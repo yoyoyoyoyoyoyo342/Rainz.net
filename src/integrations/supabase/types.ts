@@ -98,6 +98,69 @@ export type Database = {
         }
         Relationships: []
       }
+      api_keys: {
+        Row: {
+          api_key: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_used_at: string | null
+          name: string
+          stripe_subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          api_key: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          name?: string
+          stripe_subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          api_key?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          name?: string
+          stripe_subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      api_usage: {
+        Row: {
+          api_key: string
+          created_at: string
+          endpoint: string
+          id: string
+          response_status: number | null
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          api_key: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          response_status?: number | null
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          api_key?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          response_status?: number | null
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_id: string
@@ -145,6 +208,8 @@ export type Database = {
       }
       broadcast_messages: {
         Row: {
+          audience: string
+          audience_filter: Json | null
           created_at: string | null
           created_by: string | null
           id: string
@@ -152,6 +217,8 @@ export type Database = {
           message: string
         }
         Insert: {
+          audience?: string
+          audience_filter?: Json | null
           created_at?: string | null
           created_by?: string | null
           id?: string
@@ -159,6 +226,8 @@ export type Database = {
           message: string
         }
         Update: {
+          audience?: string
+          audience_filter?: Json | null
           created_at?: string | null
           created_by?: string | null
           id?: string
@@ -357,6 +426,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      premium_grants: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          granted_at: string
+          granted_by: string
+          id: string
+          is_active: boolean
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string
+          granted_by: string
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string
+          granted_by?: string
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

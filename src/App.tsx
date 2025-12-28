@@ -160,10 +160,10 @@ function AppContent() {
                               <Route path="/" element={<Weather />} />
                               <Route path="/auth" element={<Auth />} />
                               <Route path="/admin" element={<AdminPanel />} />
-                              <Route path="/blog" element={<Blog />} />
-                              <Route path="/blog/:slug" element={<BlogPost />} />
                               <Route path="/articles" element={<Articles />} />
                               <Route path="/articles/:slug" element={<BlogPost />} />
+                              <Route path="/blog" element={<Navigate to="/articles" replace />} />
+                              <Route path="/blog/:slug" element={<Navigate to="/articles" replace />} />
                               <Route path="/terms" element={<TermsOfService />} />
                               <Route path="/privacy" element={<PrivacyPolicy />} />
                               <Route path="/data-settings" element={<DataSettings />} />

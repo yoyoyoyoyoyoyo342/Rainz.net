@@ -53,3 +53,21 @@ verify_jwt = true
 
 [functions.publish-scheduled-posts]
 verify_jwt = false
+
+[functions.create-api-subscription]
+verify_jwt = true
+
+[functions.report-api-usage]
+verify_jwt = false
+
+[functions.generate-api-key]
+verify_jwt = true
+
+[functions.clear-analytics]
+verify_jwt = true
+
+[functions.populate-analytics]
+verify_jwt = true
+
+[functions.create-affiliate-checkout]
+verify_jwt = true

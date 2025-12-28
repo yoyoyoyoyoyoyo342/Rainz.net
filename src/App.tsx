@@ -160,6 +160,7 @@ function AppContent() {
                               <Route path="/" element={<Weather />} />
                               <Route path="/auth" element={<Auth />} />
                               <Route path="/admin" element={<AdminPanel />} />
+                              <Route path="/api" element={<Api />} />
                               <Route path="/articles" element={<Articles />} />
                               <Route path="/articles/:slug" element={<BlogPost />} />
                               <Route path="/blog" element={<Navigate to="/articles" replace />} />

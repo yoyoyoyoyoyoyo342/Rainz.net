@@ -1,18 +1,110 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Copy, Check, Zap, Globe, Brain, Shield } from "lucide-react";
+import { Copy, Check, Zap, Globe, Brain, Shield, Key, CreditCard, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
+
+interface ApiKey {
+  id: string;
+  api_key: string;
+  name: string;
+  is_active: boolean;
+  created_at: string;
+  last_used_at: string | null;
+}
 
 export default function Api() {
+  const { user } = useAuth();
   const [copiedEndpoint, setCopiedEndpoint] = useState<string | null>(null);
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [loadingKeys, setLoadingKeys] = useState(false);
+  const [generatingKey, setGeneratingKey] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      loadApiKeys();
+    }
+
+    // Check for subscription success
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('subscription') === 'success') {
+      toast.success('API subscription activated! You can now generate an API key.');
+      window.history.replaceState({}, '', '/api');
+    }
+  }, [user]);
+
+  async function loadApiKeys() {
+    setLoadingKeys(true);
+    try {
+      const { data, error } = await supabase
+        .from('api_keys')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setApiKeys(data || []);
+    } catch (error) {
+      console.error('Error loading API keys:', error);
+    } finally {
+      setLoadingKeys(false);
+    }
+  }
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedEndpoint(id);
     setTimeout(() => setCopiedEndpoint(null), 2000);
   };
+
+  async function handleSubscribe() {
+    if (!user) {
+      toast.error('Please sign in to subscribe');
+      return;
+    }
+
+    setSubscribing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-api-subscription');
+      
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to start subscription');
+    } finally {
+      setSubscribing(false);
+    }
+  }
+
+  async function handleGenerateKey() {
+    if (!user) {
+      toast.error('Please sign in to generate an API key');
+      return;
+    }
+
+    setGeneratingKey(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-api-key', {
+        body: { name: 'API Key ' + (apiKeys.length + 1) }
+      });
+      
+      if (error) throw error;
+      
+      toast.success('API key generated successfully!');
+      copyToClipboard(data.api_key, 'new-key');
+      loadApiKeys();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to generate API key');
+    } finally {
+      setGeneratingKey(false);
+    }
+  }
 
   const endpoint = "https://ohwtbkudpkfbakynikyj.supabase.co/functions/v1/llm-weather-forecast";
 
@@ -61,10 +153,10 @@ export default function Api() {
 
         <Card className="mb-8 border-2 border-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <CardTitle className="text-2xl">Pricing</CardTitle>
-                <CardDescription>Simple, transparent pricing</CardDescription>
+                <CardTitle className="text-2xl">Pay As You Go</CardTitle>
+                <CardDescription>Only pay for what you use</CardDescription>
               </div>
               <div className="text-right">
                 <div className="text-3xl font-bold text-primary">€0.01</div>
@@ -72,17 +164,91 @@ export default function Api() {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-3">
               <Badge variant="outline" className="py-1">
                 <Shield className="h-3 w-3 mr-1" /> Secure API Key
               </Badge>
               <Badge variant="outline" className="py-1">No monthly minimum</Badge>
-              <Badge variant="outline" className="py-1">Pay as you go</Badge>
+              <Badge variant="outline" className="py-1">
+                <CreditCard className="h-3 w-3 mr-1" /> Metered billing
+              </Badge>
               <Badge variant="outline" className="py-1">Volume discounts available</Badge>
             </div>
+            {user ? (
+              <div className="flex flex-wrap gap-3 pt-2">
+                <Button onClick={handleSubscribe} disabled={subscribing}>
+                  {subscribing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Setting up...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Add Payment Method
+                    </>
+                  )}
+                </Button>
+                <Button variant="outline" onClick={handleGenerateKey} disabled={generatingKey}>
+                  {generatingKey ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Key className="h-4 w-4 mr-2" />
+                      Generate API Key
+                    </>
+                  )}
+                </Button>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground pt-2">
+                Sign in to get started with the API
+              </p>
+            )}
           </CardContent>
         </Card>
+
+        {user && apiKeys.length > 0 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5" />
+                Your API Keys
+              </CardTitle>
+              <CardDescription>Manage your API keys</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {apiKeys.map((key) => (
+                  <div key={key.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    <div>
+                      <div className="font-medium">{key.name}</div>
+                      <code className="text-sm text-muted-foreground">
+                        {key.api_key.substring(0, 12)}...
+                      </code>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={key.is_active ? "default" : "secondary"}>
+                        {key.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => copyToClipboard(key.api_key, key.id)}
+                      >
+                        {copiedEndpoint === key.id ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="mb-8">
           <CardHeader>
@@ -130,23 +296,8 @@ export default function Api() {
         "feelsLike": 74,
         "pressure": 1015
       },
-      "hourlyForecast": [
-        {
-          "time": "2024-01-15T14:00:00Z",
-          "temperature": 73,
-          "condition": "Cloudy",
-          "precipitation": 10
-        }
-      ],
-      "dailyForecast": [
-        {
-          "day": "Monday",
-          "condition": "Partly Cloudy",
-          "highTemp": 75,
-          "lowTemp": 58,
-          "precipitation": 20
-        }
-      ]
+      "hourlyForecast": [...],
+      "dailyForecast": [...]
     }
   ]
 }`}</pre>
@@ -188,12 +339,12 @@ export default function Api() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Get Started</CardTitle>
-            <CardDescription>Contact us for API access</CardDescription>
+            <CardTitle>Need Help?</CardTitle>
+            <CardDescription>Contact us for support or volume pricing</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              To get an API key and start using the Rainz Weather API, please contact us at:
+              For API support, volume pricing, or enterprise plans, please contact us at:
             </p>
             <a 
               href="mailto:api@rainz.net" 

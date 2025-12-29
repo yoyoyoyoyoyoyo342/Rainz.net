@@ -28,15 +28,11 @@ serve(async (req) => {
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    logStep("Stripe key verified");
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
-    logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
-    logStep("Authenticating user with token");
-
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const requester = userData.user;
@@ -45,34 +41,57 @@ serve(async (req) => {
 
     // Optional: check a different user's subscription (used for leaderboard badges)
     let targetUserId: string | null = null;
-    let body: any = null;
     try {
-      body = await req.json();
+      const body = await req.json();
       targetUserId = typeof body?.check_user_id === "string" ? body.check_user_id : null;
     } catch {
       // No body is fine
     }
 
     const userIdToCheck = targetUserId || requester.id;
-    logStep("Checking subscription for user", { userIdToCheck, requestedBy: requester.id });
+    logStep("Checking subscription for user", { userIdToCheck });
 
-    // Resolve email for the user we're checking
+    // First check for active premium_grants (admin-granted free premium)
+    const { data: premiumGrant, error: grantError } = await supabaseClient
+      .from("premium_grants")
+      .select("id, expires_at, reason")
+      .eq("user_id", userIdToCheck)
+      .eq("is_active", true)
+      .or("expires_at.is.null,expires_at.gt.now()")
+      .limit(1)
+      .maybeSingle();
+
+    if (!grantError && premiumGrant) {
+      logStep("Active premium grant found", { grantId: premiumGrant.id, reason: premiumGrant.reason });
+      return new Response(
+        JSON.stringify({
+          subscribed: true,
+          product_id: "premium_grant",
+          subscription_end: premiumGrant.expires_at,
+          grant_reason: premiumGrant.reason,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
+    // If no premium grant, check Stripe subscription
     let emailToCheck: string | null = null;
 
     if (userIdToCheck === requester.id) {
-      // Fast path: requester email is already available via getUser(token)
       emailToCheck = requester.email ?? null;
     } else {
-      // Leaderboard use-case: look up another user's email via admin API
       const { data: adminUser, error: adminErr } = await supabaseClient.auth.admin.getUserById(userIdToCheck);
       if (adminErr) {
-        logStep("Failed to fetch user via admin API", { userIdToCheck, message: adminErr.message });
+        logStep("Failed to fetch user via admin API", { userIdToCheck });
       }
       emailToCheck = adminUser?.user?.email ?? null;
     }
 
     if (!emailToCheck) {
-      logStep("No email available for user; returning unsubscribed", { userIdToCheck });
+      logStep("No email available for user; returning unsubscribed");
       return new Response(JSON.stringify({ subscribed: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -83,7 +102,7 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: emailToCheck, limit: 1 });
 
     if (customers.data.length === 0) {
-      logStep("No customer found, returning unsubscribed", { email: emailToCheck });
+      logStep("No customer found, returning unsubscribed");
       return new Response(JSON.stringify({ subscribed: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -91,8 +110,6 @@ serve(async (req) => {
     }
 
     const customerId = customers.data[0].id;
-    logStep("Found Stripe customer", { customerId });
-
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
@@ -105,18 +122,10 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
-      logStep("Active subscription found", {
-        subscriptionId: subscription.id,
-        currentPeriodEnd: subscription.current_period_end,
-      });
-
       if (subscription.current_period_end) {
         try {
           subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-        } catch (dateError) {
-          logStep("Warning: Could not parse subscription end date", {
-            value: subscription.current_period_end,
-          });
+        } catch {
           subscriptionEnd = null;
         }
       }
@@ -126,7 +135,7 @@ serve(async (req) => {
         const priceProduct = priceItem.price.product;
         productId = typeof priceProduct === "string" ? priceProduct : priceProduct.id;
       }
-      logStep("Determined subscription product", { productId, subscriptionEnd });
+      logStep("Active Stripe subscription found", { productId, subscriptionEnd });
     } else {
       logStep("No active subscription found");
     }

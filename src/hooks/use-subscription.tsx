@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { useAuth } from './use-auth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -17,12 +17,17 @@ interface SubscriptionContextType {
   isLoading: boolean;
   subscriptionEnd: string | null;
   productId: string | null;
+  grantReason: string | null;
   checkSubscription: () => Promise<void>;
   openCheckout: () => Promise<void>;
   openPortal: () => Promise<void>;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
+
+// Cache subscription check result to avoid repeated API calls
+const subscriptionCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 60000; // 1 minute cache
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const { user, session } = useAuth();
@@ -31,15 +36,33 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [productId, setProductId] = useState<string | null>(null);
+  const [grantReason, setGrantReason] = useState<string | null>(null);
+  const checkInProgress = useRef(false);
 
   const checkSubscription = useCallback(async () => {
-    if (!session?.access_token) {
+    if (!session?.access_token || !user?.id) {
       setIsSubscribed(false);
       setSubscriptionEnd(null);
       setProductId(null);
+      setGrantReason(null);
       setIsLoading(false);
       return;
     }
+
+    // Check cache first
+    const cached = subscriptionCache.get(user.id);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      setIsSubscribed(cached.data.subscribed ?? false);
+      setSubscriptionEnd(cached.data.subscription_end ?? null);
+      setProductId(cached.data.product_id ?? null);
+      setGrantReason(cached.data.grant_reason ?? null);
+      setIsLoading(false);
+      return;
+    }
+
+    // Prevent concurrent checks
+    if (checkInProgress.current) return;
+    checkInProgress.current = true;
 
     try {
       setIsLoading(true);
@@ -55,16 +78,21 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Cache the result
+      subscriptionCache.set(user.id, { data, timestamp: Date.now() });
+
       setIsSubscribed(data?.subscribed ?? false);
       setSubscriptionEnd(data?.subscription_end ?? null);
       setProductId(data?.product_id ?? null);
+      setGrantReason(data?.grant_reason ?? null);
     } catch (error) {
       console.error('Error checking subscription:', error);
       setIsSubscribed(false);
     } finally {
       setIsLoading(false);
+      checkInProgress.current = false;
     }
-  }, [session?.access_token]);
+  }, [session?.access_token, user?.id]);
 
   const openCheckout = useCallback(async () => {
     if (!session?.access_token) {
@@ -77,14 +105,11 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      console.log('Creating checkout session...');
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
       });
-
-      console.log('Checkout response:', { data, error });
 
       if (error) {
         toast({
@@ -104,19 +129,15 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         throw new Error('No checkout URL returned');
       }
 
-      console.log('Opening checkout URL:', data.url);
       window.location.href = data.url;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.error('Error opening checkout:', error);
-
-      // If we already toasted above, this is harmless; if not, still show a user-facing error.
       toast({
         title: 'Could not open checkout',
         description: message || 'Please try again in a moment.',
         variant: 'destructive',
       });
-
       throw error;
     }
   }, [session?.access_token, toast]);
@@ -154,7 +175,6 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       }
 
       if (data?.url) {
-        // Use same-window redirect to avoid popup blockers
         window.location.href = data.url;
       } else {
         toast({
@@ -174,13 +194,15 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     checkSubscription();
   }, [checkSubscription]);
 
-  // Periodic refresh every 60 seconds
+  // Periodic refresh every 5 minutes (reduced from 1 minute for performance)
   useEffect(() => {
     if (!user) return;
 
     const interval = setInterval(() => {
+      // Clear cache and recheck
+      subscriptionCache.delete(user.id);
       checkSubscription();
-    }, 60000);
+    }, 300000); // 5 minutes
 
     return () => clearInterval(interval);
   }, [user, checkSubscription]);
@@ -192,6 +214,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         isLoading,
         subscriptionEnd,
         productId,
+        grantReason,
         checkSubscription,
         openCheckout,
         openPortal,

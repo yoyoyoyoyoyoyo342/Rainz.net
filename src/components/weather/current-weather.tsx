@@ -58,13 +58,7 @@ export function CurrentWeather({
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
-
-      const { data, error } = await supabase
-        .from("saved_locations")
-        .select("*")
-        .order("is_primary", { ascending: false })
-        .order("name");
-
+      const { data, error } = await supabase.from("saved_locations").select("*").order("is_primary", { ascending: false }).order("name");
       if (error) throw error;
       return data as SavedLocation[];
     },
@@ -75,7 +69,6 @@ export function CurrentWeather({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (!currentLocation) throw new Error("No current location");
-
       const { error } = await supabase.from("saved_locations").insert({
         user_id: user.id,
         name: currentLocation.name,
@@ -83,7 +76,6 @@ export function CurrentWeather({
         longitude: currentLocation.lon,
         is_primary: savedLocations.length === 0,
       });
-
       if (error) throw error;
     },
     onSuccess: () => {
@@ -98,19 +90,11 @@ export function CurrentWeather({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (!currentLocation) throw new Error("No current location");
-
       const savedLocation = savedLocations.find(
-        loc => Math.abs(loc.latitude - currentLocation.lat) < 0.01 && 
-               Math.abs(loc.longitude - currentLocation.lon) < 0.01
+        loc => Math.abs(loc.latitude - currentLocation.lat) < 0.01 && Math.abs(loc.longitude - currentLocation.lon) < 0.01
       );
-
       if (!savedLocation) throw new Error("Location not found");
-
-      const { error } = await supabase
-        .from("saved_locations")
-        .delete()
-        .eq("id", savedLocation.id);
-
+      const { error } = await supabase.from("saved_locations").delete().eq("id", savedLocation.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -121,8 +105,7 @@ export function CurrentWeather({
   });
 
   const savedLocationData = currentLocation && savedLocations.find(
-    loc => Math.abs(loc.latitude - currentLocation.lat) < 0.01 && 
-           Math.abs(loc.longitude - currentLocation.lon) < 0.01
+    loc => Math.abs(loc.latitude - currentLocation.lat) < 0.01 && Math.abs(loc.longitude - currentLocation.lon) < 0.01
   );
   const isLocationSaved = !!savedLocationData;
 
@@ -149,41 +132,21 @@ export function CurrentWeather({
     if (c.includes("overcast")) return "from-gray-500/80 via-slate-600/70 to-gray-700/80";
     if (c.includes("cloud") && !c.includes("partly")) return "from-gray-400/80 via-slate-500/70 to-gray-600/80";
     if (c.includes("partly")) return "from-blue-300/80 via-gray-300/70 to-blue-400/80";
-    // Clear/sunny
     return "from-sky-300/80 via-blue-400/70 to-indigo-500/80";
   };
 
   const formatWindSpeed = (speed: number) => {
-    if (isImperial) {
-      return `${speed}`;
-    } else {
-      return `${Math.round(speed * 1.609)}`;
-    }
+    return isImperial ? `${speed}` : `${Math.round(speed * 1.609)}`;
   };
 
-  const feelsLikeTemp = isImperial 
-    ? mostAccurate.currentWeather.feelsLike 
-    : Math.round((mostAccurate.currentWeather.feelsLike - 32) * 5 / 9);
-  const actualTemp = isImperial 
-    ? mostAccurate.currentWeather.temperature 
-    : Math.round((mostAccurate.currentWeather.temperature - 32) * 5 / 9);
-  const highTemp = isImperial 
-    ? mostAccurate.dailyForecast[0]?.highTemp 
-    : Math.round((mostAccurate.dailyForecast[0]?.highTemp - 32) * 5 / 9);
-  const lowTemp = isImperial 
-    ? mostAccurate.dailyForecast[0]?.lowTemp 
-    : Math.round((mostAccurate.dailyForecast[0]?.lowTemp - 32) * 5 / 9);
-  
-  // Convert visibility from miles to km when metric is selected
-  const displayVisibility = isImperial 
-    ? mostAccurate.currentWeather.visibility 
-    : Math.round(mostAccurate.currentWeather.visibility * 1.60934 * 10) / 10;
+  const feelsLikeTemp = isImperial ? mostAccurate.currentWeather.feelsLike : Math.round((mostAccurate.currentWeather.feelsLike - 32) * 5 / 9);
+  const actualTemp = isImperial ? mostAccurate.currentWeather.temperature : Math.round((mostAccurate.currentWeather.temperature - 32) * 5 / 9);
+  const highTemp = isImperial ? mostAccurate.dailyForecast[0]?.highTemp : Math.round((mostAccurate.dailyForecast[0]?.highTemp - 32) * 5 / 9);
+  const lowTemp = isImperial ? mostAccurate.dailyForecast[0]?.lowTemp : Math.round((mostAccurate.dailyForecast[0]?.lowTemp - 32) * 5 / 9);
+  const displayVisibility = isImperial ? mostAccurate.currentWeather.visibility : Math.round(mostAccurate.currentWeather.visibility * 1.60934 * 10) / 10;
 
-  const locationDisplay = displayName 
-    ? displayName.split(',')[0] 
-    : (isAutoDetected ? t('weather.myLocation') : mostAccurate.location.split(',')[0]);
+  const locationDisplay = displayName ? displayName.split(',')[0] : (isAutoDetected ? t('weather.myLocation') : mostAccurate.location.split(',')[0]);
 
-  // Apply compact mode styling
   const isCompact = premiumSettings?.compactMode;
   const cardPadding = isCompact ? 'p-2' : 'p-4';
   const statsPadding = isCompact ? 'p-1.5' : 'p-2.5';
@@ -195,15 +158,12 @@ export function CurrentWeather({
   return (
     <section className="mb-4">
       <Card className="overflow-hidden border-0 shadow-xl">
-        {/* Main Weather Display with Dynamic Gradient */}
         <div className={`relative bg-gradient-to-br ${getWeatherGradient(mostAccurate.currentWeather.condition)} ${cardPadding}`}>
-          {/* Ambient glow effects */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute -top-20 -right-20 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
             <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
           </div>
 
-          {/* Top Row: Location + Actions */}
           <div className={`relative flex items-center justify-between ${marginBottom}`}>
             <div className="flex items-center gap-2">
               <MapPin className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} text-white/80`} />
@@ -228,7 +188,6 @@ export function CurrentWeather({
             </div>
           </div>
 
-          {/* Center: Temperature + Condition */}
           <div className={`relative flex items-center justify-between ${marginBottom}`}>
             <div className={`flex items-center ${isCompact ? 'gap-2' : 'gap-3'}`}>
               <div className={`${iconSize} rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center`}>
@@ -243,7 +202,6 @@ export function CurrentWeather({
               </div>
             </div>
 
-            {/* Feels Like - controlled by setting */}
             {(premiumSettings?.showFeelsLike !== false) && (
               <div className="text-right">
                 <p className={`text-white/60 uppercase tracking-wide ${isCompact ? 'text-[10px]' : 'text-xs'}`}>{t('weather.feelsLike')}</p>
@@ -253,15 +211,12 @@ export function CurrentWeather({
             )}
           </div>
 
-          {/* Bottom: Quick Stats - controlled by settings */}
           <div className={`relative grid grid-cols-3 ${isCompact ? 'gap-1' : 'gap-2'}`}>
-            {/* Wind - always shown */}
             <div className={`bg-white/15 backdrop-blur-sm rounded-xl ${statsPadding} text-center`}>
               <Wind className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} text-white/80 mx-auto ${isCompact ? 'mb-0.5' : 'mb-1'}`} />
               <p className={`text-white font-semibold ${isCompact ? 'text-xs' : 'text-sm'}`}>{formatWindSpeed(mostAccurate.currentWeather.windSpeed)}</p>
               <p className={`text-white/60 ${isCompact ? 'text-[10px]' : 'text-xs'}`}>{isImperial ? 'mph' : 'km/h'}</p>
             </div>
-            {/* Humidity - controlled by setting */}
             {(premiumSettings?.showHumidity !== false) && (
               <div className={`bg-white/15 backdrop-blur-sm rounded-xl ${statsPadding} text-center`}>
                 <Droplets className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} text-white/80 mx-auto ${isCompact ? 'mb-0.5' : 'mb-1'}`} />
@@ -269,7 +224,6 @@ export function CurrentWeather({
                 <p className={`text-white/60 ${isCompact ? 'text-[10px]' : 'text-xs'}`}>Humidity</p>
               </div>
             )}
-            {/* Visibility - controlled by setting */}
             {(premiumSettings?.showVisibility !== false) && (
               <div className={`bg-white/15 backdrop-blur-sm rounded-xl ${statsPadding} text-center`}>
                 <Eye className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} text-white/80 mx-auto ${isCompact ? 'mb-0.5' : 'mb-1'}`} />
@@ -277,7 +231,6 @@ export function CurrentWeather({
                 <p className={`text-white/60 ${isCompact ? 'text-[10px]' : 'text-xs'}`}>{isImperial ? 'mi' : 'km'}</p>
               </div>
             )}
-            {/* Precipitation Chance - controlled by setting */}
             {premiumSettings?.showPrecipChance && (mostAccurate.currentWeather as any).precipChance !== undefined && (
               <div className={`bg-white/15 backdrop-blur-sm rounded-xl ${statsPadding} text-center`}>
                 <Droplets className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} text-blue-300 mx-auto ${isCompact ? 'mb-0.5' : 'mb-1'}`} />
@@ -285,7 +238,6 @@ export function CurrentWeather({
                 <p className={`text-white/60 ${isCompact ? 'text-[10px]' : 'text-xs'}`}>Precip</p>
               </div>
             )}
-            {/* Dew Point - controlled by setting */}
             {premiumSettings?.showDewPoint && mostAccurate.currentWeather.dewPoint !== undefined && (
               <div className={`bg-white/15 backdrop-blur-sm rounded-xl ${statsPadding} text-center`}>
                 <Thermometer className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} text-white/80 mx-auto ${isCompact ? 'mb-0.5' : 'mb-1'}`} />
@@ -295,7 +247,6 @@ export function CurrentWeather({
                 <p className={`text-white/60 ${isCompact ? 'text-[10px]' : 'text-xs'}`}>Dew Pt</p>
               </div>
             )}
-            {/* Pressure - controlled by setting */}
             {premiumSettings?.showPressure && mostAccurate.currentWeather.pressure !== undefined && (
               <div className={`bg-white/15 backdrop-blur-sm rounded-xl ${statsPadding} text-center`}>
                 <span className={`text-white/80 ${isCompact ? 'text-[10px]' : 'text-xs'}`}>hPa</span>
@@ -306,15 +257,9 @@ export function CurrentWeather({
           </div>
         </div>
 
-        {/* Bottom Actions Bar */}
         <CardContent className="p-2 bg-background/60 backdrop-blur-md border-t border-border/30">
           <div className="flex gap-2">
-            <Button 
-              onClick={() => setShowLocationCard(true)} 
-              variant="ghost" 
-              size="sm" 
-              className="flex-1 h-8 text-xs"
-            >
+            <Button onClick={() => setShowLocationCard(true)} variant="ghost" size="sm" className="flex-1 h-8 text-xs">
               <Camera className="w-3 h-3 mr-1.5" />
               Share Card
             </Button>

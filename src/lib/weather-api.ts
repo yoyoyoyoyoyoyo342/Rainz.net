@@ -100,7 +100,6 @@ export const weatherApi = {
   },
 
   getWeatherData: async (lat: number, lon: number, locationName?: string): Promise<WeatherResponse> => {
-    // Fetch directly from Open-Meteo (no API key required)
     const params = new URLSearchParams({
       latitude: String(lat),
       longitude: String(lon),
@@ -138,34 +137,29 @@ export const weatherApi = {
       ].join(","),
       timezone: "auto",
       temperature_unit: "fahrenheit",
-      forecast_days: "16", // Request 16 days to ensure we have 10 full days after today
+      forecast_days: "16",
     });
 
     const url = `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
-    console.log("Fetching weather from:", url);
     const res = await fetch(url);
     if (!res.ok) {
-      console.error("Weather API error:", res.status, res.statusText);
       throw new Error(`Failed to fetch weather: ${res.status} ${res.statusText}`);
     }
     const data: any = await res.json();
-    console.log("Weather data received:", data);
 
     const weatherCodeToText = (code?: number, temp?: number, snowfall?: number, humidity?: number, windSpeed?: number): string => {
-      // Enhanced snow detection with stricter temperature thresholds
       const hasSnow = snowfall !== undefined && snowfall > 0;
-      const isFreezing = temp !== undefined && temp <= 35; // 35°F threshold (1.7°C)
-      const isVeryWet = humidity !== undefined && humidity > 85; // High humidity suggests wet precip
-      const isWindy = windSpeed !== undefined && windSpeed > 15; // Wind affects precipitation type
+      const isFreezing = temp !== undefined && temp <= 35;
+      const isVeryWet = humidity !== undefined && humidity > 85;
+      const isWindy = windSpeed !== undefined && windSpeed > 15;
       
-      // Snow probability scoring system
       const snowScore = 
-        (hasSnow ? 4 : 0) + // Actual snowfall is strongest indicator (increased weight)
-        (temp !== undefined && temp <= 32 ? 3 : temp !== undefined && temp <= 35 ? 2 : 0) + // Temperature factor
-        (isVeryWet && isFreezing ? 1 : 0) + // Wet + cold = likely snow
-        (isWindy && isFreezing ? 1 : 0); // Wind + cold = blowing snow
+        (hasSnow ? 4 : 0) +
+        (temp !== undefined && temp <= 32 ? 3 : temp !== undefined && temp <= 35 ? 2 : 0) +
+        (isVeryWet && isFreezing ? 1 : 0) +
+        (isWindy && isFreezing ? 1 : 0);
       
-      const isSnowing = snowScore >= 4; // Need strong evidence for snow (stricter threshold)
+      const isSnowing = snowScore >= 4;
       
       switch (code) {
         case 0: return "Clear";
@@ -195,7 +189,6 @@ export const weatherApi = {
 
     const hourlyTimes: string[] = data?.hourly?.time || [];
     const currentTime: string | undefined = data?.current_weather?.time;
-    // Find the nearest hourly index to current time (handles 30-min offsets like 11:30 vs 11:00)
     let idx = 0;
     if (hourlyTimes.length) {
       const parseTs = (s: string) => new Date(s).getTime();
@@ -207,7 +200,6 @@ export const weatherApi = {
       }, 0);
     }
 
-    // Sun times (today) - Validate and safely parse dates
     const sunriseIso = data?.daily?.sunrise?.[0];
     const sunsetIso = data?.daily?.sunset?.[0];
     
@@ -240,7 +232,6 @@ export const weatherApi = {
       }
     }
 
-    // Fetch moon data from edge function
     let moonriseStr: string | undefined;
     let moonsetStr: string | undefined;
     let moonPhaseStr: string | undefined;
@@ -254,11 +245,7 @@ export const weatherApi = {
         moonriseStr = moonResponse.data.moonrise || undefined;
         moonsetStr = moonResponse.data.moonset || undefined;
         moonPhaseStr = moonResponse.data.moonPhase || undefined;
-        console.log('Moon data fetched successfully:', moonResponse.data);
       } else {
-        console.log('Moon data not available, using fallback calculation');
-        
-        // Fallback to calculated moon data if API fails
         if (sunriseIso && sunsetIso) {
           const sunriseTime = new Date(sunriseIso);
           const sunsetTime = new Date(sunsetIso);
@@ -294,14 +281,12 @@ export const weatherApi = {
           }
         }
       }
-    } catch (moonError) {
-      console.log('Failed to fetch moon data:', moonError);
+    } catch {
       moonriseStr = undefined;
       moonsetStr = undefined;
       moonPhaseStr = undefined;
     }
 
-    // Air Quality (US AQI) - fetch nearest hour
     const aqiParams = new URLSearchParams({
       latitude: String(lat),
       longitude: String(lon),
@@ -340,7 +325,6 @@ export const weatherApi = {
       }
     } catch {}
 
-    // Fetch pollen data
     const pollenParams = new URLSearchParams({
       latitude: lat.toString(),
       longitude: lon.toString(),
@@ -365,18 +349,16 @@ export const weatherApi = {
             return Math.abs(d - target) < Math.abs(best - target) ? i : bestIdx;
           }, 0);
         }
-        // Apply seasonal multipliers and enhanced accuracy for pollen data
         const currentMonth = new Date().getMonth();
         
-        // Seasonal multipliers based on real pollen seasons
         const getSeasonalMultiplier = (pollenType: string, month: number): number => {
           const multipliers = {
-            alder: [2.0, 2.5, 1.8, 0.5, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 1.2], // Jan-Dec
-            birch: [0.0, 0.2, 1.5, 2.5, 2.0, 0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], // Mar-May peak
-            grass: [0.0, 0.0, 0.5, 1.2, 2.5, 3.0, 2.8, 2.2, 1.0, 0.2, 0.0, 0.0], // May-Aug peak
-            mugwort: [0.0, 0.0, 0.0, 0.0, 0.2, 0.8, 2.0, 2.5, 1.5, 0.3, 0.0, 0.0], // Jul-Sep peak
-            olive: [0.0, 0.0, 0.5, 1.8, 2.5, 2.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0], // Apr-Jun peak
-            ragweed: [0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 1.0, 2.5, 2.8, 1.5, 0.2, 0.0] // Aug-Oct peak
+            alder: [2.0, 2.5, 1.8, 0.5, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 1.2],
+            birch: [0.0, 0.2, 1.5, 2.5, 2.0, 0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            grass: [0.0, 0.0, 0.5, 1.2, 2.5, 3.0, 2.8, 2.2, 1.0, 0.2, 0.0, 0.0],
+            mugwort: [0.0, 0.0, 0.0, 0.0, 0.2, 0.8, 2.0, 2.5, 1.5, 0.3, 0.0, 0.0],
+            olive: [0.0, 0.0, 0.5, 1.8, 2.5, 2.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
+            ragweed: [0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 1.0, 2.5, 2.8, 1.5, 0.2, 0.0]
           };
           return multipliers[pollenType as keyof typeof multipliers]?.[month] || 1.0;
         };
@@ -401,21 +383,16 @@ export const weatherApi = {
       }
     } catch {}
 
-
-    // Enhanced precipitation calculation
     const currentPrecipProb = data?.hourly?.precipitation_probability?.[idx] ?? 0;
     const currentPrecip = data?.hourly?.precipitation?.[idx] ?? 0;
     const currentRain = data?.hourly?.rain?.[idx] ?? 0;
     const currentShowers = data?.hourly?.showers?.[idx] ?? 0;
     const currentSnow = data?.hourly?.snowfall?.[idx] ?? 0;
-    
-    // More accurate precipitation calculation
     const totalPrecipitation = Math.round((currentPrecip + currentRain + currentShowers + currentSnow) * 10) / 10;
 
-    // Calculate snow depth (sum of snowfall from today)
     const todaySnowfall = data?.daily?.snowfall_sum?.[0] ?? 0;
-    const snowfallCm = Math.round(currentSnow * 10) / 10; // Current hourly snowfall in cm
-    const snowDepthInches = Math.round((todaySnowfall / 2.54) * 10) / 10; // Convert cm to inches
+    const snowfallCm = Math.round(currentSnow * 10) / 10;
+    const snowDepthInches = Math.round((todaySnowfall / 2.54) * 10) / 10;
 
     const currentTemp = Math.round(data?.current_weather?.temperature ?? 0);
     const currentHumidity = Math.round(data?.hourly?.relative_humidity_2m?.[idx] ?? 0);
@@ -428,7 +405,6 @@ export const weatherApi = {
       currentWindSpeed
     );
     
-    // Calculate dew point (Open-Meteo provides it directly in Fahrenheit since we request temperature_unit=fahrenheit)
     const currentDewPoint = Math.round(data?.hourly?.dew_point_2m?.[idx] ?? 0);
 
     const current: CurrentWeather = {
@@ -455,48 +431,29 @@ export const weatherApi = {
       precipitationProbability: currentPrecipProb,
       cloudCover: Math.round(data?.hourly?.cloud_cover?.[idx] ?? 0),
       windGusts: Math.round(data?.hourly?.wind_gusts_10m?.[idx] ?? 0),
-      snowfall: Math.round((snowfallCm / 2.54) * 10) / 10, // Convert cm to inches
+      snowfall: Math.round((snowfallCm / 2.54) * 10) / 10,
       snowDepth: snowDepthInches,
       dewPoint: currentDewPoint,
     };
 
-    console.log("Processed current weather:", {
-      windSpeed: current.windSpeed,
-      visibility: current.visibility,
-      humidity: current.humidity,
-      raw_windspeed: data?.current_weather?.windspeed,
-      raw_visibility: data?.hourly?.visibility?.[idx],
-      raw_humidity: data?.hourly?.relative_humidity_2m?.[idx],
-      idx
-    });
-
-    // Generate hourly forecast aligned to midnight for each day
-    // We need enough hours to cover 10 full days starting from tomorrow
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
-    
-    // Calculate hours remaining today (until midnight)
     const hoursRemainingToday = 24 - currentHour - (currentMinute > 30 ? 1 : 0);
-    
-    // We need: remaining hours today + (10 full days * 24 hours)
     const totalHoursNeeded = hoursRemainingToday + (10 * 24);
     const maxHours = Math.min(totalHoursNeeded, hourlyTimes.length - idx);
     
     const hourly: HourlyForecast[] = hourlyTimes.slice(idx, idx + maxHours).map((t: string, i: number) => {
       const j = idx + i;
       const hourDate = new Date(t);
-      
-      // Enhanced precipitation calculation for hourly forecast
       const precipProb = data?.hourly?.precipitation_probability?.[j] ?? 0;
       const precip = data?.hourly?.precipitation?.[j] ?? 0;
       const rain = data?.hourly?.rain?.[j] ?? 0;
       const showers = data?.hourly?.showers?.[j] ?? 0;
       const snow = data?.hourly?.snowfall?.[j] ?? 0;
       const totalPrecip = Math.round((precip + rain + showers + snow) * 10) / 10;
-      
       const hourTemp = Math.round(data?.hourly?.temperature_2m?.[j] ?? 0);
-      const hourSnow = Math.round((snow / 2.54) * 10) / 10; // Convert to inches
+      const hourSnow = Math.round((snow / 2.54) * 10) / 10;
       
       return {
         time: hourDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -508,18 +465,16 @@ export const weatherApi = {
     });
 
     const daily: DailyForecast[] = (data?.daily?.time || []).slice(0, 11).map((d: string, i: number) => {
-      // Enhanced precipitation calculation for daily forecast
       const precipProb = data?.daily?.precipitation_probability_max?.[i] ?? 0;
       const precipSum = data?.daily?.precipitation_sum?.[i] ?? 0;
       const rainSum = data?.daily?.rain_sum?.[i] ?? 0;
       const showersSum = data?.daily?.showers_sum?.[i] ?? 0;
       const snowSum = data?.daily?.snowfall_sum?.[i] ?? 0;
       const totalPrecip = precipSum + rainSum + showersSum + snowSum;
-      
       const dayHighTemp = Math.round(data?.daily?.temperature_2m_max?.[i] ?? 0);
       const dayLowTemp = Math.round(data?.daily?.temperature_2m_min?.[i] ?? 0);
       const dayAvgTemp = Math.round((dayHighTemp + dayLowTemp) / 2);
-      const daySnow = Math.round((snowSum / 2.54) * 10) / 10; // Convert to inches
+      const daySnow = Math.round((snowSum / 2.54) * 10) / 10;
       
       return {
         day: new Date(d).toLocaleDateString([], { weekday: "short" }),
@@ -549,7 +504,6 @@ export const weatherApi = {
       aggregated: source,
     };
 
-    // Try to fetch additional sources from Supabase Edge Function
     try {
       const { data, error } = await supabase.functions.invoke("aggregate-weather", {
         body: { lat, lon, locationName }
@@ -558,32 +512,22 @@ export const weatherApi = {
         const extraSources = (data as any).sources as WeatherSource[];
         response.sources = [...response.sources, ...extraSources];
       }
-    } catch (e) {
-      // Silently ignore to keep core functionality working
-      console.warn("Additional sources unavailable:", (e as Error).message);
-    }
+    } catch {}
 
-    // Call LLM weather forecast to analyze all sources and provide enhanced predictions
     if (response.sources.length > 1) {
       try {
-        console.log(`Calling LLM forecast with ${response.sources.length} weather sources...`);
         const { data: llmData, error: llmError } = await supabase.functions.invoke("llm-weather-forecast", {
           body: { sources: response.sources, location: locationName }
         });
         
         if (!llmError && llmData && llmData.current) {
-          console.log(`LLM forecast received with ${llmData.modelAgreement}% model agreement`);
-          
-          // Merge LLM insights into the mostAccurate source
           const enhancedSource: WeatherSource = {
             ...response.mostAccurate,
             currentWeather: {
               ...response.mostAccurate.currentWeather,
-              // Use LLM's analyzed values where available
               condition: llmData.current.condition || response.mostAccurate.currentWeather.condition,
               description: llmData.current.description || response.mostAccurate.currentWeather.description,
             },
-            // Store LLM insights for display
             llmAnalysis: {
               summary: llmData.summary,
               modelAgreement: llmData.modelAgreement,
@@ -595,9 +539,7 @@ export const weatherApi = {
           response.mostAccurate = enhancedSource;
           response.aggregated = enhancedSource;
         }
-      } catch (e) {
-        console.warn("LLM forecast unavailable:", (e as Error).message);
-      }
+      } catch {}
     }
 
     return response;
@@ -610,11 +552,10 @@ export const weatherApi = {
         return;
       }
 
-      // Use high accuracy with WiFi/4G/5G triangulation + GPS for best precision
       navigator.geolocation.getCurrentPosition(resolve, reject, {
-        enableHighAccuracy: true, // Enables GPS + WiFi/cellular triangulation
-        timeout: 15000, // Extended timeout for high accuracy
-        maximumAge: 0, // Always get fresh location, don't use cached
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
       });
     });
   },

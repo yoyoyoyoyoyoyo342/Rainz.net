@@ -18,22 +18,12 @@ export function Footer() {
             <Link to="/about" className="hover:text-foreground transition-colors">
               About
             </Link>
-            <a
-              href="https://rainz.net/articles"
-              className="hover:text-foreground transition-colors"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <Link to="/articles" className="hover:text-foreground transition-colors">
               Blog
-            </a>
-            <a
-              href="https://rainz.net/api"
-              className="hover:text-foreground transition-colors"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            </Link>
+            <Link to="/api" className="hover:text-foreground transition-colors">
               API
-            </a>
+            </Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">
               Privacy Policy
             </Link>

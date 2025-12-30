@@ -1,15 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Bell, Flame, Trophy, X, Inbox, Circle, Swords, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useUserStreaks } from "@/hooks/use-user-streaks";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { useSubscription } from "@/hooks/use-subscription";
 
 interface BroadcastMessage {
   id: string;
   message: string;
   created_at: string;
+  audience?: string;
+  audience_filter?: any;
 }
 
 interface UserNotification {
@@ -22,8 +25,8 @@ interface UserNotification {
   created_at: string;
 }
 
-const DISMISSED_MESSAGES_KEY = 'dismissed_broadcast_messages';
-const READ_MESSAGES_KEY = 'read_broadcast_messages';
+const DISMISSED_MESSAGES_KEY = "dismissed_broadcast_messages";
+const READ_MESSAGES_KEY = "read_broadcast_messages";
 
 function getDismissedMessages(): Set<string> {
   try {
@@ -59,8 +62,17 @@ interface HeaderInfoBarProps {
   user: any;
 }
 
+function isMessageForUser(message: BroadcastMessage, isSubscribed: boolean) {
+  const audience = message.audience ?? "all";
+  if (audience === "all") return true;
+  if (audience === "premium") return isSubscribed;
+  if (audience === "free") return !isSubscribed;
+  return true;
+}
+
 export function HeaderInfoBar({ user }: HeaderInfoBarProps) {
   const { streakData, loading: streakLoading } = useUserStreaks();
+  const { isSubscribed } = useSubscription();
   const [messages, setMessages] = useState<BroadcastMessage[]>([]);
   const [userNotifications, setUserNotifications] = useState<UserNotification[]>([]);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
@@ -70,34 +82,27 @@ export function HeaderInfoBar({ user }: HeaderInfoBarProps) {
   useEffect(() => {
     setDismissedIds(getDismissedMessages());
     setReadIds(getReadMessages());
-    
+
     async function loadMessages() {
       const { data } = await supabase
-        .from('broadcast_messages')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .from("broadcast_messages")
+        .select("id,message,created_at,audience,audience_filter")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
 
-      if (data) {
-        setMessages(data);
-      }
+      if (data) setMessages(data as BroadcastMessage[]);
     }
 
     loadMessages();
 
-    // Listen for new broadcast messages
     const broadcastChannel = supabase
-      .channel('header-broadcast-messages')
+      .channel("header-broadcast-messages")
       .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'broadcast_messages',
-        },
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "broadcast_messages" },
         (payload) => {
           const newMessage = payload.new as BroadcastMessage;
-          setMessages(prev => [newMessage, ...prev]);
+          setMessages((prev) => [newMessage, ...prev]);
         }
       )
       .subscribe();
@@ -107,7 +112,6 @@ export function HeaderInfoBar({ user }: HeaderInfoBarProps) {
     };
   }, []);
 
-  // Load user-specific notifications
   useEffect(() => {
     if (!user) {
       setUserNotifications([]);
@@ -115,39 +119,35 @@ export function HeaderInfoBar({ user }: HeaderInfoBarProps) {
     }
 
     async function loadUserNotifications() {
-      // Only load notifications from the last 7 days to avoid bombarding new users
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
+
       const { data } = await supabase
-        .from('user_notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('created_at', sevenDaysAgo.toISOString())
-        .order('created_at', { ascending: false })
+        .from("user_notifications")
+        .select("*")
+        .eq("user_id", user.id)
+        .gte("created_at", sevenDaysAgo.toISOString())
+        .order("created_at", { ascending: false })
         .limit(20);
 
-      if (data) {
-        setUserNotifications(data);
-      }
+      if (data) setUserNotifications(data as UserNotification[]);
     }
 
     loadUserNotifications();
 
-    // Listen for new user notifications in realtime
     const userChannel = supabase
       .channel(`user-notifications-${user.id}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'user_notifications',
+          event: "INSERT",
+          schema: "public",
+          table: "user_notifications",
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
           const newNotification = payload.new as UserNotification;
-          setUserNotifications(prev => [newNotification, ...prev]);
+          setUserNotifications((prev) => [newNotification, ...prev]);
         }
       )
       .subscribe();
@@ -157,64 +157,70 @@ export function HeaderInfoBar({ user }: HeaderInfoBarProps) {
     };
   }, [user]);
 
-  // Mark messages as read when opening inbox
+  const visibleMessages = useMemo(() => {
+    return messages
+      .filter((m) => !dismissedIds.has(m.id))
+      .filter((m) => isMessageForUser(m, isSubscribed));
+  }, [messages, dismissedIds, isSubscribed]);
+
+  const unreadBroadcasts = useMemo(() => {
+    return visibleMessages.filter((m) => !readIds.has(m.id));
+  }, [visibleMessages, readIds]);
+
+  const unreadUserNotifications = useMemo(() => {
+    return userNotifications.filter((n) => !n.is_read);
+  }, [userNotifications]);
+
+  const totalUnread = unreadBroadcasts.length + unreadUserNotifications.length;
+
   useEffect(() => {
-    if (isOpen && messages.length > 0) {
-      messages.forEach(m => {
-        if (!readIds.has(m.id)) {
-          markMessageAsRead(m.id);
-        }
+    if (isOpen && visibleMessages.length > 0) {
+      visibleMessages.forEach((m) => {
+        if (!readIds.has(m.id)) markMessageAsRead(m.id);
       });
       setReadIds(getReadMessages());
     }
 
-    // Mark user notifications as read
     if (isOpen && userNotifications.length > 0 && user) {
-      const unreadNotifications = userNotifications.filter(n => !n.is_read);
+      const unreadNotifications = userNotifications.filter((n) => !n.is_read);
       if (unreadNotifications.length > 0) {
         supabase
-          .from('user_notifications')
+          .from("user_notifications")
           .update({ is_read: true })
-          .eq('user_id', user.id)
-          .eq('is_read', false)
+          .eq("user_id", user.id)
+          .eq("is_read", false)
           .then(() => {
-            setUserNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+            setUserNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
           });
       }
     }
-  }, [isOpen, messages, userNotifications, user]);
+  }, [isOpen, visibleMessages, userNotifications, user, readIds]);
 
   const handleDismiss = (id: string) => {
     markMessageAsDismissed(id);
-    setDismissedIds(prev => new Set([...prev, id]));
+    setDismissedIds((prev) => new Set([...prev, id]));
   };
 
   const handleDismissUserNotification = async (id: string) => {
-    await supabase.from('user_notifications').delete().eq('id', id);
-    setUserNotifications(prev => prev.filter(n => n.id !== id));
+    await supabase.from("user_notifications").delete().eq("id", id);
+    setUserNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'battle_challenge':
+      case "battle_challenge":
         return <Swords className="h-4 w-4 text-yellow-500" />;
-      case 'battle_accepted':
+      case "battle_accepted":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'battle_result':
+      case "battle_result":
         return <Trophy className="h-4 w-4 text-primary" />;
       default:
         return <Bell className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
-  const unreadBroadcasts = messages.filter(m => !dismissedIds.has(m.id) && !readIds.has(m.id));
-  const unreadUserNotifications = userNotifications.filter(n => !n.is_read);
-  const totalUnread = unreadBroadcasts.length + unreadUserNotifications.length;
-  const visibleMessages = messages.filter(m => !dismissedIds.has(m.id));
-
   return (
     <div className="flex items-center gap-2">
-      {/* Streak Display - Compact */}
       {user && streakData && !streakLoading && (
         <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-primary/10 rounded-full border border-primary/20">
           <Flame className="h-3.5 w-3.5 text-primary" />
@@ -227,7 +233,6 @@ export function HeaderInfoBar({ user }: HeaderInfoBarProps) {
         </div>
       )}
 
-      {/* Notifications Inbox */}
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button variant="ghost" size="sm" className="relative h-8 w-8 p-0">
@@ -254,19 +259,16 @@ export function HeaderInfoBar({ user }: HeaderInfoBarProps) {
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {/* User Notifications (Battle challenges, etc.) */}
                 {userNotifications.map((notification) => (
-                  <div 
-                    key={notification.id} 
-                    className={`p-3 transition-colors ${!notification.is_read ? 'bg-primary/5' : 'bg-background'}`}
+                  <div
+                    key={notification.id}
+                    className={`p-3 transition-colors ${!notification.is_read ? "bg-primary/5" : "bg-background"}`}
                   >
                     <div className="flex items-start gap-2">
                       {!notification.is_read && (
                         <Circle className="h-2 w-2 mt-1.5 fill-primary text-primary shrink-0" />
                       )}
-                      <div className="shrink-0 mt-0.5">
-                        {getNotificationIcon(notification.type)}
-                      </div>
+                      <div className="shrink-0 mt-0.5">{getNotificationIcon(notification.type)}</div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-primary mb-1">{notification.title}</p>
                         <p className="text-sm text-foreground break-words whitespace-pre-wrap">
@@ -291,9 +293,9 @@ export function HeaderInfoBar({ user }: HeaderInfoBarProps) {
                           {new Date(notification.created_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         className="h-6 w-6 p-0 shrink-0 hover:bg-destructive/10"
                         onClick={() => handleDismissUserNotification(notification.id)}
                       >
@@ -303,18 +305,15 @@ export function HeaderInfoBar({ user }: HeaderInfoBarProps) {
                   </div>
                 ))}
 
-                {/* Broadcast Messages */}
                 {visibleMessages.map((message) => {
                   const isUnread = !readIds.has(message.id);
                   return (
-                    <div 
-                      key={message.id} 
-                      className={`p-3 transition-colors ${isUnread ? 'bg-primary/5' : 'bg-background'}`}
+                    <div
+                      key={message.id}
+                      className={`p-3 transition-colors ${isUnread ? "bg-primary/5" : "bg-background"}`}
                     >
                       <div className="flex items-start gap-2">
-                        {isUnread && (
-                          <Circle className="h-2 w-2 mt-1.5 fill-primary text-primary shrink-0" />
-                        )}
+                        {isUnread && <Circle className="h-2 w-2 mt-1.5 fill-primary text-primary shrink-0" />}
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-primary mb-1">Admin Announcement</p>
                           <p className="text-sm text-foreground break-words">{message.message}</p>
@@ -322,9 +321,9 @@ export function HeaderInfoBar({ user }: HeaderInfoBarProps) {
                             {new Date(message.created_at).toLocaleDateString()}
                           </p>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="h-6 w-6 p-0 shrink-0 hover:bg-destructive/10"
                           onClick={() => handleDismiss(message.id)}
                         >

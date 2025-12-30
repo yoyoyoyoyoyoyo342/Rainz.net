@@ -116,24 +116,17 @@ export function AdminBlogPosts() {
   };
 
   const notifyAllUsers = async (post: { title: string; excerpt: string | null; slug: string }) => {
-    try {
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id');
+    const { error } = await supabase.functions.invoke('notify-blog-post', {
+      body: {
+        title: post.title,
+        excerpt: post.excerpt,
+        slug: post.slug,
+      },
+    });
 
-      if (!profiles || profiles.length === 0) return;
-
-      const notifications = profiles.map(profile => ({
-        user_id: profile.user_id,
-        type: 'article',
-        title: `New Article: ${post.title}`,
-        message: `${post.excerpt || post.title}\n\nRead the full article at https://rainz.net/articles/${post.slug}`,
-        metadata: { slug: post.slug }
-      }));
-
-      await supabase.from('user_notifications').insert(notifications);
-    } catch (error) {
-      console.error('Failed to notify users:', error);
+    if (error) {
+      // Keep admin flow smooth; the post can still be published even if notifications fail.
+      console.warn('notify-blog-post failed', error);
     }
   };
 

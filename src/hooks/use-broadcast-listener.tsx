@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useSubscription } from '@/hooks/use-subscription';
 
 const DISMISSED_MESSAGES_KEY = 'dismissed_broadcast_messages';
 
@@ -19,28 +20,38 @@ function markMessageAsDismissed(messageId: string) {
   localStorage.setItem(DISMISSED_MESSAGES_KEY, JSON.stringify([...dismissed]));
 }
 
+function isMessageForUser(message: { audience?: string }, isSubscribed: boolean) {
+  const audience = message.audience ?? 'all';
+  if (audience === 'all') return true;
+  if (audience === 'premium') return isSubscribed;
+  if (audience === 'free') return !isSubscribed;
+  return true;
+}
+
 export function useBroadcastListener() {
+  const { isSubscribed } = useSubscription();
   const shownMessagesRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const dismissedMessages = getDismissedMessages();
 
-    // Load and show existing active messages on mount
     async function loadExistingMessages() {
       const { data: messages } = await supabase
         .from('broadcast_messages')
-        .select('*')
+        .select('id,message,audience,is_active,created_at')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (messages) {
-        messages.forEach(message => {
+        messages.forEach((message) => {
+          if (!isMessageForUser(message, isSubscribed)) return;
+
           if (!dismissedMessages.has(message.id) && !shownMessagesRef.current.has(message.id)) {
             shownMessagesRef.current.add(message.id);
-            
+
             toast.info('Admin Announcement', {
               description: message.message,
-              duration: Infinity, // Keep open until user dismisses
+              duration: Infinity,
               position: 'top-center',
               onDismiss: () => markMessageAsDismissed(message.id),
               onAutoClose: () => markMessageAsDismissed(message.id),
@@ -52,7 +63,6 @@ export function useBroadcastListener() {
 
     loadExistingMessages();
 
-    // Listen for new messages
     const channel = supabase
       .channel('broadcast-messages-changes')
       .on(
@@ -63,15 +73,16 @@ export function useBroadcastListener() {
           table: 'broadcast_messages',
         },
         (payload) => {
-          const newMessage = payload.new as { id: string; message: string };
-          
-          // Only show each message once
+          const newMessage = payload.new as { id: string; message: string; audience?: string };
+
+          if (!isMessageForUser(newMessage, isSubscribed)) return;
+
           if (!dismissedMessages.has(newMessage.id) && !shownMessagesRef.current.has(newMessage.id)) {
             shownMessagesRef.current.add(newMessage.id);
-            
+
             toast.info('Admin Announcement', {
               description: newMessage.message,
-              duration: Infinity, // Keep open until user dismisses
+              duration: Infinity,
               position: 'top-center',
               onDismiss: () => markMessageAsDismissed(newMessage.id),
               onAutoClose: () => markMessageAsDismissed(newMessage.id),
@@ -84,5 +95,5 @@ export function useBroadcastListener() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [isSubscribed]);
 }

@@ -1019,6 +1019,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      invoke_publish_scheduled_posts: { Args: never; Returns: undefined }
       manual_verify_predictions: { Args: never; Returns: Json }
       trigger_verify_predictions: { Args: never; Returns: undefined }
     }

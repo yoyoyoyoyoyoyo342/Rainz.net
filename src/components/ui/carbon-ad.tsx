@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 
 // AdSense credentials from environment
 const AD_CLIENT = import.meta.env.VITE_GOOGLE_ADSENSE_CLIENT_ID || '';
@@ -56,15 +58,24 @@ export function GoogleAd({ className = '', format = 'auto' }: GoogleAdProps) {
   }
 
   return (
-    <div ref={adRef} className={`google-ad-container flex justify-center ${className}`} aria-label="Advertisement">
-      <ins
-        className="adsbygoogle"
-        style={{ display: 'block', minWidth: '300px', minHeight: '90px' }}
-        data-ad-client={AD_CLIENT}
-        data-ad-slot={AD_SLOT}
-        data-ad-format={format}
-        data-full-width-responsive="true"
-      />
+    <div className={`flex flex-col items-center gap-2 ${className}`}>
+      <div ref={adRef} className="google-ad-container flex justify-center" aria-label="Advertisement">
+        <ins
+          className="adsbygoogle"
+          style={{ display: 'block', minWidth: '300px', minHeight: '90px' }}
+          data-ad-client={AD_CLIENT}
+          data-ad-slot={AD_SLOT}
+          data-ad-format={format}
+          data-full-width-responsive="true"
+        />
+      </div>
+      <Link 
+        to="/about" 
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+      >
+        <Sparkles className="h-3 w-3" />
+        <span>Upgrade to Rainz+ to remove ads</span>
+      </Link>
     </div>
   );
 }

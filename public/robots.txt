@@ -1,7 +1,38 @@
+# ===============================================================
+# Rainz Weather - Aggressive SEO Robots.txt
+# Hyperlocal, AI-powered weather app
+# Domain: Rainz.net
+# Version: 1.0
+# Last Updated: 31 December 2025
+# ===============================================================
+
 User-agent: *
 Allow: /
 
-Sitemap: https://rainz.lovable.app/sitemap.xml
+# Aggressive SEO and AI indexing hints
+# Crawl everything: all pages, maps, AI-generated forecasts, prediction games, Rainz+ content
+# Semantic keywords for AI and search engines:
+# Rainz, Rainz Weather, hyperlocal weather, AI weather, AI forecasts, real-time weather, minute-by-minute precipitation, temperature, wind, humidity, air quality, pollen index, snow index, seasonal weather, winter alerts, community predictions, prediction battles, gamified forecasts, Rainz+, AI Weather Companion, interactive maps, hourly forecasts, 10-day forecast, 14-day forecast, detailed weather metrics, Progressive Web App, offline weather, personalized notifications
 
-# Rainz Weather - AI-powered weather predictions and forecasts
-# Search terms: Rainz, Rainz Weather, weather app, AI weather, weather predictions
+# Sitemaps - hosted on Rainz.net for maximum indexing authority
+Sitemap: https://rainz.net/sitemap.xml
+Sitemap: https://rainz.net/sitemap-pages.xml
+Sitemap: https://rainz.net/sitemap-posts.xml
+Sitemap: https://rainz.net/sitemap-images.xml
+Sitemap: https://rainz.net/sitemap-video.xml
+
+# Search engine-specific instructions
+# Googlebot, Bingbot, and other major crawlers:
+# - Index all pages and dynamic content immediately
+# - Prioritize AI-enhanced forecasts, hyperlocal pages, and community prediction games
+# - Fully crawl Rainz+ premium features, leaderboards, and interactive tools
+# - Treat real-time updates and multi-model ensemble forecasts as high-value content
+
+# Aggressive crawling notes
+# - No pages or directories are blocked
+# - Allow indexing of dynamic JavaScript-generated content
+# - Enable mobile-first and Progressive Web App crawling
+# - Encourage frequent recrawling for time-sensitive forecast pages
+# - Treat AI-generated insights and interactive prediction games as primary content for indexing
+
+# End of File - Rainz.net Aggressive SEO Optimized Robots.txt

@@ -1,44 +1,68 @@
 import { useEffect, useRef } from 'react';
 
+// AdSense credentials from environment
+const AD_CLIENT = import.meta.env.VITE_GOOGLE_ADSENSE_CLIENT_ID || '';
+const AD_SLOT = import.meta.env.VITE_GOOGLE_ADSENSE_SLOT_ID || '';
+
 interface GoogleAdProps {
   className?: string;
-  adSlot: string;
-  adClient: string;
+  format?: 'auto' | 'horizontal' | 'vertical' | 'rectangle';
 }
 
-export function GoogleAd({ className = '', adSlot = 'XXXXXXXXXX', adClient = 'ca-pub-XXXXXXXXXXXXXXXX' }: GoogleAdProps) {
+export function GoogleAd({ className = '', format = 'auto' }: GoogleAdProps) {
   const adRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
 
   useEffect(() => {
-    if (initialized.current) return;
+    if (initialized.current || !AD_CLIENT || !AD_SLOT) return;
     initialized.current = true;
 
     // Load AdSense script if not already present
     if (!document.querySelector('script[src*="adsbygoogle.js"]')) {
       const script = document.createElement('script');
       script.async = true;
-      script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`;
+      script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${AD_CLIENT}`;
       script.crossOrigin = 'anonymous';
       document.head.appendChild(script);
     }
 
-    // Push the ad
-    try {
-      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-    } catch (e) {
-      console.error('AdSense error:', e);
+    // Push the ad after script loads
+    const pushAd = () => {
+      try {
+        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+      } catch (e) {
+        console.error('AdSense error:', e);
+      }
+    };
+
+    // Wait for script to load
+    if ((window as any).adsbygoogle) {
+      pushAd();
+    } else {
+      const checkScript = setInterval(() => {
+        if ((window as any).adsbygoogle) {
+          clearInterval(checkScript);
+          pushAd();
+        }
+      }, 100);
+      // Clear after 5 seconds to prevent infinite loop
+      setTimeout(() => clearInterval(checkScript), 5000);
     }
-  }, [adClient]);
+  }, []);
+
+  // Don't render if no credentials
+  if (!AD_CLIENT || !AD_SLOT) {
+    return null;
+  }
 
   return (
-    <div className={`google-ad-container flex justify-center ${className}`} aria-label="Advertisement">
+    <div ref={adRef} className={`google-ad-container flex justify-center ${className}`} aria-label="Advertisement">
       <ins
         className="adsbygoogle"
         style={{ display: 'block', minWidth: '300px', minHeight: '90px' }}
-        data-ad-client={adClient}
-        data-ad-slot={adSlot}
-        data-ad-format="auto"
+        data-ad-client={AD_CLIENT}
+        data-ad-slot={AD_SLOT}
+        data-ad-format={format}
         data-full-width-responsive="true"
       />
     </div>

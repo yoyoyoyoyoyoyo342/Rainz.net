@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { CarbonAd } from "./carbon-ad";
+import { GoogleAd } from "./carbon-ad";
 import { useSubscription } from "@/hooks/use-subscription";
 
 export function Footer() {
@@ -10,7 +10,7 @@ export function Footer() {
       <div className="container mx-auto px-4 py-6">
         {!isSubscribed && (
           <div className="flex justify-center mb-6">
-            <CarbonAd />
+            <GoogleAd />
           </div>
         )}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">

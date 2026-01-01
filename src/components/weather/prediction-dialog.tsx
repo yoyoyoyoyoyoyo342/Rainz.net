@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { trackPredictionMade, trackEvent } from "@/lib/track-event";
 
 interface PredictionDialogProps {
   location: string;
@@ -84,15 +85,20 @@ export const PredictionDialog = ({
   }, [acceptingBattle, user]);
 
   const handlePredictionMade = async (predictionId?: string) => {
+    // Track the prediction
+    trackPredictionMade(location);
+
     // If accepting a battle, link the prediction to it
     if (acceptingBattle && predictionId) {
       await acceptBattle(acceptingBattle.id, predictionId);
       setAcceptingBattle(null);
+      trackEvent('battle_joined', '/predictions');
     } else if (createBattleMode && predictionId) {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       const battleDate = tomorrow.toISOString().split("T")[0];
       await createBattle(location, latitude, longitude, battleDate, predictionId, targetUser?.id);
+      trackEvent('battle_created', '/predictions');
     }
     onPredictionMade();
     setOpen(false);

@@ -23,6 +23,7 @@ import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
 import { AIChatButton } from "@/components/weather/ai-chat-button";
 import { AnimatedWeatherBackground } from "@/components/weather/animated-weather-background";
+import { HolidayBackground, getCurrentHoliday } from "@/components/weather/holiday-backgrounds";
 import { MorningWeatherReview } from "@/components/weather/morning-weather-review";
 import { WinterAlerts } from "@/components/weather/winter-alerts";
 import { WeatherStationInfo } from "@/components/weather/weather-station-info";
@@ -41,6 +42,7 @@ import { HeaderInfoBar } from "@/components/weather/header-info-bar";
 import RainMapCard from "@/components/weather/rain-map-card";
 import { usePremiumSettings } from "@/hooks/use-premium-settings";
 import { AffiliateCard } from "@/components/weather/affiliate-card";
+import { trackWeatherView } from "@/lib/track-event";
 
 export default function WeatherPage() {
   const [selectedLocation, setSelectedLocation] = useState<{
@@ -58,6 +60,7 @@ export default function WeatherPage() {
   const { setTimeOfDay } = useTimeOfDayContext();
   const { settings: premiumSettings, isSubscribed } = usePremiumSettings();
   const { data: hyperlocalData } = useHyperlocalWeather(selectedLocation?.lat, selectedLocation?.lon);
+  const currentHoliday = getCurrentHoliday();
 
   const { data: savedLocations = [] } = useQuery({
     queryKey: ["saved-locations"],
@@ -107,8 +110,12 @@ export default function WeatherPage() {
   }, [weatherData, selectedLocation]);
 
   useEffect(() => {
-    if (weatherData) {
+    if (weatherData && selectedLocation) {
       setLastUpdated(new Date());
+      
+      // Track weather view
+      trackWeatherView(selectedLocation.name, selectedLocation.lat, selectedLocation.lon);
+
       if (profile?.notification_enabled && weatherData.mostAccurate?.currentWeather) {
         const alerts = checkWeatherAlerts(weatherData.mostAccurate.currentWeather);
         alerts.forEach(alert => {
@@ -120,7 +127,7 @@ export default function WeatherPage() {
         });
       }
     }
-  }, [weatherData, profile, toast]);
+  }, [weatherData, profile, toast, selectedLocation]);
 
   useEffect(() => {
     if (!weatherData?.mostAccurate?.currentWeather) return;
@@ -211,7 +218,13 @@ export default function WeatherPage() {
 
   return (
     <div className="min-h-screen overflow-x-hidden relative">
-      {premiumSettings.animatedBackgrounds && (
+      {/* Holiday background takes priority if active */}
+      {currentHoliday && premiumSettings.animatedBackgrounds && (
+        <HolidayBackground holiday={currentHoliday} />
+      )}
+      
+      {/* Regular weather background when no holiday */}
+      {!currentHoliday && premiumSettings.animatedBackgrounds && (
         <AnimatedWeatherBackground 
           condition={weatherData?.mostAccurate?.currentWeather?.condition} 
           sunrise={weatherData?.mostAccurate?.currentWeather?.sunrise} 

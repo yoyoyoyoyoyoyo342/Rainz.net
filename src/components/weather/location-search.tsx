@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/language-context";
 import { supabase } from "@/integrations/supabase/client";
 import { StationSelector } from "./station-selector";
+import { trackLocationSearch, trackLocationDetect } from "@/lib/track-event";
 
 interface WeatherStation {
   name: string;
@@ -229,6 +230,9 @@ export function LocationSearch({
     
     setSearchQuery("");
 
+    // Track the search
+    trackLocationSearch(locationName, location.latitude, location.longitude, 'location');
+
     // Save to history
     await saveToHistory('location', locationName, location.latitude, location.longitude);
 
@@ -253,6 +257,9 @@ export function LocationSearch({
 
     setSearchQuery("");
     setLoadingStations(true);
+
+    // Track the search
+    trackLocationSearch(locationName, lat, lon, 'address');
 
     // Save to history
     await saveToHistory('address', locationName, lat, lon);
@@ -357,6 +364,9 @@ export function LocationSearch({
         latitude,
         longitude
       } = position.coords;
+
+      // Track location detection
+      trackLocationDetect();
 
       // For current location, use coordinates directly without station selector
       onLocationSelect(latitude, longitude, "Current Location");

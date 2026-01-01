@@ -66,6 +66,7 @@ export type Database = {
           created_at: string | null
           event_type: string
           id: string
+          metadata: Json | null
           page_path: string
           referrer: string | null
           session_id: string | null
@@ -78,6 +79,7 @@ export type Database = {
           created_at?: string | null
           event_type: string
           id?: string
+          metadata?: Json | null
           page_path: string
           referrer?: string | null
           session_id?: string | null
@@ -90,6 +92,7 @@ export type Database = {
           created_at?: string | null
           event_type?: string
           id?: string
+          metadata?: Json | null
           page_path?: string
           referrer?: string | null
           session_id?: string | null
@@ -948,6 +951,17 @@ export type Database = {
           rank: number | null
           total_points: number | null
           total_predictions: number | null
+        }
+        Relationships: []
+      }
+      location_search_stats: {
+        Row: {
+          last_searched: string | null
+          latitude: string | null
+          location_name: string | null
+          longitude: string | null
+          search_count: number | null
+          unique_sessions: number | null
         }
         Relationships: []
       }

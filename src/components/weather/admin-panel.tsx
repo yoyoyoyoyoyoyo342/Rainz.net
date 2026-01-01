@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CheckCircle2, XCircle, Clock, BarChart3, MessageSquare, Database, Gift, FileText } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, BarChart3, MessageSquare, Database, Gift, FileText, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { AnalyticsDashboard } from './analytics-dashboard';
 import { BroadcastMessage } from './broadcast-message';
 import { ApiDataComparison } from './api-data-comparison';
 import { AdminPremiumGrants } from './admin-premium-grants';
 import { AdminBlogPosts } from './admin-blog-posts';
+import { AdminLocationStats } from './admin-location-stats';
 
 interface WeatherReport {
   id: string;
@@ -110,6 +111,10 @@ export function AdminPanel() {
     <Tabs defaultValue="reports" className="space-y-4">
       <TabsList className="flex-wrap h-auto gap-1">
         <TabsTrigger value="reports">Weather Reports</TabsTrigger>
+        <TabsTrigger value="location-stats">
+          <MapPin className="w-4 h-4 mr-2" />
+          Location Stats
+        </TabsTrigger>
         <TabsTrigger value="premium">
           <Gift className="w-4 h-4 mr-2" />
           Premium
@@ -194,6 +199,10 @@ export function AdminPanel() {
           </Table>
           </CardContent>
         </Card>
+      </TabsContent>
+
+      <TabsContent value="location-stats">
+        <AdminLocationStats />
       </TabsContent>
 
       <TabsContent value="premium">

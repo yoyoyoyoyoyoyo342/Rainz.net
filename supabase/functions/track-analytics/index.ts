@@ -75,17 +75,14 @@ serve(async (req) => {
 
     // Process each event
     for (const event of events) {
-      const { event_type, page_path, session_id, method, hostname, status_code, duration_ms, query, error: eventError } = event;
+      const { event_type, page_path, session_id, metadata } = event;
       
       console.log('Analytics event:', {
         event_type,
         page_path,
         user_id: userId,
         session_id,
-        method,
-        hostname,
-        status_code,
-        duration_ms,
+        metadata,
         country,
         city,
         user_agent: userAgent,
@@ -104,6 +101,7 @@ serve(async (req) => {
           city,
           user_agent: userAgent,
           referrer,
+          metadata: metadata || {},
         });
 
       if (error) {

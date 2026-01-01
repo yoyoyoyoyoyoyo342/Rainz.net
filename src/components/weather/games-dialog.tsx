@@ -9,6 +9,7 @@ import { useDailyGameLimit } from "@/hooks/use-daily-game-limit";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
+import { trackGamePlayed, trackGameCompleted } from "@/lib/track-event";
 
 interface GamesDialogProps {
   weatherCondition?: string;
@@ -60,9 +61,13 @@ export function GamesDialog({ weatherCondition }: GamesDialogProps) {
   const gameConfig = GAME_URLS[currentGame];
 
   const handleGameEnd = async (score: number) => {
+    // Track game play
+    trackGamePlayed(gameInfo.name);
+
     if (!status.hasPlayedToday && !gameCompleted) {
       await recordGamePlay(score);
       setGameCompleted(true);
+      trackGameCompleted(gameInfo.name, score);
       toast.success(`Game complete! You earned ${score} points!`);
     }
   };

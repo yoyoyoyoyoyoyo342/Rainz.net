@@ -6,6 +6,7 @@ import { MessageCircle, Send, Loader2, Bot, User, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import rainzLogo from "@/assets/rainz-logo-new.png";
+import { trackAIChatMessage, trackEvent } from "@/lib/track-event";
 import {
   Dialog,
   DialogContent,
@@ -47,6 +48,9 @@ export function AISupportChat() {
     const userMessage = input.trim();
     setInput("");
     
+    // Track AI chat message
+    trackAIChatMessage();
+
     setMessages(prev => [...prev, {
       role: "user",
       content: userMessage,

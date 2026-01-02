@@ -9,8 +9,6 @@ interface HolidayBackgroundProps {
 }
 
 export function HolidayBackground({ holiday, showWeatherOverlay = true, weatherCondition, sunrise, sunset }: HolidayBackgroundProps) {
-  if (!holiday) return null;
-
   const timeOfDay = useMemo(() => {
     if (!sunrise || !sunset) return 'day';
     const now = new Date();
@@ -25,12 +23,16 @@ export function HolidayBackground({ holiday, showWeatherOverlay = true, weatherC
     const sunriseEnd = sunriseTime + 30;
     const sunsetStart = sunsetTime - 30;
     const sunsetEnd = sunsetTime + 30;
-    
+
     if (currentTime >= sunriseStart && currentTime <= sunriseEnd) return 'sunrise';
     if (currentTime >= sunsetStart && currentTime <= sunsetEnd) return 'sunset';
     if (currentTime < sunriseTime || currentTime > sunsetTime) return 'night';
     return 'day';
   }, [sunrise, sunset]);
+
+  // Important: never return before hooks (prevents React hook order mismatch)
+  if (!holiday) return null;
+
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">

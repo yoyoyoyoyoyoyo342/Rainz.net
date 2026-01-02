@@ -694,50 +694,149 @@ function ThanksgivingBackground() {
 
 // Weather overlay component for sun effects over holiday backgrounds
 function WeatherOverlay({ timeOfDay, condition }: { timeOfDay: 'day' | 'night' | 'sunrise' | 'sunset'; condition?: string }) {
+  const raindrops = useMemo(() => 
+    Array.from({ length: 80 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 2,
+      duration: 0.4 + Math.random() * 0.3,
+      height: 15 + Math.random() * 20,
+    })), []
+  );
+
+  const snowflakes = useMemo(() => 
+    Array.from({ length: 60 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 8,
+      duration: 4 + Math.random() * 6,
+      size: 8 + Math.random() * 16,
+      sway: Math.random() * 40 - 20,
+    })), []
+  );
+
+  const stars = useMemo(() => 
+    Array.from({ length: 40 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 60,
+      delay: Math.random() * 3,
+      size: 1 + Math.random() * 2,
+    })), []
+  );
+
+  const lowerCondition = condition?.toLowerCase() || '';
+  const isRainy = lowerCondition.includes('rain') || lowerCondition.includes('drizzle') || lowerCondition.includes('shower');
+  const isSnowy = lowerCondition.includes('snow') || lowerCondition.includes('sleet');
+  const isCloudy = lowerCondition.includes('cloud') || lowerCondition.includes('overcast');
+  const isFoggy = lowerCondition.includes('fog') || lowerCondition.includes('mist');
+  const isStormy = lowerCondition.includes('thunder') || lowerCondition.includes('storm');
+
   return (
     <>
-      {/* Sunrise glow overlay */}
+      {/* Sunrise sun and glow */}
       {timeOfDay === 'sunrise' && (
-        <div className="absolute inset-0 bg-gradient-to-b from-orange-400/20 via-yellow-300/10 to-transparent pointer-events-none" />
+        <>
+          <div className="absolute inset-0 bg-gradient-to-t from-orange-400/30 via-yellow-300/20 to-transparent pointer-events-none" />
+          <div 
+            className="absolute bottom-[15%] left-1/2 -translate-x-1/2 w-24 h-24 rounded-full bg-gradient-to-t from-orange-500 to-yellow-300 opacity-80 blur-sm"
+            style={{ boxShadow: '0 0 80px 40px rgba(255, 180, 50, 0.5)' }}
+          />
+        </>
       )}
       
-      {/* Sunset glow overlay */}
+      {/* Sunset sun and glow */}
       {timeOfDay === 'sunset' && (
-        <div className="absolute inset-0 bg-gradient-to-b from-orange-500/25 via-pink-400/15 to-purple-600/10 pointer-events-none" />
+        <>
+          <div className="absolute inset-0 bg-gradient-to-t from-orange-600/35 via-pink-500/25 to-purple-700/15 pointer-events-none" />
+          <div 
+            className="absolute bottom-[10%] left-1/2 -translate-x-1/2 w-28 h-28 rounded-full bg-gradient-to-t from-red-600 via-orange-500 to-yellow-400 opacity-70 blur-sm"
+            style={{ boxShadow: '0 0 100px 50px rgba(255, 100, 50, 0.4)' }}
+          />
+        </>
       )}
       
-      {/* Night overlay */}
+      {/* Night overlay with stars and moon */}
       {timeOfDay === 'night' && (
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-blue-900/30 to-indigo-900/40 pointer-events-none" />
+        <>
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 via-blue-950/40 to-indigo-950/50 pointer-events-none" />
+          {/* Stars */}
+          {stars.map((star) => (
+            <div
+              key={star.id}
+              className="absolute rounded-full bg-white pointer-events-none"
+              style={{
+                left: `${star.left}%`,
+                top: `${star.top}%`,
+                width: star.size,
+                height: star.size,
+                animation: `twinkle ${1.5 + star.delay}s ease-in-out infinite`,
+                animationDelay: `${star.delay}s`,
+              }}
+            />
+          ))}
+          {/* Moon */}
+          <div 
+            className="absolute top-[10%] right-[15%] w-16 h-16 rounded-full bg-gradient-to-br from-gray-100 to-gray-300 opacity-80 pointer-events-none"
+            style={{ boxShadow: '0 0 40px 15px rgba(200, 200, 255, 0.3)' }}
+          />
+        </>
+      )}
+
+      {/* Cloud overlay */}
+      {isCloudy && !isRainy && !isSnowy && (
+        <div className="absolute inset-0 pointer-events-none opacity-60">
+          <div className="cloud-overlay cloud-1" />
+          <div className="cloud-overlay cloud-2" />
+          <div className="cloud-overlay cloud-3" />
+        </div>
+      )}
+
+      {/* Fog overlay */}
+      {isFoggy && (
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-400/40 via-gray-300/30 to-transparent pointer-events-none backdrop-blur-[1px]" />
       )}
       
-      {/* Rain/snow overlays based on condition */}
-      {condition?.toLowerCase().includes('rain') && (
-        <div className="absolute inset-0 opacity-30 pointer-events-none">
-          {Array.from({ length: 30 }).map((_, i) => (
+      {/* Rain overlay */}
+      {isRainy && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute inset-0 bg-gray-800/20" />
+          {raindrops.map((drop) => (
             <div
-              key={i}
-              className="absolute w-0.5 h-4 bg-blue-300/60 animate-pulse"
+              key={drop.id}
+              className="absolute bg-gradient-to-b from-transparent via-blue-300/70 to-blue-400/90 rounded-full"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 2}s`,
+                left: `${drop.left}%`,
+                width: 2,
+                height: drop.height,
+                animation: `rainfall ${drop.duration}s linear infinite`,
+                animationDelay: `${drop.delay}s`,
               }}
             />
           ))}
         </div>
       )}
+
+      {/* Storm lightning flashes */}
+      {isStormy && (
+        <div 
+          className="absolute inset-0 pointer-events-none bg-white/0"
+          style={{ animation: 'lightning 4s ease-in-out infinite' }}
+        />
+      )}
       
-      {condition?.toLowerCase().includes('snow') && (
-        <div className="absolute inset-0 opacity-40 pointer-events-none">
-          {Array.from({ length: 20 }).map((_, i) => (
+      {/* Snow overlay */}
+      {isSnowy && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {snowflakes.map((flake) => (
             <div
-              key={i}
-              className="absolute text-white text-sm animate-pulse"
+              key={flake.id}
+              className="absolute text-white opacity-80"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
+                left: `${flake.left}%`,
+                fontSize: flake.size,
+                animation: `snowfall ${flake.duration}s linear infinite`,
+                animationDelay: `${flake.delay}s`,
               }}
             >
               ❄
@@ -745,6 +844,54 @@ function WeatherOverlay({ timeOfDay, condition }: { timeOfDay: 'day' | 'night' |
           ))}
         </div>
       )}
+
+      <style>{`
+        @keyframes rainfall {
+          0% { transform: translateY(-20px); opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { transform: translateY(100vh); opacity: 0; }
+        }
+        @keyframes snowfall {
+          0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
+          10% { opacity: 0.8; }
+          90% { opacity: 0.8; }
+          100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.4; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.3); }
+        }
+        @keyframes lightning {
+          0%, 89%, 91%, 93%, 100% { background-color: transparent; }
+          90%, 92% { background-color: rgba(255, 255, 255, 0.3); }
+        }
+        .cloud-overlay {
+          position: absolute;
+          background: radial-gradient(ellipse at center, rgba(200, 200, 200, 0.8) 0%, transparent 70%);
+          border-radius: 50%;
+          filter: blur(10px);
+        }
+        .cloud-overlay.cloud-1 {
+          width: 300px; height: 100px;
+          top: 5%; left: 10%;
+          animation: cloud-drift 30s linear infinite;
+        }
+        .cloud-overlay.cloud-2 {
+          width: 250px; height: 80px;
+          top: 15%; left: 50%;
+          animation: cloud-drift 25s linear infinite reverse;
+        }
+        .cloud-overlay.cloud-3 {
+          width: 350px; height: 120px;
+          top: 8%; left: 70%;
+          animation: cloud-drift 35s linear infinite;
+        }
+        @keyframes cloud-drift {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100vw); }
+        }
+      `}</style>
     </>
   );
 }

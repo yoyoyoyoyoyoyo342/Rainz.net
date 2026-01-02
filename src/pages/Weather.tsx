@@ -222,7 +222,13 @@ export default function WeatherPage() {
       {premiumSettings.animatedBackgrounds && (
         <>
           {currentHoliday ? (
-            <HolidayBackground holiday={currentHoliday} />
+            <HolidayBackground 
+              holiday={currentHoliday} 
+              showWeatherOverlay={true}
+              weatherCondition={weatherData?.mostAccurate?.currentWeather?.condition}
+              sunrise={weatherData?.mostAccurate?.currentWeather?.sunrise}
+              sunset={weatherData?.mostAccurate?.currentWeather?.sunset}
+            />
           ) : (
             <AnimatedWeatherBackground 
               condition={weatherData?.mostAccurate?.currentWeather?.condition} 

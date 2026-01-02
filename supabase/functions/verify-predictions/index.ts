@@ -119,19 +119,31 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get yesterday's date
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const predictionDate = yesterday.toISOString().split('T')[0];
+    // Check if current time is 10 PM CET (21:00 UTC in winter, 20:00 UTC in summer)
+    const now = new Date();
+    const cetHour = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Paris" })).getHours();
+    
+    // Only run at 10 PM CET (22:00 in Europe/Paris timezone)
+    // Allow a 30-minute window (21:45 - 22:15) for cron job timing flexibility
+    if (cetHour !== 22 && cetHour !== 21) {
+      console.log(`Current CET hour is ${cetHour}, waiting for 22:00 CET to verify predictions`);
+      return new Response(
+        JSON.stringify({ message: 'Not yet 10 PM CET, skipping verification', currentCetHour: cetHour }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    console.log(`Verifying predictions for date: ${predictionDate}`);
+    // Get today's date (we verify predictions for today at 10 PM, using actual day's data)
+    const today = now.toISOString().split('T')[0];
 
-    // Get all unverified predictions for yesterday that were explicitly created by users
-    // Only process predictions that have all required fields and were created before today
+    console.log(`Verifying predictions for date: ${today} at 10 PM CET`);
+
+    // Get all unverified predictions for today that were explicitly created by users
+    // We verify at end of day (10 PM CET) with actual weather data from the day
     const { data: predictions, error: fetchError } = await supabase
       .from('weather_predictions')
       .select('*')
-      .eq('prediction_date', predictionDate)
+      .eq('prediction_date', today)
       .eq('is_verified', false)
       .not('user_id', 'is', null)
       .not('predicted_high', 'is', null)
@@ -144,9 +156,9 @@ serve(async (req) => {
     }
 
     if (!predictions || predictions.length === 0) {
-      console.log('No valid predictions to verify for yesterday');
+      console.log('No valid predictions to verify for today');
       return new Response(
-        JSON.stringify({ message: 'No predictions to verify', verified: 0 }),
+        JSON.stringify({ message: 'No predictions to verify', verified: 0, date: today }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -155,14 +167,14 @@ serve(async (req) => {
 
     let verifiedCount = 0;
 
-    // Verify each prediction
+    // Verify each prediction using actual day's weather data
     for (const prediction of predictions) {
       try {
-        // Fetch LLM-processed weather data (experimental data is the "correct" answer)
+        // Fetch actual weather data for today (the day of the prediction)
         const llmWeather = await fetchLLMWeatherData(
           prediction.latitude, 
           prediction.longitude, 
-          predictionDate
+          today
         );
 
         if (!llmWeather) {
@@ -240,7 +252,7 @@ serve(async (req) => {
         const { data: battles } = await supabase
           .from('prediction_battles')
           .select('*')
-          .eq('battle_date', predictionDate)
+          .eq('battle_date', today)
           .eq('status', 'accepted')
           .or(`challenger_prediction_id.eq.${prediction.id},opponent_prediction_id.eq.${prediction.id}`);
 

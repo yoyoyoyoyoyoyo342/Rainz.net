@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import rainzLogo from '@/assets/rainz-logo-new.png';
+import { ArticleAd, ArticleTopAd, ArticleBottomAd } from '@/components/ui/article-adsense';
 
 interface BlogPost {
   id: string;
@@ -56,27 +57,38 @@ export default function BlogPost() {
     }
   };
 
-  // Simple markdown-like rendering
-  const renderContent = (content: string) => {
-    return content.split('\n').map((line, index) => {
+  // Insert ads between paragraphs of content
+  const renderContentWithAds = useMemo(() => {
+    if (!post?.content) return [];
+    
+    const lines = post.content.split('\n');
+    const result: React.ReactNode[] = [];
+    let paragraphCount = 0;
+    
+    lines.forEach((line, index) => {
       // Headers
       if (line.startsWith('### ')) {
-        return <h3 key={index} className="text-xl font-semibold mt-6 mb-3 text-foreground">{line.slice(4)}</h3>;
+        result.push(<h3 key={index} className="text-xl font-semibold mt-6 mb-3 text-foreground">{line.slice(4)}</h3>);
+      } else if (line.startsWith('## ')) {
+        result.push(<h2 key={index} className="text-2xl font-bold mt-8 mb-4 text-foreground">{line.slice(3)}</h2>);
+      } else if (line.startsWith('# ')) {
+        result.push(<h1 key={index} className="text-3xl font-bold mt-8 mb-4 text-foreground">{line.slice(2)}</h1>);
+      } else if (line.trim() === '') {
+        result.push(<br key={index} />);
+      } else {
+        // Regular paragraph
+        result.push(<p key={index} className="text-muted-foreground mb-4 leading-relaxed">{line}</p>);
+        paragraphCount++;
+        
+        // Insert ad after every 4 paragraphs
+        if (paragraphCount > 0 && paragraphCount % 4 === 0) {
+          result.push(<ArticleAd key={`ad-${index}`} format="fluid" />);
+        }
       }
-      if (line.startsWith('## ')) {
-        return <h2 key={index} className="text-2xl font-bold mt-8 mb-4 text-foreground">{line.slice(3)}</h2>;
-      }
-      if (line.startsWith('# ')) {
-        return <h1 key={index} className="text-3xl font-bold mt-8 mb-4 text-foreground">{line.slice(2)}</h1>;
-      }
-      // Empty lines
-      if (line.trim() === '') {
-        return <br key={index} />;
-      }
-      // Regular paragraphs
-      return <p key={index} className="text-muted-foreground mb-4 leading-relaxed">{line}</p>;
     });
-  };
+    
+    return result;
+  }, [post?.content]);
 
   if (loading) {
     return (
@@ -112,6 +124,9 @@ export default function BlogPost() {
       </header>
 
       <main className="container mx-auto px-4 py-12 max-w-3xl">
+        {/* Top Ad */}
+        <ArticleTopAd />
+
         {post.cover_image_url && (
           <img
             src={post.cover_image_url}
@@ -134,9 +149,12 @@ export default function BlogPost() {
           )}
 
           <div className="prose prose-invert max-w-none">
-            {renderContent(post.content)}
+            {renderContentWithAds}
           </div>
         </article>
+
+        {/* Bottom Ad */}
+        <ArticleBottomAd />
       </main>
 
       <footer className="border-t border-border py-8 mt-12">

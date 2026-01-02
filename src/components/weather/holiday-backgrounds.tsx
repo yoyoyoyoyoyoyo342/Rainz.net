@@ -1,11 +1,36 @@
 import { useMemo } from 'react';
 
 interface HolidayBackgroundProps {
-  holiday: 'easter' | 'eid' | 'diwali' | 'christmas' | 'newyear' | 'halloween' | 'thanksgiving' | null;
+  holiday: 'easter' | 'eid' | 'diwali' | 'christmas' | 'newyear' | 'halloween' | 'thanksgiving' | 'hanukkah' | null;
+  showWeatherOverlay?: boolean;
+  weatherCondition?: string;
+  sunrise?: string;
+  sunset?: string;
 }
 
-export function HolidayBackground({ holiday }: HolidayBackgroundProps) {
+export function HolidayBackground({ holiday, showWeatherOverlay = true, weatherCondition, sunrise, sunset }: HolidayBackgroundProps) {
   if (!holiday) return null;
+
+  const timeOfDay = useMemo(() => {
+    if (!sunrise || !sunset) return 'day';
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    const parseSunTime = (timeStr: string) => {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      return hours * 60 + minutes;
+    };
+    const sunriseTime = parseSunTime(sunrise);
+    const sunsetTime = parseSunTime(sunset);
+    const sunriseStart = sunriseTime - 30;
+    const sunriseEnd = sunriseTime + 30;
+    const sunsetStart = sunsetTime - 30;
+    const sunsetEnd = sunsetTime + 30;
+    
+    if (currentTime >= sunriseStart && currentTime <= sunriseEnd) return 'sunrise';
+    if (currentTime >= sunsetStart && currentTime <= sunsetEnd) return 'sunset';
+    if (currentTime < sunriseTime || currentTime > sunsetTime) return 'night';
+    return 'day';
+  }, [sunrise, sunset]);
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -16,6 +41,10 @@ export function HolidayBackground({ holiday }: HolidayBackgroundProps) {
       {holiday === 'newyear' && <NewYearBackground />}
       {holiday === 'halloween' && <HalloweenBackground />}
       {holiday === 'thanksgiving' && <ThanksgivingBackground />}
+      {holiday === 'hanukkah' && <HanukkahBackground />}
+      
+      {/* Weather overlay effects */}
+      {showWeatherOverlay && <WeatherOverlay timeOfDay={timeOfDay} condition={weatherCondition} />}
       
       <style>{`
         /* Easter Animations */
@@ -661,66 +690,226 @@ function ThanksgivingBackground() {
   );
 }
 
-// Utility function to detect current holiday
+// Weather overlay component for sun effects over holiday backgrounds
+function WeatherOverlay({ timeOfDay, condition }: { timeOfDay: 'day' | 'night' | 'sunrise' | 'sunset'; condition?: string }) {
+  return (
+    <>
+      {/* Sunrise glow overlay */}
+      {timeOfDay === 'sunrise' && (
+        <div className="absolute inset-0 bg-gradient-to-b from-orange-400/20 via-yellow-300/10 to-transparent pointer-events-none" />
+      )}
+      
+      {/* Sunset glow overlay */}
+      {timeOfDay === 'sunset' && (
+        <div className="absolute inset-0 bg-gradient-to-b from-orange-500/25 via-pink-400/15 to-purple-600/10 pointer-events-none" />
+      )}
+      
+      {/* Night overlay */}
+      {timeOfDay === 'night' && (
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-blue-900/30 to-indigo-900/40 pointer-events-none" />
+      )}
+      
+      {/* Rain/snow overlays based on condition */}
+      {condition?.toLowerCase().includes('rain') && (
+        <div className="absolute inset-0 opacity-30 pointer-events-none">
+          {Array.from({ length: 30 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-0.5 h-4 bg-blue-300/60 animate-pulse"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 2}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+      
+      {condition?.toLowerCase().includes('snow') && (
+        <div className="absolute inset-0 opacity-40 pointer-events-none">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute text-white text-sm animate-pulse"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 3}s`,
+              }}
+            >
+              ❄
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+// Hanukkah Background
+function HanukkahBackground() {
+  const candles = useMemo(() => 
+    Array.from({ length: 9 }, (_, i) => ({
+      id: i,
+      isCenter: i === 4, // Shamash (helper candle) in center
+      delay: i * 0.3,
+    })), []
+  );
+
+  const stars = useMemo(() => 
+    Array.from({ length: 25 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 50,
+      delay: Math.random() * 3,
+      size: 6 + Math.random() * 10,
+    })), []
+  );
+
+  return (
+    <>
+      {/* Deep blue night gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-900/40 via-indigo-900/30 to-slate-900/40" />
+      
+      {/* Stars of David scattered */}
+      {stars.map((star) => (
+        <div
+          key={star.id}
+          className="absolute opacity-40"
+          style={{
+            left: `${star.left}%`,
+            top: `${star.top}%`,
+            fontSize: star.size,
+            animation: `star-twinkle-eid ${2 + star.delay}s ease-in-out infinite`,
+            animationDelay: `${star.delay}s`,
+          }}
+        >
+          ✡
+        </div>
+      ))}
+      
+      {/* Menorah at bottom center */}
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-end gap-2">
+        {candles.map((candle) => (
+          <div
+            key={candle.id}
+            className="flex flex-col items-center"
+            style={{ marginBottom: candle.isCenter ? '20px' : '0' }}
+          >
+            {/* Flame */}
+            <div
+              className="w-3 h-5 rounded-full bg-gradient-to-t from-yellow-500 via-orange-400 to-yellow-200"
+              style={{
+                animation: 'diya-flicker 1.5s ease-in-out infinite',
+                animationDelay: `${candle.delay}s`,
+                boxShadow: '0 0 10px rgba(255, 200, 0, 0.6), 0 0 20px rgba(255, 150, 0, 0.4)',
+              }}
+            />
+            {/* Candle */}
+            <div 
+              className={`w-2 ${candle.isCenter ? 'h-16' : 'h-12'} bg-gradient-to-b from-blue-300 to-blue-500 rounded-b`}
+            />
+          </div>
+        ))}
+      </div>
+      
+      {/* Dreidels */}
+      <div className="absolute bottom-16 left-20 text-4xl opacity-40" style={{ animation: 'turkey-wobble 2s ease-in-out infinite' }}>🪽</div>
+      <div className="absolute bottom-20 right-24 text-3xl opacity-30" style={{ animation: 'turkey-wobble 2.5s ease-in-out infinite', animationDelay: '0.5s' }}>✡</div>
+      
+      {/* Gelt (coins) */}
+      <div className="absolute bottom-8 left-1/4 text-2xl opacity-50">🪙</div>
+      <div className="absolute bottom-12 right-1/3 text-xl opacity-40">🪙</div>
+    </>
+  );
+}
+
+// Utility function to detect current holiday - exact days only
 export function getCurrentHoliday(): HolidayBackgroundProps['holiday'] {
   const now = new Date();
   const month = now.getMonth(); // 0-indexed
   const day = now.getDate();
   const year = now.getFullYear();
 
-  // Easter (approximate - usually March/April, varies by year)
-  // Using approximate dates for 2025-2027
+  // New Year (December 31 - January 2) - special extended range
+  if ((month === 11 && day === 31) || (month === 0 && day <= 2)) {
+    return 'newyear';
+  }
+
+  // Easter (exact day only)
   const easterDates: Record<number, { month: number; day: number }> = {
     2025: { month: 3, day: 20 }, // April 20, 2025
     2026: { month: 3, day: 5 },  // April 5, 2026
     2027: { month: 2, day: 28 }, // March 28, 2027
   };
   const easter = easterDates[year];
-  if (easter && month === easter.month && day >= easter.day - 3 && day <= easter.day + 1) {
+  if (easter && month === easter.month && day === easter.day) {
     return 'easter';
   }
 
-  // Eid al-Fitr (approximate - moves each year based on lunar calendar)
-  // These are rough approximations
+  // Eid al-Fitr (exact day only)
   const eidDates: Record<number, { month: number; day: number }> = {
     2025: { month: 2, day: 30 }, // March 30, 2025
     2026: { month: 2, day: 20 }, // March 20, 2026
     2027: { month: 2, day: 9 },  // March 9, 2027
   };
   const eid = eidDates[year];
-  if (eid && month === eid.month && day >= eid.day - 1 && day <= eid.day + 2) {
+  if (eid && month === eid.month && day === eid.day) {
     return 'eid';
   }
 
-  // Diwali (October/November)
+  // Diwali (exact day only)
   const diwaliDates: Record<number, { month: number; day: number }> = {
     2025: { month: 9, day: 20 },  // October 20, 2025
     2026: { month: 10, day: 8 },  // November 8, 2026
     2027: { month: 9, day: 29 },  // October 29, 2027
   };
   const diwali = diwaliDates[year];
-  if (diwali && month === diwali.month && day >= diwali.day - 2 && day <= diwali.day + 2) {
+  if (diwali && month === diwali.month && day === diwali.day) {
     return 'diwali';
   }
 
-  // Halloween (October 25-31)
-  if (month === 9 && day >= 25 && day <= 31) {
+  // Halloween (October 31 only)
+  if (month === 9 && day === 31) {
     return 'halloween';
   }
 
-  // Thanksgiving (4th Thursday of November - approximate Nov 22-28)
-  if (month === 10 && day >= 22 && day <= 28) {
-    return 'thanksgiving';
+  // Thanksgiving (4th Thursday of November - calculate exact date)
+  if (month === 10) {
+    const firstDayOfNov = new Date(year, 10, 1).getDay();
+    const firstThursday = firstDayOfNov <= 4 ? 5 - firstDayOfNov : 12 - firstDayOfNov;
+    const fourthThursday = firstThursday + 21;
+    if (day === fourthThursday) {
+      return 'thanksgiving';
+    }
   }
 
-  // Christmas (December 20 - 26)
-  if (month === 11 && day >= 20 && day <= 26) {
+  // Christmas (December 25 only)
+  if (month === 11 && day === 25) {
     return 'christmas';
   }
 
-  // New Year (December 31 - January 2)
-  if ((month === 11 && day === 31) || (month === 0 && day <= 2)) {
-    return 'newyear';
+  // Hanukkah (8 nights, dates vary by year based on Hebrew calendar)
+  const hanukkahDates: Record<number, { startMonth: number; startDay: number; endMonth: number; endDay: number }> = {
+    2025: { startMonth: 11, startDay: 14, endMonth: 11, endDay: 22 }, // Dec 14-22, 2025
+    2026: { startMonth: 11, startDay: 4, endMonth: 11, endDay: 12 },  // Dec 4-12, 2026
+    2027: { startMonth: 11, startDay: 24, endMonth: 0, endDay: 1 },   // Dec 24, 2027 - Jan 1, 2028
+  };
+  const hanukkah = hanukkahDates[year];
+  if (hanukkah) {
+    // Handle Hanukkah spanning year boundary
+    if (hanukkah.endMonth < hanukkah.startMonth) {
+      // Spans into next year
+      if ((month === hanukkah.startMonth && day >= hanukkah.startDay) || 
+          (month === hanukkah.endMonth && day <= hanukkah.endDay)) {
+        return 'hanukkah';
+      }
+    } else {
+      if (month === hanukkah.startMonth && day >= hanukkah.startDay && day <= hanukkah.endDay) {
+        return 'hanukkah';
+      }
+    }
   }
 
   return null;

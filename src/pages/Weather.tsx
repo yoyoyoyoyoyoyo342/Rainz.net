@@ -218,19 +218,20 @@ export default function WeatherPage() {
 
   return (
     <div className="min-h-screen overflow-x-hidden relative">
-      {/* Holiday background takes priority if active */}
-      {currentHoliday && premiumSettings.animatedBackgrounds && (
-        <HolidayBackground holiday={currentHoliday} />
-      )}
-      
-      {/* Regular weather background when no holiday */}
-      {!currentHoliday && premiumSettings.animatedBackgrounds && (
-        <AnimatedWeatherBackground 
-          condition={weatherData?.mostAccurate?.currentWeather?.condition} 
-          sunrise={weatherData?.mostAccurate?.currentWeather?.sunrise} 
-          sunset={weatherData?.mostAccurate?.currentWeather?.sunset} 
-          moonPhase={weatherData?.mostAccurate?.currentWeather?.moonPhase} 
-        />
+      {/* Animated backgrounds - always render both to avoid hook count issues */}
+      {premiumSettings.animatedBackgrounds && (
+        <>
+          {currentHoliday ? (
+            <HolidayBackground holiday={currentHoliday} />
+          ) : (
+            <AnimatedWeatherBackground 
+              condition={weatherData?.mostAccurate?.currentWeather?.condition} 
+              sunrise={weatherData?.mostAccurate?.currentWeather?.sunrise} 
+              sunset={weatherData?.mostAccurate?.currentWeather?.sunset} 
+              moonPhase={weatherData?.mostAccurate?.currentWeather?.moonPhase} 
+            />
+          )}
+        </>
       )}
 
       <div className="container mx-auto px-4 py-4 sm:py-6 max-w-7xl relative z-10">

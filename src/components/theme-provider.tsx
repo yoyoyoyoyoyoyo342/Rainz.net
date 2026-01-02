@@ -30,10 +30,16 @@ export function ThemeProvider({
   isNightTime = false,
   ...props
 }: ThemeProviderProps) {
-  // Store user's preferred theme separately
-  const [userPreferredTheme, setUserPreferredTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
-  )
+  // Store user's preferred theme separately - default to dark if no preference stored
+  const [userPreferredTheme, setUserPreferredTheme] = useState<Theme>(() => {
+    const stored = localStorage.getItem(storageKey) as Theme;
+    // If nothing stored, set dark as default and save it
+    if (!stored) {
+      localStorage.setItem(storageKey, "dark");
+      return "dark";
+    }
+    return stored;
+  })
   
   // Active theme (may be overridden by night mode)
   const [theme, setTheme] = useState<Theme>(userPreferredTheme)

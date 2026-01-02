@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar } from 'lucide-react';
+import { ArticleTopAd, ArticleBottomAd } from '@/components/ui/article-adsense';
 
 interface BlogPost {
   id: string;
@@ -67,6 +68,9 @@ export default function Articles() {
           </div>
         </div>
 
+        {/* Top Ad */}
+        <ArticleTopAd className="mb-8" />
+
         {isLoading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
@@ -91,39 +95,41 @@ export default function Articles() {
           <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {posts.map((post) => (
-                <Card
+                <Link
                   key={post.id}
-                  className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group"
-                  onClick={() => navigate(`/blog/${post.slug}`)}
+                  to={`/blog/${post.slug}`}
+                  className="block"
                 >
-                  {post.cover_image_url ? (
-                    <div className="h-48 overflow-hidden">
-                      <img
-                        src={post.cover_image_url}
-                        alt={post.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                  ) : (
-                    <div className="h-48 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                      <span className="text-4xl">📰</span>
-                    </div>
-                  )}
-                  <CardContent className="p-4">
-                    <h2 className="text-lg font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                      {post.title}
-                    </h2>
-                    {post.excerpt && (
-                      <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
-                        {post.excerpt}
-                      </p>
+                  <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group h-full">
+                    {post.cover_image_url ? (
+                      <div className="h-48 overflow-hidden">
+                        <img
+                          src={post.cover_image_url}
+                          alt={post.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-48 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                        <span className="text-4xl">📰</span>
+                      </div>
                     )}
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Calendar className="w-3 h-3" />
-                      <span>{formatDate(post.published_at || post.created_at)}</span>
-                    </div>
-                  </CardContent>
-                </Card>
+                    <CardContent className="p-4">
+                      <h2 className="text-lg font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                        {post.title}
+                      </h2>
+                      {post.excerpt && (
+                        <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
+                          {post.excerpt}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Calendar className="w-3 h-3" />
+                        <span>{formatDate(post.published_at || post.created_at)}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
 
@@ -152,6 +158,9 @@ export default function Articles() {
                 </Button>
               </div>
             )}
+
+            {/* Bottom Ad */}
+            <ArticleBottomAd className="mt-8" />
           </>
         )}
       </div>

@@ -63,6 +63,10 @@ export function AdminPanel() {
     try {
       console.log(`Updating report ${reportId} to ${status}`);
       
+      // Find the report we're updating
+      const reportToUpdate = reports.find(r => r.id === reportId);
+      
+      // Simple update without updated_at since the column doesn't exist
       const { data, error } = await supabase
         .from('weather_reports')
         .update({ status })
@@ -75,6 +79,11 @@ export function AdminPanel() {
       }
 
       console.log('Update result:', data);
+
+      // If approved, check if we should auto-update the forecast
+      if (status === 'approved' && reportToUpdate) {
+        await checkAndUpdateForecast(reportToUpdate);
+      }
 
       toast({
         title: 'Success',
@@ -89,6 +98,58 @@ export function AdminPanel() {
         description: error.message || `Failed to ${status} report`,
         variant: 'destructive',
       });
+    }
+  }
+
+  // Check if 3+ approved reports agree on the same condition for a location and update weather_history
+  async function checkAndUpdateForecast(report: WeatherReport) {
+    try {
+      // Get all approved reports for this location and date
+      const { data: approvedReports, error } = await supabase
+        .from('weather_reports')
+        .select('actual_condition')
+        .eq('location_name', report.location_name)
+        .eq('report_date', report.report_date)
+        .eq('status', 'approved');
+
+      if (error) {
+        console.error('Error fetching approved reports:', error);
+        return;
+      }
+
+      // Count conditions
+      const conditionCounts: Record<string, number> = {};
+      approvedReports?.forEach(r => {
+        const condition = r.actual_condition?.toLowerCase() || '';
+        conditionCounts[condition] = (conditionCounts[condition] || 0) + 1;
+      });
+
+      // Find conditions with 3+ reports
+      const majorityCondition = Object.entries(conditionCounts).find(([_, count]) => count >= 3);
+
+      if (majorityCondition) {
+        console.log(`Auto-updating forecast: ${majorityCondition[0]} has ${majorityCondition[1]} agreeing reports`);
+        
+        // Update weather_history if it exists - use 'condition' column (not 'actual_condition')
+        const { error: historyError } = await supabase
+          .from('weather_history')
+          .update({ 
+            condition: majorityCondition[0]
+          })
+          .eq('location_name', report.location_name)
+          .eq('date', report.report_date);
+
+        if (historyError) {
+          console.error('Error updating weather history:', historyError);
+        } else {
+          toast({
+            title: 'Forecast Updated',
+            description: `Weather history updated to "${majorityCondition[0]}" based on ${majorityCondition[1]} matching reports`,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error in checkAndUpdateForecast:', error);
     }
   }
 

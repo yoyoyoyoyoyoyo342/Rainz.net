@@ -29,16 +29,7 @@ export default function Auth() {
     const isReset = searchParams.get('reset') === 'true';
     setResetMode(isReset);
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-        // Don't redirect if in reset mode - user needs to set new password
-        if (!isReset) {
-          navigate('/');
-        }
-      }
-    });
-
+    // Set up auth state listener FIRST to prevent race conditions
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // Check reset param again in case it changed
       const currentIsReset = new URLSearchParams(window.location.search).get('reset') === 'true';
@@ -47,14 +38,28 @@ export default function Auth() {
         setUser(session.user);
         // Don't redirect if in reset mode
         if (!currentIsReset) {
-          navigate('/');
+          // Use window.location for clean navigation to avoid gray screen
+          window.location.href = '/';
         }
       } else {
         setUser(null);
       }
     });
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user);
+        // Don't redirect if in reset mode - user needs to set new password
+        if (!isReset) {
+          // Use window.location for clean navigation to avoid gray screen
+          window.location.href = '/';
+        }
+      }
+    });
+
     return () => subscription.unsubscribe();
-  }, [navigate, searchParams]);
+  }, [searchParams]);
 
   const cleanupAuthState = () => {
     Object.keys(localStorage).forEach(key => {

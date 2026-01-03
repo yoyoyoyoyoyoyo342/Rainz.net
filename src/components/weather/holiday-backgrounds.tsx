@@ -692,39 +692,8 @@ function ThanksgivingBackground() {
   );
 }
 
-// Weather overlay component for sun effects over holiday backgrounds
+// Weather overlay component - cartoon style matching animated-weather-background.tsx
 function WeatherOverlay({ timeOfDay, condition }: { timeOfDay: 'day' | 'night' | 'sunrise' | 'sunset'; condition?: string }) {
-  const raindrops = useMemo(() => 
-    Array.from({ length: 80 }, (_, i) => ({
-      id: i,
-      left: Math.random() * 100,
-      delay: Math.random() * 2,
-      duration: 0.4 + Math.random() * 0.3,
-      height: 15 + Math.random() * 20,
-    })), []
-  );
-
-  const snowflakes = useMemo(() => 
-    Array.from({ length: 60 }, (_, i) => ({
-      id: i,
-      left: Math.random() * 100,
-      delay: Math.random() * 8,
-      duration: 4 + Math.random() * 6,
-      size: 8 + Math.random() * 16,
-      sway: Math.random() * 40 - 20,
-    })), []
-  );
-
-  const stars = useMemo(() => 
-    Array.from({ length: 40 }, (_, i) => ({
-      id: i,
-      left: Math.random() * 100,
-      top: Math.random() * 60,
-      delay: Math.random() * 3,
-      size: 1 + Math.random() * 2,
-    })), []
-  );
-
   const lowerCondition = condition?.toLowerCase() || '';
   const isRainy = lowerCondition.includes('rain') || lowerCondition.includes('drizzle') || lowerCondition.includes('shower');
   const isSnowy = lowerCondition.includes('snow') || lowerCondition.includes('sleet');
@@ -734,163 +703,195 @@ function WeatherOverlay({ timeOfDay, condition }: { timeOfDay: 'day' | 'night' |
 
   return (
     <>
-      {/* Sunrise sun and glow */}
+      {/* Sunrise sun - cartoon style */}
       {timeOfDay === 'sunrise' && (
         <>
           <div className="absolute inset-0 bg-gradient-to-t from-orange-400/30 via-yellow-300/20 to-transparent pointer-events-none" />
-          <div 
-            className="absolute bottom-[15%] left-1/2 -translate-x-1/2 w-24 h-24 rounded-full bg-gradient-to-t from-orange-500 to-yellow-300 opacity-80 blur-sm"
-            style={{ boxShadow: '0 0 80px 40px rgba(255, 180, 50, 0.5)' }}
-          />
+          <div className="sun sun-rise" />
         </>
       )}
       
-      {/* Sunset sun and glow */}
+      {/* Sunset sun - cartoon style */}
       {timeOfDay === 'sunset' && (
         <>
           <div className="absolute inset-0 bg-gradient-to-t from-orange-600/35 via-pink-500/25 to-purple-700/15 pointer-events-none" />
-          <div 
-            className="absolute bottom-[10%] left-1/2 -translate-x-1/2 w-28 h-28 rounded-full bg-gradient-to-t from-red-600 via-orange-500 to-yellow-400 opacity-70 blur-sm"
-            style={{ boxShadow: '0 0 100px 50px rgba(255, 100, 50, 0.4)' }}
-          />
+          <div className="sun sun-set" />
         </>
       )}
       
-      {/* Night overlay with stars and moon */}
+      {/* Night with stars and moon - cartoon style */}
       {timeOfDay === 'night' && (
         <>
           <div className="absolute inset-0 bg-gradient-to-b from-slate-900/50 via-blue-950/40 to-indigo-950/50 pointer-events-none" />
-          {/* Stars */}
-          {stars.map((star) => (
-            <div
-              key={star.id}
-              className="absolute rounded-full bg-white pointer-events-none"
-              style={{
-                left: `${star.left}%`,
-                top: `${star.top}%`,
-                width: star.size,
-                height: star.size,
-                animation: `twinkle ${1.5 + star.delay}s ease-in-out infinite`,
-                animationDelay: `${star.delay}s`,
-              }}
-            />
-          ))}
-          {/* Moon */}
-          <div 
-            className="absolute top-[10%] right-[15%] w-16 h-16 rounded-full bg-gradient-to-br from-gray-100 to-gray-300 opacity-80 pointer-events-none"
-            style={{ boxShadow: '0 0 40px 15px rgba(200, 200, 255, 0.3)' }}
-          />
+          <div className="stars-container">
+            {Array.from({ length: 80 }).map((_, i) => (
+              <div key={i} className="star" style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 60}%`,
+                animationDelay: `${Math.random() * 3}s`,
+                animationDuration: `${2 + Math.random() * 2}s`
+              }} />
+            ))}
+          </div>
+          <div className="moon" />
         </>
       )}
 
-      {/* Cloud overlay */}
-      {isCloudy && !isRainy && !isSnowy && (
-        <div className="absolute inset-0 pointer-events-none opacity-60">
-          <div className="cloud-overlay cloud-1" />
-          <div className="cloud-overlay cloud-2" />
-          <div className="cloud-overlay cloud-3" />
-        </div>
+      {/* Clouds - cartoon style */}
+      {(isCloudy || isRainy || isStormy) && (
+        <>
+          <div className="cloud cloud-1" />
+          <div className="cloud cloud-2" />
+          <div className="cloud cloud-3" />
+        </>
       )}
 
-      {/* Fog overlay */}
-      {isFoggy && (
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-400/40 via-gray-300/30 to-transparent pointer-events-none backdrop-blur-[1px]" />
-      )}
+      {/* Fog */}
+      {isFoggy && <div className="fog-overlay" />}
       
-      {/* Rain overlay */}
+      {/* Rain - cartoon style */}
       {isRainy && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute inset-0 bg-gray-800/20" />
-          {raindrops.map((drop) => (
-            <div
-              key={drop.id}
-              className="absolute bg-gradient-to-b from-transparent via-blue-300/70 to-blue-400/90 rounded-full"
-              style={{
-                left: `${drop.left}%`,
-                width: 2,
-                height: drop.height,
-                animation: `rainfall ${drop.duration}s linear infinite`,
-                animationDelay: `${drop.delay}s`,
-              }}
-            />
+        <div className="rain-container">
+          {Array.from({ length: 50 }).map((_, i) => (
+            <div key={i} className="raindrop" style={{
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 2}s`,
+              animationDuration: `${0.5 + Math.random() * 0.5}s`
+            }} />
           ))}
         </div>
       )}
 
-      {/* Storm lightning flashes */}
-      {isStormy && (
-        <div 
-          className="absolute inset-0 pointer-events-none bg-white/0"
-          style={{ animation: 'lightning 4s ease-in-out infinite' }}
-        />
-      )}
-      
-      {/* Snow overlay */}
+      {/* Snow with snowman - cartoon style */}
       {isSnowy && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {snowflakes.map((flake) => (
-            <div
-              key={flake.id}
-              className="absolute text-white opacity-80"
-              style={{
-                left: `${flake.left}%`,
-                fontSize: flake.size,
-                animation: `snowfall ${flake.duration}s linear infinite`,
-                animationDelay: `${flake.delay}s`,
-              }}
-            >
-              ❄
+        <>
+          <div className="snow-container">
+            {Array.from({ length: 60 }).map((_, i) => (
+              <div key={i} className="snowflake" style={{
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 5}s`,
+                animationDuration: `${5 + Math.random() * 5}s`,
+                fontSize: `${10 + Math.random() * 15}px`,
+                opacity: 0.7 + Math.random() * 0.3
+              }}>❄</div>
+            ))}
+          </div>
+          <div className="snowman">
+            <div className="snowman-head">
+              <div className="snowman-eye snowman-eye-left">•</div>
+              <div className="snowman-eye snowman-eye-right">•</div>
+              <div className="snowman-carrot"></div>
+              <div className="snowman-smile">⌣</div>
             </div>
-          ))}
-        </div>
+            <div className="snowman-body">
+              <div className="snowman-button snowman-button-1">•</div>
+              <div className="snowman-button snowman-button-2">•</div>
+              <div className="snowman-button snowman-button-3">•</div>
+            </div>
+            <div className="snowman-bottom"></div>
+            <div className="snowman-arm snowman-arm-left"></div>
+            <div className="snowman-arm snowman-arm-right"></div>
+          </div>
+        </>
       )}
+
+      {/* Lightning - cartoon style */}
+      {isStormy && <div className="lightning" />}
 
       <style>{`
-        @keyframes rainfall {
-          0% { transform: translateY(-20px); opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { transform: translateY(100vh); opacity: 0; }
-        }
-        @keyframes snowfall {
-          0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
-          10% { opacity: 0.8; }
-          90% { opacity: 0.8; }
-          100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
-        }
-        @keyframes twinkle {
-          0%, 100% { opacity: 0.4; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.3); }
-        }
-        @keyframes lightning {
-          0%, 89%, 91%, 93%, 100% { background-color: transparent; }
-          90%, 92% { background-color: rgba(255, 255, 255, 0.3); }
-        }
-        .cloud-overlay {
+        .moon {
           position: absolute;
-          background: radial-gradient(ellipse at center, rgba(200, 200, 200, 0.8) 0%, transparent 70%);
+          width: 80px;
+          height: 80px;
+          top: 15%;
+          right: 15%;
+          background: rgba(255, 255, 255, 0.9);
           border-radius: 50%;
-          filter: blur(10px);
+          box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+          pointer-events: none;
         }
-        .cloud-overlay.cloud-1 {
-          width: 300px; height: 100px;
-          top: 5%; left: 10%;
-          animation: cloud-drift 30s linear infinite;
+        .sun {
+          position: absolute;
+          width: 100px;
+          height: 100px;
+          background: rgba(255, 230, 100, 0.9);
+          border-radius: 50%;
+          box-shadow: 0 0 50px rgba(255, 230, 100, 0.5);
+          pointer-events: none;
         }
-        .cloud-overlay.cloud-2 {
-          width: 250px; height: 80px;
-          top: 15%; left: 50%;
-          animation: cloud-drift 25s linear infinite reverse;
+        .sun-rise { bottom: 10%; left: 50%; transform: translateX(-50%); }
+        .sun-set { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .stars-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+        .star {
+          position: absolute;
+          width: 2px;
+          height: 2px;
+          background: rgba(255, 255, 255, 0.8);
+          border-radius: 50%;
+          animation: twinkle linear infinite;
         }
-        .cloud-overlay.cloud-3 {
-          width: 350px; height: 120px;
-          top: 8%; left: 70%;
-          animation: cloud-drift 35s linear infinite;
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+        .cloud {
+          position: absolute;
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 100px;
+          animation: float 20s infinite ease-in-out;
+          pointer-events: none;
         }
-        @keyframes cloud-drift {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100vw); }
+        .cloud::before, .cloud::after {
+          content: '';
+          position: absolute;
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 100px;
         }
+        .cloud-1 { width: 100px; height: 40px; top: 10%; left: -10%; animation-duration: 25s; }
+        .cloud-1::before { width: 50px; height: 50px; top: -25px; left: 10px; }
+        .cloud-1::after { width: 60px; height: 40px; top: -15px; right: 10px; }
+        .cloud-2 { width: 120px; height: 50px; top: 30%; left: -15%; animation-duration: 30s; animation-delay: 5s; }
+        .cloud-2::before { width: 60px; height: 60px; top: -30px; left: 15px; }
+        .cloud-2::after { width: 70px; height: 50px; top: -20px; right: 15px; }
+        .cloud-3 { width: 90px; height: 35px; top: 50%; left: -10%; animation-duration: 22s; animation-delay: 10s; }
+        .cloud-3::before { width: 45px; height: 45px; top: -20px; left: 10px; }
+        .cloud-3::after { width: 55px; height: 35px; top: -12px; right: 10px; }
+        @keyframes float { 0%, 100% { transform: translateX(0) translateY(0); } 50% { transform: translateX(120vw) translateY(-20px); } }
+        .fog-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to bottom, rgba(200, 200, 220, 0.4) 0%, rgba(220, 220, 230, 0.3) 30%, rgba(200, 200, 220, 0.2) 60%, transparent 100%);
+          animation: fogDrift 8s ease-in-out infinite;
+          pointer-events: none;
+        }
+        @keyframes fogDrift { 0%, 100% { opacity: 0.5; transform: translateX(0); } 50% { opacity: 0.7; transform: translateX(-20px); } }
+        .rain-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+        .raindrop {
+          position: absolute;
+          width: 2px;
+          height: 20px;
+          background: linear-gradient(to bottom, transparent, rgba(174, 194, 224, 0.8));
+          animation: rain linear infinite;
+        }
+        @keyframes rain { 0% { transform: translateY(-20px); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateY(100vh); opacity: 0.3; } }
+        .snow-container { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+        .snowflake { position: absolute; color: white; animation: snow linear infinite; }
+        @keyframes snow { 0% { transform: translateY(-20px) rotate(0deg); opacity: 0; } 10% { opacity: 0.8; } 100% { transform: translateY(100vh) rotate(360deg); opacity: 0.2; } }
+        .snowman { position: absolute; bottom: 20px; right: 30px; pointer-events: none; z-index: 10; }
+        .snowman-head { width: 30px; height: 30px; background: white; border-radius: 50%; position: relative; margin: 0 auto; box-shadow: inset -3px -3px 8px rgba(0, 0, 0, 0.1); }
+        .snowman-eye { position: absolute; font-size: 6px; top: 8px; color: #333; }
+        .snowman-eye-left { left: 8px; }
+        .snowman-eye-right { right: 8px; }
+        .snowman-carrot { position: absolute; width: 0; height: 0; border-left: 12px solid #FFA500; border-top: 3px solid transparent; border-bottom: 3px solid transparent; top: 13px; left: 50%; transform: translateX(-50%); }
+        .snowman-smile { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); font-size: 8px; color: #333; }
+        .snowman-body { width: 40px; height: 40px; background: white; border-radius: 50%; position: relative; margin: -5px auto 0; box-shadow: inset -4px -4px 10px rgba(0, 0, 0, 0.1); }
+        .snowman-button { position: absolute; font-size: 6px; left: 50%; transform: translateX(-50%); color: #333; }
+        .snowman-button-1 { top: 8px; }
+        .snowman-button-2 { top: 16px; }
+        .snowman-button-3 { top: 24px; }
+        .snowman-bottom { width: 50px; height: 50px; background: white; border-radius: 50%; margin: -8px auto 0; box-shadow: inset -5px -5px 12px rgba(0, 0, 0, 0.1); }
+        .snowman-arm { position: absolute; width: 25px; height: 3px; background: #8B4513; top: 50px; }
+        .snowman-arm-left { left: -20px; transform: rotate(-20deg); }
+        .snowman-arm-right { right: -20px; transform: rotate(20deg); }
+        .lightning { position: absolute; inset: 0; background: transparent; animation: lightningFlash 4s ease-in-out infinite; pointer-events: none; }
+        @keyframes lightningFlash { 0%, 89%, 91%, 93%, 100% { background-color: transparent; } 90%, 92% { background-color: rgba(255, 255, 255, 0.3); } }
       `}</style>
     </>
   );

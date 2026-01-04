@@ -43,6 +43,7 @@ import RainMapCard from "@/components/weather/rain-map-card";
 import { usePremiumSettings } from "@/hooks/use-premium-settings";
 import { AffiliateCard } from "@/components/weather/affiliate-card";
 import { trackWeatherView } from "@/lib/track-event";
+import { ExtendedMoonCard } from "@/components/weather/extended-moon-card";
 
 export default function WeatherPage() {
   const [selectedLocation, setSelectedLocation] = useState<{
@@ -409,7 +410,21 @@ export default function WeatherPage() {
                 case "tenDay":
                   return <TenDayForecast key="tenDay" dailyForecast={weatherData.mostAccurate.dailyForecast} weatherSources={weatherData.sources} hourlyForecast={weatherData.mostAccurate.hourlyForecast} isImperial={isImperial} is24Hour={is24Hour} premiumSettings={premiumSettings} />;
                 case "detailedMetrics":
-                  return <DetailedMetrics key="detailedMetrics" currentWeather={weatherData.mostAccurate.currentWeather} is24Hour={is24Hour} premiumSettings={premiumSettings} />;
+                  return (
+                    <div key="detailedMetrics">
+                      <DetailedMetrics currentWeather={weatherData.mostAccurate.currentWeather} is24Hour={is24Hour} premiumSettings={premiumSettings} />
+                      {isSubscribed && selectedLocation && (
+                        <ExtendedMoonCard
+                          moonrise={weatherData.mostAccurate.currentWeather.moonrise}
+                          moonset={weatherData.mostAccurate.currentWeather.moonset}
+                          moonPhase={weatherData.mostAccurate.currentWeather.moonPhase}
+                          latitude={selectedLocation.lat}
+                          longitude={selectedLocation.lon}
+                          is24Hour={is24Hour}
+                        />
+                      )}
+                    </div>
+                  );
                 case "aqi":
                   return hyperlocalData?.aqi ? (
                     <div key="aqi" className="mb-4">

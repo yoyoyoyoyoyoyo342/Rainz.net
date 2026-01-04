@@ -71,3 +71,9 @@ verify_jwt = true
 
 [functions.create-affiliate-checkout]
 verify_jwt = true
+
+[functions.ai-moon-insights]
+verify_jwt = false
+
+[functions.notify-blog-post]
+verify_jwt = true

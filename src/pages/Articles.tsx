@@ -97,7 +97,7 @@ export default function Articles() {
               {posts.map((post) => (
                 <Link
                   key={post.id}
-                  to={`/blog/${post.slug}`}
+                  to={`/articles/${post.slug}`}
                   className="block"
                 >
                   <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow group h-full">

@@ -348,6 +348,207 @@ serve(async (req: Request) => {
       console.error("Met.no fetch failed:", err);
     }
 
+    // Bright Sky (German Weather Service DWD) - completely free, no key needed
+    try {
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+      const url = new URL("https://api.brightsky.dev/weather");
+      url.searchParams.set("lat", lat.toString());
+      url.searchParams.set("lon", lon.toString());
+      url.searchParams.set("date", dateStr);
+
+      const res = await fetch(url.toString());
+      if (!res.ok) throw new Error(`BrightSky HTTP ${res.status}`);
+      const data = await res.json();
+
+      const weather = data?.weather || [];
+      const current = weather[0];
+      
+      const conditionMap: Record<string, string> = {
+        "clear-day": "Clear", "clear-night": "Clear",
+        "partly-cloudy-day": "Partly Cloudy", "partly-cloudy-night": "Partly Cloudy",
+        "cloudy": "Cloudy", "fog": "Foggy",
+        "wind": "Windy", "rain": "Rain", "sleet": "Sleet",
+        "snow": "Snow", "hail": "Hail", "thunderstorm": "Thunderstorm"
+      };
+
+      if (current) {
+        const source: WeatherSource = {
+          source: "BrightSky DWD",
+          location: locationName || "Selected Location",
+          latitude: lat,
+          longitude: lon,
+          accuracy: 0.91,
+          currentWeather: {
+            temperature: Math.round((current?.temperature ?? 0) * 9/5 + 32),
+            condition: conditionMap[current?.icon] || "Unknown",
+            description: conditionMap[current?.icon] || "Unknown",
+            humidity: Math.round(current?.relative_humidity ?? 0),
+            windSpeed: Math.round((current?.wind_speed ?? 0) * 0.621371),
+            windDirection: Math.round(current?.wind_direction ?? 0),
+            visibility: Math.round((current?.visibility ?? 10000) / 1609.34),
+            feelsLike: Math.round((current?.temperature ?? 0) * 9/5 + 32),
+            uvIndex: 0,
+            pressure: Math.round(current?.pressure_msl ?? 1013),
+          },
+          hourlyForecast: weather.slice(0, 24).map((h: any) => ({
+            time: new Date(h?.timestamp ?? Date.now()).toLocaleTimeString([], { hour: "2-digit" }),
+            temperature: Math.round((h?.temperature ?? 0) * 9/5 + 32),
+            condition: conditionMap[h?.icon] || "Unknown",
+            precipitation: Math.round(h?.precipitation ?? 0),
+            icon: "",
+          })),
+          dailyForecast: [],
+        };
+        sources.push(source);
+        console.log("Successfully fetched BrightSky DWD data");
+      }
+    } catch (err) {
+      console.error("BrightSky fetch failed:", err);
+    }
+
+    // Open-Meteo Marine API for coastal areas - free, no key needed
+    try {
+      const url = new URL("https://marine-api.open-meteo.com/v1/marine");
+      url.searchParams.set("latitude", lat.toString());
+      url.searchParams.set("longitude", lon.toString());
+      url.searchParams.set("hourly", "wave_height,wave_direction,wave_period,swell_wave_height");
+      url.searchParams.set("timezone", "auto");
+
+      const res = await fetch(url.toString());
+      if (res.ok) {
+        const data = await res.json();
+        // Only add if we have valid marine data (coastal location)
+        if (data?.hourly?.wave_height?.[0] !== undefined) {
+          console.log("Marine data available for coastal location");
+        }
+      }
+    } catch (err) {
+      // Marine data is optional, no need to log errors
+    }
+
+    // SMHI (Swedish Meteorological and Hydrological Institute) - free, no key needed
+    try {
+      const url = new URL(`https://opendata-download-metfcst.smhi.se/api/category/pmp3g/version/2/geotype/point/lon/${lon.toFixed(4)}/lat/${lat.toFixed(4)}/data.json`);
+      
+      const res = await fetch(url.toString());
+      if (!res.ok) throw new Error(`SMHI HTTP ${res.status}`);
+      const data = await res.json();
+
+      const timeSeries = data?.timeSeries || [];
+      const current = timeSeries[0];
+      
+      const getParam = (params: any[], name: string) => {
+        const param = params?.find((p: any) => p.name === name);
+        return param?.values?.[0];
+      };
+
+      const wsymb2ToCondition = (code: number) => {
+        const conditions: Record<number, string> = {
+          1: "Clear", 2: "Partly Cloudy", 3: "Partly Cloudy", 4: "Partly Cloudy",
+          5: "Cloudy", 6: "Cloudy", 7: "Foggy", 8: "Rain", 9: "Rain", 10: "Rain",
+          11: "Thunderstorm", 12: "Sleet", 13: "Sleet", 14: "Sleet",
+          15: "Snow", 16: "Snow", 17: "Snow", 18: "Rain", 19: "Rain", 20: "Rain",
+          21: "Thunderstorm", 22: "Sleet", 23: "Sleet", 24: "Sleet",
+          25: "Snow", 26: "Snow", 27: "Snow"
+        };
+        return conditions[code] || "Unknown";
+      };
+
+      if (current) {
+        const params = current?.parameters || [];
+        const source: WeatherSource = {
+          source: "SMHI",
+          location: locationName || "Selected Location",
+          latitude: lat,
+          longitude: lon,
+          accuracy: 0.90,
+          currentWeather: {
+            temperature: Math.round((getParam(params, 't') ?? 0) * 9/5 + 32),
+            condition: wsymb2ToCondition(getParam(params, 'Wsymb2') ?? 1),
+            description: wsymb2ToCondition(getParam(params, 'Wsymb2') ?? 1),
+            humidity: Math.round(getParam(params, 'r') ?? 0),
+            windSpeed: Math.round((getParam(params, 'ws') ?? 0) * 2.237),
+            windDirection: Math.round(getParam(params, 'wd') ?? 0),
+            visibility: Math.round((getParam(params, 'vis') ?? 10) / 1.609),
+            feelsLike: Math.round((getParam(params, 't') ?? 0) * 9/5 + 32),
+            uvIndex: 0,
+            pressure: Math.round(getParam(params, 'msl') ?? 1013),
+          },
+          hourlyForecast: timeSeries.slice(0, 24).map((h: any) => {
+            const hParams = h?.parameters || [];
+            return {
+              time: new Date(h?.validTime ?? Date.now()).toLocaleTimeString([], { hour: "2-digit" }),
+              temperature: Math.round((getParam(hParams, 't') ?? 0) * 9/5 + 32),
+              condition: wsymb2ToCondition(getParam(hParams, 'Wsymb2') ?? 1),
+              precipitation: Math.round((getParam(hParams, 'pmean') ?? 0) * 100),
+              icon: "",
+            };
+          }),
+          dailyForecast: [],
+        };
+        sources.push(source);
+        console.log("Successfully fetched SMHI data");
+      }
+    } catch (err) {
+      console.error("SMHI fetch failed:", err);
+    }
+
+    // 7Timer! - Completely free, no key needed
+    try {
+      const url = `https://www.7timer.info/bin/api.pl?lon=${lon}&lat=${lat}&product=civil&output=json`;
+      
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`7Timer HTTP ${res.status}`);
+      const data = await res.json();
+
+      const datapoints = data?.dataseries || [];
+      const current = datapoints[0];
+      
+      const prec7TimerToCondition = (prec: string, cloudcover: number) => {
+        if (prec === "snow") return "Snow";
+        if (prec === "rain" || prec === "showers" || prec === "ishowers") return "Rain";
+        if (prec === "ts" || prec === "tsrain") return "Thunderstorm";
+        if (cloudcover <= 2) return "Clear";
+        if (cloudcover <= 5) return "Partly Cloudy";
+        return "Cloudy";
+      };
+
+      if (current) {
+        const source: WeatherSource = {
+          source: "7Timer!",
+          location: locationName || "Selected Location",
+          latitude: lat,
+          longitude: lon,
+          accuracy: 0.82,
+          currentWeather: {
+            temperature: Math.round(current?.temp2m * 9/5 + 32),
+            condition: prec7TimerToCondition(current?.prec_type, current?.cloudcover),
+            description: prec7TimerToCondition(current?.prec_type, current?.cloudcover),
+            humidity: Math.round(current?.rh2m ? (current.rh2m.replace('%', '').split('-').reduce((a: number, b: string) => a + parseInt(b), 0) / 2) : 50),
+            windSpeed: Math.round(current?.wind10m?.speed * 2.237 || 0),
+            windDirection: 0,
+            visibility: 10,
+            feelsLike: Math.round(current?.temp2m * 9/5 + 32),
+            uvIndex: 0,
+            pressure: 1013,
+          },
+          hourlyForecast: datapoints.slice(0, 8).map((h: any, i: number) => ({
+            time: new Date(Date.now() + i * 3 * 60 * 60 * 1000).toLocaleTimeString([], { hour: "2-digit" }),
+            temperature: Math.round(h?.temp2m * 9/5 + 32),
+            condition: prec7TimerToCondition(h?.prec_type, h?.cloudcover),
+            precipitation: h?.prec_type === "none" ? 0 : 50,
+            icon: "",
+          })),
+          dailyForecast: [],
+        };
+        sources.push(source);
+        console.log("Successfully fetched 7Timer data");
+      }
+    } catch (err) {
+      console.error("7Timer fetch failed:", err);
+    }
+
     return new Response(JSON.stringify({ sources }), {
       headers: { "Content-Type": "application/json", ...corsHeaders },
       status: 200,

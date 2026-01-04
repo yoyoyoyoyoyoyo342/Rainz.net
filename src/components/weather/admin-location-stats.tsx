@@ -43,8 +43,20 @@ interface DailyStats {
   games: number;
 }
 
-const BIRTHDAY = new Date('2025-08-08');
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+
+// Calculate the next birthday date - August 8th
+const getNextBirthday = () => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  let birthday = new Date(currentYear, 7, 8); // August 8th (month is 0-indexed)
+  
+  // If birthday has passed this year, use next year
+  if (now > birthday) {
+    birthday = new Date(currentYear + 1, 7, 8);
+  }
+  return birthday;
+};
 
 export function AdminLocationStats() {
   const [locationStats, setLocationStats] = useState<LocationStat[]>([]);
@@ -62,9 +74,30 @@ export function AdminLocationStats() {
   });
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
-
-  const daysUntilBirthday = differenceInDays(BIRTHDAY, new Date());
-  const isBirthday = daysUntilBirthday <= 0 && daysUntilBirthday >= -1;
+  const [daysUntilBirthday, setDaysUntilBirthday] = useState(0);
+  const [isBirthday, setIsBirthday] = useState(false);
+  
+  // Update countdown every second
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const aug8 = new Date(now.getFullYear(), 7, 8);
+      
+      // Check if today is the birthday
+      const isToday = today.getTime() === aug8.getTime();
+      setIsBirthday(isToday);
+      
+      const nextBirthday = getNextBirthday();
+      const days = differenceInDays(nextBirthday, now);
+      setDaysUntilBirthday(days);
+    };
+    
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000); // Update every second
+    
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     loadStats();

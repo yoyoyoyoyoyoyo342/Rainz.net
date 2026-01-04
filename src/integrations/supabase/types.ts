@@ -973,6 +973,7 @@ export type Database = {
           report_details: string | null
           reported_condition: string
           status: string | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -987,6 +988,7 @@ export type Database = {
           report_details?: string | null
           reported_condition: string
           status?: string | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
@@ -1001,6 +1003,7 @@ export type Database = {
           report_details?: string | null
           reported_condition?: string
           status?: string | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []

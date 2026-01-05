@@ -9,8 +9,8 @@ const corsHeaders = {
 // Fetch LLM-processed weather data for a location and date
 async function fetchLLMWeatherData(lat: number, lon: number, date: string) {
   try {
-    // First fetch raw weather data from Open-Meteo
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&start_date=${date}&end_date=${date}&temperature_unit=fahrenheit&timezone=auto`;
+    // Fetch raw weather data from Open-Meteo in CELSIUS (users predict in Celsius)
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&start_date=${date}&end_date=${date}&temperature_unit=celsius&timezone=auto`;
     const weatherResponse = await fetch(weatherUrl);
     const weatherData = await weatherResponse.json();
 
@@ -19,93 +19,41 @@ async function fetchLLMWeatherData(lat: number, lon: number, date: string) {
       return null;
     }
 
-    const rawActualHigh = weatherData.daily.temperature_2m_max[0];
-    const rawActualLow = weatherData.daily.temperature_2m_min[0];
+    const rawActualHigh = Math.round(weatherData.daily.temperature_2m_max[0]);
+    const rawActualLow = Math.round(weatherData.daily.temperature_2m_min[0]);
     const rawWeatherCode = weatherData.daily.weathercode[0];
     const rawCondition = mapWeatherCodeToCondition(rawWeatherCode);
 
-    // Try to get LLM-processed data for more accurate "experimental" results
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
-    if (!supabaseUrl || !supabaseKey) {
-      console.log("Supabase credentials not available, using raw data");
-      return { actualHigh: rawActualHigh, actualLow: rawActualLow, actualCondition: rawCondition };
-    }
+    console.log(`Fetched actual weather for ${date}: High=${rawActualHigh}°C, Low=${rawActualLow}°C, Condition=${rawCondition}`);
 
-    // Create weather source format for LLM processing
-    const weatherSource = {
-      source: "Open-Meteo",
-      currentWeather: {
-        temperature: Math.round((rawActualHigh + rawActualLow) / 2),
-        condition: rawCondition,
-        humidity: 50,
-        windSpeed: 10,
-        feelsLike: Math.round((rawActualHigh + rawActualLow) / 2),
-        pressure: 1013
-      },
-      hourlyForecast: [],
-      dailyForecast: [{
-        day: new Date(date).toLocaleDateString([], { weekday: "short" }),
-        condition: rawCondition,
-        highTemp: rawActualHigh,
-        lowTemp: rawActualLow,
-        precipitation: 0
-      }]
-    };
-
-    // Call the LLM weather forecast function
-    const llmUrl = `${supabaseUrl}/functions/v1/llm-weather-forecast`;
-    const llmResponse = await fetch(llmUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${supabaseKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        sources: [weatherSource],
-        location: `${lat},${lon}`
-      })
-    });
-
-    if (!llmResponse.ok) {
-      console.log("LLM forecast failed, using raw data");
-      return { actualHigh: rawActualHigh, actualLow: rawActualLow, actualCondition: rawCondition };
-    }
-
-    const llmData = await llmResponse.json();
-    
-    // If LLM returned processed data, use it
-    if (llmData && !llmData.rawApiData && llmData.daily && llmData.daily.length > 0) {
-      const llmDaily = llmData.daily[0];
-      console.log(`Using LLM-processed data: high=${llmDaily.highTemp}, low=${llmDaily.lowTemp}, condition=${llmDaily.condition}`);
-      return {
-        actualHigh: llmDaily.highTemp,
-        actualLow: llmDaily.lowTemp,
-        actualCondition: normalizeCondition(llmDaily.condition)
-      };
-    }
-
-    // Fallback to raw data
     return { actualHigh: rawActualHigh, actualLow: rawActualLow, actualCondition: rawCondition };
   } catch (error) {
-    console.error("Error fetching LLM weather data:", error);
+    console.error("Error fetching weather data:", error);
     return null;
   }
 }
 
-// Normalize LLM condition to match prediction conditions
-function normalizeCondition(condition: string): string {
+// Normalize user's predicted condition to match the 5 basic API conditions
+// This ensures fair comparison since API only returns: sunny, partly-cloudy, cloudy, rainy, snowy
+function normalizePredictedCondition(condition: string): string {
   const c = condition.toLowerCase();
-  if (c.includes('clear') || c.includes('sunny')) return 'sunny';
-  if (c.includes('partly')) return 'partly-cloudy';
-  if (c.includes('overcast') || c.includes('cloudy')) return 'cloudy';
-  if (c.includes('thunder')) return 'rainy';
-  if (c.includes('heavy rain')) return 'rainy';
-  if (c.includes('rain') || c.includes('drizzle') || c.includes('shower')) return 'rainy';
-  if (c.includes('snow') || c.includes('sleet')) return 'snowy';
-  if (c.includes('fog')) return 'cloudy';
-  return 'cloudy';
+  
+  // Sunny conditions
+  if (c === 'sunny' || c === 'clear') return 'sunny';
+  
+  // Partly cloudy
+  if (c === 'partly-cloudy') return 'partly-cloudy';
+  
+  // Cloudy conditions (overcast, foggy, windy map to cloudy)
+  if (c === 'cloudy' || c === 'overcast' || c === 'foggy' || c === 'windy') return 'cloudy';
+  
+  // Rainy conditions (drizzle, rain, heavy-rain, thunderstorm all map to rainy)
+  if (c === 'rainy' || c === 'drizzle' || c === 'heavy-rain' || c === 'thunderstorm') return 'rainy';
+  
+  // Snowy conditions (snow, heavy-snow, sleet all map to snowy)
+  if (c === 'snowy' || c === 'heavy-snow' || c === 'sleet') return 'snowy';
+  
+  return 'cloudy'; // Default fallback
 }
 
 serve(async (req) => {
@@ -186,10 +134,16 @@ serve(async (req) => {
         const actualLow = llmWeather.actualLow;
         const actualCondition = llmWeather.actualCondition;
 
-        // Check if prediction is correct (within 5 degrees for temps and exact match for condition)
-        const highAccurate = Math.abs(prediction.predicted_high - actualHigh) <= 5;
-        const lowAccurate = Math.abs(prediction.predicted_low - actualLow) <= 5;
-        const conditionAccurate = prediction.predicted_condition === actualCondition;
+        // Normalize user's condition to compare fairly with API's basic conditions
+        const normalizedPredictedCondition = normalizePredictedCondition(prediction.predicted_condition);
+        
+        // Check if prediction is correct (within 3 degrees for temps, condition categories match)
+        const highAccurate = Math.abs(prediction.predicted_high - actualHigh) <= 3;
+        const lowAccurate = Math.abs(prediction.predicted_low - actualLow) <= 3;
+        const conditionAccurate = normalizedPredictedCondition === actualCondition;
+        
+        console.log(`Comparing prediction ${prediction.id}: predicted=${prediction.predicted_high}/${prediction.predicted_low}/${normalizedPredictedCondition} vs actual=${actualHigh}/${actualLow}/${actualCondition}`);
+        console.log(`Results: highAccurate=${highAccurate}, lowAccurate=${lowAccurate}, conditionAccurate=${conditionAccurate}`);
         
         // Count how many parts are correct
         const correctParts = [highAccurate, lowAccurate, conditionAccurate].filter(Boolean).length;

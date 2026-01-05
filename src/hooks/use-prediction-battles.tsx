@@ -283,18 +283,27 @@ export const usePredictionBattles = () => {
 
       if (error) throw error;
 
-      // Get today's date at midnight in local timezone
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      // Get current time for expiration check (battles expire at midnight of the day they were created)
+      const now = new Date();
 
-      // Filter out user's own battles, expired battles (created before today), and add names
+      // Filter out user's own battles, expired battles, and add names
       const filteredBattles = (data || []).filter((b) => {
         if (b.challenger_id === user?.id) return false;
         
-        // Check if battle was created before today (expired at midnight)
+        // Check if battle has expired (past midnight of creation day)
         const createdAt = new Date(b.created_at);
-        createdAt.setHours(0, 0, 0, 0);
-        if (createdAt < today) return false;
+        const expiryTime = new Date(createdAt);
+        expiryTime.setHours(23, 59, 59, 999); // End of the day it was created
+        
+        if (now > expiryTime) {
+          // Mark as expired in the background
+          supabase
+            .from("prediction_battles")
+            .update({ status: "expired" })
+            .eq("id", b.id)
+            .then(() => {});
+          return false;
+        }
         
         return true;
       });
@@ -320,6 +329,39 @@ export const usePredictionBattles = () => {
       return [];
     }
   };
+  
+  // Auto-expire pending battles that are past midnight
+  const expireOldBattles = async () => {
+    if (!user) return;
+    
+    const now = new Date();
+    
+    // Get all pending battles
+    const { data: pendingBattles } = await supabase
+      .from("prediction_battles")
+      .select("id, created_at")
+      .eq("status", "pending");
+    
+    if (!pendingBattles) return;
+    
+    for (const battle of pendingBattles) {
+      const createdAt = new Date(battle.created_at);
+      const expiryTime = new Date(createdAt);
+      expiryTime.setHours(23, 59, 59, 999);
+      
+      if (now > expiryTime) {
+        await supabase
+          .from("prediction_battles")
+          .update({ status: "expired" })
+          .eq("id", battle.id);
+      }
+    }
+  };
+  
+  // Run expiry check on mount
+  useEffect(() => {
+    expireOldBattles();
+  }, [user]);
 
   return {
     battles,

@@ -85,35 +85,52 @@ serve(async (req) => {
   }
 
   try {
-    const { moonPhase, moonIllumination, latitude, longitude } = await req.json();
+    const { moonPhase, moonIllumination, latitude, longitude, moonrise, moonset, sunrise, sunset } = await req.json();
 
-    console.log('AI Moon Insights request:', { moonPhase, moonIllumination, latitude, longitude });
+    console.log('AI Moon Insights request:', { moonPhase, moonIllumination, latitude, longitude, moonrise, moonset });
 
-    const systemPrompt = `You are an AI assistant specializing in lunar knowledge, astronomy, and how the moon affects daily life. You provide insightful, practical, and sometimes mystical information about the moon.
+    // Calculate current date and time info for accurate insights
+    const now = new Date();
+    const currentHour = now.getHours();
+    const isNight = currentHour < 6 || currentHour > 20;
+    const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    
+    // Calculate moon visibility window
+    const moonVisibleHours = moonrise && moonset ? 
+      `Moon rises at ${moonrise} and sets at ${moonset}` : 
+      'Moon visibility times not available';
 
-Generate 5 unique insights about the current moon phase and its effects. Each insight should be practical and actionable.
+    const systemPrompt = `You are an expert lunar astronomer and lifestyle advisor. You provide SPECIFIC, DATA-DRIVEN insights about the moon based on REAL astronomical data provided.
 
-Categories to cover:
-1. Photography/Astronomy - Best viewing/photography opportunities
-2. Gardening/Nature - How the moon phase affects plants and wildlife
-3. Sleep & Wellness - How the moon may impact sleep and mood
-4. Activities - Best outdoor activities for this moon phase
-5. Cultural/Mystical - Interesting traditions or folklore about this phase
+CRITICAL: Use the EXACT data provided. Do not make up values. Reference specific times, illumination percentages, and phase details accurately.
 
-Return ONLY a valid JSON array with this structure (no markdown, no code blocks):
-[
-  {"title": "Short Title", "description": "Practical insight (max 25 words)", "icon": "emoji"},
-  ...
-]
+Generate 5 unique, highly specific insights based on the REAL moon data below. Each insight must:
+1. Reference actual data (illumination %, rise/set times, phase name)
+2. Give specific, actionable advice for TODAY
+3. Be accurate to the current phase and timing
 
-Use relevant emojis: 📷 🌱 😴 🏃 ✨ 🔭 🌊 🐺 🧘 🎣 etc.`;
+Categories:
+1. 📷 Photography/Stargazing - MUST mention actual illumination % and visibility window
+2. 🌱 Gardening/Nature - Phase-specific planting/harvesting advice  
+3. 😴 Sleep & Wellness - How tonight's specific moon affects rest
+4. 🏃 Outdoor Activities - Best times based on actual moonrise/set
+5. ✨ Cultural/Folklore - Phase-specific traditions
 
-    const userPrompt = `Current moon data:
+Return ONLY a valid JSON array (no markdown, no code blocks):
+[{"title": "Title", "description": "Specific insight with real data (max 30 words)", "icon": "emoji"}]`;
+
+    const userPrompt = `REAL MOON DATA FOR ${dateStr}:
 - Phase: ${moonPhase || 'Unknown'}
-- Illumination: ${moonIllumination || 50}%
-- Location: Lat ${latitude?.toFixed(2) || 'N/A'}, Lon ${longitude?.toFixed(2) || 'N/A'}
+- Illumination: ${moonIllumination || 50}% (this is the actual percentage of moon's surface lit)
+- Moonrise: ${moonrise || 'N/A'}
+- Moonset: ${moonset || 'N/A'}
+- Sunrise: ${sunrise || 'N/A'}
+- Sunset: ${sunset || 'N/A'}
+- Location: ${latitude?.toFixed(2) || 'N/A'}°, ${longitude?.toFixed(2) || 'N/A'}°
+- Current time: ${now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+- ${isNight ? 'Currently nighttime' : 'Currently daytime'}
 
-Generate 5 personalized moon insights for today based on this moon phase. Be specific and actionable.`;
+Generate 5 insights using THIS EXACT DATA. Reference the actual ${moonIllumination || 50}% illumination and ${moonPhase || 'current'} phase in your responses.`;
 
     // Try Groq first, then OpenAI
     let response = await callGroq(systemPrompt, userPrompt);

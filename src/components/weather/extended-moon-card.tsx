@@ -121,6 +121,8 @@ export function ExtendedMoonCard({
           moonIllumination: illumination,
           latitude,
           longitude,
+          moonrise, // Pass actual moonrise time
+          moonset, // Pass actual moonset time
         },
       });
 

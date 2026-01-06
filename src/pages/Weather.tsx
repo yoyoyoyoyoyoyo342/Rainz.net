@@ -44,6 +44,7 @@ import { usePremiumSettings } from "@/hooks/use-premium-settings";
 import { AffiliateCard } from "@/components/weather/affiliate-card";
 import { trackWeatherView } from "@/lib/track-event";
 import { ExtendedMoonCard } from "@/components/weather/extended-moon-card";
+import { useAccountStorage } from "@/hooks/use-account-storage";
 
 export default function WeatherPage() {
   const [selectedLocation, setSelectedLocation] = useState<{
@@ -61,6 +62,7 @@ export default function WeatherPage() {
   const { setTimeOfDay } = useTimeOfDayContext();
   const { settings: premiumSettings, isSubscribed } = usePremiumSettings();
   const { data: hyperlocalData } = useHyperlocalWeather(selectedLocation?.lat, selectedLocation?.lon);
+  const { setUserLocation: saveLocationToAccount } = useAccountStorage();
   const currentHoliday = getCurrentHoliday();
 
   const { data: savedLocations = [] } = useQuery({
@@ -194,23 +196,25 @@ export default function WeatherPage() {
           const newLocation = { lat: latitude, lon: longitude, name: cityName };
           setSelectedLocation(newLocation);
           setIsAutoDetected(true);
-          localStorage.setItem("userLocation", JSON.stringify(newLocation));
+          // Save to account for logged-in users, localStorage for guests
+          saveLocationToAccount(newLocation);
         } catch {
           const newLocation = { lat: latitude, lon: longitude, name: "Current Location" };
           setSelectedLocation(newLocation);
           setIsAutoDetected(true);
-          localStorage.setItem("userLocation", JSON.stringify(newLocation));
+          saveLocationToAccount(newLocation);
         }
       } catch {}
     };
     detectLocation();
-  }, []);
+  }, [saveLocationToAccount]);
 
   const handleLocationSelect = (lat: number, lon: number, locationName: string) => {
     const newLocation = { lat, lon, name: locationName };
     setSelectedLocation(newLocation);
     setIsAutoDetected(false);
-    localStorage.setItem("userLocation", JSON.stringify(newLocation));
+    // Save to account for logged-in users, localStorage for guests
+    saveLocationToAccount(newLocation);
   };
 
   const handleRefresh = () => {

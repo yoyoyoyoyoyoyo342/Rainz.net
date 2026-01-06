@@ -38,10 +38,14 @@ export interface WeatherAlert {
 
 export interface SnowData {
   snowIntensity: number; // inches/hour
-  snowAccumulation: number; // inches
+  snowAccumulation: number; // inches (daily total)
+  snowDepth: number; // inches (current depth)
   iceAccumulation: number; // inches
   temperature: number;
   windChill: number;
+  precipProbability: number;
+  weatherCode: number;
+  source: string; // 'open-meteo' indicates authoritative snow data
 }
 
 export interface HyperlocalWeatherData {

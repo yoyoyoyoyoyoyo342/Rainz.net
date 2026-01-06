@@ -23,6 +23,20 @@ serve(async (req) => {
 
     console.log('Fetching hyperlocal weather data for:', { latitude, longitude });
 
+    // Fetch Open-Meteo snow data (FREE, specialized for snow - this overrides other sources)
+    const openMeteoSnowUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=snowfall,snow_depth,temperature_2m,apparent_temperature,precipitation,precipitation_probability,weather_code&daily=snowfall_sum,precipitation_sum&timezone=auto&forecast_days=3`;
+    
+    let openMeteoSnowData: any = null;
+    try {
+      const openMeteoSnowResponse = await fetch(openMeteoSnowUrl);
+      if (openMeteoSnowResponse.ok) {
+        openMeteoSnowData = await openMeteoSnowResponse.json();
+        console.log('Open-Meteo snow data fetched successfully');
+      }
+    } catch (e) {
+      console.error('Open-Meteo snow fetch failed:', e);
+    }
+
     // Fetch Tomorrow.io minute-by-minute data (hyperlocal precipitation)
     const tomorrowUrl = `https://api.tomorrow.io/v4/weather/forecast?location=${latitude},${longitude}&apikey=${TOMORROW_IO_KEY}&timesteps=1m&units=imperial`;
     
@@ -45,14 +59,40 @@ serve(async (req) => {
       precipitationProbability: item.values.precipitationProbability || 0,
     })) || [];
 
-    // Extract snow-specific data from Tomorrow.io hourly data
+    // Get current hour index for Open-Meteo data
+    const currentHour = new Date().getHours();
+    const hourlyOpenMeteo = openMeteoSnowData?.hourly || {};
+    
+    // Open-Meteo snow data ALWAYS overrides Tomorrow.io for snow-specific fields
+    // Open-Meteo provides snowfall in cm, snow_depth in meters - convert to inches
+    const openMeteoSnowfall = hourlyOpenMeteo.snowfall?.[currentHour] || 0; // cm/hour
+    const openMeteoSnowDepth = hourlyOpenMeteo.snow_depth?.[currentHour] || 0; // meters
+    const openMeteoTemp = hourlyOpenMeteo.temperature_2m?.[currentHour]; // Celsius
+    const openMeteoFeelsLike = hourlyOpenMeteo.apparent_temperature?.[currentHour]; // Celsius
+    const dailySnowfallSum = openMeteoSnowData?.daily?.snowfall_sum?.[0] || 0; // cm total for day
+    
+    // Convert to imperial
+    const snowfallInchesPerHour = openMeteoSnowfall * 0.3937; // cm to inches
+    const snowDepthInches = openMeteoSnowDepth * 39.37; // meters to inches
+    const dailySnowfallInches = dailySnowfallSum * 0.3937; // cm to inches
+    const tempF = openMeteoTemp !== undefined ? (openMeteoTemp * 9/5) + 32 : (current.temp_f || 32);
+    const feelsLikeF = openMeteoFeelsLike !== undefined ? (openMeteoFeelsLike * 9/5) + 32 : (current.feelslike_f || 32);
+    
+    // Tomorrow.io fallback for ice accumulation (Open-Meteo doesn't provide this)
     const hourlyData = tomorrowData?.timelines?.hourly?.[0]?.values || {};
+    
+    // PRIORITY: Open-Meteo snow data overrides Tomorrow.io for all snow fields
     const snowData = {
-      snowIntensity: hourlyData.snowIntensity || 0, // inches/hour
-      snowAccumulation: hourlyData.snowAccumulation || 0, // inches
-      iceAccumulation: hourlyData.iceAccumulation || 0, // inches
-      temperature: hourlyData.temperature || current.temp_f || 0,
-      windChill: hourlyData.windChill || current.feelslike_f || 0,
+      snowIntensity: snowfallInchesPerHour, // Open-Meteo (inches/hour)
+      snowAccumulation: dailySnowfallInches, // Open-Meteo daily total (inches)
+      snowDepth: snowDepthInches, // Open-Meteo current depth (inches)
+      iceAccumulation: hourlyData.iceAccumulation || 0, // Tomorrow.io fallback (inches)
+      temperature: tempF,
+      windChill: feelsLikeF,
+      // Additional snow data from Open-Meteo
+      precipProbability: hourlyOpenMeteo.precipitation_probability?.[currentHour] || 0,
+      weatherCode: hourlyOpenMeteo.weather_code?.[currentHour] || 0,
+      source: 'open-meteo', // Mark that this is authoritative snow data
     };
     const forecast = weatherApiData?.forecast?.forecastday || [];
     const astronomy = forecast[0]?.astro || {};

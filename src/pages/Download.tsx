@@ -6,15 +6,13 @@ import { Link } from "react-router-dom";
 
 const DownloadPage = () => {
   const handleMacDownload = () => {
-    // TODO: Replace with actual .dmg download URL
-    console.log("Mac download clicked - replace with actual URL");
-    // window.location.href = "https://your-host.com/rainz.dmg";
+    window.location.href =
+      "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.V1.0.dmg";
   };
 
   const handleWindowsDownload = () => {
-    // TODO: Replace with actual .exe download URL
-    console.log("Windows download clicked - replace with actual URL");
-    // window.location.href = "https://your-host.com/rainz-setup.exe";
+    window.location.href =
+      "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.Setup.V1.0.exe";
   };
 
   const features = [
@@ -71,7 +69,7 @@ const DownloadPage = () => {
                 <ArrowDownToLine className="h-5 w-5" />
                 Download .dmg
               </Button>
-              <p className="text-xs text-muted-foreground">Version 1.0.0 • Coming Soon</p>
+              <p className="text-xs text-muted-foreground">Version 1.0.0</p>
             </CardContent>
           </Card>
 
@@ -94,7 +92,7 @@ const DownloadPage = () => {
                 <ArrowDownToLine className="h-5 w-5" />
                 Download .exe
               </Button>
-              <p className="text-xs text-muted-foreground">Version 1.0.0 • Coming Soon</p>
+              <p className="text-xs text-muted-foreground">Version 1.0.0</p>
             </CardContent>
           </Card>
         </div>

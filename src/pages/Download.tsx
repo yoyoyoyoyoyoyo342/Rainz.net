@@ -11,7 +11,7 @@ const DownloadPage = () => {
     // window.location.href = "https://your-host.com/rainz.dmg";
   };
 
-  const handleWindowsDownload = () => {
+  const handleWindowsDownload = (https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.Setup.V1.0exe) => {
     // TODO: Replace with actual .exe download URL
     console.log("Windows download clicked - replace with actual URL");
     // window.location.href = "https://your-host.com/rainz-setup.exe";

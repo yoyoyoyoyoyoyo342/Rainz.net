@@ -5,13 +5,13 @@ import { Monitor, Apple, ArrowDownToLine, CheckCircle, ArrowLeft } from "lucide-
 import { Link } from "react-router-dom";
 
 const DownloadPage = () => {
-  const handleMacDownload = (https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.V1.0.dmg) => {
+  const handleMacDownload = () => {
     // TODO: Replace with actual .dmg download URL
     console.log("Mac download clicked - replace with actual URL");
     // window.location.href = "https://your-host.com/rainz.dmg";
   };
 
-  const handleWindowsDownload = (https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.Setup.V1.0exe) => {
+  const handleWindowsDownload = () => {
     // TODO: Replace with actual .exe download URL
     console.log("Windows download clicked - replace with actual URL");
     // window.location.href = "https://your-host.com/rainz-setup.exe";
@@ -29,14 +29,19 @@ const DownloadPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <div className="container mx-auto px-4 py-12">
         {/* Back button */}
-        <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8"
+        >
           <ArrowLeft className="h-4 w-4" />
           Back to Rainz
         </Link>
 
         {/* Header */}
         <div className="text-center mb-12">
-          <Badge variant="secondary" className="mb-4">Desktop App</Badge>
+          <Badge variant="secondary" className="mb-4">
+            Desktop App
+          </Badge>
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             Download Rainz
           </h1>
@@ -62,11 +67,7 @@ const DownloadPage = () => {
                 <p>macOS 11.0 or later</p>
                 <p>Apple Silicon & Intel supported</p>
               </div>
-              <Button 
-                size="lg" 
-                className="w-full gap-2" 
-                onClick={handleMacDownload}
-              >
+              <Button size="lg" className="w-full gap-2" onClick={handleMacDownload}>
                 <ArrowDownToLine className="h-5 w-5" />
                 Download .dmg
               </Button>
@@ -89,11 +90,7 @@ const DownloadPage = () => {
                 <p>Windows 10 or later</p>
                 <p>64-bit required</p>
               </div>
-              <Button 
-                size="lg" 
-                className="w-full gap-2" 
-                onClick={handleWindowsDownload}
-              >
+              <Button size="lg" className="w-full gap-2" onClick={handleWindowsDownload}>
                 <ArrowDownToLine className="h-5 w-5" />
                 Download .exe
               </Button>
@@ -107,10 +104,7 @@ const DownloadPage = () => {
           <h2 className="text-2xl font-semibold mb-6">Why download the desktop app?</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             {features.map((feature, index) => (
-              <div 
-                key={index}
-                className="flex items-center gap-3 p-4 rounded-lg bg-card border"
-              >
+              <div key={index} className="flex items-center gap-3 p-4 rounded-lg bg-card border">
                 <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
                 <span className="text-sm">{feature}</span>
               </div>
@@ -123,7 +117,9 @@ const DownloadPage = () => {
           <h3 className="font-semibold mb-2">Don't want to download?</h3>
           <p className="text-sm text-muted-foreground mb-4">
             You can install Rainz directly from your browser. Just visit{" "}
-            <Link to="/" className="text-primary hover:underline">rainz.net</Link>{" "}
+            <Link to="/" className="text-primary hover:underline">
+              rainz.net
+            </Link>{" "}
             and click "Add to Home Screen" or "Install App" in your browser menu.
           </p>
         </div>

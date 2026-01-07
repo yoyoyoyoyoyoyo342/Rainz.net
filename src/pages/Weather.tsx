@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { CloudSun, LogIn } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -162,7 +162,13 @@ export default function WeatherPage() {
     }
   }, [error, toast]);
 
+  // Track if we've already detected location this session
+  const locationDetectedRef = useRef(false);
+
   useEffect(() => {
+    // Only detect location once per session
+    if (locationDetectedRef.current) return;
+    
     const detectLocation = async () => {
       try {
         const position = await weatherApi.getCurrentLocation();
@@ -194,12 +200,14 @@ export default function WeatherPage() {
           };
           const cityName = getBestLocationName(geocodeData);
           const newLocation = { lat: latitude, lon: longitude, name: cityName };
+          locationDetectedRef.current = true;
           setSelectedLocation(newLocation);
           setIsAutoDetected(true);
           // Save to account for logged-in users, localStorage for guests
           saveLocationToAccount(newLocation);
         } catch {
           const newLocation = { lat: latitude, lon: longitude, name: "Current Location" };
+          locationDetectedRef.current = true;
           setSelectedLocation(newLocation);
           setIsAutoDetected(true);
           saveLocationToAccount(newLocation);
@@ -207,7 +215,7 @@ export default function WeatherPage() {
       } catch {}
     };
     detectLocation();
-  }, [saveLocationToAccount]);
+  }, []); // Empty dependency array - only run once on mount
 
   const handleLocationSelect = (lat: number, lon: number, locationName: string) => {
     const newLocation = { lat, lon, name: locationName };

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./use-auth";
 
@@ -39,6 +39,12 @@ export function useAccountStorage() {
   const { user } = useAuth();
   const [data, setData] = useState<AccountStorageData>(DEFAULT_DATA);
   const [loading, setLoading] = useState(true);
+  const dataRef = useRef(data);
+  
+  // Keep ref in sync
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
 
   // Load data from account or localStorage
   useEffect(() => {
@@ -235,9 +241,10 @@ export function useAccountStorage() {
     }
   };
 
-  // Update user location
+  // Update user location - stable callback
   const setUserLocation = useCallback(async (location: { lat: number; lon: number; name: string } | null) => {
-    const newData = { ...data, userLocation: location };
+    const currentData = dataRef.current;
+    const newData = { ...currentData, userLocation: location };
     setData(newData);
 
     if (user) {
@@ -249,17 +256,18 @@ export function useAccountStorage() {
         localStorage.removeItem("userLocation");
       }
     }
-  }, [user, data]);
+  }, [user]); // Only depend on user, use ref for data
 
-  // Update game high score
+  // Update game high score - stable callback
   const setGameHighScore = useCallback(async (game: keyof AccountStorageData['gameHighScores'], score: number) => {
-    const currentScore = data.gameHighScores[game] || 0;
+    const currentData = dataRef.current;
+    const currentScore = currentData.gameHighScores[game] || 0;
     if (score <= currentScore) return; // Only update if higher
 
     const newData = {
-      ...data,
+      ...currentData,
       gameHighScores: {
-        ...data.gameHighScores,
+        ...currentData.gameHighScores,
         [game]: score,
       },
     };
@@ -278,12 +286,13 @@ export function useAccountStorage() {
       };
       localStorage.setItem(keyMap[game], score.toString());
     }
-  }, [user, data]);
+  }, [user]);
 
-  // Dismiss morning review
+  // Dismiss morning review - stable callback
   const dismissMorningReview = useCallback(async () => {
     const today = new Date().toDateString();
-    const newData = { ...data, morningReviewDismissed: today };
+    const currentData = dataRef.current;
+    const newData = { ...currentData, morningReviewDismissed: today };
     setData(newData);
 
     if (user) {
@@ -291,12 +300,13 @@ export function useAccountStorage() {
     } else {
       localStorage.setItem("morning-review-dismissed", today);
     }
-  }, [user, data]);
+  }, [user]);
 
-  // Dismiss broadcast
+  // Dismiss broadcast - stable callback
   const dismissBroadcast = useCallback(async (messageId: string) => {
-    const newDismissed = [...new Set([...data.dismissedBroadcasts, messageId])];
-    const newData = { ...data, dismissedBroadcasts: newDismissed };
+    const currentData = dataRef.current;
+    const newDismissed = [...new Set([...currentData.dismissedBroadcasts, messageId])];
+    const newData = { ...currentData, dismissedBroadcasts: newDismissed };
     setData(newData);
 
     if (user) {
@@ -304,7 +314,7 @@ export function useAccountStorage() {
     } else {
       localStorage.setItem("rainz-dismissed-messages", JSON.stringify(newDismissed));
     }
-  }, [user, data]);
+  }, [user]);
 
   return {
     data,

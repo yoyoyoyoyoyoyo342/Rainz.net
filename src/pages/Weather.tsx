@@ -7,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { weatherApi } from "@/lib/weather-api";
-import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { LocationSearch } from "@/components/weather/location-search";
 import { CurrentWeather } from "@/components/weather/current-weather";
 import { HourlyForecast } from "@/components/weather/hourly-forecast";
@@ -45,6 +44,7 @@ import { AffiliateCard } from "@/components/weather/affiliate-card";
 import { trackWeatherView } from "@/lib/track-event";
 import { ExtendedMoonCard } from "@/components/weather/extended-moon-card";
 import { useAccountStorage } from "@/hooks/use-account-storage";
+import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
 
 export default function WeatherPage() {
   const [selectedLocation, setSelectedLocation] = useState<{
@@ -93,10 +93,14 @@ export default function WeatherPage() {
 
   usePushNotifications();
   
-  const { data: weatherData, isLoading, error } = useQuery<WeatherResponse, Error>({
+  const { data: weatherData, isLoading, isFetching, error } = useQuery<WeatherResponse, Error>({
     queryKey: ["/api/weather", selectedLocation?.lat, selectedLocation?.lon],
     enabled: !!selectedLocation,
-    queryFn: () => weatherApi.getWeatherData(selectedLocation!.lat, selectedLocation!.lon, selectedLocation!.name)
+    queryFn: () => weatherApi.getWeatherData(selectedLocation!.lat, selectedLocation!.lon, selectedLocation!.name),
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    retry: 1,
+    placeholderData: (prev) => prev,
   });
 
   const sunrise = weatherData?.mostAccurate?.currentWeather?.sunrise;
@@ -152,15 +156,20 @@ export default function WeatherPage() {
     }
   }, [weatherData]);
 
+  const lastErrorToastRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (error) {
+    if (error && !weatherData) {
+      const msg = (error as Error).message || "Unknown error";
+      if (lastErrorToastRef.current === msg) return;
+      lastErrorToastRef.current = msg;
       toast({
         title: "Failed to fetch weather data",
-        description: (error as Error).message || "Please check your connection and try again.",
-        variant: "destructive"
+        description: msg || "Please check your connection and try again.",
+        variant: "destructive",
       });
     }
-  }, [error, toast]);
+  }, [error, toast, weatherData]);
 
   // Track if we've already detected location this session
   const locationDetectedRef = useRef(false);
@@ -316,10 +325,9 @@ export default function WeatherPage() {
             )}
           </CardContent>
         </Card>
-
-        <LoadingOverlay isOpen={isLoading && !weatherData} />
-
-        {!selectedLocation ? (
+        {selectedLocation && isLoading && !weatherData ? (
+          <WeatherPageSkeleton />
+        ) : !selectedLocation ? (
           <Card className="glass-card border border-border/20 text-center py-12 rounded-2xl">
             <CardContent className="space-y-4">
               <CloudSun className="w-16 h-16 text-primary mx-auto" />
@@ -329,7 +337,7 @@ export default function WeatherPage() {
               </div>
             </CardContent>
           </Card>
-        ) : error ? (
+        ) : error && !weatherData ? (
           <Card className="glass-card border-destructive/30 text-center py-12 rounded-2xl">
             <CardContent className="space-y-4">
               <div className="text-4xl">⚠️</div>
@@ -366,7 +374,7 @@ export default function WeatherPage() {
               weatherData={weatherData.sources} 
               mostAccurate={weatherData.mostAccurate} 
               onRefresh={handleRefresh} 
-              isLoading={isLoading} 
+              isLoading={isFetching} 
               lastUpdated={lastUpdated} 
               isImperial={isImperial} 
               isAutoDetected={isAutoDetected} 

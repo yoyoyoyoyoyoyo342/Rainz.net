@@ -5,7 +5,7 @@ import { Monitor, Apple, ArrowDownToLine, CheckCircle, ArrowLeft } from "lucide-
 import { Link } from "react-router-dom";
 
 const DownloadPage = () => {
-  const handleMacDownload = () => {
+  const handleMacDownload = (https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.V1.0.dmg) => {
     // TODO: Replace with actual .dmg download URL
     console.log("Mac download clicked - replace with actual URL");
     // window.location.href = "https://your-host.com/rainz.dmg";

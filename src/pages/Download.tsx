@@ -1,11 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Monitor, Apple, ArrowDownToLine, Smartphone, Globe, Zap, Bell, Wifi, ArrowLeft } from "lucide-react";
+import { Monitor, Apple, ArrowDownToLine, CheckCircle, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const DownloadPage = () => {
-
   const handleMacDownload = () => {
     window.location.href =
       "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.V1.0.dmg";
@@ -16,150 +15,128 @@ const DownloadPage = () => {
       "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.Setup.V1.0.exe";
   };
 
-  const desktopFeatures = [
-    { icon: Zap, text: "Native performance" },
-    { icon: Bell, text: "System notifications" },
-    { icon: Wifi, text: "Offline support" },
+  const features = [
+    "Real-time weather notifications",
+    "Faster performance",
+    "Offline access",
+    "System tray integration",
+    "Native keyboard shortcuts",
   ];
 
-  const pwaFeatures = [
-    { icon: Globe, text: "Works everywhere" },
-    { icon: Smartphone, text: "Home screen app" },
-    { icon: Bell, text: "Push notifications" },
+  const macBypassSteps = [
+    "Download the `.dmg` file above.",
+    "Try to open the app. macOS will block it.",
+    "Open System Settings → Privacy & Security.",
+    "At the bottom, you’ll see “Rainz Weather was blocked” → click Open Anyway.",
+    "Confirm the prompt. Now Rainz Weather will open normally.",
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-white">
+      <div className="container mx-auto px-4 py-12">
         {/* Back button */}
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
+          className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors mb-8"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          Back to Rainz
         </Link>
 
         {/* Header */}
-        <div className="text-center mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">
-            Get Rainz
-          </h1>
-          <p className="text-muted-foreground max-w-lg mx-auto">
-            Choose how you want to use Rainz Weather
+        <div className="text-center mb-12">
+          <Badge variant="secondary" className="mb-4 text-lg">
+            Desktop App
+          </Badge>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">Rainz Desktop Downloads</h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Get Rainz on your computer. Fast, native, and packed with features for Mac and Windows.
           </p>
         </div>
 
-        {/* Main options grid */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-10">
-          {/* Desktop Apps */}
-          <Card className="overflow-hidden">
-            <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-6 border-b border-border">
-              <Badge className="mb-3">Desktop</Badge>
-              <h2 className="text-xl font-semibold mb-1">Desktop App</h2>
-              <p className="text-sm text-muted-foreground">
-                Full native experience for Mac and Windows
-              </p>
-            </div>
-            <CardContent className="p-6 space-y-6">
-              <div className="flex flex-wrap gap-4">
-                {desktopFeatures.map((feature, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <feature.icon className="h-4 w-4 text-primary" />
-                    <span>{feature.text}</span>
-                  </div>
-                ))}
+        {/* Download Cards */}
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-16">
+          {/* macOS Card */}
+          <Card className="relative overflow-hidden border border-gray-200 rounded-xl hover:shadow-lg transition-shadow duration-300">
+            <CardHeader className="text-center pb-2">
+              <div className="mx-auto mb-4 p-4 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 w-fit">
+                <Apple className="h-12 w-12 text-white" />
               </div>
-
-              <div className="space-y-3">
-                <Button 
-                  size="lg" 
-                  className="w-full justify-between" 
-                  onClick={handleMacDownload}
-                >
-                  <span className="flex items-center gap-2">
-                    <Apple className="h-5 w-5" />
-                    macOS
-                  </span>
-                  <ArrowDownToLine className="h-4 w-4" />
-                </Button>
-                
-                <Button 
-                  size="lg" 
-                  variant="outline"
-                  className="w-full justify-between" 
-                  onClick={handleWindowsDownload}
-                >
-                  <span className="flex items-center gap-2">
-                    <Monitor className="h-5 w-5" />
-                    Windows
-                  </span>
-                  <ArrowDownToLine className="h-4 w-4" />
-                </Button>
+              <CardTitle className="text-2xl font-semibold">macOS</CardTitle>
+              <CardDescription>For Mac computers (Intel & Apple Silicon)</CardDescription>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <div className="text-sm text-gray-500">
+                <p>macOS 11.0 or later</p>
               </div>
-
-              <p className="text-xs text-center text-muted-foreground">
-                v1.0.0 • macOS 11+ / Windows 10+
-              </p>
+              <Button size="lg" className="w-full gap-2" onClick={handleMacDownload}>
+                <ArrowDownToLine className="h-5 w-5" />
+                Download .dmg
+              </Button>
+              <p className="text-xs text-gray-400">Version 1.0.0</p>
             </CardContent>
           </Card>
 
-          {/* PWA / Web */}
-          <Card className="overflow-hidden">
-            <div className="bg-gradient-to-br from-secondary/50 to-secondary/20 p-6 border-b border-border">
-              <Badge variant="secondary" className="mb-3">Web App</Badge>
-              <h2 className="text-xl font-semibold mb-1">Install from Browser</h2>
-              <p className="text-sm text-muted-foreground">
-                Add to home screen on any device
-              </p>
-            </div>
-            <CardContent className="p-6 space-y-6">
-              <div className="flex flex-wrap gap-4">
-                {pwaFeatures.map((feature, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <feature.icon className="h-4 w-4 text-primary" />
-                    <span>{feature.text}</span>
-                  </div>
-                ))}
+          {/* Windows Card */}
+          <Card className="relative overflow-hidden border border-gray-200 rounded-xl hover:shadow-lg transition-shadow duration-300">
+            <CardHeader className="text-center pb-2">
+              <div className="mx-auto mb-4 p-4 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 w-fit">
+                <Monitor className="h-12 w-12 text-white" />
               </div>
-
-              <div className="p-4 rounded-lg bg-muted/50 space-y-3">
-                <p className="text-sm font-medium">How to install:</p>
-                <ol className="text-sm text-muted-foreground space-y-2">
-                  <li className="flex gap-2">
-                    <span className="font-medium text-foreground">1.</span>
-                    Visit <a href="https://rainz.net" className="text-primary hover:underline">rainz.net</a> in your browser
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="font-medium text-foreground">2.</span>
-                    Tap the share/menu button
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="font-medium text-foreground">3.</span>
-                    Select "Add to Home Screen" or "Install App"
-                  </li>
-                </ol>
-              </div>
-
-              <Button 
-                size="lg" 
-                variant="secondary"
-                className="w-full" 
-                asChild
-              >
-                <Link to="/">
-                  <Globe className="h-4 w-4 mr-2" />
-                  Open Rainz Web
-                </Link>
+              <CardTitle className="text-2xl font-semibold">Windows</CardTitle>
+              <CardDescription>For Windows 10 or later (64-bit)</CardDescription>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <Button size="lg" className="w-full gap-2" onClick={handleWindowsDownload}>
+                <ArrowDownToLine className="h-5 w-5" />
+                Download .exe
               </Button>
+              <p className="text-xs text-gray-400">Version 1.0.0</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Bottom note */}
-        <p className="text-center text-xs text-muted-foreground">
-          All versions sync your saved locations when signed in
-        </p>
+        {/* Features Section */}
+        <div className="max-w-2xl mx-auto text-center mb-12">
+          <h2 className="text-2xl font-semibold mb-6 text-gray-900">Why download Rainz?</h2>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-3 p-4 rounded-lg bg-white border border-gray-200 shadow-sm"
+              >
+                <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                <span className="text-sm text-gray-700">{feature}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* macOS Bypass Instructions */}
+        <div className="max-w-2xl mx-auto mb-12 p-6 rounded-xl bg-gray-50 border border-gray-200 shadow-sm">
+          <h3 className="text-xl font-semibold mb-4 text-gray-900">macOS Users — Opening Unsigned Apps</h3>
+          <p className="text-gray-600 mb-3">
+            Because we don’t have a paid Apple Developer ID, macOS will warn you when opening Rainz Weather. Follow
+            these steps:
+          </p>
+          <ol className="list-decimal list-inside text-gray-700 space-y-2">
+            {macBypassSteps.map((step, idx) => (
+              <li key={idx}>{step}</li>
+            ))}
+          </ol>
+        </div>
+
+        {/* PWA Alternative */}
+        <div className="max-w-2xl mx-auto mt-12 p-6 rounded-xl bg-white border border-gray-200 shadow-sm text-center">
+          <h3 className="font-semibold mb-2 text-gray-900">Prefer not to download?</h3>
+          <p className="text-gray-600 mb-4">
+            You can install Rainz directly from your browser. Visit{" "}
+            <Link to="/" className="text-blue-600 hover:underline">
+              rainz.net
+            </Link>{" "}
+            and select "Add to Home Screen" or "Install App" in your browser menu.
+          </p>
+        </div>
       </div>
     </div>
   );

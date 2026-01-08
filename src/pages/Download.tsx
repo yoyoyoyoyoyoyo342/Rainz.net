@@ -63,7 +63,7 @@ const DownloadPage = () => {
                 <Apple className="h-12 w-12 text-white" />
               </div>
               <CardTitle className="text-2xl font-semibold text-black">macOS</CardTitle>
-              <CardDescription>For Mac computers (Intel & Apple Silicon)</CardDescription>
+              <CardDescription className="text-black">For Mac computers (Intel & Apple Silicon)</CardDescription>
             </CardHeader>
             <CardContent className="text-center space-y-4">
               <div className="text-sm text-gray-500">
@@ -84,7 +84,7 @@ const DownloadPage = () => {
                 <Monitor className="h-12 w-12 text-white" />
               </div>
               <CardTitle className="text-2xl font-semibold text-black">Windows</CardTitle>
-              <CardDescription>For Windows 10 or later (64-bit)</CardDescription>
+              <CardDescription className="text-black">For Windows 10 or later (64-bit)</CardDescription>
             </CardHeader>
             <CardContent className="text-center space-y-4">
               <Button size="lg" className="w-full gap-2" onClick={handleWindowsDownload}>

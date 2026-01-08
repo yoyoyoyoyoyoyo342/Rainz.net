@@ -21,8 +21,8 @@ export function Footer() {
             <Link to="/articles" className="hover:text-foreground transition-colors">
               Blog
             </Link>
-            <Link to="/api" className="hover:text-foreground transition-colors">
-              API
+            <Link to="/download" className="hover:text-foreground transition-colors">
+              Download
             </Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">
               Privacy Policy

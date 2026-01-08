@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { CloudSun, LogIn } from "lucide-react";
+import { CloudSun, LogIn, WifiOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -45,6 +45,7 @@ import { trackWeatherView } from "@/lib/track-event";
 import { ExtendedMoonCard } from "@/components/weather/extended-moon-card";
 import { useAccountStorage } from "@/hooks/use-account-storage";
 import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
+import { useOfflineCache } from "@/hooks/use-offline-cache";
 
 export default function WeatherPage() {
   const [selectedLocation, setSelectedLocation] = useState<{
@@ -63,6 +64,8 @@ export default function WeatherPage() {
   const { settings: premiumSettings, isSubscribed } = usePremiumSettings();
   const { data: hyperlocalData } = useHyperlocalWeather(selectedLocation?.lat, selectedLocation?.lon);
   const { setUserLocation: saveLocationToAccount } = useAccountStorage();
+  const { saveToCache, getFromCache, isEnabled: offlineCacheEnabled } = useOfflineCache();
+  const [isUsingCachedData, setIsUsingCachedData] = useState(false);
   const currentHoliday = getCurrentHoliday();
 
   const { data: savedLocations = [] } = useQuery({
@@ -96,7 +99,33 @@ export default function WeatherPage() {
   const { data: weatherData, isLoading, isFetching, error } = useQuery<WeatherResponse, Error>({
     queryKey: ["/api/weather", selectedLocation?.lat, selectedLocation?.lon],
     enabled: !!selectedLocation,
-    queryFn: () => weatherApi.getWeatherData(selectedLocation!.lat, selectedLocation!.lon, selectedLocation!.name),
+    queryFn: async () => {
+      try {
+        const data = await weatherApi.getWeatherData(selectedLocation!.lat, selectedLocation!.lon, selectedLocation!.name);
+        setIsUsingCachedData(false);
+        
+        // Save to offline cache for premium users
+        if (offlineCacheEnabled && data) {
+          saveToCache(selectedLocation!.lat, selectedLocation!.lon, selectedLocation!.name, data);
+        }
+        
+        return data;
+      } catch (fetchError) {
+        // Try to use cached data if fetch fails (premium feature)
+        if (offlineCacheEnabled) {
+          const cached = await getFromCache(selectedLocation!.lat, selectedLocation!.lon);
+          if (cached) {
+            setIsUsingCachedData(true);
+            toast({
+              title: "Using cached data",
+              description: `Showing weather from ${new Date(cached.timestamp).toLocaleTimeString()}`,
+            });
+            return cached.data as WeatherResponse;
+          }
+        }
+        throw fetchError;
+      }
+    },
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     retry: 1,
@@ -292,6 +321,14 @@ export default function WeatherPage() {
           </div>
 
           <CardContent className="p-4 sm:p-6 bg-background/50 backdrop-blur-md space-y-4">
+            {/* Offline cache indicator for premium users */}
+            {isUsingCachedData && (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300">
+                <WifiOff className="w-4 h-4" />
+                <span className="text-xs">Using cached weather data • Last updated {lastUpdated?.toLocaleTimeString()}</span>
+              </div>
+            )}
+            
             <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-start">
               <div className="space-y-2">
                 <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />

@@ -3,11 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Monitor, Apple, ArrowDownToLine, Smartphone, Globe, Zap, Bell, Wifi, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
-import { GoogleAd } from "@/components/ui/carbon-ad";
-import { useSubscription } from "@/hooks/use-subscription";
 
 const DownloadPage = () => {
-  const { isSubscribed } = useSubscription();
 
   const handleMacDownload = () => {
     window.location.href =
@@ -52,13 +49,6 @@ const DownloadPage = () => {
             Choose how you want to use Rainz Weather
           </p>
         </div>
-
-        {/* Ad placement - between header and content */}
-        {!isSubscribed && (
-          <div className="flex justify-center mb-8">
-            <GoogleAd />
-          </div>
-        )}
 
         {/* Main options grid */}
         <div className="grid lg:grid-cols-2 gap-6 mb-10">

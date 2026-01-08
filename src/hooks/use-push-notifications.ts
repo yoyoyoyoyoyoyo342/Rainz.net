@@ -1,8 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { weatherApi } from '@/lib/weather-api';
 import { isIOS, isPWAInstalled, needsPWAInstall, canRequestNotifications } from '@/lib/pwa-utils';
+import { 
+  isPushSupported, 
+  subscribeToPush, 
+  showLocalNotification,
+  requestNotificationPermission as requestNativePermission 
+} from '@/lib/notification-utils';
 
 interface NotificationData {
   temperature: number;
@@ -15,12 +21,15 @@ interface NotificationData {
 export function usePushNotifications() {
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const [pushSupported, setPushSupported] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     if ('Notification' in window) {
       setPermission(Notification.permission);
     }
+    
+    setPushSupported(isPushSupported());
 
     // Register service worker for push notifications
     if ('serviceWorker' in navigator) {

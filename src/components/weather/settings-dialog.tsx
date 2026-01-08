@@ -954,6 +954,19 @@ export function SettingsDialog({
                     </p>
                   </div>
                 )}
+
+                {/* Offline Cache Status */}
+                <div className="space-y-2 pt-2 border-t border-border/50">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Offline Weather Cache</span>
+                    <span className="text-xs bg-green-500/20 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">
+                      Active
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Weather data is cached for offline access. Data expires after 6 hours.
+                  </p>
+                </div>
               </>
             )}
           </div>

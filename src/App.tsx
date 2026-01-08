@@ -28,7 +28,7 @@ const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Articles = lazy(() => import("./pages/Articles"));
-const Api = lazy(() => import("./pages/Api"));
+
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const DataSettings = lazy(() => import("./pages/DataSettings"));
@@ -145,7 +145,7 @@ function AppContent() {
                         <Suspense fallback={<LoadingOverlay isOpen={true} />}>
                           {isApiSubdomain ? (
                             <Routes>
-                              <Route path="/" element={<Api />} />
+                              <Route path="/" element={<Navigate to="https://rainz.net" replace />} />
                               <Route path="*" element={<Navigate to="/" replace />} />
                             </Routes>
                           ) : isBlogSubdomain ? (
@@ -161,7 +161,7 @@ function AppContent() {
                               <Route path="/" element={<Weather />} />
                               <Route path="/auth" element={<Auth />} />
                               <Route path="/admin" element={<AdminPanel />} />
-                              <Route path="/api" element={<Api />} />
+                              
                               <Route path="/articles" element={<Articles />} />
                               <Route path="/articles/:slug" element={<BlogPost />} />
                               <Route path="/blog" element={<Navigate to="/articles" replace />} />

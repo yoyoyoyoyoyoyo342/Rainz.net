@@ -60,9 +60,9 @@ const DownloadPage = () => {
           <Card className="relative overflow-hidden border border-gray-200 rounded-xl hover:shadow-lg transition-shadow duration-300">
             <CardHeader className="text-center pb-2">
               <div className="mx-auto mb-4 p-4 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 w-fit">
-                <Apple className="h-12 w-12 text-black" />
+                <Apple className="h-12 w-12 text-white" />
               </div>
-              <CardTitle className="text-2xl font-semibold">macOS</CardTitle>
+              <CardTitle className="text-2xl font-semibold text-black">macOS</CardTitle>
               <CardDescription>For Mac computers (Intel & Apple Silicon)</CardDescription>
             </CardHeader>
             <CardContent className="text-center space-y-4">
@@ -81,9 +81,9 @@ const DownloadPage = () => {
           <Card className="relative overflow-hidden border border-gray-200 rounded-xl hover:shadow-lg transition-shadow duration-300">
             <CardHeader className="text-center pb-2">
               <div className="mx-auto mb-4 p-4 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 w-fit">
-                <Monitor className="h-12 w-12 text-black" />
+                <Monitor className="h-12 w-12 text-white" />
               </div>
-              <CardTitle className="text-2xl font-semibold">Windows</CardTitle>
+              <CardTitle className="text-2xl font-semibold text-black">Windows</CardTitle>
               <CardDescription>For Windows 10 or later (64-bit)</CardDescription>
             </CardHeader>
             <CardContent className="text-center space-y-4">

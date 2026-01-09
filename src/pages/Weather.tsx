@@ -46,6 +46,7 @@ import { ExtendedMoonCard } from "@/components/weather/extended-moon-card";
 import { useAccountStorage } from "@/hooks/use-account-storage";
 import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
 import { useOfflineCache } from "@/hooks/use-offline-cache";
+import { InlineAd } from "@/components/ui/inline-ad";
 
 export default function WeatherPage() {
   const [selectedLocation, setSelectedLocation] = useState<{
@@ -469,6 +470,9 @@ export default function WeatherPage() {
             )}
 
             <MorningWeatherReview weatherData={weatherData.mostAccurate} location={actualStationName} isImperial={isImperial} userId={user?.id} />
+
+            {/* Non-intrusive inline ad - placed in natural content flow */}
+            <InlineAd />
 
             {cardOrder.map(cardType => {
               if (!visibleCards[cardType]) return null;

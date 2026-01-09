@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Target, Trophy, Swords, CheckCircle, Calendar } from "lucide-react";
+import { Target, Trophy, Swords, CheckCircle, Calendar, Crown } from "lucide-react";
 import { WeatherPredictionForm } from "./weather-prediction-form";
 import { Leaderboard } from "./leaderboard";
 import { PredictionBattles } from "./prediction-battles";
 import { UserSearch } from "./user-search";
 import { WeeklyChallenge } from "./weekly-challenge";
+import { SeasonalTournament } from "./seasonal-tournament";
 import { useLanguage } from "@/contexts/language-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -162,7 +163,7 @@ export const PredictionDialog = ({
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="predict" className="text-xs sm:text-sm">
               <Target className="w-4 h-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Predict</span>
@@ -170,6 +171,10 @@ export const PredictionDialog = ({
             <TabsTrigger value="weekly" className="text-xs sm:text-sm">
               <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Weekly</span>
+            </TabsTrigger>
+            <TabsTrigger value="tournament" className="text-xs sm:text-sm">
+              <Crown className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Season</span>
             </TabsTrigger>
             <TabsTrigger value="battles" className="text-xs sm:text-sm relative">
               <Swords className="w-4 h-4 mr-1 sm:mr-2" />
@@ -273,6 +278,10 @@ export const PredictionDialog = ({
               longitude={longitude}
               onMakePrediction={() => setActiveTab("predict")}
             />
+          </TabsContent>
+          
+          <TabsContent value="tournament" className="mt-6">
+            <SeasonalTournament />
           </TabsContent>
           
           <TabsContent value="battles" className="mt-6">

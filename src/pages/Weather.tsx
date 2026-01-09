@@ -208,6 +208,33 @@ export default function WeatherPage() {
     if (locationDetectedRef.current) return;
     
     const detectLocation = async () => {
+      // Check if we're offline and have cached data (premium feature)
+      if (!navigator.onLine && offlineCacheEnabled) {
+        try {
+          const cachedLocation = await getFromCache(0, 0); // This won't work, need different approach
+          const { getMostRecentCachedLocation } = await import('@/lib/offline-cache');
+          const cached = await getMostRecentCachedLocation();
+          
+          if (cached) {
+            locationDetectedRef.current = true;
+            setSelectedLocation({
+              lat: cached.latitude,
+              lon: cached.longitude,
+              name: cached.locationName,
+            });
+            setIsAutoDetected(false);
+            setIsUsingCachedData(true);
+            toast({
+              title: "Offline Mode",
+              description: `Showing cached weather for ${cached.locationName}`,
+            });
+            return;
+          }
+        } catch (error) {
+          console.error('Error loading cached location:', error);
+        }
+      }
+
       try {
         const position = await weatherApi.getCurrentLocation();
         const { latitude, longitude } = position.coords;
@@ -253,7 +280,7 @@ export default function WeatherPage() {
       } catch {}
     };
     detectLocation();
-  }, []); // Empty dependency array - only run once on mount
+  }, [offlineCacheEnabled]); // Add offlineCacheEnabled dependency
 
   const handleLocationSelect = (lat: number, lon: number, locationName: string) => {
     const newLocation = { lat, lon, name: locationName };

@@ -9,12 +9,24 @@ import {
   cleanupExpiredCache,
   getCacheStats,
   isOfflineCacheSupported,
+  getMostRecentCachedLocation,
+  getAllCachedLocations,
+  isOffline,
 } from '@/lib/offline-cache';
 
 interface OfflineCacheState {
   isSupported: boolean;
   cacheCount: number;
   lastCacheTime: Date | null;
+  isOffline: boolean;
+}
+
+interface CachedLocation {
+  latitude: number;
+  longitude: number;
+  locationName: string;
+  data: any;
+  timestamp: number;
 }
 
 export function useOfflineCache() {
@@ -23,7 +35,22 @@ export function useOfflineCache() {
     isSupported: isOfflineCacheSupported(),
     cacheCount: 0,
     lastCacheTime: null,
+    isOffline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
   });
+
+  // Listen for online/offline events
+  useEffect(() => {
+    const handleOnline = () => setState(prev => ({ ...prev, isOffline: false }));
+    const handleOffline = () => setState(prev => ({ ...prev, isOffline: true }));
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Load cache stats on mount
   useEffect(() => {
@@ -81,10 +108,30 @@ export function useOfflineCache() {
     return getCachedWeatherData(latitude, longitude);
   }, [isSubscribed, state.isSupported]);
 
+  /**
+   * Get the most recent cached location for offline startup
+   */
+  const getMostRecentCached = useCallback(async (): Promise<CachedLocation | null> => {
+    if (!isSubscribed || !state.isSupported) return null;
+    
+    return getMostRecentCachedLocation();
+  }, [isSubscribed, state.isSupported]);
+
+  /**
+   * Get all cached locations
+   */
+  const getAllCached = useCallback(async () => {
+    if (!isSubscribed || !state.isSupported) return [];
+    
+    return getAllCachedLocations();
+  }, [isSubscribed, state.isSupported]);
+
   return {
     ...state,
     saveToCache,
     getFromCache,
+    getMostRecentCached,
+    getAllCached,
     isEnabled: isSubscribed && state.isSupported,
   };
 }

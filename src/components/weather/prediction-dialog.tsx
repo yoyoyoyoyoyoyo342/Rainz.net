@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Target, Trophy, Swords, CheckCircle } from "lucide-react";
+import { Target, Trophy, Swords, CheckCircle, Calendar } from "lucide-react";
 import { WeatherPredictionForm } from "./weather-prediction-form";
 import { Leaderboard } from "./leaderboard";
 import { PredictionBattles } from "./prediction-battles";
 import { UserSearch } from "./user-search";
+import { WeeklyChallenge } from "./weekly-challenge";
 import { useLanguage } from "@/contexts/language-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -161,23 +162,27 @@ export const PredictionDialog = ({
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="predict" className="text-sm sm:text-base">
-              <Target className="w-4 h-4 mr-2" />
-              Predict
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="predict" className="text-xs sm:text-sm">
+              <Target className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Predict</span>
             </TabsTrigger>
-            <TabsTrigger value="battles" className="text-sm sm:text-base relative">
-              <Swords className="w-4 h-4 mr-2" />
-              Battles
+            <TabsTrigger value="weekly" className="text-xs sm:text-sm">
+              <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Weekly</span>
+            </TabsTrigger>
+            <TabsTrigger value="battles" className="text-xs sm:text-sm relative">
+              <Swords className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Battles</span>
               {pendingChallenges.length > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-destructive text-destructive-foreground text-xs">
                   {pendingChallenges.length}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="leaderboard" className="text-sm sm:text-base">
-              <Trophy className="w-4 h-4 mr-2" />
-              Leaderboard
+            <TabsTrigger value="leaderboard" className="text-xs sm:text-sm">
+              <Trophy className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Leaders</span>
             </TabsTrigger>
           </TabsList>
           
@@ -259,6 +264,15 @@ export const PredictionDialog = ({
                 returnPredictionId={createBattleMode || !!acceptingBattle}
               />
             )}
+          </TabsContent>
+          
+          <TabsContent value="weekly" className="mt-6">
+            <WeeklyChallenge
+              location={location}
+              latitude={latitude}
+              longitude={longitude}
+              onMakePrediction={() => setActiveTab("predict")}
+            />
           </TabsContent>
           
           <TabsContent value="battles" className="mt-6">

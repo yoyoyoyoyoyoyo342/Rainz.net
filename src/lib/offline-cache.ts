@@ -149,6 +149,106 @@ export async function getCachedWeatherData(
 }
 
 /**
+ * Get the most recent cached location (for offline startup)
+ */
+export async function getMostRecentCachedLocation(): Promise<{
+  latitude: number;
+  longitude: number;
+  locationName: string;
+  data: any;
+  timestamp: number;
+} | null> {
+  try {
+    const db = await openDatabase();
+    const transaction = db.transaction(WEATHER_STORE, 'readonly');
+    const store = transaction.objectStore(WEATHER_STORE);
+    
+    return new Promise((resolve) => {
+      const getAllRequest = store.getAll();
+      
+      getAllRequest.onsuccess = () => {
+        const results = getAllRequest.result as CachedWeatherData[];
+        
+        if (results.length === 0) {
+          resolve(null);
+          return;
+        }
+        
+        // Find the most recent valid cache entry
+        const validResults = results.filter(r => isCacheValid(r.timestamp));
+        
+        if (validResults.length === 0) {
+          resolve(null);
+          return;
+        }
+        
+        // Sort by timestamp descending and get the most recent
+        validResults.sort((a, b) => b.timestamp - a.timestamp);
+        const mostRecent = validResults[0];
+        
+        resolve({
+          latitude: mostRecent.latitude,
+          longitude: mostRecent.longitude,
+          locationName: mostRecent.locationName,
+          data: mostRecent.data,
+          timestamp: mostRecent.timestamp,
+        });
+      };
+      
+      getAllRequest.onerror = () => {
+        console.error('Failed to get cached locations:', getAllRequest.error);
+        resolve(null);
+      };
+    });
+  } catch (error) {
+    console.error('Error getting most recent cached location:', error);
+    return null;
+  }
+}
+
+/**
+ * Get all cached locations
+ */
+export async function getAllCachedLocations(): Promise<Array<{
+  latitude: number;
+  longitude: number;
+  locationName: string;
+  timestamp: number;
+}>> {
+  try {
+    const db = await openDatabase();
+    const transaction = db.transaction(WEATHER_STORE, 'readonly');
+    const store = transaction.objectStore(WEATHER_STORE);
+    
+    return new Promise((resolve) => {
+      const getAllRequest = store.getAll();
+      
+      getAllRequest.onsuccess = () => {
+        const results = getAllRequest.result as CachedWeatherData[];
+        const validResults = results
+          .filter(r => isCacheValid(r.timestamp))
+          .map(r => ({
+            latitude: r.latitude,
+            longitude: r.longitude,
+            locationName: r.locationName,
+            timestamp: r.timestamp,
+          }))
+          .sort((a, b) => b.timestamp - a.timestamp);
+        
+        resolve(validResults);
+      };
+      
+      getAllRequest.onerror = () => {
+        resolve([]);
+      };
+    });
+  } catch (error) {
+    console.error('Error getting all cached locations:', error);
+    return [];
+  }
+}
+
+/**
  * Clear all cached weather data
  */
 export async function clearWeatherCache(): Promise<boolean> {
@@ -244,4 +344,11 @@ export async function getCacheStats(): Promise<{
  */
 export function isOfflineCacheSupported(): boolean {
   return 'indexedDB' in window;
+}
+
+/**
+ * Check if user is currently offline
+ */
+export function isOffline(): boolean {
+  return !navigator.onLine;
 }

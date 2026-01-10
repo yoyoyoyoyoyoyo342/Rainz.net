@@ -154,7 +154,7 @@ export default function WeatherPage() {
       trackWeatherView(selectedLocation.name, selectedLocation.lat, selectedLocation.lon);
 
       if (profile?.notification_enabled && weatherData.mostAccurate?.currentWeather) {
-        const alerts = checkWeatherAlerts(weatherData.mostAccurate.currentWeather);
+        const alerts = checkWeatherAlerts(weatherData.mostAccurate.currentWeather, isImperial);
         alerts.forEach(alert => {
           toast({
             title: `${alert.icon} ${alert.title}`,
@@ -431,7 +431,7 @@ export default function WeatherPage() {
 
             {weatherData.mostAccurate?.currentWeather && (
               <div className="mb-4">
-                <WinterAlerts alerts={checkWeatherAlerts(weatherData.mostAccurate.currentWeather)} />
+                <WinterAlerts alerts={checkWeatherAlerts(weatherData.mostAccurate.currentWeather, isImperial)} />
               </div>
             )}
 

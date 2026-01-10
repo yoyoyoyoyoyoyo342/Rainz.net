@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.notify-blog-post]
 verify_jwt = true
+
+[functions.weather-api]
+verify_jwt = false

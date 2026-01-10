@@ -8,10 +8,22 @@ export interface WeatherAlert {
   icon: string;
 }
 
-export function checkWeatherAlerts(weather: CurrentWeather): WeatherAlert[] {
+// Convert temperature for display based on user preference
+function formatTemp(temp: number, isImperial: boolean): string {
+  return `${temp}°${isImperial ? 'F' : 'C'}`;
+}
+
+// Get threshold values based on unit - thresholds defined in Fahrenheit, converted if needed
+function getTempThreshold(fahrenheitValue: number, isImperial: boolean): number {
+  if (isImperial) return fahrenheitValue;
+  // Convert Fahrenheit threshold to Celsius for comparison
+  return Math.round((fahrenheitValue - 32) * 5 / 9);
+}
+
+export function checkWeatherAlerts(weather: CurrentWeather, isImperial: boolean = true): WeatherAlert[] {
   const alerts: WeatherAlert[] = [];
 
-  // UV Index alerts
+  // UV Index alerts (unit-independent)
   if (weather.uvIndex >= 8) {
     alerts.push({
       id: "uv-extreme",
@@ -30,7 +42,7 @@ export function checkWeatherAlerts(weather: CurrentWeather): WeatherAlert[] {
     });
   }
 
-  // Air Quality alerts
+  // Air Quality alerts (unit-independent)
   if (weather.aqi && weather.aqi > 150) {
     alerts.push({
       id: "aqi-unhealthy",
@@ -49,69 +61,83 @@ export function checkWeatherAlerts(weather: CurrentWeather): WeatherAlert[] {
     });
   }
 
-  // Wind speed alerts
-  if (weather.windSpeed >= 25) {
+  // Wind speed alerts - thresholds in mph (convert if user is metric)
+  // Weather data comes in user's preferred unit, so compare directly
+  const windThreshold = isImperial ? 25 : 40; // 25 mph or 40 km/h
+  const windUnit = isImperial ? 'mph' : 'km/h';
+  if (weather.windSpeed >= windThreshold) {
     alerts.push({
       id: "wind-high",
       title: "High Wind Warning",
-      description: `Wind speed is ${weather.windSpeed} mph. Be cautious of falling debris.`,
+      description: `Wind speed is ${weather.windSpeed} ${windUnit}. Be cautious of falling debris.`,
       severity: "high",
       icon: "💨"
     });
   }
 
-  // Visibility alerts
-  if (weather.visibility <= 2) {
+  // Visibility alerts - thresholds in miles (convert if user is metric)
+  const visibilityThreshold = isImperial ? 2 : 3; // 2 miles or 3 km
+  const visibilityUnit = isImperial ? 'miles' : 'km';
+  if (weather.visibility <= visibilityThreshold) {
     alerts.push({
       id: "visibility-low",
       title: "Low Visibility Alert",
-      description: `Visibility is only ${weather.visibility} miles. Drive with caution.`,
+      description: `Visibility is only ${weather.visibility} ${visibilityUnit}. Drive with caution.`,
       severity: "moderate",
       icon: "🌫️"
     });
   }
 
-  // Temperature extremes
-  if (weather.temperature >= 95) {
+  // Temperature extremes - use user's unit
+  const extremeHeatThreshold = getTempThreshold(95, isImperial);
+  const extremeColdThreshold = getTempThreshold(10, isImperial);
+  const unitSymbol = isImperial ? '°F' : '°C';
+
+  if (weather.temperature >= extremeHeatThreshold) {
     alerts.push({
       id: "heat-extreme",
       title: "Extreme Heat Warning",
-      description: `Temperature is ${weather.temperature}°F. Stay hydrated and seek shade.`,
+      description: `Temperature is ${weather.temperature}${unitSymbol}. Stay hydrated and seek shade.`,
       severity: "extreme",
       icon: "🔥"
     });
-  } else if (weather.temperature <= 10) {
+  } else if (weather.temperature <= extremeColdThreshold) {
     alerts.push({
       id: "cold-extreme",
       title: "Extreme Cold Warning",
-      description: `Temperature is ${weather.temperature}°F. Dress warmly and limit exposure.`,
+      description: `Temperature is ${weather.temperature}${unitSymbol}. Dress warmly and limit exposure.`,
       severity: "extreme",
       icon: "🥶"
     });
   }
 
   // Winter weather alerts
-  // Heavy snowfall warning
-  if (weather.snowfall && weather.snowfall > 2) {
+  // Heavy snowfall warning (inches or cm based on unit)
+  const heavySnowThreshold = isImperial ? 2 : 5; // 2 inches or 5 cm
+  const moderateSnowThreshold = isImperial ? 0.5 : 1.3; // 0.5 inches or 1.3 cm
+  const snowUnit = isImperial ? '"' : 'cm';
+  
+  if (weather.snowfall && weather.snowfall > heavySnowThreshold) {
     alerts.push({
       id: "snow-heavy",
       title: "Heavy Snowfall Warning",
-      description: `${weather.snowfall.toFixed(1)}" of snow expected. Travel not recommended.`,
+      description: `${weather.snowfall.toFixed(1)}${snowUnit} of snow expected. Travel not recommended.`,
       severity: "extreme",
       icon: "❄️"
     });
-  } else if (weather.snowfall && weather.snowfall > 0.5) {
+  } else if (weather.snowfall && weather.snowfall > moderateSnowThreshold) {
     alerts.push({
       id: "snow-moderate",
       title: "Snowfall Alert",
-      description: `${weather.snowfall.toFixed(1)}" of snow expected. Drive with caution.`,
+      description: `${weather.snowfall.toFixed(1)}${snowUnit} of snow expected. Drive with caution.`,
       severity: "high",
       icon: "🌨️"
     });
   }
 
   // Ice risk warning (based on temperature + precipitation)
-  const iceRisk = weather.temperature <= 32 && weather.precipitation && weather.precipitation > 0;
+  const freezingPoint = getTempThreshold(32, isImperial);
+  const iceRisk = weather.temperature <= freezingPoint && weather.precipitation && weather.precipitation > 0;
   if (iceRisk) {
     alerts.push({
       id: "ice-danger",
@@ -123,30 +149,36 @@ export function checkWeatherAlerts(weather: CurrentWeather): WeatherAlert[] {
   }
 
   // Dangerous wind chill
-  if (weather.feelsLike <= 0) {
+  const dangerousWindChill = getTempThreshold(0, isImperial);
+  const highWindChill = getTempThreshold(20, isImperial);
+  
+  if (weather.feelsLike <= dangerousWindChill) {
     alerts.push({
       id: "windchill-extreme",
       title: "Dangerous Wind Chill",
-      description: `Feels like ${weather.feelsLike}°F. Frostbite possible in minutes. Limit outdoor exposure.`,
+      description: `Feels like ${weather.feelsLike}${unitSymbol}. Frostbite possible in minutes. Limit outdoor exposure.`,
       severity: "extreme",
       icon: "🌬️"
     });
-  } else if (weather.feelsLike <= 20 && weather.feelsLike < weather.temperature - 10) {
+  } else if (weather.feelsLike <= highWindChill && weather.feelsLike < weather.temperature - (isImperial ? 10 : 6)) {
     alerts.push({
       id: "windchill-high",
       title: "High Wind Chill Advisory",
-      description: `Feels like ${weather.feelsLike}°F. Dress in warm layers.`,
+      description: `Feels like ${weather.feelsLike}${unitSymbol}. Dress in warm layers.`,
       severity: "high",
       icon: "🥶"
     });
   }
 
   // Blizzard conditions (heavy snow + high wind)
-  if (weather.snowfall && weather.snowfall > 3 && weather.windSpeed >= 35) {
+  const blizzardSnowThreshold = isImperial ? 3 : 7.6; // 3 inches or 7.6 cm
+  const blizzardWindThreshold = isImperial ? 35 : 56; // 35 mph or 56 km/h
+  
+  if (weather.snowfall && weather.snowfall > blizzardSnowThreshold && weather.windSpeed >= blizzardWindThreshold) {
     alerts.push({
       id: "blizzard",
       title: "Blizzard Warning",
-      description: `Heavy snow and winds ${weather.windSpeed} mph. Whiteout conditions expected. Do not travel.`,
+      description: `Heavy snow and winds ${weather.windSpeed} ${windUnit}. Whiteout conditions expected. Do not travel.`,
       severity: "extreme",
       icon: "🌨️"
     });

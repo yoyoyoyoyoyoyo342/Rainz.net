@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Target, Trophy, Swords, CheckCircle, Calendar, Crown } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Target, Trophy, Swords, CheckCircle, Calendar, Crown, HelpCircle, Info } from "lucide-react";
 import { WeatherPredictionForm } from "./weather-prediction-form";
 import { Leaderboard } from "./leaderboard";
 import { PredictionBattles } from "./prediction-battles";
@@ -18,6 +18,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { trackPredictionMade, trackEvent } from "@/lib/track-event";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PredictionDialogProps {
   location: string;
@@ -39,6 +40,14 @@ interface AcceptingBattle {
   date: string;
   challengerName: string;
 }
+
+const tabDescriptions = {
+  predict: "Make your weather prediction for tomorrow",
+  weekly: "Complete daily predictions all week for bonus points",
+  tournament: "Compete in monthly rankings for seasonal badges",
+  battles: "Challenge other users to head-to-head prediction battles",
+  leaderboard: "See the top weather predictors and their stats",
+};
 
 export const PredictionDialog = ({
   location,
@@ -159,39 +168,102 @@ export const PredictionDialog = ({
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Weather Challenge</DialogTitle>
+          <DialogTitle className="text-2xl flex items-center gap-2">
+            <Target className="w-6 h-6 text-primary" />
+            Weather Predictions
+          </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Test your weather forecasting skills, compete with others, and climb the leaderboard
+          </DialogDescription>
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="predict" className="text-xs sm:text-sm">
-              <Target className="w-4 h-4 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Predict</span>
-            </TabsTrigger>
-            <TabsTrigger value="weekly" className="text-xs sm:text-sm">
-              <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Weekly</span>
-            </TabsTrigger>
-            <TabsTrigger value="tournament" className="text-xs sm:text-sm">
-              <Crown className="w-4 h-4 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Season</span>
-            </TabsTrigger>
-            <TabsTrigger value="battles" className="text-xs sm:text-sm relative">
-              <Swords className="w-4 h-4 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Battles</span>
-              {pendingChallenges.length > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-destructive text-destructive-foreground text-xs">
-                  {pendingChallenges.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="leaderboard" className="text-xs sm:text-sm">
-              <Trophy className="w-4 h-4 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Leaders</span>
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 h-auto">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <TabsTrigger value="predict" className="text-xs sm:text-sm flex flex-col sm:flex-row gap-1 py-2">
+                    <Target className="w-4 h-4" />
+                    <span className="hidden sm:inline">Predict</span>
+                  </TabsTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{tabDescriptions.predict}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <TabsTrigger value="weekly" className="text-xs sm:text-sm flex flex-col sm:flex-row gap-1 py-2">
+                    <Calendar className="w-4 h-4" />
+                    <span className="hidden sm:inline">Weekly</span>
+                  </TabsTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{tabDescriptions.weekly}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <TabsTrigger value="tournament" className="text-xs sm:text-sm flex flex-col sm:flex-row gap-1 py-2">
+                    <Crown className="w-4 h-4" />
+                    <span className="hidden sm:inline">Season</span>
+                  </TabsTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{tabDescriptions.tournament}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <TabsTrigger value="battles" className="text-xs sm:text-sm flex flex-col sm:flex-row gap-1 py-2 relative">
+                    <Swords className="w-4 h-4" />
+                    <span className="hidden sm:inline">Battles</span>
+                    {pendingChallenges.length > 0 && (
+                      <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-destructive text-destructive-foreground text-xs">
+                        {pendingChallenges.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{tabDescriptions.battles}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <TabsTrigger value="leaderboard" className="text-xs sm:text-sm flex flex-col sm:flex-row gap-1 py-2">
+                    <Trophy className="w-4 h-4" />
+                    <span className="hidden sm:inline">Leaders</span>
+                  </TabsTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{tabDescriptions.leaderboard}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </TabsList>
+
+          {/* Tab description banner */}
+          <div className="mt-4 p-3 bg-muted/50 rounded-lg flex items-center gap-2">
+            <Info className="w-4 h-4 text-primary shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              {tabDescriptions[activeTab as keyof typeof tabDescriptions]}
+            </p>
+          </div>
           
-          <TabsContent value="predict" className="mt-6">
+          <TabsContent value="predict" className="mt-4">
             {acceptingBattle && (
               <div className="mb-4 space-y-3">
                 <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
@@ -228,7 +300,7 @@ export const PredictionDialog = ({
                   <Swords className="w-5 h-5 text-primary" />
                   <div>
                     <Label htmlFor="battle-mode" className="font-medium">Challenge Mode</Label>
-                    <p className="text-xs text-muted-foreground">Challenge someone to a prediction battle</p>
+                    <p className="text-xs text-muted-foreground">Challenge someone to a prediction battle (+50 bonus pts for winner)</p>
                   </div>
                 </div>
                 <Switch
@@ -271,7 +343,7 @@ export const PredictionDialog = ({
             )}
           </TabsContent>
           
-          <TabsContent value="weekly" className="mt-6">
+          <TabsContent value="weekly" className="mt-4">
             <WeeklyChallenge
               location={location}
               latitude={latitude}
@@ -280,11 +352,11 @@ export const PredictionDialog = ({
             />
           </TabsContent>
           
-          <TabsContent value="tournament" className="mt-6">
+          <TabsContent value="tournament" className="mt-4">
             <SeasonalTournament />
           </TabsContent>
           
-          <TabsContent value="battles" className="mt-6">
+          <TabsContent value="battles" className="mt-4">
             <PredictionBattles
               location={location}
               latitude={latitude}
@@ -293,7 +365,7 @@ export const PredictionDialog = ({
             />
           </TabsContent>
           
-          <TabsContent value="leaderboard" className="mt-6">
+          <TabsContent value="leaderboard" className="mt-4">
             <Leaderboard />
           </TabsContent>
         </Tabs>

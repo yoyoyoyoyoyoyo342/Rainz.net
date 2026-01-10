@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Trophy, Medal, Award, TrendingUp, Crown } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp, Crown, Target, Flame, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DisplayNameDialog } from "./display-name-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 interface LeaderboardEntry {
   rank: number;
@@ -27,6 +28,7 @@ export const Leaderboard = () => {
   const [loading, setLoading] = useState(true);
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [hasDisplayName, setHasDisplayName] = useState(false);
+  const [currentUserRank, setCurrentUserRank] = useState<LeaderboardEntry | null>(null);
 
   useEffect(() => {
     checkDisplayName();
@@ -122,6 +124,16 @@ export const Leaderboard = () => {
         })
       );
 
+      // Find current user's rank if not in top 5
+      if (user) {
+        const userEntry = leaderboardWithStreaks.find(e => e.user_id === user.id);
+        if (userEntry && userEntry.rank > 5) {
+          setCurrentUserRank(userEntry);
+        } else {
+          setCurrentUserRank(null);
+        }
+      }
+
       setLeaderboard(leaderboardWithStreaks.slice(0, 5));
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
@@ -146,7 +158,20 @@ export const Leaderboard = () => {
       case 2:
         return <Award className="h-5 w-5 text-amber-600" />;
       default:
-        return <span className="text-sm font-bold text-muted-foreground">#{index + 1}</span>;
+        return <span className="text-sm font-bold text-muted-foreground w-5 text-center">#{index + 1}</span>;
+    }
+  };
+
+  const getRankStyle = (index: number) => {
+    switch (index) {
+      case 0:
+        return "bg-gradient-to-r from-yellow-500/20 to-yellow-500/5 border-yellow-500/50";
+      case 1:
+        return "bg-gradient-to-r from-gray-400/20 to-gray-400/5 border-gray-400/50";
+      case 2:
+        return "bg-gradient-to-r from-amber-600/20 to-amber-600/5 border-amber-600/50";
+      default:
+        return "bg-background/60 border-border/30 hover:bg-background/80";
     }
   };
 
@@ -190,36 +215,32 @@ export const Leaderboard = () => {
         </div>
       ) : (
         <div className="space-y-2">
-          {leaderboard.slice(0, 5).map((entry, index) => {
+          {leaderboard.map((entry, index) => {
             const accuracy = entry.total_predictions > 0
               ? Math.round((entry.correct_predictions / entry.total_predictions) * 100)
               : 0;
+            const isCurrentUser = user?.id === entry.user_id;
 
             return (
               <div
                 key={entry.rank}
-                className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${
-                  index === 0
-                    ? "bg-yellow-500/20 border-yellow-500/50"
-                    : index === 1
-                    ? "bg-gray-400/15 border-gray-400/40"
-                    : index === 2
-                    ? "bg-amber-600/15 border-amber-600/40"
-                    : "bg-background/60 border-border/30 hover:bg-background/80"
-                }`}
+                className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${getRankStyle(index)} ${isCurrentUser ? "ring-2 ring-primary" : ""}`}
               >
                 <div className="flex items-center justify-center w-8">
                   {getRankIcon(index)}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <button
                       onClick={() => navigate(`/profile/${entry.user_id}`)}
                       className="font-bold text-foreground truncate hover:text-primary hover:underline transition-colors text-left"
                     >
                       {entry.display_name}
                     </button>
+                    {isCurrentUser && (
+                      <Badge variant="outline" className="text-xs">You</Badge>
+                    )}
                     {entry.is_subscriber && (
                       <TooltipProvider>
                         <Tooltip>
@@ -235,37 +256,119 @@ export const Leaderboard = () => {
                       </TooltipProvider>
                     )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
-                    <span className="font-medium">{accuracy}% accurate</span>
-                    <span>•</span>
-                    <span className="font-medium">{entry.current_streak}🔥</span>
-                    <span>•</span>
-                    <span>Longest: {entry.longest_streak}🔥</span>
-                    <span>•</span>
-                    <span>{entry.total_predictions} total</span>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1">
+                            <Target className="w-3 h-3" />
+                            {accuracy}%
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Prediction accuracy ({entry.correct_predictions}/{entry.total_predictions} correct)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1">
+                            <Flame className="w-3 h-3 text-orange-500" />
+                            {entry.current_streak}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Current streak (Best: {entry.longest_streak})</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <span className="text-muted-foreground/60">
+                      {entry.total_predictions} predictions
+                    </span>
                   </div>
                 </div>
 
                 <div className="text-right">
                   <p className="text-2xl font-bold text-primary">
-                    {entry.total_points}
+                    {entry.total_points.toLocaleString()}
                   </p>
-                  <p className="text-xs text-muted-foreground">points</p>
+                  <p className="text-xs text-muted-foreground">pts</p>
                 </div>
               </div>
             );
           })}
+
+          {/* Show current user if not in top 5 */}
+          {currentUserRank && (
+            <>
+              <div className="text-center text-muted-foreground py-1">• • •</div>
+              <div className={`flex items-center gap-4 p-4 rounded-lg border bg-primary/5 border-primary/30 ring-2 ring-primary`}>
+                <div className="flex items-center justify-center w-8">
+                  <span className="text-sm font-bold text-primary">#{currentUserRank.rank}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold">{currentUserRank.display_name}</span>
+                    <Badge variant="outline" className="text-xs">You</Badge>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                    <span className="flex items-center gap-1">
+                      <Target className="w-3 h-3" />
+                      {currentUserRank.total_predictions > 0
+                        ? Math.round((currentUserRank.correct_predictions / currentUserRank.total_predictions) * 100)
+                        : 0}%
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Flame className="w-3 h-3 text-orange-500" />
+                      {currentUserRank.current_streak}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-primary">{currentUserRank.total_points.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">pts</p>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
-      <div className="mt-6 p-4 bg-secondary/20 rounded-lg">
-        <p className="text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground">Scoring:</span>
-          <br />• +25 points daily for maintaining your streak
-          <br />• +100 points if 1 prediction correct
-          <br />• +200 points if 2 predictions correct
-          <br />• +300 points if all 3 predictions correct
-          <br />• -100 points if all predictions wrong
+      {/* Scoring explanation */}
+      <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-border/30">
+        <div className="flex items-center gap-2 mb-3">
+          <Info className="w-4 h-4 text-primary" />
+          <h4 className="font-semibold text-sm">How Scoring Works</h4>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="flex items-center justify-between p-2 bg-background/50 rounded">
+            <span>All 3 correct</span>
+            <span className="font-bold text-green-500">+300 pts</span>
+          </div>
+          <div className="flex items-center justify-between p-2 bg-background/50 rounded">
+            <span>2 correct</span>
+            <span className="font-bold text-green-500">+200 pts</span>
+          </div>
+          <div className="flex items-center justify-between p-2 bg-background/50 rounded">
+            <span>1 correct</span>
+            <span className="font-bold text-green-500">+100 pts</span>
+          </div>
+          <div className="flex items-center justify-between p-2 bg-background/50 rounded">
+            <span>All wrong</span>
+            <span className="font-bold text-red-500">-100 pts</span>
+          </div>
+          <div className="flex items-center justify-between p-2 bg-background/50 rounded">
+            <span>Daily streak</span>
+            <span className="font-bold text-blue-500">+25 pts</span>
+          </div>
+          <div className="flex items-center justify-between p-2 bg-background/50 rounded">
+            <span>Battle win</span>
+            <span className="font-bold text-yellow-500">+50 pts</span>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground mt-3">
+          Predictions are scored at 10 PM CET daily. High temp, low temp, and condition are each evaluated (within 3° tolerance for temps).
         </p>
       </div>
 

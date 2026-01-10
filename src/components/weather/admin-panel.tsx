@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CheckCircle2, XCircle, Clock, BarChart3, MessageSquare, Database, Gift, FileText, MapPin } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, BarChart3, MessageSquare, Database, Gift, FileText, MapPin, Key } from 'lucide-react';
 import { format } from 'date-fns';
 import { AnalyticsDashboard } from './analytics-dashboard';
 import { BroadcastMessage } from './broadcast-message';
@@ -14,6 +14,7 @@ import { ApiDataComparison } from './api-data-comparison';
 import { AdminPremiumGrants } from './admin-premium-grants';
 import { AdminBlogPosts } from './admin-blog-posts';
 import { AdminLocationStats } from './admin-location-stats';
+import { AdminApiToken } from './admin-api-token';
 
 interface WeatherReport {
   id: string;
@@ -196,6 +197,10 @@ export function AdminPanel() {
           <Database className="w-4 h-4 mr-2" />
           API Data
         </TabsTrigger>
+        <TabsTrigger value="api-token">
+          <Key className="w-4 h-4 mr-2" />
+          API Token
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="reports">
@@ -284,6 +289,10 @@ export function AdminPanel() {
 
       <TabsContent value="api-data">
         <ApiDataComparison />
+      </TabsContent>
+
+      <TabsContent value="api-token">
+        <AdminApiToken />
       </TabsContent>
     </Tabs>
   );

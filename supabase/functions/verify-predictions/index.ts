@@ -7,9 +7,10 @@ const corsHeaders = {
 };
 
 // Fetch LLM-processed weather data for a location and date
+// IMPORTANT: Predictions are stored in CELSIUS, so we fetch and compare in Celsius
 async function fetchLLMWeatherData(lat: number, lon: number, date: string) {
   try {
-    // Fetch raw weather data from Open-Meteo in CELSIUS (users predict in Celsius)
+    // Fetch raw weather data from Open-Meteo in CELSIUS (predictions are stored in Celsius)
     const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&start_date=${date}&end_date=${date}&temperature_unit=celsius&timezone=auto`;
     const weatherResponse = await fetch(weatherUrl);
     const weatherData = await weatherResponse.json();
@@ -19,14 +20,15 @@ async function fetchLLMWeatherData(lat: number, lon: number, date: string) {
       return null;
     }
 
-    const rawActualHigh = Math.round(weatherData.daily.temperature_2m_max[0]);
-    const rawActualLow = Math.round(weatherData.daily.temperature_2m_min[0]);
+    // Keep values in Celsius for comparison with user predictions
+    const actualHighCelsius = Math.round(weatherData.daily.temperature_2m_max[0]);
+    const actualLowCelsius = Math.round(weatherData.daily.temperature_2m_min[0]);
     const rawWeatherCode = weatherData.daily.weathercode[0];
     const rawCondition = mapWeatherCodeToCondition(rawWeatherCode);
 
-    console.log(`Fetched actual weather for ${date}: High=${rawActualHigh}°C, Low=${rawActualLow}°C, Condition=${rawCondition}`);
+    console.log(`Fetched actual weather for ${date}: High=${actualHighCelsius}°C, Low=${actualLowCelsius}°C, Condition=${rawCondition}`);
 
-    return { actualHigh: rawActualHigh, actualLow: rawActualLow, actualCondition: rawCondition };
+    return { actualHigh: actualHighCelsius, actualLow: actualLowCelsius, actualCondition: rawCondition };
   } catch (error) {
     console.error("Error fetching weather data:", error);
     return null;

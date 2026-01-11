@@ -77,6 +77,32 @@ serve(async (req) => {
       );
     }
 
+    // Check for active premium trials (shop purchases)
+    const { data: premiumTrial, error: trialError } = await supabaseClient
+      .from("premium_trials")
+      .select("id, expires_at, source")
+      .eq("user_id", userIdToCheck)
+      .gte("expires_at", new Date().toISOString())
+      .order("expires_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!trialError && premiumTrial) {
+      logStep("Active premium trial found", { trialId: premiumTrial.id, expiresAt: premiumTrial.expires_at });
+      return new Response(
+        JSON.stringify({
+          subscribed: true,
+          product_id: "premium_trial",
+          subscription_end: premiumTrial.expires_at,
+          grant_reason: `Trial from ${premiumTrial.source}`,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
     // If no premium grant, check Stripe subscription
     let emailToCheck: string | null = null;
 

@@ -499,6 +499,33 @@ export type Database = {
         }
         Relationships: []
       }
+      premium_trials: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          source: string
+          starts_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          source?: string
+          starts_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          source?: string
+          starts_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -622,6 +649,33 @@ export type Database = {
         }
         Relationships: []
       }
+      shop_purchases: {
+        Row: {
+          id: string
+          item_name: string
+          item_type: string
+          points_spent: number
+          purchased_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          item_name: string
+          item_type: string
+          points_spent: number
+          purchased_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          item_name?: string
+          item_type?: string
+          points_spent?: number
+          purchased_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_achievements: {
         Row: {
           achievement_id: string
@@ -671,6 +725,33 @@ export type Database = {
           created_at?: string
           id?: string
           severity?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_inventory: {
+        Row: {
+          created_at: string
+          id: string
+          item_type: string
+          quantity: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_type: string
+          quantity?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_type?: string
+          quantity?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -820,6 +901,7 @@ export type Database = {
           id: string
           last_visit_date: string
           longest_streak: number
+          streak_freezes_used: number | null
           total_predictions: number
           total_visits: number
           updated_at: string
@@ -831,6 +913,7 @@ export type Database = {
           id?: string
           last_visit_date?: string
           longest_streak?: number
+          streak_freezes_used?: number | null
           total_predictions?: number
           total_visits?: number
           updated_at?: string
@@ -842,6 +925,7 @@ export type Database = {
           id?: string
           last_visit_date?: string
           longest_streak?: number
+          streak_freezes_used?: number | null
           total_predictions?: number
           total_visits?: number
           updated_at?: string

@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Target, Trophy, Swords, CheckCircle, Calendar, Crown, HelpCircle, Info } from "lucide-react";
+import { Target, Trophy, Swords, CheckCircle, Calendar, Crown, HelpCircle, Info, ShoppingBag } from "lucide-react";
 import { WeatherPredictionForm } from "./weather-prediction-form";
 import { Leaderboard } from "./leaderboard";
 import { PredictionBattles } from "./prediction-battles";
 import { UserSearch } from "./user-search";
 import { WeeklyChallenge } from "./weekly-challenge";
 import { SeasonalTournament } from "./seasonal-tournament";
+import { PointsShop } from "./points-shop";
 import { useLanguage } from "@/contexts/language-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +48,7 @@ const tabDescriptions = {
   tournament: "Compete in monthly rankings for seasonal badges",
   battles: "Challenge other users to head-to-head prediction battles",
   leaderboard: "See the top weather predictors and their stats",
+  shop: "Spend your points on streak freezes and premium trials",
 };
 
 export const PredictionDialog = ({
@@ -178,7 +180,7 @@ export const PredictionDialog = ({
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 h-auto">
+          <TabsList className="grid w-full grid-cols-6 h-auto">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -250,6 +252,20 @@ export const PredictionDialog = ({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{tabDescriptions.leaderboard}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <TabsTrigger value="shop" className="text-xs sm:text-sm flex flex-col sm:flex-row gap-1 py-2">
+                    <ShoppingBag className="w-4 h-4" />
+                    <span className="hidden sm:inline">Shop</span>
+                  </TabsTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{tabDescriptions.shop}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -367,6 +383,10 @@ export const PredictionDialog = ({
           
           <TabsContent value="leaderboard" className="mt-4">
             <Leaderboard />
+          </TabsContent>
+          
+          <TabsContent value="shop" className="mt-4">
+            <PointsShop />
           </TabsContent>
         </Tabs>
       </DialogContent>

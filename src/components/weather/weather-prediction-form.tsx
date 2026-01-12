@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CloudRain, CloudSnow, Cloud, Sun, CloudDrizzle, CloudLightning, CloudFog, Wind, Cloudy } from "lucide-react";
+import { 
+  CloudRain, CloudSnow, Cloud, Sun, CloudDrizzle, CloudLightning, 
+  CloudFog, Wind, Target, Thermometer, ThermometerSnowflake, 
+  ThermometerSun, Sparkles, MapPin
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { z } from "zod";
 
@@ -20,32 +23,31 @@ interface WeatherPredictionFormProps {
 }
 
 const weatherConditions = [
-  { value: "sunny", label: "Sunny", icon: Sun },
-  { value: "partly-cloudy", label: "Partly Cloudy", icon: Cloud },
-  { value: "cloudy", label: "Cloudy", icon: Cloud },
-  { value: "overcast", label: "Overcast", icon: Cloud },
-  { value: "drizzle", label: "Drizzle", icon: CloudDrizzle },
-  { value: "rainy", label: "Rainy", icon: CloudRain },
-  { value: "heavy-rain", label: "Heavy Rain", icon: CloudRain },
-  { value: "thunderstorm", label: "Thunderstorm", icon: CloudLightning },
-  { value: "snowy", label: "Snowy", icon: CloudSnow },
-  { value: "heavy-snow", label: "Heavy Snow", icon: CloudSnow },
-  { value: "sleet", label: "Sleet/Mix", icon: CloudSnow },
-  { value: "foggy", label: "Foggy", icon: CloudFog },
-  { value: "windy", label: "Windy", icon: Wind },
+  { value: "sunny", label: "Sunny", icon: Sun, color: "text-yellow-500" },
+  { value: "partly-cloudy", label: "Partly Cloudy", icon: Cloud, color: "text-blue-300" },
+  { value: "cloudy", label: "Cloudy", icon: Cloud, color: "text-gray-400" },
+  { value: "overcast", label: "Overcast", icon: Cloud, color: "text-gray-500" },
+  { value: "drizzle", label: "Drizzle", icon: CloudDrizzle, color: "text-blue-400" },
+  { value: "rainy", label: "Rainy", icon: CloudRain, color: "text-blue-500" },
+  { value: "heavy-rain", label: "Heavy Rain", icon: CloudRain, color: "text-blue-600" },
+  { value: "thunderstorm", label: "Thunderstorm", icon: CloudLightning, color: "text-purple-500" },
+  { value: "snowy", label: "Snowy", icon: CloudSnow, color: "text-sky-300" },
+  { value: "heavy-snow", label: "Heavy Snow", icon: CloudSnow, color: "text-sky-400" },
+  { value: "sleet", label: "Sleet/Mix", icon: CloudSnow, color: "text-slate-400" },
+  { value: "foggy", label: "Foggy", icon: CloudFog, color: "text-gray-400" },
+  { value: "windy", label: "Windy", icon: Wind, color: "text-teal-500" },
 ];
 
-// Validation schema
 const predictionSchema = z.object({
   predictedHigh: z.number()
-    .min(-100, "Temperature must be at least -100°F")
-    .max(150, "Temperature must be at most 150°F"),
+    .min(-100, "Temperature must be at least -100°")
+    .max(150, "Temperature must be at most 150°"),
   predictedLow: z.number()
-    .min(-100, "Temperature must be at least -100°F")
-    .max(150, "Temperature must be at most 150°F"),
+    .min(-100, "Temperature must be at least -100°")
+    .max(150, "Temperature must be at most 150°"),
   predictedCondition: z.string().min(1, "Please select a weather condition"),
 }).refine(data => data.predictedHigh >= data.predictedLow, {
-  message: "High temperature must be greater than or equal to low temperature",
+  message: "High must be ≥ low temperature",
   path: ["predictedHigh"],
 });
 
@@ -63,6 +65,14 @@ export const WeatherPredictionForm = ({
   const [predictedCondition, setPredictedCondition] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowFormatted = tomorrow.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    month: 'short', 
+    day: 'numeric' 
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -76,7 +86,6 @@ export const WeatherPredictionForm = ({
       return;
     }
 
-    // Validate input
     try {
       predictionSchema.parse({
         predictedHigh: parseFloat(predictedHigh),
@@ -93,11 +102,8 @@ export const WeatherPredictionForm = ({
     setLoading(true);
     
     try {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
       const predictionDate = tomorrow.toISOString().split("T")[0];
 
-      // Check if user already made a prediction for tomorrow
       const { data: existingPrediction } = await supabase
         .from("weather_predictions")
         .select("id")
@@ -106,7 +112,7 @@ export const WeatherPredictionForm = ({
         .maybeSingle();
 
       if (existingPrediction) {
-        toast.error("You've already made your prediction for tomorrow! Come back tomorrow to predict the next day.");
+        toast.error("You've already predicted for tomorrow!");
         return;
       }
 
@@ -127,7 +133,7 @@ export const WeatherPredictionForm = ({
 
       if (error) throw error;
 
-      toast.success("🎯 Prediction submitted! Check back tomorrow to see if you were right!");
+      toast.success("🎯 Prediction submitted!");
       setPredictedHigh("");
       setPredictedLow("");
       setPredictedCondition("");
@@ -140,81 +146,147 @@ export const WeatherPredictionForm = ({
     }
   };
 
+  const selectedCondition = weatherConditions.find(c => c.value === predictedCondition);
+
   return (
-    <Card className="p-6 bg-background/40 backdrop-blur-md border-border/50">
-      <h3 className="text-lg font-semibold mb-4">🔮 Predict Tomorrow's Weather</h3>
-      <p className="text-sm text-muted-foreground mb-4">
-        Make your prediction for <span className="font-medium text-foreground">{location}</span> tomorrow
-      </p>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 mb-2">
+          <Target className="w-8 h-8 text-primary" />
+        </div>
+        <h3 className="text-xl font-bold">Predict Tomorrow's Weather</h3>
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <MapPin className="w-4 h-4" />
+          <span>{location}</span>
+        </div>
+        <p className="text-xs text-muted-foreground">{tomorrowFormatted}</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Temperature Inputs */}
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="low">Low Temp ({isImperial ? '°F' : '°C'})</Label>
-            <Input
-              id="low"
-              type="number"
-              value={predictedLow}
-              onChange={(e) => setPredictedLow(e.target.value)}
-              placeholder={isImperial ? "55" : "13"}
-              className="bg-background/60"
-            />
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2 text-sm">
+              <ThermometerSnowflake className="w-4 h-4 text-blue-400" />
+              Low Temp
+            </Label>
+            <div className="relative">
+              <Input
+                type="number"
+                value={predictedLow}
+                onChange={(e) => setPredictedLow(e.target.value)}
+                placeholder={isImperial ? "55" : "13"}
+                className="text-lg font-semibold pr-10 h-12"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                °{isImperial ? 'F' : 'C'}
+              </span>
+            </div>
           </div>
-          <div>
-            <Label htmlFor="high">High Temp ({isImperial ? '°F' : '°C'})</Label>
-            <Input
-              id="high"
-              type="number"
-              value={predictedHigh}
-              onChange={(e) => setPredictedHigh(e.target.value)}
-              placeholder={isImperial ? "75" : "24"}
-              className="bg-background/60"
-            />
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2 text-sm">
+              <ThermometerSun className="w-4 h-4 text-orange-400" />
+              High Temp
+            </Label>
+            <div className="relative">
+              <Input
+                type="number"
+                value={predictedHigh}
+                onChange={(e) => setPredictedHigh(e.target.value)}
+                placeholder={isImperial ? "75" : "24"}
+                className="text-lg font-semibold pr-10 h-12"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                °{isImperial ? 'F' : 'C'}
+              </span>
+            </div>
           </div>
         </div>
 
-        <div>
-          <Label htmlFor="condition">Weather Condition</Label>
+        {/* Condition Select */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2 text-sm">
+            <Cloud className="w-4 h-4" />
+            Weather Condition
+          </Label>
           <Select value={predictedCondition} onValueChange={setPredictedCondition}>
-            <SelectTrigger className="bg-background/60">
-              {predictedCondition ? (
-                <div className="flex items-center gap-2">
-                  {(() => {
-                    const selected = weatherConditions.find(c => c.value === predictedCondition);
-                    if (!selected) return <SelectValue placeholder="Select condition" />;
-                    const Icon = selected.icon;
-                    return (
-                      <>
-                        <Icon className="h-4 w-4" />
-                        <span>{selected.label}</span>
-                      </>
-                    );
-                  })()}
+            <SelectTrigger className="h-12">
+              {selectedCondition ? (
+                <div className="flex items-center gap-3">
+                  <selectedCondition.icon className={`w-5 h-5 ${selectedCondition.color}`} />
+                  <span className="font-medium">{selectedCondition.label}</span>
                 </div>
               ) : (
-                <SelectValue placeholder="Select condition" />
+                <SelectValue placeholder="Select condition..." />
               )}
             </SelectTrigger>
             <SelectContent>
-              {weatherConditions.map((condition) => {
-                const Icon = condition.icon;
-                return (
-                  <SelectItem key={condition.value} value={condition.value} className="cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <Icon className="h-4 w-4" />
-                      <span>{condition.label}</span>
-                    </div>
-                  </SelectItem>
-                );
-              })}
+              <div className="grid grid-cols-2 gap-1 p-1">
+                {weatherConditions.map((condition) => {
+                  const Icon = condition.icon;
+                  return (
+                    <SelectItem 
+                      key={condition.value} 
+                      value={condition.value} 
+                      className="cursor-pointer rounded-md"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Icon className={`w-4 h-4 ${condition.color}`} />
+                        <span>{condition.label}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </div>
             </SelectContent>
           </Select>
         </div>
 
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Submitting..." : "Submit Prediction"}
+        {/* Preview */}
+        {(predictedHigh || predictedLow || predictedCondition) && (
+          <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+            <p className="text-xs text-muted-foreground mb-2">Your Prediction</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {selectedCondition && (
+                  <selectedCondition.icon className={`w-8 h-8 ${selectedCondition.color}`} />
+                )}
+                <span className="font-medium">{selectedCondition?.label || "—"}</span>
+              </div>
+              <div className="text-right">
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-400 font-semibold">{predictedLow || "—"}°</span>
+                  <span className="text-muted-foreground">/</span>
+                  <span className="text-orange-400 font-semibold">{predictedHigh || "—"}°</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Submit Button */}
+        <Button 
+          type="submit" 
+          className="w-full h-12 text-base font-semibold gap-2" 
+          disabled={loading || !predictedHigh || !predictedLow || !predictedCondition}
+        >
+          {loading ? (
+            <>Submitting...</>
+          ) : (
+            <>
+              <Sparkles className="w-5 h-5" />
+              Submit Prediction
+            </>
+          )}
         </Button>
+
+        {/* Scoring Info */}
+        <div className="text-center text-xs text-muted-foreground space-y-1 pt-2">
+          <p>🎯 All 3 correct = <span className="text-green-500 font-medium">+300 pts</span></p>
+          <p>Predictions verified at 10 PM CET daily</p>
+        </div>
       </form>
-    </Card>
+    </div>
   );
 };

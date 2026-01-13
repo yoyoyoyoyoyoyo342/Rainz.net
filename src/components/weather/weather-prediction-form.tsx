@@ -7,11 +7,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { 
   CloudRain, CloudSnow, Cloud, Sun, CloudDrizzle, CloudLightning, 
-  CloudFog, Wind, Target, Thermometer, ThermometerSnowflake, 
-  ThermometerSun, Sparkles, MapPin
+  CloudFog, Wind, Target, ThermometerSnowflake, 
+  ThermometerSun, Sparkles, MapPin, Share2
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { z } from "zod";
+import { PredictionShare } from "./prediction-share";
 
 interface WeatherPredictionFormProps {
   location: string;
@@ -64,6 +65,13 @@ export const WeatherPredictionForm = ({
   const [predictedLow, setPredictedLow] = useState("");
   const [predictedCondition, setPredictedCondition] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [submittedPrediction, setSubmittedPrediction] = useState<{
+    high: string;
+    low: string;
+    condition: string;
+    location: string;
+  } | null>(null);
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -134,6 +142,17 @@ export const WeatherPredictionForm = ({
       if (error) throw error;
 
       toast.success("🎯 Prediction submitted!");
+      
+      // Store prediction for sharing
+      const conditionLabel = weatherConditions.find(c => c.value === predictedCondition)?.label || predictedCondition;
+      setSubmittedPrediction({
+        high: predictedHigh,
+        low: predictedLow,
+        condition: conditionLabel,
+        location,
+      });
+      setShowShare(true);
+      
       setPredictedHigh("");
       setPredictedLow("");
       setPredictedCondition("");
@@ -283,10 +302,19 @@ export const WeatherPredictionForm = ({
 
         {/* Scoring Info */}
         <div className="text-center text-xs text-muted-foreground space-y-1 pt-2">
-          <p>🎯 All 3 correct = <span className="text-green-500 font-medium">+300 pts</span></p>
+          <p>🎯 All 3 correct = <span className="text-green-500 font-medium">+300 pts + Free Streak Freeze!</span></p>
           <p>Predictions verified at 10 PM CET daily</p>
         </div>
       </form>
+
+      {/* Share Dialog */}
+      {submittedPrediction && (
+        <PredictionShare
+          prediction={submittedPrediction}
+          isOpen={showShare}
+          onClose={() => setShowShare(false)}
+        />
+      )}
     </div>
   );
 };

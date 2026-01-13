@@ -152,9 +152,11 @@ serve(async (req) => {
         
         // Calculate tiered accuracy points
         let pointsEarned = 0;
+        let awardBonusStreakFreeze = false;
         switch (correctParts) {
           case 3:
             pointsEarned = 300;  // All correct
+            awardBonusStreakFreeze = true; // Perfect prediction bonus!
             break;
           case 2:
             pointsEarned = 200;  // 2 correct
@@ -203,6 +205,42 @@ serve(async (req) => {
           .from('profiles')
           .update({ total_points: newTotalPoints })
           .eq('user_id', prediction.user_id);
+
+        // Award bonus streak freeze for perfect prediction (this is the only way to go above 5)
+        if (awardBonusStreakFreeze) {
+          console.log(`Awarding bonus streak freeze to user ${prediction.user_id} for perfect prediction`);
+          
+          // Get current streak freeze count
+          const { data: inventory } = await supabase
+            .from('user_inventory')
+            .select('quantity')
+            .eq('user_id', prediction.user_id)
+            .eq('item_type', 'streak_freeze')
+            .maybeSingle();
+
+          const currentFreezes = inventory?.quantity || 0;
+          
+          // Upsert to add streak freeze (no cap for perfect predictions!)
+          await supabase
+            .from('user_inventory')
+            .upsert({
+              user_id: prediction.user_id,
+              item_type: 'streak_freeze',
+              quantity: currentFreezes + 1,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'user_id,item_type' });
+
+          // Notify user about the bonus
+          await supabase.from('user_notifications').insert({
+            user_id: prediction.user_id,
+            type: 'perfect_prediction',
+            title: '🎯 Perfect Prediction!',
+            message: `All 3 predictions correct! +300 points AND a free Streak Freeze added to your inventory!`,
+            metadata: { points: 300, bonus: 'streak_freeze' },
+          });
+
+          console.log(`User ${prediction.user_id} now has ${currentFreezes + 1} streak freezes`);
+        }
 
         // Check if this prediction is part of a battle and resolve it
         const { data: battles } = await supabase

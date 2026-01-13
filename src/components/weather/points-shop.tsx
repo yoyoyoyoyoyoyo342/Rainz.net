@@ -80,9 +80,9 @@ const SHOP_ITEMS: ShopItem[] = [
 ];
 
 const SP_PACKAGES = [
-  { id: "sp_500", points: 500, price: "$1.99", popular: false },
-  { id: "sp_1200", points: 1200, price: "$3.99", popular: true },
-  { id: "sp_3000", points: 3000, price: "$7.99", popular: false },
+  { id: "sp_500", points: 500, price: "€0.99", popular: false },
+  { id: "sp_1200", points: 1200, price: "€1.99", popular: true },
+  { id: "sp_3000", points: 3000, price: "€4.49", popular: false },
 ];
 
 const CONVERSION_RATE = 10; // 10 PP = 1 SP
@@ -90,6 +90,14 @@ const CONVERSION_RATE = 10; // 10 PP = 1 SP
 interface UserInventory {
   streak_freeze: number;
   prediction_boost: number;
+}
+
+interface ShopOffer {
+  id: string;
+  item_id: string;
+  original_price: number;
+  offer_price: number;
+  ends_at: string | null;
 }
 
 export const PointsShop = () => {
@@ -104,12 +112,38 @@ export const PointsShop = () => {
   const [converting, setConverting] = useState(false);
   const [buyingPackage, setBuyingPackage] = useState<string | null>(null);
   const [activeTrial, setActiveTrial] = useState<Date | null>(null);
+  const [offers, setOffers] = useState<ShopOffer[]>([]);
 
   useEffect(() => {
     if (user) {
       fetchUserData();
     }
+    fetchOffers();
   }, [user]);
+
+  const fetchOffers = async () => {
+    try {
+      const { data } = await supabase
+        .from("shop_offers")
+        .select("id, item_id, original_price, offer_price, ends_at")
+        .eq("is_active", true);
+      setOffers(data || []);
+    } catch (error) {
+      console.error("Error fetching offers:", error);
+    }
+  };
+
+  const getItemPrice = (itemId: string, defaultPrice: number) => {
+    const offer = offers.find((o) => o.item_id === itemId);
+    if (offer) {
+      // Check if offer is still valid (not expired)
+      if (offer.ends_at && new Date(offer.ends_at) < new Date()) {
+        return { price: defaultPrice, isOnSale: false, originalPrice: defaultPrice };
+      }
+      return { price: offer.offer_price, isOnSale: true, originalPrice: offer.original_price };
+    }
+    return { price: defaultPrice, isOnSale: false, originalPrice: defaultPrice };
+  };
 
   // Handle SP purchase confirmation from URL
   useEffect(() => {
@@ -260,8 +294,9 @@ export const PointsShop = () => {
       return;
     }
 
-    if (item.type === "streak_freeze" && item.maxQuantity && inventory.streak_freeze >= item.maxQuantity) {
-      toast.error(`You can only hold ${item.maxQuantity} streak freezes`);
+    // For shop purchases, max is 5. Only perfect predictions can go above
+    if (item.type === "streak_freeze" && inventory.streak_freeze >= 5) {
+      toast.error("You can only purchase up to 5 streak freezes. Earn more through perfect predictions!");
       return;
     }
 
@@ -273,18 +308,21 @@ export const PointsShop = () => {
     setPurchasing(item.id);
 
     try {
-      // Deduct SP
+      // Get actual price (may be on sale)
+      const { price: actualPrice } = getItemPrice(item.id, item.price);
+      
+      // Deduct SP with actual price
       await supabase
         .from("profiles")
-        .update({ shop_points: shopPoints - item.price })
+        .update({ shop_points: shopPoints - actualPrice })
         .eq("user_id", user.id);
 
-      // Record purchase
+      // Record purchase with actual price
       await supabase.from("shop_purchases").insert({
         user_id: user.id,
         item_type: item.type,
         item_name: item.name,
-        points_spent: item.price,
+        points_spent: actualPrice,
       });
 
       // Handle item logic
@@ -463,17 +501,23 @@ export const PointsShop = () => {
         </h3>
         <div className="grid gap-3">
           {SHOP_ITEMS.map((item) => {
-            const canAfford = shopPoints >= item.price;
-            const atMax = item.type === "streak_freeze" && item.maxQuantity && inventory.streak_freeze >= item.maxQuantity;
+            const { price: currentPrice, isOnSale, originalPrice } = getItemPrice(item.id, item.price);
+            const canAfford = shopPoints >= currentPrice;
+            const atMax = item.type === "streak_freeze" && inventory.streak_freeze >= 5;
             const hasActive = item.type === "rainz_plus_trial" && (isSubscribed || !!activeTrial);
             const isDisabled = !canAfford || atMax || hasActive;
 
             return (
-              <Card key={item.id} className={`transition-all ${isDisabled ? "opacity-60" : "hover:border-primary/50"}`}>
+              <Card key={item.id} className={`transition-all ${isOnSale ? "border-green-500/50 bg-green-500/5" : ""} ${isDisabled ? "opacity-60" : "hover:border-primary/50"}`}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-muted rounded-lg shrink-0">
+                    <div className="p-2.5 bg-muted rounded-lg shrink-0 relative">
                       {item.icon}
+                      {isOnSale && (
+                        <Badge className="absolute -top-2 -right-2 text-[9px] px-1 py-0 bg-green-500">
+                          SALE
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -481,18 +525,23 @@ export const PointsShop = () => {
                         {item.duration && (
                           <Badge variant="outline" className="text-[10px]">{item.duration}</Badge>
                         )}
-                        {item.maxQuantity && item.type === "streak_freeze" && (
+                        {item.type === "streak_freeze" && (
                           <Badge variant="outline" className="text-[10px]">
-                            {inventory.streak_freeze}/{item.maxQuantity}
+                            {inventory.streak_freeze} owned
                           </Badge>
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">{item.description}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
-                      <div className="flex items-center gap-1 text-sm font-bold text-amber-500">
-                        <Sparkles className="w-3 h-3" />
-                        {item.price}
+                      <div className="flex items-center gap-1">
+                        {isOnSale && (
+                          <span className="text-xs text-muted-foreground line-through">{originalPrice}</span>
+                        )}
+                        <span className={`text-sm font-bold ${isOnSale ? "text-green-500" : "text-amber-500"}`}>
+                          <Sparkles className="w-3 h-3 inline mr-0.5" />
+                          {currentPrice}
+                        </span>
                       </div>
                       <Button
                         size="sm"
@@ -504,7 +553,7 @@ export const PointsShop = () => {
                         {purchasing === item.id ? (
                           <Loader2 className="w-3 h-3 animate-spin" />
                         ) : atMax ? (
-                          "Max"
+                          "Max (Shop)"
                         ) : hasActive ? (
                           "Active"
                         ) : !canAfford ? (
@@ -529,7 +578,8 @@ export const PointsShop = () => {
             <Snowflake className="w-3 h-3" /> Streak Freezes are automatic
           </p>
           <p>• If you miss a day, a freeze protects your streak</p>
-          <p>• Max 5 freezes at a time</p>
+          <p>• Max 5 from the shop, but you can earn more through perfect predictions!</p>
+          <p>• Get all 3 predictions correct = +300 pts + Free Streak Freeze</p>
         </CardContent>
       </Card>
     </div>

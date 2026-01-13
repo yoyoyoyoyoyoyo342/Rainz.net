@@ -7,11 +7,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Shop Points packages
+// Shop Points packages in EUR (cents)
 const SP_PACKAGES = {
-  sp_500: { amount: 199, points: 500, name: "500 Shop Points" },
-  sp_1200: { amount: 399, points: 1200, name: "1,200 Shop Points" },
-  sp_3000: { amount: 799, points: 3000, name: "3,000 Shop Points" },
+  sp_500: { amount: 99, points: 500, name: "500 Shop Points" },
+  sp_1200: { amount: 199, points: 1200, name: "1,200 Shop Points" },
+  sp_3000: { amount: 449, points: 3000, name: "3,000 Shop Points" },
 };
 
 serve(async (req) => {
@@ -27,25 +27,47 @@ serve(async (req) => {
   try {
     const { packageId } = await req.json();
     
+    console.log(`[BUY-SP] Received request for package: ${packageId}`);
+    
     if (!packageId || !SP_PACKAGES[packageId as keyof typeof SP_PACKAGES]) {
+      console.log(`[BUY-SP] Invalid package ID: ${packageId}`);
       throw new Error("Invalid package ID");
     }
 
     const spPackage = SP_PACKAGES[packageId as keyof typeof SP_PACKAGES];
+    console.log(`[BUY-SP] Package details: ${JSON.stringify(spPackage)}`);
 
     // Get authenticated user
-    const authHeader = req.headers.get("Authorization")!;
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.log("[BUY-SP] No authorization header");
+      throw new Error("No authorization header");
+    }
+    
     const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
+    const { data, error: authError } = await supabaseClient.auth.getUser(token);
+    
+    if (authError) {
+      console.log(`[BUY-SP] Auth error: ${authError.message}`);
+      throw new Error(`Authentication failed: ${authError.message}`);
+    }
+    
     const user = data.user;
     
     if (!user?.email) {
+      console.log("[BUY-SP] User not authenticated or email not available");
       throw new Error("User not authenticated or email not available");
     }
 
     console.log(`[BUY-SP] User ${user.email} purchasing ${spPackage.name}`);
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      console.log("[BUY-SP] STRIPE_SECRET_KEY not set");
+      throw new Error("Stripe is not configured");
+    }
+
+    const stripe = new Stripe(stripeKey, {
       apiVersion: "2025-08-27.basil",
     });
 
@@ -54,16 +76,22 @@ serve(async (req) => {
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
+      console.log(`[BUY-SP] Found existing customer: ${customerId}`);
+    } else {
+      console.log("[BUY-SP] Creating new customer");
     }
 
-    // Create checkout session
+    const origin = req.headers.get("origin") || "https://rainz.net";
+    console.log(`[BUY-SP] Origin: ${origin}`);
+
+    // Create checkout session with EUR
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
           price_data: {
-            currency: "usd",
+            currency: "eur",
             product_data: {
               name: spPackage.name,
               description: `Get ${spPackage.points} Shop Points to spend in the Rainz shop`,
@@ -74,8 +102,8 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${req.headers.get("origin")}/?sp_purchase=success&points=${spPackage.points}`,
-      cancel_url: `${req.headers.get("origin")}/?sp_purchase=cancelled`,
+      success_url: `${origin}/?sp_purchase=success&points=${spPackage.points}`,
+      cancel_url: `${origin}/?sp_purchase=cancelled`,
       metadata: {
         user_id: user.id,
         package_id: packageId,
@@ -83,7 +111,7 @@ serve(async (req) => {
       },
     });
 
-    console.log(`[BUY-SP] Checkout session created: ${session.id}`);
+    console.log(`[BUY-SP] Checkout session created: ${session.id}, URL: ${session.url}`);
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

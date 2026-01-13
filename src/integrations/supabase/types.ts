@@ -652,6 +652,42 @@ export type Database = {
         }
         Relationships: []
       }
+      shop_offers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          item_id: string
+          offer_price: number
+          original_price: number
+          starts_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          item_id: string
+          offer_price: number
+          original_price: number
+          starts_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          item_id?: string
+          offer_price?: number
+          original_price?: number
+          starts_at?: string
+        }
+        Relationships: []
+      }
       shop_purchases: {
         Row: {
           id: string

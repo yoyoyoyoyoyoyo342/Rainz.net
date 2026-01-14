@@ -80,3 +80,12 @@ verify_jwt = true
 
 [functions.weather-api]
 verify_jwt = false
+
+[functions.buy-shop-points]
+verify_jwt = false
+
+[functions.confirm-sp-purchase]
+verify_jwt = false
+
+[functions.world-weather-average]
+verify_jwt = false

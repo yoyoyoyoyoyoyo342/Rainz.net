@@ -289,7 +289,10 @@ export const PointsShop = () => {
       return;
     }
 
-    if (shopPoints < item.price) {
+    // Get actual price (may be on sale) - check affordability with OFFER price, not original
+    const { price: actualPrice } = getItemPrice(item.id, item.price);
+    
+    if (shopPoints < actualPrice) {
       toast.error("Not enough Shop Points!");
       return;
     }
@@ -308,10 +311,7 @@ export const PointsShop = () => {
     setPurchasing(item.id);
 
     try {
-      // Get actual price (may be on sale)
-      const { price: actualPrice } = getItemPrice(item.id, item.price);
-      
-      // Deduct SP with actual price
+      // Deduct SP with actual price (already calculated above)
       await supabase
         .from("profiles")
         .update({ shop_points: shopPoints - actualPrice })

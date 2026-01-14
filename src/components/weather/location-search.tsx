@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, MapPin, Loader2, History, X } from "lucide-react";
+import { Search, MapPin, Loader2, History, X, Globe } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -165,9 +165,12 @@ export function LocationSearch({
     isLoading
   } = useQuery({
     queryKey: ["/api/locations/search", debouncedQuery],
-    enabled: debouncedQuery.length > 2,
+    enabled: debouncedQuery.length > 2 && debouncedQuery.toLowerCase() !== "world",
     queryFn: () => weatherApi.searchLocations(debouncedQuery)
   });
+  
+  // Check for "World" search
+  const isWorldSearch = debouncedQuery.toLowerCase() === "world";
 
   // Fetch address results in parallel
   useEffect(() => {
@@ -477,10 +480,36 @@ export function LocationSearch({
                   </div>
                 )}
               </div>
-            ) : (isLoading || loadingAddresses) ? (
+            ) : (isLoading || loadingAddresses) && !isWorldSearch ? (
               <div className="p-4 text-center text-muted-foreground">
                 <Loader2 className="w-4 h-4 animate-spin inline-block mr-2" />
                 {t('search.searching')}
+              </div>
+            ) : isWorldSearch ? (
+              <div className="max-h-60 overflow-y-auto">
+                <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30">
+                  Global Weather
+                </div>
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    // Use special coordinates to indicate world search (0,0)
+                    onLocationSelect(0, 0, "World Average");
+                    toast({
+                      title: "World Weather",
+                      description: "Loading global weather average from 20 major cities worldwide",
+                    });
+                  }}
+                  className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border flex items-start gap-2"
+                >
+                  <Globe className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                  <div>
+                    <div className="font-medium text-foreground">World Average</div>
+                    <div className="text-sm text-muted-foreground">
+                      Average weather from 20 major cities worldwide
+                    </div>
+                  </div>
+                </button>
               </div>
             ) : (locations.length > 0 || addressResults.length > 0) ? (
               <div className="max-h-60 overflow-y-auto">

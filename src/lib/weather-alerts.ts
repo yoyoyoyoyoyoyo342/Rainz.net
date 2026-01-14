@@ -89,8 +89,10 @@ export function checkWeatherAlerts(weather: CurrentWeather, isImperial: boolean 
   }
 
   // Temperature extremes - use user's unit
-  const extremeHeatThreshold = getTempThreshold(95, isImperial);
-  const extremeColdThreshold = getTempThreshold(10, isImperial);
+  // IMPORTANT: Weather data is ALWAYS in the user's preferred unit (isImperial)
+  // So we compare against thresholds in the same unit system
+  const extremeHeatThreshold = isImperial ? 95 : 35; // 95°F or 35°C
+  const extremeColdThreshold = isImperial ? 10 : -12; // 10°F or -12°C
   const unitSymbol = isImperial ? '°F' : '°C';
 
   if (weather.temperature >= extremeHeatThreshold) {
@@ -136,7 +138,7 @@ export function checkWeatherAlerts(weather: CurrentWeather, isImperial: boolean 
   }
 
   // Ice risk warning (based on temperature + precipitation)
-  const freezingPoint = getTempThreshold(32, isImperial);
+  const freezingPoint = isImperial ? 32 : 0; // 32°F or 0°C
   const iceRisk = weather.temperature <= freezingPoint && weather.precipitation && weather.precipitation > 0;
   if (iceRisk) {
     alerts.push({
@@ -148,9 +150,10 @@ export function checkWeatherAlerts(weather: CurrentWeather, isImperial: boolean 
     });
   }
 
-  // Dangerous wind chill
-  const dangerousWindChill = getTempThreshold(0, isImperial);
-  const highWindChill = getTempThreshold(20, isImperial);
+  // Dangerous wind chill - use direct values based on unit
+  const dangerousWindChill = isImperial ? 0 : -18; // 0°F or -18°C
+  const highWindChill = isImperial ? 20 : -7; // 20°F or -7°C
+  const windChillDiff = isImperial ? 10 : 6;
   
   if (weather.feelsLike <= dangerousWindChill) {
     alerts.push({
@@ -160,7 +163,7 @@ export function checkWeatherAlerts(weather: CurrentWeather, isImperial: boolean 
       severity: "extreme",
       icon: "🌬️"
     });
-  } else if (weather.feelsLike <= highWindChill && weather.feelsLike < weather.temperature - (isImperial ? 10 : 6)) {
+  } else if (weather.feelsLike <= highWindChill && weather.feelsLike < weather.temperature - windChillDiff) {
     alerts.push({
       id: "windchill-high",
       title: "High Wind Chill Advisory",

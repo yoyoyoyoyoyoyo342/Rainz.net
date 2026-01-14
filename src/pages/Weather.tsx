@@ -98,9 +98,64 @@ export default function WeatherPage() {
   usePushNotifications();
   
   const { data: weatherData, isLoading, isFetching, error } = useQuery<WeatherResponse, Error>({
-    queryKey: ["/api/weather", selectedLocation?.lat, selectedLocation?.lon],
+    queryKey: ["/api/weather", selectedLocation?.lat, selectedLocation?.lon, selectedLocation?.name],
     enabled: !!selectedLocation,
     queryFn: async () => {
+      // Special handling for World Average
+      if (selectedLocation?.name === "World Average") {
+        const { data, error } = await supabase.functions.invoke('world-weather-average', {
+          body: { isImperial }
+        });
+        
+        if (error) throw error;
+        
+        // Transform world data to match WeatherResponse structure
+        const worldData = data;
+        const baseCurrentWeather = {
+          temperature: worldData.temperature,
+          humidity: worldData.humidity,
+          windSpeed: worldData.windSpeed,
+          windDirection: 0,
+          condition: worldData.condition,
+          uvIndex: worldData.uvIndex,
+          feelsLike: worldData.temperature,
+          visibility: 10,
+          sunrise: "06:00",
+          sunset: "18:00",
+          pressure: 1013,
+          precipitation: 0,
+          precipitationProbability: 0,
+          description: `Global average from ${worldData.citiesPolled} major cities. Hottest: ${worldData.extremes.hottest.city} (${worldData.extremes.hottest.temperature}°), Coldest: ${worldData.extremes.coldest.city} (${worldData.extremes.coldest.temperature}°)`,
+        };
+        
+        const transformedData: WeatherResponse = {
+          mostAccurate: {
+            currentWeather: baseCurrentWeather,
+            source: "World Average",
+            location: "World",
+            latitude: 0,
+            longitude: 0,
+            accuracy: 100,
+            hourlyForecast: [],
+            dailyForecast: [],
+          },
+          sources: [],
+          aggregated: {
+            currentWeather: baseCurrentWeather,
+            source: "World Average",
+            location: "World",
+            latitude: 0,
+            longitude: 0,
+            accuracy: 100,
+            hourlyForecast: [],
+            dailyForecast: [],
+          },
+        };
+        
+        setIsUsingCachedData(false);
+        return transformedData;
+      }
+      
       try {
         const data = await weatherApi.getWeatherData(selectedLocation!.lat, selectedLocation!.lon, selectedLocation!.name);
         setIsUsingCachedData(false);

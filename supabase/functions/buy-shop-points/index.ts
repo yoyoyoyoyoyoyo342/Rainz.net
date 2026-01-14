@@ -7,11 +7,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Shop Points packages in EUR (cents)
+// Shop Points packages with Stripe price IDs
 const SP_PACKAGES = {
-  sp_500: { amount: 99, points: 500, name: "500 Shop Points" },
-  sp_1200: { amount: 199, points: 1200, name: "1,200 Shop Points" },
-  sp_3000: { amount: 449, points: 3000, name: "3,000 Shop Points" },
+  sp_500: { priceId: "price_1SpM7z8mRhH1c6KOuli4lyNY", points: 500, name: "500 Shop Points" },
+  sp_1200: { priceId: "price_1SpM8D8mRhH1c6KOYvTEYjsh", points: 1200, name: "1,200 Shop Points" },
+  sp_3000: { priceId: "price_1SpM8O8mRhH1c6KOzdiEU1yC", points: 3000, name: "3,000 Shop Points" },
 };
 
 serve(async (req) => {
@@ -84,20 +84,13 @@ serve(async (req) => {
     const origin = req.headers.get("origin") || "https://rainz.net";
     console.log(`[BUY-SP] Origin: ${origin}`);
 
-    // Create checkout session with EUR
+    // Create checkout session using the Stripe price ID
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price_data: {
-            currency: "eur",
-            product_data: {
-              name: spPackage.name,
-              description: `Get ${spPackage.points} Shop Points to spend in the Rainz shop`,
-            },
-            unit_amount: spPackage.amount,
-          },
+          price: spPackage.priceId,
           quantity: 1,
         },
       ],

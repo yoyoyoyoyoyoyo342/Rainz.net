@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Target, Trophy, Flame, Zap, Medal, ShoppingBag, Swords } from "lucide-react";
+import { Target, Trophy, Flame, Zap, Medal, ShoppingBag, Users } from "lucide-react";
 import { WeatherPredictionForm } from "./weather-prediction-form";
 import { Leaderboard } from "./leaderboard";
 import { WeeklyChallenge } from "./weekly-challenge";
 import { SeasonalTournament } from "./seasonal-tournament";
 import { PointsShop } from "./points-shop";
 import { BattleLeagues } from "./battle-leagues";
-import { PredictionBattles } from "./prediction-battles";
 import { useLanguage } from "@/contexts/language-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -166,14 +165,10 @@ export const PredictionDialog = ({
         )}
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 h-11">
+          <TabsList className="grid w-full grid-cols-3 h-11">
             <TabsTrigger value="predict" className="gap-1 text-xs sm:text-sm">
               <Target className="w-4 h-4" />
               <span className="hidden sm:inline">Predict</span>
-            </TabsTrigger>
-            <TabsTrigger value="battles" className="gap-1 text-xs sm:text-sm">
-              <Swords className="w-4 h-4" />
-              <span className="hidden sm:inline">Battles</span>
             </TabsTrigger>
             <TabsTrigger value="leaderboard" className="gap-1 text-xs sm:text-sm">
               <Trophy className="w-4 h-4" />
@@ -222,31 +217,6 @@ export const PredictionDialog = ({
               isImperial={isImperial}
             />
           </TabsContent>
-
-          <TabsContent value="battles" className="mt-4 space-y-6">
-            {/* Battles & Challenges */}
-            <div>
-              <h3 className="font-semibold flex items-center gap-2 mb-4">
-                <Swords className="w-5 h-5 text-primary" />
-                Active Battles
-              </h3>
-              <PredictionBattles
-                location={location}
-                latitude={latitude}
-                longitude={longitude}
-                onAcceptBattle={() => setActiveTab("predict")}
-              />
-            </div>
-
-            {/* Leagues Section */}
-            <div className="pt-4 border-t">
-              <h3 className="font-semibold flex items-center gap-2 mb-4">
-                <Trophy className="w-5 h-5 text-amber-500" />
-                Prediction Leagues
-              </h3>
-              <BattleLeagues />
-            </div>
-          </TabsContent>
           
           <TabsContent value="leaderboard" className="mt-4 space-y-4">
             {/* Leaderboard Type Selector */}
@@ -264,6 +234,12 @@ export const PredictionDialog = ({
                   <SelectItem value="weekly">This Week</SelectItem>
                   <SelectItem value="monthly">This Month</SelectItem>
                   <SelectItem value="seasonal">This Season</SelectItem>
+                  <SelectItem value="leagues">
+                    <span className="flex items-center gap-1">
+                      <Users className="w-3 h-3" />
+                      My Leagues
+                    </span>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -279,6 +255,9 @@ export const PredictionDialog = ({
             )}
             {(leaderboardType === "monthly" || leaderboardType === "seasonal") && (
               <SeasonalTournament />
+            )}
+            {leaderboardType === "leagues" && (
+              <BattleLeagues />
             )}
           </TabsContent>
           

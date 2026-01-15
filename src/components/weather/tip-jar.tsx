@@ -87,12 +87,14 @@ export const TipJar = () => {
       if (error) throw error;
       
       if (data?.url) {
-        window.open(data.url, "_blank");
+        // Use location.href for more reliable Stripe redirect (avoids popup blockers)
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned");
       }
     } catch (error: any) {
       console.error("Error creating tip checkout:", error);
       toast.error("Failed to process tip. Please try again.");
-    } finally {
       setTipping(null);
     }
   };

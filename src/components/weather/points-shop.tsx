@@ -315,11 +315,14 @@ export const PointsShop = () => {
 
       if (error) throw error;
       if (data?.url) {
-        window.open(data.url, "_blank");
+        // Use location.href for more reliable Stripe redirect (avoids popup blockers)
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned");
       }
     } catch (error: any) {
+      console.error("Buy SP error:", error);
       toast.error(error.message || "Failed to initiate purchase");
-    } finally {
       setBuyingPackage(null);
     }
   };

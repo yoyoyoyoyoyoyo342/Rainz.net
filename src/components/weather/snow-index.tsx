@@ -18,14 +18,14 @@ interface SnowIndexProps {
 export function SnowIndex({ snowData, isImperial = false }: SnowIndexProps) {
   if (!snowData) {
     return (
-      <div className="overflow-hidden rounded-2xl shadow-xl border-0">
-        <div className="bg-gradient-to-r from-blue-300/70 via-cyan-400/60 to-sky-400/70 backdrop-blur-sm p-4">
+      <div className="overflow-hidden rounded-2xl glass-card">
+        <div className="p-4 border-b border-border/50">
           <div className="flex items-center gap-2">
-            <Snowflake className="w-5 h-5 text-white" />
-            <h3 className="font-semibold text-white">Snow Index</h3>
+            <Snowflake className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold text-foreground">Snow Index</h3>
           </div>
         </div>
-        <div className="bg-background/50 backdrop-blur-md p-6 text-center">
+        <div className="p-6 text-center">
           <p className="text-muted-foreground">No snow data available</p>
         </div>
       </div>
@@ -101,25 +101,25 @@ export function SnowIndex({ snowData, isImperial = false }: SnowIndexProps) {
   ];
 
   return (
-    <div className="overflow-hidden rounded-2xl shadow-xl border-0">
-      {/* Header with softer gradient */}
-      <div className="bg-gradient-to-r from-blue-300/70 via-cyan-400/60 to-sky-400/70 backdrop-blur-sm p-4">
+    <div className="overflow-hidden rounded-2xl glass-card">
+      {/* Header without gradient */}
+      <div className="p-4 border-b border-border/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Snowflake className="w-5 h-5 text-white animate-pulse" />
-            <h3 className="font-semibold text-white">Snow Index</h3>
+            <Snowflake className="w-5 h-5 text-primary animate-pulse" />
+            <h3 className="font-semibold text-foreground">Snow Index</h3>
           </div>
-          <span className="text-xs text-white/80">Live conditions</span>
+          <span className="text-xs text-muted-foreground">Live conditions</span>
         </div>
       </div>
 
       {/* Content */}
-      <div className="bg-background/50 backdrop-blur-md p-4">
+      <div className="p-4">
         <div className="grid grid-cols-2 gap-3 mb-4">
           {snowMetrics.map((metric, idx) => (
             <div 
               key={idx} 
-              className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-accent/5 border border-border/50"
+              className="p-3 rounded-xl bg-muted/30 border border-border/30"
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xl">{metric.icon}</span>
@@ -134,9 +134,9 @@ export function SnowIndex({ snowData, isImperial = false }: SnowIndexProps) {
         </div>
 
         {/* Advisory */}
-        <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20">
+        <div className="p-3 rounded-xl bg-primary/5 border border-primary/20">
           <div className="flex items-center gap-2 mb-1">
-            <Snowflake className="w-4 h-4 text-blue-500" />
+            <Snowflake className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium">Winter Advisory</span>
           </div>
           <p className="text-xs text-muted-foreground">

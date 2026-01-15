@@ -156,36 +156,40 @@
   }
 }
 
-/* Solid Card Design - Lasting, non-transparent */
+/* Glassmorphism Design - Translucent glass effect */
 @layer components {
   .glass-card {
     position: relative;
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08),
-                0 4px 12px rgba(0, 0, 0, 0.04);
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    background: hsl(var(--card) / 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.5);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 hsl(var(--card) / 0.4);
+    transition: all 0.2s ease;
   }
 
   .glass-card:hover {
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1),
-                0 8px 24px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12),
+                inset 0 1px 0 hsl(var(--card) / 0.5);
   }
 
   .glass-card-strong {
     position: relative;
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1),
-                0 8px 24px rgba(0, 0, 0, 0.08);
+    background: hsl(var(--card) / 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsl(var(--border) / 0.6);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12),
+                inset 0 1px 0 hsl(var(--card) / 0.5);
   }
 
   .glass-header {
     position: relative;
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06),
-                0 2px 8px rgba(0, 0, 0, 0.04);
+    background: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid hsl(var(--border) / 0.4);
   }
 }
 

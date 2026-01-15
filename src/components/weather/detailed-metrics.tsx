@@ -26,16 +26,16 @@ export function DetailedMetrics({
   return (
     <section className="mb-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* UV Index Card - controlled by showUV setting */}
+        {/* UV Index Card */}
         {showUV && (
-          <div className="overflow-hidden rounded-2xl shadow-xl border-0">
-            <div className="bg-gradient-to-r from-yellow-300/70 via-orange-400/60 to-red-400/70 backdrop-blur-sm p-4">
+          <div className="overflow-hidden rounded-2xl glass-card">
+            <div className="p-4 border-b border-border/50">
               <div className="flex items-center gap-2">
-                <Sun className="w-5 h-5 text-white" />
-                <h3 className="font-semibold text-white">UV Index</h3>
+                <Sun className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-foreground">UV Index</h3>
               </div>
             </div>
-            <div className="bg-background/50 backdrop-blur-md p-4">
+            <div className="p-4">
               <div className="text-4xl font-bold text-foreground mb-2">
                 {currentWeather.uvIndex}
               </div>
@@ -58,59 +58,59 @@ export function DetailedMetrics({
           </div>
         )}
 
-        {/* Sun & Moon Card - controlled by showSunTimes and showMoonPhase settings */}
+        {/* Sun & Moon Card */}
         {(showSunTimes || showMoonPhase) && (
-          <div className="overflow-hidden rounded-2xl shadow-xl border-0">
-            <div className="bg-gradient-to-r from-amber-300/70 via-orange-300/60 to-purple-400/70 backdrop-blur-sm p-4">
+          <div className="overflow-hidden rounded-2xl glass-card">
+            <div className="p-4 border-b border-border/50">
               <div className="flex items-center gap-2">
-                <Sunrise className="w-5 h-5 text-white" />
-                <h3 className="font-semibold text-white">Sun & Moon</h3>
+                <Sunrise className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-foreground">Sun & Moon</h3>
               </div>
             </div>
-            <div className="bg-background/50 backdrop-blur-md p-4">
+            <div className="p-4">
               <div className={`grid ${showSunTimes && showMoonPhase ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
-                {/* Sun - controlled by showSunTimes */}
+                {/* Sun */}
                 {showSunTimes && (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
                       <div className="flex items-center gap-2">
                         <Sunrise className="w-4 h-4 text-amber-500" />
                         <span className="text-xs text-muted-foreground">Sunrise</span>
                       </div>
                       <span className="font-semibold text-sm">{formatTime(currentWeather.sunrise, is24Hour)}</span>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
                       <div className="flex items-center gap-2">
                         <Sunset className="w-4 h-4 text-orange-500" />
                         <span className="text-xs text-muted-foreground">Sunset</span>
                       </div>
                       <span className="font-semibold text-sm">{formatTime(currentWeather.sunset, is24Hour)}</span>
                     </div>
-                    <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-muted/30">
                       <span className="text-muted-foreground">Daylight</span>
                       <span className="font-medium">{currentWeather.daylight ?? '—'}</span>
                     </div>
                   </div>
                 )}
 
-                {/* Moon - controlled by showMoonPhase */}
+                {/* Moon */}
                 {showMoonPhase && (
                   <div className={`space-y-3 ${showSunTimes ? 'border-l border-border/50 pl-4' : ''}`}>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
                       <div className="flex items-center gap-2">
-                        <Moon className="w-4 h-4 text-purple-400" />
+                        <Moon className="w-4 h-4 text-purple-500" />
                         <span className="text-xs text-muted-foreground">Rise</span>
                       </div>
                       <span className="font-semibold text-sm">{formatTime(currentWeather.moonrise, is24Hour)}</span>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
                       <div className="flex items-center gap-2">
-                        <Moon className="w-4 h-4 text-slate-400" />
+                        <Moon className="w-4 h-4 text-slate-500" />
                         <span className="text-xs text-muted-foreground">Set</span>
                       </div>
                       <span className="font-semibold text-sm">{formatTime(currentWeather.moonset, is24Hour)}</span>
                     </div>
-                    <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-muted/30">
                       <span className="text-muted-foreground">Phase</span>
                       <span className="font-medium">{currentWeather.moonPhase ?? '—'}</span>
                     </div>

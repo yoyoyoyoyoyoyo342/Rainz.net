@@ -75,8 +75,8 @@ export function AdminShopOffers() {
     if (!item) return;
 
     const price = parseInt(offerPrice);
-    if (isNaN(price) || price <= 0 || price >= item.defaultPrice) {
-      toast.error("Offer price must be less than the original price");
+    if (isNaN(price) || price < 0 || price >= item.defaultPrice) {
+      toast.error("Offer price must be less than the original price (0 = free)");
       return;
     }
 

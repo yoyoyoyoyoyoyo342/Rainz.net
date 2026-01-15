@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Target, Trophy, CheckCircle, Crown, Flame, Zap, Users, Medal } from "lucide-react";
+import { Target, Trophy, Flame, Zap, Medal, ShoppingBag, Swords } from "lucide-react";
 import { WeatherPredictionForm } from "./weather-prediction-form";
 import { Leaderboard } from "./leaderboard";
 import { WeeklyChallenge } from "./weekly-challenge";
 import { SeasonalTournament } from "./seasonal-tournament";
 import { PointsShop } from "./points-shop";
+import { BattleLeagues } from "./battle-leagues";
+import { PredictionBattles } from "./prediction-battles";
 import { useLanguage } from "@/contexts/language-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -14,8 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { trackPredictionMade, trackEvent } from "@/lib/track-event";
-import { ShoppingBag } from "lucide-react";
+import { trackPredictionMade } from "@/lib/track-event";
 
 interface PredictionDialogProps {
   location: string;
@@ -165,16 +166,20 @@ export const PredictionDialog = ({
         )}
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-11">
-            <TabsTrigger value="predict" className="gap-1.5 text-xs sm:text-sm">
+          <TabsList className="grid w-full grid-cols-4 h-11">
+            <TabsTrigger value="predict" className="gap-1 text-xs sm:text-sm">
               <Target className="w-4 h-4" />
               <span className="hidden sm:inline">Predict</span>
             </TabsTrigger>
-            <TabsTrigger value="leaderboard" className="gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="battles" className="gap-1 text-xs sm:text-sm">
+              <Swords className="w-4 h-4" />
+              <span className="hidden sm:inline">Battles</span>
+            </TabsTrigger>
+            <TabsTrigger value="leaderboard" className="gap-1 text-xs sm:text-sm">
               <Trophy className="w-4 h-4" />
               <span className="hidden sm:inline">Leaders</span>
             </TabsTrigger>
-            <TabsTrigger value="shop" className="gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="shop" className="gap-1 text-xs sm:text-sm">
               <ShoppingBag className="w-4 h-4" />
               <span className="hidden sm:inline">Shop</span>
             </TabsTrigger>
@@ -216,6 +221,31 @@ export const PredictionDialog = ({
               onPredictionMade={handlePredictionMade}
               isImperial={isImperial}
             />
+          </TabsContent>
+
+          <TabsContent value="battles" className="mt-4 space-y-6">
+            {/* Battles & Challenges */}
+            <div>
+              <h3 className="font-semibold flex items-center gap-2 mb-4">
+                <Swords className="w-5 h-5 text-primary" />
+                Active Battles
+              </h3>
+              <PredictionBattles
+                location={location}
+                latitude={latitude}
+                longitude={longitude}
+                onAcceptBattle={() => setActiveTab("predict")}
+              />
+            </div>
+
+            {/* Leagues Section */}
+            <div className="pt-4 border-t">
+              <h3 className="font-semibold flex items-center gap-2 mb-4">
+                <Trophy className="w-5 h-5 text-amber-500" />
+                Prediction Leagues
+              </h3>
+              <BattleLeagues />
+            </div>
           </TabsContent>
           
           <TabsContent value="leaderboard" className="mt-4 space-y-4">

@@ -424,6 +424,70 @@ export type Database = {
         }
         Relationships: []
       }
+      league_invites: {
+        Row: {
+          created_at: string
+          id: string
+          league_id: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          league_id: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          league_id?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_invites_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "prediction_leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      league_members: {
+        Row: {
+          id: string
+          joined_at: string
+          league_id: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          league_id: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          league_id?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_members_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "prediction_leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -458,6 +522,7 @@ export type Database = {
           created_at: string | null
           id: string
           latitude: number
+          league_id: string | null
           location_name: string
           longitude: number
           opponent_id: string | null
@@ -476,6 +541,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           latitude: number
+          league_id?: string | null
           location_name: string
           longitude: number
           opponent_id?: string | null
@@ -494,6 +560,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           latitude?: number
+          league_id?: string | null
           location_name?: string
           longitude?: number
           opponent_id?: string | null
@@ -512,6 +579,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "prediction_battles_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "prediction_leagues"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "prediction_battles_opponent_prediction_id_fkey"
             columns: ["opponent_prediction_id"]
             isOneToOne: false
@@ -519,6 +593,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prediction_leagues: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          icon: string | null
+          id: string
+          invite_code: string | null
+          is_public: boolean | null
+          max_members: number | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          invite_code?: string | null
+          is_public?: boolean | null
+          max_members?: number | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          invite_code?: string | null
+          is_public?: boolean | null
+          max_members?: number | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       premium_grants: {
         Row: {

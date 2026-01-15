@@ -10,6 +10,7 @@ import { useSubscription } from "@/hooks/use-subscription";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+
 interface WeatherTrendsCardProps {
   currentWeather?: CurrentWeather;
   location?: string;
@@ -50,18 +51,18 @@ export function WeatherTrendsCard({
   // Plus-only feature
   if (!isSubscribed) {
     return (
-      <div className="overflow-hidden rounded-2xl shadow-xl border-0 border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-orange-500/5">
-        <div className="bg-gradient-to-r from-rose-300/70 via-pink-400/60 to-fuchsia-400/70 backdrop-blur-sm p-4">
+      <div className="overflow-hidden rounded-2xl glass-card border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-orange-500/5">
+        <div className="p-4 border-b border-border/50">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-white" />
-            <h3 className="font-semibold text-white">Weather Trends</h3>
+            <TrendingUp className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold text-foreground">Weather Trends</h3>
             <span className="flex items-center gap-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full ml-auto">
               <Crown className="w-3 h-3" />
               Plus
             </span>
           </div>
         </div>
-        <div className="bg-background/50 backdrop-blur-md p-6 text-center">
+        <div className="p-6 text-center">
           <Lock className="w-8 h-8 text-amber-500 mx-auto mb-2" />
           <p className="text-sm font-medium mb-1">30-Day Weather Trends</p>
           <p className="text-xs text-muted-foreground mb-3">
@@ -110,11 +111,10 @@ export function WeatherTrendsCard({
       if (!currentWeather || !location || !latitude || !longitude) return;
 
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return; // Only save for authenticated users
+      if (!user) return;
 
       const today = format(new Date(), "yyyy-MM-dd");
 
-      // Check if entry exists for today
       const { data: existing } = await supabase
         .from("weather_history")
         .select("*")
@@ -124,7 +124,6 @@ export function WeatherTrendsCard({
         .single();
 
       if (existing) {
-        // Update existing entry with current weather
         await supabase
           .from("weather_history")
           .update({
@@ -140,7 +139,6 @@ export function WeatherTrendsCard({
           })
           .eq("id", existing.id);
       } else {
-        // Insert new entry
         await supabase.from("weather_history").insert({
           user_id: user.id,
           location_name: location,
@@ -180,14 +178,14 @@ export function WeatherTrendsCard({
 
   if (isLoading) {
     return (
-      <div className="overflow-hidden rounded-2xl shadow-xl border-0">
-        <div className="bg-gradient-to-r from-rose-300/70 via-pink-400/60 to-fuchsia-400/70 backdrop-blur-sm p-4">
+      <div className="overflow-hidden rounded-2xl glass-card">
+        <div className="p-4 border-b border-border/50">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-white" />
-            <h3 className="font-semibold text-white">Weather Trends</h3>
+            <TrendingUp className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold text-foreground">Weather Trends</h3>
           </div>
         </div>
-        <div className="bg-background/50 backdrop-blur-md p-4">
+        <div className="p-4">
           <p className="text-sm text-muted-foreground">Loading historical data...</p>
         </div>
       </div>
@@ -196,14 +194,14 @@ export function WeatherTrendsCard({
 
   if (historyData.length === 0) {
     return (
-      <div className="overflow-hidden rounded-2xl shadow-xl border-0">
-        <div className="bg-gradient-to-r from-rose-300/70 via-pink-400/60 to-fuchsia-400/70 backdrop-blur-sm p-4">
+      <div className="overflow-hidden rounded-2xl glass-card">
+        <div className="p-4 border-b border-border/50">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-white" />
-            <h3 className="font-semibold text-white">Weather Trends</h3>
+            <TrendingUp className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold text-foreground">Weather Trends</h3>
           </div>
         </div>
-        <div className="bg-background/50 backdrop-blur-md p-4">
+        <div className="p-4">
           <div className="text-center py-8">
             <Calendar className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
@@ -223,27 +221,27 @@ export function WeatherTrendsCard({
   const precipUnit = isImperial ? "in" : "mm";
 
   return (
-    <div className="overflow-hidden rounded-2xl shadow-xl border-0 w-full">
-      {/* Header with softer gradient */}
-      <div className="bg-gradient-to-r from-rose-300/70 via-pink-400/60 to-fuchsia-400/70 backdrop-blur-sm p-4">
+    <div className="overflow-hidden rounded-2xl glass-card w-full">
+      {/* Header without gradient */}
+      <div className="p-4 border-b border-border/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-white" />
-            <h3 className="font-semibold text-white">Weather Trends</h3>
+            <TrendingUp className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold text-foreground">Weather Trends</h3>
           </div>
-          <span className="text-xs text-white/80">Last 30 days</span>
+          <span className="text-xs text-muted-foreground">Last 30 days</span>
         </div>
       </div>
 
       {/* Content */}
-      <div className="bg-background/50 backdrop-blur-md p-4 sm:p-6 w-full overflow-hidden">
+      <div className="p-4 sm:p-6 w-full overflow-hidden">
         {/* Summary Stats */}
         <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-4 sm:mb-6">
-          <div className="text-center p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary/10 to-accent/5 border border-border/50">
+          <div className="text-center p-2 sm:p-3 rounded-xl bg-muted/30 border border-border/30">
             <p className="text-[10px] sm:text-xs text-muted-foreground">Avg Temperature</p>
             <p className="text-xl sm:text-2xl font-bold">{avgTemp}{tempUnit}</p>
           </div>
-          <div className="text-center p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary/10 to-accent/5 border border-border/50">
+          <div className="text-center p-2 sm:p-3 rounded-xl bg-muted/30 border border-border/30">
             <p className="text-[10px] sm:text-xs text-muted-foreground">Total Precipitation</p>
             <p className="text-xl sm:text-2xl font-bold">{totalPrecip.toFixed(1)} {precipUnit}</p>
           </div>

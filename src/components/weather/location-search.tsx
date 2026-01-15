@@ -65,14 +65,11 @@ export function LocationSearch({
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [placeholder, setPlaceholder] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const { t } = useLanguage();
 
   const [user, setUser] = useState<any>(null);
 
-  // Get current user for sync across devices
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -80,7 +77,6 @@ export function LocationSearch({
     };
     getUser();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
     });
@@ -88,7 +84,6 @@ export function LocationSearch({
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch recent search history (synced across devices for logged-in users)
   const { data: searchHistory = [], refetch: refetchHistory } = useQuery({
     queryKey: ["/api/search-history", user?.id],
     queryFn: async () => {
@@ -110,7 +105,6 @@ export function LocationSearch({
     enabled: !!user
   });
 
-  // Typing animation for placeholder
   useEffect(() => {
     const phrases = ["Search for a location", "Search for an address"];
     let phraseIndex = 0;
@@ -129,10 +123,10 @@ export function LocationSearch({
           timeout = setTimeout(() => {
             isDeleting = true;
             type();
-          }, 2000); // Pause at end of phrase
+          }, 2000);
           return;
         }
-        timeout = setTimeout(type, 100); // Typing speed
+        timeout = setTimeout(type, 100);
       } else {
         setPlaceholder(currentPhrase.substring(0, charIndex - 1));
         charIndex--;
@@ -140,10 +134,10 @@ export function LocationSearch({
         if (charIndex === 0) {
           isDeleting = false;
           phraseIndex = (phraseIndex + 1) % phrases.length;
-          timeout = setTimeout(type, 500); // Pause before next phrase
+          timeout = setTimeout(type, 500);
           return;
         }
-        timeout = setTimeout(type, 50); // Deleting speed
+        timeout = setTimeout(type, 50);
       }
     };
 
@@ -152,7 +146,6 @@ export function LocationSearch({
     return () => clearTimeout(timeout);
   }, []);
 
-  // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
@@ -169,10 +162,8 @@ export function LocationSearch({
     queryFn: () => weatherApi.searchLocations(debouncedQuery)
   });
   
-  // Check for "World" search
   const isWorldSearch = debouncedQuery.toLowerCase() === "world";
 
-  // Fetch address results in parallel
   useEffect(() => {
     const fetchAddresses = async () => {
       if (debouncedQuery.length < 3) {
@@ -233,13 +224,10 @@ export function LocationSearch({
     
     setSearchQuery("");
 
-    // Track the search
     trackLocationSearch(locationName, location.latitude, location.longitude, 'location');
 
-    // Save to history
     await saveToHistory('location', locationName, location.latitude, location.longitude);
 
-    // For city/location searches, use coordinates directly without station selector
     onLocationSelect(location.latitude, location.longitude, locationName);
     toast({
       title: "Location selected",
@@ -261,14 +249,11 @@ export function LocationSearch({
     setSearchQuery("");
     setLoadingStations(true);
 
-    // Track the search
     trackLocationSearch(locationName, lat, lon, 'address');
 
-    // Save to history
     await saveToHistory('address', locationName, lat, lon);
 
     try {
-      // Find nearby weather stations and auto-select the nearest one
       const { data, error } = await supabase.functions.invoke('find-nearby-stations', {
         body: { latitude: lat, longitude: lon }
       });
@@ -278,7 +263,6 @@ export function LocationSearch({
       const nearbyStations: WeatherStation[] = data?.stations || [];
       
       if (nearbyStations.length > 0) {
-        // Auto-select the nearest station (first in array)
         const nearestStation = nearbyStations[0];
         onLocationSelect(nearestStation.latitude, nearestStation.longitude, nearestStation.name);
         toast({
@@ -308,7 +292,6 @@ export function LocationSearch({
     setSearchQuery("");
     setLoadingStations(true);
 
-    // Check if this was an address search - auto-select nearest station
     if (item.search_type === 'address') {
       try {
         const { data, error } = await supabase.functions.invoke('find-nearby-stations', {
@@ -320,7 +303,6 @@ export function LocationSearch({
         const nearbyStations: WeatherStation[] = data?.stations || [];
         
         if (nearbyStations.length > 0) {
-          // Auto-select the nearest station
           const nearestStation = nearbyStations[0];
           setLoadingStations(false);
           onLocationSelect(nearestStation.latitude, nearestStation.longitude, nearestStation.name);
@@ -335,7 +317,6 @@ export function LocationSearch({
       }
     }
 
-    // For location searches or if station finding failed, use coordinates directly
     setLoadingStations(false);
     onLocationSelect(item.latitude, item.longitude, item.location_name);
     toast({
@@ -363,15 +344,10 @@ export function LocationSearch({
     setIsDetecting(true);
     try {
       const position = await weatherApi.getCurrentLocation();
-      const {
-        latitude,
-        longitude
-      } = position.coords;
+      const { latitude, longitude } = position.coords;
 
-      // Track location detection
       trackLocationDetect();
 
-      // For current location, use coordinates directly without station selector
       onLocationSelect(latitude, longitude, "Current Location");
       toast({
         title: "Location detected",
@@ -409,9 +385,9 @@ export function LocationSearch({
   }
 
   return (
-    <Card className="relative flex-1 max-w-md z-[9999] overflow-hidden rounded-2xl border-white/20 shadow-lg">
-      {/* Gradient Header */}
-      <div className="bg-gradient-to-r from-sky-500/70 via-blue-600/60 to-indigo-700/70 p-4">
+    <Card className="relative flex-1 max-w-md z-[9999] overflow-hidden rounded-2xl glass-card">
+      {/* Clean header without gradient */}
+      <div className="p-4 border-b border-border/50">
         <div className="relative">
           <Input 
             type="text" 
@@ -420,7 +396,7 @@ export function LocationSearch({
             onChange={e => setSearchQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-            className="w-full pl-12 pr-16 py-3 bg-background/60 backdrop-blur-md text-foreground border-white/20 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-muted-foreground rounded-xl text-ellipsis" 
+            className="w-full pl-12 pr-16 py-3 bg-muted/50 text-foreground border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-muted-foreground rounded-xl text-ellipsis" 
             style={{ textAlign: 'left' }} 
           />
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
@@ -438,9 +414,8 @@ export function LocationSearch({
 
       {/* Search Results Dropdown */}
       {(searchQuery.length > 2 || isLoading || loadingAddresses || (isFocused && searchQuery.length === 0)) && (
-        <CardContent className="p-0 bg-background/50 backdrop-blur-md border-t border-white/10">
+        <CardContent className="p-0 border-t border-border/30">
             {searchQuery.length === 0 && isFocused ? (
-              // Show recent searches when focused and no query
               <div className="max-h-60 overflow-y-auto">
                 {searchHistory.length > 0 ? (
                   <>
@@ -451,7 +426,7 @@ export function LocationSearch({
                       <button
                         key={item.id}
                         onClick={() => handleHistoryClick(item)}
-                        className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0 flex items-start gap-2 group"
+                        className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0 flex items-start gap-2 group"
                       >
                         <History className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                         <div className="flex-1 min-w-0">
@@ -493,42 +468,42 @@ export function LocationSearch({
                 <button
                   onClick={() => {
                     setSearchQuery("");
-                    // Use special coordinates to indicate world search (0,0)
                     onLocationSelect(0, 0, "World Average");
                     toast({
                       title: "World Weather",
                       description: "Loading global weather average from 20 major cities worldwide",
                     });
                   }}
-                  className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border flex items-start gap-2"
+                  className="w-full text-left p-4 hover:bg-muted/50 transition-colors flex items-start gap-2"
                 >
                   <Globe className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <div className="font-medium text-foreground">World Average</div>
-                    <div className="text-sm text-muted-foreground">
-                      Average weather from 20 major cities worldwide
+                    <div className="text-xs text-muted-foreground">
+                      Global average from 20 major cities
                     </div>
                   </div>
                 </button>
               </div>
-            ) : (locations.length > 0 || addressResults.length > 0) ? (
-              <div className="max-h-60 overflow-y-auto">
-                {/* Location Results */}
+            ) : (
+              <div className="max-h-80 overflow-y-auto">
                 {locations.length > 0 && (
                   <>
                     <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30">
-                      Cities & Places
+                      Locations
                     </div>
-                    {locations.map((location, index) => (
-                      <button 
-                        key={`loc-${index}`} 
-                        onClick={() => handleLocationClick(location)} 
-                        className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0 flex items-start gap-2"
+                    {locations.slice(0, 5).map((location, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleLocationClick(location)}
+                        className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0 flex items-start gap-2"
                       >
                         <MapPin className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
-                        <div>
-                          <div className="font-medium text-foreground">{location.name}</div>
-                          <div className="text-sm text-muted-foreground">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-foreground truncate">
+                            {location.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground truncate">
                             {location.state ? `${location.state}, ` : ''}{location.country}
                           </div>
                         </div>
@@ -536,27 +511,22 @@ export function LocationSearch({
                     ))}
                   </>
                 )}
-
-                {/* Address Results */}
+                
                 {addressResults.length > 0 && (
                   <>
                     <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30">
                       Addresses
                     </div>
-                    {addressResults.slice(0, 3).map((address, index) => (
-                      <button 
-                        key={`addr-${index}`} 
-                        onClick={() => handleAddressClick(address)} 
-                        className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0 flex items-start gap-2"
+                    {addressResults.slice(0, 5).map((address, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleAddressClick(address)}
+                        className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0 flex items-start gap-2"
                       >
-                        <Search className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                        <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-foreground truncate">
-                            {address.address.suburb ||
-                              address.address.village ||
-                              address.address.town ||
-                              address.address.city ||
-                              "Unknown Location"}
+                            {address.address.road || address.address.suburb || address.display_name.split(',')[0]}
                           </div>
                           <div className="text-xs text-muted-foreground truncate">
                             {address.display_name}
@@ -566,13 +536,17 @@ export function LocationSearch({
                     ))}
                   </>
                 )}
+
+                {locations.length === 0 && addressResults.length === 0 && !isLoading && !loadingAddresses && (
+                  <div className="p-4 text-center text-muted-foreground">
+                    <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No results found</p>
+                    <p className="text-xs mt-1">Try a different search term</p>
+                  </div>
+                )}
               </div>
-            ) : searchQuery.length > 2 ? (
-              <div className="p-4 text-center text-muted-foreground">
-                {t('search.noResults')}
-              </div>
-            ) : null}
-          </CardContent>
+            )}
+        </CardContent>
       )}
     </Card>
   );

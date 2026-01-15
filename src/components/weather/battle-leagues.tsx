@@ -4,17 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { 
   Trophy, Users, Plus, Crown, Shield, UserPlus, Copy, 
-  CheckCircle, XCircle, LogOut, Swords, Medal, Target,
-  Globe, Lock, Hash
+  CheckCircle, XCircle, LogOut, Medal, Target,
+  Globe, Lock, Hash, Settings, RefreshCw, Trash2, UserMinus
 } from "lucide-react";
-import { usePredictionLeagues, League, LeagueLeaderboardEntry } from "@/hooks/use-prediction-leagues";
+import { usePredictionLeagues, League, LeagueLeaderboardEntry, LeagueMember } from "@/hooks/use-prediction-leagues";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,6 +35,12 @@ export function BattleLeagues() {
     leaveLeague,
     handleInvite,
     getLeagueLeaderboard,
+    getLeagueMembers,
+    updateLeague,
+    updateMemberRole,
+    removeMember,
+    regenerateInviteCode,
+    deleteLeague,
     refetch
   } = usePredictionLeagues();
 
@@ -42,7 +48,10 @@ export function BattleLeagues() {
   const [joinCodeOpen, setJoinCodeOpen] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeagueLeaderboardEntry[]>([]);
+  const [members, setMembers] = useState<LeagueMember[]>([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   
   // Create form state
   const [newName, setNewName] = useState("");
@@ -50,6 +59,13 @@ export function BattleLeagues() {
   const [newIcon, setNewIcon] = useState("🏆");
   const [isPublic, setIsPublic] = useState(true);
   const [joinCode, setJoinCode] = useState("");
+  
+  // Edit form state
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editIcon, setEditIcon] = useState("");
+  const [editIsPublic, setEditIsPublic] = useState(true);
+  const [editMaxMembers, setEditMaxMembers] = useState(50);
 
   const handleCreateLeague = async () => {
     if (!newName.trim()) {
@@ -72,7 +88,7 @@ export function BattleLeagues() {
       return;
     }
     
-    const success = await joinByCode(joinCode.trim());
+    const success = await joinByCode(joinCode.trim().toLowerCase());
     if (success) {
       setJoinCodeOpen(false);
       setJoinCode("");
@@ -87,9 +103,76 @@ export function BattleLeagues() {
   const viewLeagueDetails = async (league: League) => {
     setSelectedLeague(league);
     setLoadingLeaderboard(true);
-    const lb = await getLeagueLeaderboard(league.id);
+    
+    // Initialize edit form with current values
+    setEditName(league.name);
+    setEditDescription(league.description || "");
+    setEditIcon(league.icon);
+    setEditIsPublic(league.is_public);
+    setEditMaxMembers(league.max_members);
+    
+    const [lb, membersList] = await Promise.all([
+      getLeagueLeaderboard(league.id),
+      getLeagueMembers(league.id)
+    ]);
+    
     setLeaderboard(lb);
+    setMembers(membersList);
     setLoadingLeaderboard(false);
+  };
+
+  const handleSaveSettings = async () => {
+    if (!selectedLeague) return;
+    
+    const success = await updateLeague(selectedLeague.id, {
+      name: editName,
+      description: editDescription,
+      icon: editIcon,
+      is_public: editIsPublic,
+      max_members: editMaxMembers
+    });
+    
+    if (success) {
+      setSettingsOpen(false);
+      // Refresh the selected league data
+      const updatedLeagues = await refetch();
+      const updated = myLeagues.find(l => l.id === selectedLeague.id);
+      if (updated) {
+        setSelectedLeague({...updated, name: editName, description: editDescription, icon: editIcon, is_public: editIsPublic, max_members: editMaxMembers});
+      }
+    }
+  };
+
+  const handleRegenerateCode = async () => {
+    if (!selectedLeague) return;
+    const newCode = await regenerateInviteCode(selectedLeague.id);
+    if (newCode) {
+      setSelectedLeague({...selectedLeague, invite_code: newCode});
+    }
+  };
+
+  const handleDeleteLeague = async () => {
+    if (!selectedLeague) return;
+    const success = await deleteLeague(selectedLeague.id);
+    if (success) {
+      setDeleteConfirmOpen(false);
+      setSelectedLeague(null);
+    }
+  };
+
+  const handleRemoveMember = async (member: LeagueMember) => {
+    const success = await removeMember(member.id);
+    if (success) {
+      setMembers(prev => prev.filter(m => m.id !== member.id));
+    }
+  };
+
+  const handleToggleAdmin = async (member: LeagueMember) => {
+    const newRole = member.role === 'admin' ? 'member' : 'admin';
+    const success = await updateMemberRole(member.id, newRole as 'member' | 'admin');
+    if (success) {
+      setMembers(prev => prev.map(m => m.id === member.id ? {...m, role: newRole} : m));
+    }
   };
 
   const getRoleBadge = (role: string) => {
@@ -102,6 +185,9 @@ export function BattleLeagues() {
         return null;
     }
   };
+
+  const isOwnerOrAdmin = selectedLeague?.my_role === 'owner' || selectedLeague?.my_role === 'admin';
+  const isOwner = selectedLeague?.my_role === 'owner';
 
   if (!user) {
     return (
@@ -300,59 +386,82 @@ export function BattleLeagues() {
           <Globe className="w-4 h-4 text-blue-500" />
           Browse Public Leagues
         </h4>
-        <ScrollArea className="h-64">
-          <div className="grid gap-3 pr-4">
-            {publicLeagues
-              .filter(l => !myLeagues.some(ml => ml.id === l.id))
-              .map((league) => (
-                <Card key={league.id} className="bg-muted/30">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{league.icon}</span>
-                        <div>
-                          <p className="font-medium">{league.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {league.member_count}/{league.max_members} members
-                          </p>
+        {publicLeagues.filter(l => !myLeagues.some(ml => ml.id === l.id)).length === 0 ? (
+          <Card className="bg-muted/30">
+            <CardContent className="p-6 text-center text-muted-foreground">
+              <Globe className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p>No public leagues available</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <ScrollArea className="h-64">
+            <div className="grid gap-3 pr-4">
+              {publicLeagues
+                .filter(l => !myLeagues.some(ml => ml.id === l.id))
+                .map((league) => (
+                  <Card key={league.id} className="bg-muted/30">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{league.icon}</span>
+                          <div>
+                            <p className="font-medium">{league.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {league.member_count}/{league.max_members} members
+                            </p>
+                          </div>
                         </div>
+                        <Button 
+                          size="sm" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            joinLeague(league.id);
+                          }}
+                          disabled={(league.member_count || 0) >= league.max_members}
+                        >
+                          <UserPlus className="w-4 h-4 mr-1" />
+                          Join
+                        </Button>
                       </div>
-                      <Button 
-                        size="sm" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          joinLeague(league.id);
-                        }}
-                        disabled={(league.member_count || 0) >= league.max_members}
-                      >
-                        <UserPlus className="w-4 h-4 mr-1" />
-                        Join
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-          </div>
-        </ScrollArea>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </ScrollArea>
+        )}
       </div>
 
       {/* League Details Dialog */}
       <Dialog open={!!selectedLeague} onOpenChange={(open) => !open && setSelectedLeague(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
           {selectedLeague && (
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <span className="text-2xl">{selectedLeague.icon}</span>
                   {selectedLeague.name}
+                  {isOwner && (
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="ml-auto"
+                      onClick={() => setSettingsOpen(true)}
+                    >
+                      <Settings className="w-4 h-4" />
+                    </Button>
+                  )}
                 </DialogTitle>
               </DialogHeader>
               
-              <Tabs defaultValue="leaderboard">
-                <TabsList className="grid w-full grid-cols-2">
+              <Tabs defaultValue="leaderboard" className="flex-1 overflow-hidden flex flex-col">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="leaderboard">
                     <Medal className="w-4 h-4 mr-1" />
                     Leaderboard
+                  </TabsTrigger>
+                  <TabsTrigger value="members">
+                    <Users className="w-4 h-4 mr-1" />
+                    Members
                   </TabsTrigger>
                   <TabsTrigger value="info">
                     <Target className="w-4 h-4 mr-1" />
@@ -360,7 +469,7 @@ export function BattleLeagues() {
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="leaderboard" className="mt-4">
+                <TabsContent value="leaderboard" className="mt-4 flex-1 overflow-hidden">
                   {loadingLeaderboard ? (
                     <div className="space-y-2">
                       <Skeleton className="h-12 w-full" />
@@ -369,9 +478,9 @@ export function BattleLeagues() {
                     </div>
                   ) : leaderboard.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
-                      <Swords className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p>No battle data yet</p>
-                      <p className="text-xs">Start battling to climb the ranks!</p>
+                      <Medal className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p>No prediction data yet</p>
+                      <p className="text-xs">Make predictions to climb the ranks!</p>
                     </div>
                   ) : (
                     <ScrollArea className="h-64">
@@ -393,7 +502,7 @@ export function BattleLeagues() {
                               <div>
                                 <p className="font-medium">{entry.display_name}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {entry.battles_won}W / {entry.battles_played}P ({entry.win_rate}%)
+                                  {entry.battles_won} correct / {entry.battles_played} predictions ({entry.win_rate}%)
                                 </p>
                               </div>
                             </div>
@@ -406,6 +515,51 @@ export function BattleLeagues() {
                       </div>
                     </ScrollArea>
                   )}
+                </TabsContent>
+
+                <TabsContent value="members" className="mt-4 flex-1 overflow-hidden">
+                  <ScrollArea className="h-64">
+                    <div className="space-y-2">
+                      {members.map((member) => (
+                        <div 
+                          key={member.id} 
+                          className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{member.display_name}</p>
+                                {getRoleBadge(member.role)}
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                Joined {new Date(member.joined_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          {isOwner && member.role !== 'owner' && (
+                            <div className="flex gap-1">
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                onClick={() => handleToggleAdmin(member)}
+                                title={member.role === 'admin' ? 'Remove admin' : 'Make admin'}
+                              >
+                                <Shield className={`w-4 h-4 ${member.role === 'admin' ? 'text-blue-500' : 'text-muted-foreground'}`} />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="ghost"
+                                onClick={() => handleRemoveMember(member)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <UserMinus className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 </TabsContent>
 
                 <TabsContent value="info" className="mt-4 space-y-4">
@@ -431,11 +585,11 @@ export function BattleLeagues() {
                     </div>
                   </div>
 
-                  {(selectedLeague.my_role === 'owner' || selectedLeague.my_role === 'admin') && (
+                  {isOwnerOrAdmin && (
                     <div className="p-3 bg-muted rounded-lg">
                       <Label className="text-muted-foreground">Invite Code</Label>
                       <div className="flex items-center gap-2 mt-1">
-                        <code className="flex-1 bg-background p-2 rounded text-sm">
+                        <code className="flex-1 bg-background p-2 rounded text-sm font-mono">
                           {selectedLeague.invite_code}
                         </code>
                         <Button 
@@ -445,6 +599,15 @@ export function BattleLeagues() {
                         >
                           <Copy className="w-4 h-4" />
                         </Button>
+                        {isOwner && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={handleRegenerateCode}
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -467,6 +630,94 @@ export function BattleLeagues() {
               </Tabs>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Settings Dialog */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>League Settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>League Icon</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {LEAGUE_ICONS.map((icon) => (
+                  <Button
+                    key={icon}
+                    variant={editIcon === icon ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setEditIcon(icon)}
+                  >
+                    {icon}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label>League Name</Label>
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {editIsPublic ? <Globe className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                <Label>Public League</Label>
+              </div>
+              <Switch checked={editIsPublic} onCheckedChange={setEditIsPublic} />
+            </div>
+            <div>
+              <Label>Max Members</Label>
+              <Input
+                type="number"
+                min={1}
+                max={500}
+                value={editMaxMembers}
+                onChange={(e) => setEditMaxMembers(parseInt(e.target.value) || 50)}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleSaveSettings} className="flex-1">
+                Save Changes
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={() => setDeleteConfirmOpen(true)}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete League?</DialogTitle>
+          </DialogHeader>
+          <p className="text-muted-foreground">
+            This will permanently delete the league "{selectedLeague?.name}" and remove all members. This action cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteLeague}>
+              Delete League
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

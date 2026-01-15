@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -25,6 +25,7 @@ export const TipJar = () => {
 
   useEffect(() => {
     fetchTipData();
+    checkTipSuccess();
   }, []);
 
   const fetchTipData = async () => {
@@ -52,6 +53,21 @@ export const TipJar = () => {
       console.error("Error fetching tip data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkTipSuccess = () => {
+    const params = new URLSearchParams(window.location.search);
+    const tipResult = params.get("tip");
+    const amount = params.get("amount");
+    
+    if (tipResult === "success" && amount) {
+      const amountEuros = (parseInt(amount) / 100).toFixed(2);
+      toast.success(`Thank you for your €${amountEuros} tip! ❤️`);
+      // Clean URL
+      window.history.replaceState({}, "", window.location.pathname);
+      // Refresh tip data
+      fetchTipData();
     }
   };
 

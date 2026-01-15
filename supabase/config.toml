@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.create-tip-checkout]
 verify_jwt = false
+
+[functions.confirm-tip]
+verify_jwt = false

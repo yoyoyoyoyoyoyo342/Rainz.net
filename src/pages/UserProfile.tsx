@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -56,6 +57,7 @@ interface UserProfileData {
   created_at: string;
   bio: string | null;
   avatar_url: string | null;
+  shop_points: number;
 }
 
 interface StreakData {
@@ -80,176 +82,61 @@ interface PredictionStats {
   accuracy: number;
 }
 
-// Circular progress component
-const CircularProgress = ({ 
-  value, 
-  max, 
-  size = 120, 
-  strokeWidth = 8, 
-  color = "hsl(var(--primary))",
-  label,
-  sublabel
-}: { 
-  value: number; 
-  max: number; 
-  size?: number; 
-  strokeWidth?: number; 
-  color?: string;
-  label: string;
-  sublabel: string;
-}) => {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const percentage = max > 0 ? Math.min((value / max) * 100, 100) : 0;
-  const offset = circumference - (percentage / 100) * circumference;
-
-  return (
-    <div className="flex flex-col items-center">
-      <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="transform -rotate-90">
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke="hsl(var(--muted))"
-            strokeWidth={strokeWidth}
-            className="opacity-20"
-          />
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke={color}
-            strokeWidth={strokeWidth}
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            strokeLinecap="round"
-            className="transition-all duration-1000 ease-out"
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold text-foreground">{value}</span>
-          <span className="text-xs text-muted-foreground">{sublabel}</span>
-        </div>
-      </div>
-      <span className="mt-2 text-sm font-medium text-foreground">{label}</span>
-    </div>
-  );
-};
-
-// Stat card component
-const StatCard = ({ 
+// Stat item component
+const StatItem = ({ 
   icon: Icon, 
   label, 
   value, 
-  sublabel,
-  color = "primary",
+  color = "text-primary"
 }: { 
   icon: any; 
   label: string; 
   value: string | number; 
-  sublabel?: string;
   color?: string;
-}) => {
-  const colorClasses: Record<string, string> = {
-    primary: "from-primary/20 to-primary/5 border-primary/30",
-    orange: "from-orange-500/20 to-orange-500/5 border-orange-500/30",
-    green: "from-green-500/20 to-green-500/5 border-green-500/30",
-    red: "from-red-500/20 to-red-500/5 border-red-500/30",
-    yellow: "from-yellow-500/20 to-yellow-500/5 border-yellow-500/30",
-    purple: "from-purple-500/20 to-purple-500/5 border-purple-500/30",
-  };
-
-  const iconColors: Record<string, string> = {
-    primary: "text-primary",
-    orange: "text-orange-500",
-    green: "text-green-500",
-    red: "text-red-500",
-    yellow: "text-yellow-500",
-    purple: "text-purple-500",
-  };
-
-  return (
-    <div className={`p-4 rounded-xl bg-gradient-to-br ${colorClasses[color]} border backdrop-blur-sm animate-fade-in`}>
-      <div className="flex items-center justify-between mb-2">
-        <Icon className={`h-5 w-5 ${iconColors[color]}`} />
-      </div>
-      <p className="text-2xl font-bold text-foreground">{value}</p>
-      <p className="text-sm text-muted-foreground">{label}</p>
-      {sublabel && <p className="text-xs text-muted-foreground/70 mt-1">{sublabel}</p>}
+}) => (
+  <div className="flex items-center gap-3 p-3 rounded-xl bg-card/50 border border-border/50">
+    <div className={`p-2 rounded-lg bg-muted/50 ${color}`}>
+      <Icon className="h-4 w-4" />
     </div>
-  );
-};
+    <div className="flex-1 min-w-0">
+      <p className="text-xs text-muted-foreground truncate">{label}</p>
+      <p className="text-lg font-bold">{value}</p>
+    </div>
+  </div>
+);
 
-// Achievement badge component
+// Achievement badge component (simplified)
 const AchievementBadge = ({ 
   icon: Icon, 
   name, 
-  description, 
   unlocked, 
-  color,
   rarity = "common"
 }: { 
   icon: any; 
   name: string; 
-  description: string; 
   unlocked: boolean; 
-  color: string;
   rarity?: "common" | "rare" | "epic" | "legendary";
 }) => {
-  const rarityBadgeColors: Record<string, string> = {
-    common: "bg-gray-500/20 text-gray-400",
-    rare: "bg-blue-500/20 text-blue-400",
-    epic: "bg-purple-500/20 text-purple-400",
-    legendary: "bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400",
+  const rarityColors = {
+    common: "border-zinc-500/30 bg-zinc-500/10",
+    rare: "border-blue-500/30 bg-blue-500/10",
+    epic: "border-purple-500/30 bg-purple-500/10",
+    legendary: "border-amber-500/30 bg-amber-500/10",
   };
 
+  const iconColors = {
+    common: "text-zinc-400",
+    rare: "text-blue-400",
+    epic: "text-purple-400",
+    legendary: "text-amber-400",
+  };
+
+  if (!unlocked) return null;
+
   return (
-    <div 
-      className={`
-        relative p-4 rounded-xl border transition-all duration-300
-        ${unlocked 
-          ? `bg-gradient-to-br from-${color}/10 to-transparent border-${color}/30 shadow-lg hover:scale-[1.02]` 
-          : 'bg-muted/10 border-border/20 opacity-40 grayscale'
-        }
-      `}
-      style={unlocked ? { 
-        background: `linear-gradient(135deg, ${color}15 0%, transparent 100%)`,
-        borderColor: `${color}40`
-      } : undefined}
-    >
-      {unlocked && rarity === "legendary" && (
-        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-yellow-500/5 via-transparent to-yellow-500/5 animate-pulse" />
-      )}
-      <div className="relative flex items-start gap-3">
-        <div 
-          className="p-2.5 rounded-lg"
-          style={{ backgroundColor: unlocked ? `${color}20` : undefined }}
-        >
-          <Icon 
-            className="h-6 w-6" 
-            style={{ color: unlocked ? color : 'hsl(var(--muted-foreground))' }} 
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className={`font-semibold text-sm ${unlocked ? 'text-foreground' : 'text-muted-foreground'}`}>
-              {name}
-            </p>
-            {rarity !== "common" && (
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${rarityBadgeColors[rarity]}`}>
-                {rarity.charAt(0).toUpperCase() + rarity.slice(1)}
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
-        </div>
-        {unlocked && (
-          <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-        )}
-      </div>
+    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${rarityColors[rarity]}`}>
+      <Icon className={`h-4 w-4 ${iconColors[rarity]}`} />
+      <span className="text-sm font-medium">{name}</span>
     </div>
   );
 };
@@ -293,7 +180,7 @@ const UserProfile = () => {
     try {
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("display_name, total_points, created_at, bio, avatar_url")
+        .select("display_name, total_points, created_at, bio, avatar_url, shop_points")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -381,13 +268,11 @@ const UserProfile = () => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error("Please upload an image file");
       return;
     }
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast.error("Image must be less than 2MB");
       return;
@@ -398,22 +283,18 @@ const UserProfile = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/avatar.${fileExt}`;
 
-      // Delete existing avatar if any
       await supabase.storage.from('avatars').remove([fileName]);
 
-      // Upload new avatar
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
 
-      // Update profile with new avatar URL
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl + `?t=${Date.now()}` })
@@ -421,9 +302,8 @@ const UserProfile = () => {
 
       if (updateError) throw updateError;
 
-      // Refresh profile data
       await fetchUserData();
-      toast.success("Avatar updated successfully!");
+      toast.success("Avatar updated!");
     } catch (error) {
       console.error("Error uploading avatar:", error);
       toast.error("Failed to upload avatar");
@@ -449,7 +329,7 @@ const UserProfile = () => {
 
       await fetchUserData();
       setEditDialogOpen(false);
-      toast.success("Profile updated successfully!");
+      toast.success("Profile updated!");
     } catch (error) {
       console.error("Error saving profile:", error);
       toast.error("Failed to save profile");
@@ -460,16 +340,15 @@ const UserProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 p-4 md:p-8">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Skeleton className="h-12 w-32" />
-          <Skeleton className="h-72 w-full rounded-2xl" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="min-h-screen bg-background p-4">
+        <div className="max-w-2xl mx-auto space-y-4">
+          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-48 w-full rounded-2xl" />
+          <div className="grid grid-cols-2 gap-3">
             {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-32 rounded-xl" />
+              <Skeleton key={i} className="h-20 rounded-xl" />
             ))}
           </div>
-          <Skeleton className="h-64 w-full rounded-2xl" />
         </div>
       </div>
     );
@@ -477,14 +356,14 @@ const UserProfile = () => {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 p-4 md:p-8">
-        <div className="max-w-4xl mx-auto text-center py-20">
-          <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-6">
-            <User className="h-10 w-10 text-muted-foreground" />
+      <div className="min-h-screen bg-background p-4">
+        <div className="max-w-2xl mx-auto text-center py-20">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+            <User className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">User Not Found</h1>
-          <p className="text-muted-foreground mb-6">This profile doesn't exist or has been removed.</p>
-          <Button onClick={() => navigate(-1)} variant="outline">
+          <h1 className="text-xl font-bold mb-2">User Not Found</h1>
+          <p className="text-muted-foreground text-sm mb-4">This profile doesn't exist.</p>
+          <Button onClick={() => navigate(-1)} variant="outline" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Go Back
           </Button>
@@ -494,7 +373,7 @@ const UserProfile = () => {
   }
 
   const memberSince = new Date(profile.created_at).toLocaleDateString("en-US", {
-    month: "long",
+    month: "short",
     year: "numeric",
   });
 
@@ -506,58 +385,36 @@ const UserProfile = () => {
   const userLevel = Math.floor((profile.total_points || 0) / 500) + 1;
 
   const achievements = [
-    // Prediction achievements
-    { icon: CheckCircle, name: "First Prediction", description: "Made your first prediction", unlocked: (predictionStats?.total_predictions || 0) > 0, color: "#22c55e", rarity: "common" as const },
-    { icon: Target, name: "Getting Started", description: "10 predictions made", unlocked: (predictionStats?.total_predictions || 0) >= 10, color: "#3b82f6", rarity: "common" as const },
-    { icon: Sparkles, name: "Weather Guru", description: "50 predictions made", unlocked: (predictionStats?.total_predictions || 0) >= 50, color: "#06b6d4", rarity: "rare" as const },
-    { icon: Medal, name: "Weather Veteran", description: "100 predictions made", unlocked: (predictionStats?.total_predictions || 0) >= 100, color: "#6366f1", rarity: "epic" as const },
-    { icon: Brain, name: "Weather Expert", description: "250 predictions made", unlocked: (predictionStats?.total_predictions || 0) >= 250, color: "#8b5cf6", rarity: "epic" as const },
-    { icon: Rocket, name: "Weather Master", description: "500 predictions made", unlocked: (predictionStats?.total_predictions || 0) >= 500, color: "#ec4899", rarity: "legendary" as const },
-    
-    // Accuracy achievements
-    { icon: Eye, name: "Sharp Eye", description: "50%+ prediction accuracy", unlocked: (predictionStats?.accuracy || 0) >= 50 && (predictionStats?.total_predictions || 0) >= 5, color: "#22c55e", rarity: "common" as const },
-    { icon: Target, name: "Accuracy Pro", description: "70%+ prediction accuracy", unlocked: (predictionStats?.accuracy || 0) >= 70 && (predictionStats?.total_predictions || 0) >= 5, color: "#3b82f6", rarity: "rare" as const },
-    { icon: Gem, name: "Weather Savant", description: "85%+ prediction accuracy", unlocked: (predictionStats?.accuracy || 0) >= 85 && (predictionStats?.total_predictions || 0) >= 10, color: "#a855f7", rarity: "epic" as const },
-    { icon: Star, name: "Perfect Prediction", description: "100% accuracy with 5+ predictions", unlocked: (predictionStats?.accuracy || 0) === 100 && (predictionStats?.correct_predictions || 0) >= 5, color: "#f59e0b", rarity: "legendary" as const },
-    
-    // Streak achievements
-    { icon: Flame, name: "On Fire", description: "3-day prediction streak", unlocked: (streakData?.longest_streak || 0) >= 3, color: "#f97316", rarity: "common" as const },
-    { icon: Flame, name: "Streak Master", description: "7-day prediction streak", unlocked: (streakData?.longest_streak || 0) >= 7, color: "#f97316", rarity: "rare" as const },
-    { icon: Flame, name: "Dedicated", description: "14-day prediction streak", unlocked: (streakData?.longest_streak || 0) >= 14, color: "#ef4444", rarity: "epic" as const },
-    { icon: Zap, name: "Streak Legend", description: "30-day prediction streak", unlocked: (streakData?.longest_streak || 0) >= 30, color: "#ef4444", rarity: "legendary" as const },
-    
-    // Battle achievements
-    { icon: Swords, name: "Challenger", description: "Participated in first battle", unlocked: (battleStats?.total_battles || 0) >= 1, color: "#ef4444", rarity: "common" as const },
-    { icon: Trophy, name: "Battle Victor", description: "Won your first battle", unlocked: (battleStats?.wins || 0) >= 1, color: "#22c55e", rarity: "common" as const },
-    { icon: Shield, name: "Battle Hardened", description: "5 battle wins", unlocked: (battleStats?.wins || 0) >= 5, color: "#3b82f6", rarity: "rare" as const },
-    { icon: Swords, name: "Battle Champion", description: "Won 10 battles", unlocked: (battleStats?.wins || 0) >= 10, color: "#eab308", rarity: "epic" as const },
-    { icon: Crown, name: "Battle King", description: "Won 25 battles", unlocked: (battleStats?.wins || 0) >= 25, color: "#f59e0b", rarity: "legendary" as const },
-    { icon: Shield, name: "Undefeated", description: "5 consecutive wins", unlocked: (battleStats?.longestWinStreak || 0) >= 5, color: "#10b981", rarity: "epic" as const },
-    { icon: Shield, name: "Unstoppable", description: "10 consecutive wins", unlocked: (battleStats?.longestWinStreak || 0) >= 10, color: "#f59e0b", rarity: "legendary" as const },
-    
-    // Points achievements
-    { icon: TrendingUp, name: "Rising Star", description: "100+ total points", unlocked: (profile.total_points || 0) >= 100, color: "#22c55e", rarity: "common" as const },
-    { icon: TrendingUp, name: "Points Collector", description: "500+ total points", unlocked: (profile.total_points || 0) >= 500, color: "#3b82f6", rarity: "rare" as const },
-    { icon: TrendingUp, name: "Points Legend", description: "1000+ total points", unlocked: (profile.total_points || 0) >= 1000, color: "#a855f7", rarity: "rare" as const },
-    { icon: Gem, name: "Points Master", description: "2500+ total points", unlocked: (profile.total_points || 0) >= 2500, color: "#ec4899", rarity: "epic" as const },
-    { icon: Crown, name: "Weather Elite", description: "5000+ total points", unlocked: (profile.total_points || 0) >= 5000, color: "#f59e0b", rarity: "legendary" as const },
-    { icon: Crown, name: "Weather God", description: "10000+ total points", unlocked: (profile.total_points || 0) >= 10000, color: "#fbbf24", rarity: "legendary" as const },
-    
-    // Visit achievements
-    { icon: Calendar, name: "Regular", description: "10 total visits", unlocked: (streakData?.total_visits || 0) >= 10, color: "#22c55e", rarity: "common" as const },
-    { icon: Heart, name: "Loyal User", description: "50 total visits", unlocked: (streakData?.total_visits || 0) >= 50, color: "#ec4899", rarity: "rare" as const },
-    { icon: Gift, name: "Dedicated Fan", description: "100 total visits", unlocked: (streakData?.total_visits || 0) >= 100, color: "#8b5cf6", rarity: "epic" as const },
-    
-    // Special achievements
-    { icon: Sunrise, name: "Early Bird", description: "Member for 7+ days", unlocked: daysSinceJoined >= 7, color: "#f97316", rarity: "common" as const },
-    { icon: MapPin, name: "Weather Watcher", description: "Member for 30+ days", unlocked: daysSinceJoined >= 30, color: "#3b82f6", rarity: "rare" as const },
-    { icon: Star, name: "OG Member", description: "Member for 90+ days", unlocked: daysSinceJoined >= 90, color: "#a855f7", rarity: "epic" as const },
+    { icon: CheckCircle, name: "First Prediction", unlocked: (predictionStats?.total_predictions || 0) > 0, rarity: "common" as const },
+    { icon: Target, name: "10 Predictions", unlocked: (predictionStats?.total_predictions || 0) >= 10, rarity: "common" as const },
+    { icon: Sparkles, name: "Weather Guru", unlocked: (predictionStats?.total_predictions || 0) >= 50, rarity: "rare" as const },
+    { icon: Medal, name: "100 Predictions", unlocked: (predictionStats?.total_predictions || 0) >= 100, rarity: "epic" as const },
+    { icon: Eye, name: "Sharp Eye (50%+)", unlocked: (predictionStats?.accuracy || 0) >= 50 && (predictionStats?.total_predictions || 0) >= 5, rarity: "common" as const },
+    { icon: Target, name: "Accuracy Pro (70%+)", unlocked: (predictionStats?.accuracy || 0) >= 70 && (predictionStats?.total_predictions || 0) >= 5, rarity: "rare" as const },
+    { icon: Gem, name: "Weather Savant (85%+)", unlocked: (predictionStats?.accuracy || 0) >= 85 && (predictionStats?.total_predictions || 0) >= 10, rarity: "epic" as const },
+    { icon: Flame, name: "3-Day Streak", unlocked: (streakData?.longest_streak || 0) >= 3, rarity: "common" as const },
+    { icon: Flame, name: "7-Day Streak", unlocked: (streakData?.longest_streak || 0) >= 7, rarity: "rare" as const },
+    { icon: Zap, name: "14-Day Streak", unlocked: (streakData?.longest_streak || 0) >= 14, rarity: "epic" as const },
+    { icon: Crown, name: "30-Day Streak", unlocked: (streakData?.longest_streak || 0) >= 30, rarity: "legendary" as const },
+    { icon: Swords, name: "First Battle", unlocked: (battleStats?.total_battles || 0) >= 1, rarity: "common" as const },
+    { icon: Trophy, name: "Battle Victor", unlocked: (battleStats?.wins || 0) >= 1, rarity: "common" as const },
+    { icon: Shield, name: "5 Battle Wins", unlocked: (battleStats?.wins || 0) >= 5, rarity: "rare" as const },
+    { icon: Crown, name: "10 Battle Wins", unlocked: (battleStats?.wins || 0) >= 10, rarity: "epic" as const },
+    { icon: TrendingUp, name: "100 Points", unlocked: (profile.total_points || 0) >= 100, rarity: "common" as const },
+    { icon: TrendingUp, name: "500 Points", unlocked: (profile.total_points || 0) >= 500, rarity: "rare" as const },
+    { icon: Gem, name: "2500 Points", unlocked: (profile.total_points || 0) >= 2500, rarity: "epic" as const },
+    { icon: Crown, name: "5000 Points", unlocked: (profile.total_points || 0) >= 5000, rarity: "legendary" as const },
+    { icon: Calendar, name: "10 Visits", unlocked: (streakData?.total_visits || 0) >= 10, rarity: "common" as const },
+    { icon: Heart, name: "50 Visits", unlocked: (streakData?.total_visits || 0) >= 50, rarity: "rare" as const },
+    { icon: Sunrise, name: "Week Veteran", unlocked: daysSinceJoined >= 7, rarity: "common" as const },
+    { icon: MapPin, name: "Month Veteran", unlocked: daysSinceJoined >= 30, rarity: "rare" as const },
+    { icon: Star, name: "OG Member (90+ days)", unlocked: daysSinceJoined >= 90, rarity: "epic" as const },
   ];
 
-  const unlockedCount = achievements.filter(a => a.unlocked).length;
+  const unlockedAchievements = achievements.filter(a => a.unlocked);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 pb-32">
+    <div className="min-h-screen bg-background pb-24">
       {/* Hidden file input */}
       <input
         type="file"
@@ -567,322 +424,304 @@ const UserProfile = () => {
         className="hidden"
       />
 
-      {/* Header */}
-      <div className="relative">
-        {/* Background gradient */}
-        <div className="absolute inset-0 h-80 bg-gradient-to-b from-primary/20 via-primary/10 to-transparent" />
-        
-        {/* Content */}
-        <div className="relative max-w-4xl mx-auto px-4 pt-6">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate(-1)}
-            className="mb-6 hover:bg-background/50"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
+      <div className="max-w-2xl mx-auto px-4 pt-4">
+        {/* Back button */}
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="mb-4 -ml-2"
+        >
+          <ArrowLeft className="mr-1 h-4 w-4" />
+          Back
+        </Button>
 
-          {/* Profile Card */}
-          <Card className="relative overflow-hidden bg-background/60 backdrop-blur-xl border-border/50 shadow-2xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5" />
-            
-            <div className="relative p-6 md:p-8">
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                {/* Avatar */}
-                <div className="relative group">
-                  {profile.avatar_url ? (
-                    <img 
-                      src={profile.avatar_url}
-                      alt={profile.display_name}
-                      className="w-28 h-28 rounded-full object-cover shadow-lg shadow-primary/30 border-4 border-background"
-                    />
-                  ) : (
-                    <div className="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/30">
-                      <span className="text-4xl font-bold text-primary-foreground">
-                        {profile.display_name?.charAt(0).toUpperCase() || "?"}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Level indicator */}
-                  <div className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-background border-2 border-primary flex items-center justify-center">
-                    <span className="text-sm font-bold text-primary">{userLevel}</span>
+        {/* Profile Header Card */}
+        <Card className="relative overflow-hidden mb-4">
+          {/* Gradient Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent" />
+          
+          <div className="relative p-5">
+            <div className="flex items-start gap-4">
+              {/* Avatar */}
+              <div className="relative group flex-shrink-0">
+                {profile.avatar_url ? (
+                  <img 
+                    src={profile.avatar_url}
+                    alt={profile.display_name}
+                    className="w-20 h-20 rounded-2xl object-cover border-2 border-background shadow-lg"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center border-2 border-background shadow-lg">
+                    <span className="text-2xl font-bold text-primary-foreground">
+                      {profile.display_name?.charAt(0).toUpperCase() || "?"}
+                    </span>
                   </div>
-
-                  {/* Edit avatar overlay */}
-                  {isOwnProfile && (
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}
-                      className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-                    >
-                      {uploading ? (
-                        <Loader2 className="h-8 w-8 text-white animate-spin" />
-                      ) : (
-                        <Camera className="h-8 w-8 text-white" />
-                      )}
-                    </button>
-                  )}
+                )}
+                
+                {/* Level badge */}
+                <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground border-2 border-background">
+                  {userLevel}
                 </div>
 
-                {/* Info */}
-                <div className="flex-1 text-center md:text-left">
-                  <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
-                    <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-                      {profile.display_name}
-                    </h1>
-                    {isOwnProfile && (
-                      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Edit3 className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
-                          <DialogHeader>
-                            <DialogTitle>Edit Profile</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="displayName">Display Name</Label>
-                              <Input
-                                id="displayName"
-                                value={editDisplayName}
-                                onChange={(e) => setEditDisplayName(e.target.value)}
-                                placeholder="Enter your display name"
-                                maxLength={50}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="bio">Bio</Label>
-                              <Textarea
-                                id="bio"
-                                value={editBio}
-                                onChange={(e) => setEditBio(e.target.value)}
-                                placeholder="Tell us about yourself..."
-                                rows={3}
-                                maxLength={200}
-                              />
-                              <p className="text-xs text-muted-foreground text-right">
-                                {editBio.length}/200
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-                              <X className="h-4 w-4 mr-2" />
-                              Cancel
-                            </Button>
-                            <Button onClick={handleSaveProfile} disabled={saving}>
-                              {saving ? (
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              ) : (
-                                <Save className="h-4 w-4 mr-2" />
-                              )}
-                              Save
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                {/* Edit avatar overlay */}
+                {isOwnProfile && (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                  >
+                    {uploading ? (
+                      <Loader2 className="h-6 w-6 text-white animate-spin" />
+                    ) : (
+                      <Camera className="h-6 w-6 text-white" />
                     )}
-                  </div>
-                  
-                  {profile.bio && (
-                    <p className="text-muted-foreground mb-3 max-w-md">{profile.bio}</p>
-                  )}
-                  
-                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 text-muted-foreground">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="h-4 w-4" />
-                      <span className="text-sm">Joined {memberSince}</span>
-                    </div>
-                    <span className="hidden md:inline text-border">•</span>
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="h-4 w-4" />
-                      <span className="text-sm">{daysSinceJoined} days active</span>
-                    </div>
-                  </div>
-                  
-                  {/* Achievement progress */}
-                  <div className="mt-4">
-                    <div className="flex items-center justify-center md:justify-start gap-2 mb-1.5">
-                      <Award className="h-4 w-4 text-yellow-500" />
-                      <span className="text-sm text-muted-foreground">
-                        {unlockedCount}/{achievements.length} Achievements
-                      </span>
-                    </div>
-                    <Progress 
-                      value={(unlockedCount / achievements.length) * 100} 
-                      className="h-2 w-full md:w-64"
-                    />
-                  </div>
-                </div>
+                  </button>
+                )}
+              </div>
 
-                {/* Points */}
-                <div className="text-center p-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30">
-                  <Trophy className="h-6 w-6 text-primary mx-auto mb-2" />
-                  <p className="text-4xl font-bold text-primary">{profile.total_points.toLocaleString()}</p>
-                  <p className="text-sm text-muted-foreground">Total Points</p>
-                  <p className="text-xs text-muted-foreground mt-1">Level {userLevel}</p>
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h1 className="text-xl font-bold truncate">{profile.display_name || "Anonymous"}</h1>
+                  {isOwnProfile && (
+                    <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+                          <Edit3 className="h-3.5 w-3.5" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Edit Profile</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="displayName">Display Name</Label>
+                            <Input
+                              id="displayName"
+                              value={editDisplayName}
+                              onChange={(e) => setEditDisplayName(e.target.value)}
+                              placeholder="Enter your display name"
+                              maxLength={50}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="bio">Bio</Label>
+                            <Textarea
+                              id="bio"
+                              value={editBio}
+                              onChange={(e) => setEditBio(e.target.value)}
+                              placeholder="Tell us about yourself..."
+                              rows={3}
+                              maxLength={200}
+                            />
+                            <p className="text-xs text-muted-foreground text-right">{editBio.length}/200</p>
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                            Cancel
+                          </Button>
+                          <Button onClick={handleSaveProfile} disabled={saving}>
+                            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                </div>
+                
+                {profile.bio && (
+                  <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{profile.bio}</p>
+                )}
+                
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Calendar className="h-3 w-3" />
+                  <span>Joined {memberSince}</span>
+                  <span className="text-border">•</span>
+                  <span>{daysSinceJoined} days</span>
                 </div>
               </div>
             </div>
-          </Card>
-        </div>
-      </div>
 
-      {/* Stats Section */}
-      <div className="max-w-4xl mx-auto px-4 mt-8 space-y-8">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard 
-            icon={Flame} 
-            label="Current Streak" 
-            value={`${streakData?.current_streak || 0}🔥`}
-            sublabel={`Best: ${streakData?.longest_streak || 0} days`}
-            color="orange"
-          />
-          <StatCard 
-            icon={Target} 
-            label="Accuracy" 
-            value={`${predictionStats?.accuracy || 0}%`}
-            sublabel={`${predictionStats?.correct_predictions || 0}/${predictionStats?.total_predictions || 0} correct`}
-            color="primary"
-          />
-          <StatCard 
-            icon={Swords} 
-            label="Win Rate" 
-            value={`${winRate}%`}
-            sublabel={`${battleStats?.wins || 0}W - ${battleStats?.losses || 0}L`}
-            color={winRate >= 50 ? "green" : "red"}
-          />
-          <StatCard 
-            icon={Activity} 
-            label="Total Visits" 
-            value={streakData?.total_visits || 0}
-            sublabel="Days on Rainz"
-            color="purple"
-          />
-        </div>
-
-        {/* Circular Progress Stats */}
-        <Card className="p-6 md:p-8 bg-background/40 backdrop-blur-md border-border/50">
-          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-            <Activity className="h-5 w-5 text-primary" />
-            Performance Overview
-          </h3>
-          <div className="flex flex-wrap justify-around gap-8">
-            <CircularProgress 
-              value={predictionStats?.total_predictions || 0} 
-              max={100}
-              label="Predictions"
-              sublabel="made"
-              color="hsl(var(--primary))"
-            />
-            <CircularProgress 
-              value={predictionStats?.accuracy || 0} 
-              max={100}
-              label="Accuracy"
-              sublabel="percent"
-              color="#22c55e"
-            />
-            <CircularProgress 
-              value={battleStats?.wins || 0} 
-              max={Math.max(battleStats?.total_battles || 10, 10)}
-              label="Battles Won"
-              sublabel={`of ${battleStats?.total_battles || 0}`}
-              color="#eab308"
-            />
-            <CircularProgress 
-              value={streakData?.longest_streak || 0} 
-              max={30}
-              label="Best Streak"
-              sublabel="days"
-              color="#f97316"
-            />
+            {/* Points Summary */}
+            <div className="grid grid-cols-3 gap-3 mt-5">
+              <div className="text-center p-3 rounded-xl bg-primary/10 border border-primary/20">
+                <Trophy className="h-4 w-4 text-primary mx-auto mb-1" />
+                <p className="text-lg font-bold text-primary">{(profile.total_points || 0).toLocaleString()}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Points</p>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-orange-500/10 border border-orange-500/20">
+                <Flame className="h-4 w-4 text-orange-500 mx-auto mb-1" />
+                <p className="text-lg font-bold text-orange-500">{streakData?.current_streak || 0}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Streak</p>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <Sparkles className="h-4 w-4 text-amber-500 mx-auto mb-1" />
+                <p className="text-lg font-bold text-amber-500">{(profile.shop_points || 0).toLocaleString()}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Shop Pts</p>
+              </div>
+            </div>
           </div>
         </Card>
 
-        {/* Battle Record */}
-        <Card className="p-6 md:p-8 bg-background/40 backdrop-blur-md border-border/50">
-          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-            <Swords className="h-5 w-5 text-red-500" />
-            Battle Record
-          </h3>
+        {/* Tabs for Stats & Achievements */}
+        <Tabs defaultValue="stats" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="stats">Stats</TabsTrigger>
+            <TabsTrigger value="achievements">
+              Achievements ({unlockedAchievements.length})
+            </TabsTrigger>
+          </TabsList>
           
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-            <div className="text-center p-4 rounded-xl bg-muted/20">
-              <p className="text-3xl font-bold text-foreground">{battleStats?.total_battles || 0}</p>
-              <p className="text-sm text-muted-foreground">Total</p>
-            </div>
-            <div className="text-center p-4 rounded-xl bg-green-500/10 border border-green-500/30">
-              <p className="text-3xl font-bold text-green-500">{battleStats?.wins || 0}</p>
-              <p className="text-sm text-muted-foreground">Wins</p>
-            </div>
-            <div className="text-center p-4 rounded-xl bg-red-500/10 border border-red-500/30">
-              <p className="text-3xl font-bold text-red-500">{battleStats?.losses || 0}</p>
-              <p className="text-sm text-muted-foreground">Losses</p>
-            </div>
-            <div className="text-center p-4 rounded-xl bg-gray-500/10 border border-gray-500/30">
-              <p className="text-3xl font-bold text-gray-400">{battleStats?.ties || 0}</p>
-              <p className="text-sm text-muted-foreground">Ties</p>
-            </div>
-            <div className="text-center p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30">
-              <p className="text-3xl font-bold text-yellow-500">{battleStats?.pending || 0}</p>
-              <p className="text-sm text-muted-foreground">Active</p>
-            </div>
-          </div>
-
-          {/* Win/Loss bar */}
-          {battleStats && (battleStats.wins + battleStats.losses) > 0 && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-green-500 font-medium">{battleStats.wins} Wins</span>
-                <span className="text-red-500 font-medium">{battleStats.losses} Losses</span>
-              </div>
-              <div className="h-3 rounded-full overflow-hidden bg-red-500/30 flex">
-                <div 
-                  className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-500"
-                  style={{ width: `${winRate}%` }}
+          <TabsContent value="stats" className="space-y-4">
+            {/* Prediction Stats */}
+            <Card className="p-4">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Target className="h-4 w-4 text-primary" />
+                Predictions
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <StatItem 
+                  icon={Activity} 
+                  label="Total Made" 
+                  value={predictionStats?.total_predictions || 0}
+                  color="text-primary"
+                />
+                <StatItem 
+                  icon={CheckCircle} 
+                  label="Correct" 
+                  value={predictionStats?.correct_predictions || 0}
+                  color="text-green-500"
+                />
+                <StatItem 
+                  icon={Target} 
+                  label="Accuracy" 
+                  value={`${predictionStats?.accuracy || 0}%`}
+                  color="text-blue-500"
+                />
+                <StatItem 
+                  icon={Flame} 
+                  label="Best Streak" 
+                  value={streakData?.longest_streak || 0}
+                  color="text-orange-500"
                 />
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-muted-foreground">
-                  Current streak: {battleStats.currentWinStreak} wins
-                </span>
-                <Badge variant={winRate >= 50 ? "default" : "secondary"}>
-                  {winRate}% Win Rate
-                </Badge>
-              </div>
-            </div>
-          )}
-        </Card>
+            </Card>
 
-        {/* Achievements */}
-        <Card className="p-6 md:p-8 bg-background/40 backdrop-blur-md border-border/50">
-          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-            <Award className="h-5 w-5 text-yellow-500" />
-            Achievements
-            <Badge variant="outline" className="ml-2">
-              {unlockedCount}/{achievements.length}
-            </Badge>
-          </h3>
+            {/* Battle Stats */}
+            <Card className="p-4">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Swords className="h-4 w-4 text-red-500" />
+                Battles
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <StatItem 
+                  icon={Swords} 
+                  label="Total Battles" 
+                  value={battleStats?.total_battles || 0}
+                  color="text-primary"
+                />
+                <StatItem 
+                  icon={Trophy} 
+                  label="Wins" 
+                  value={battleStats?.wins || 0}
+                  color="text-green-500"
+                />
+                <StatItem 
+                  icon={Target} 
+                  label="Win Rate" 
+                  value={`${winRate}%`}
+                  color="text-blue-500"
+                />
+                <StatItem 
+                  icon={Shield} 
+                  label="Best Win Streak" 
+                  value={battleStats?.longestWinStreak || 0}
+                  color="text-purple-500"
+                />
+              </div>
+              
+              {/* Win/Loss Bar */}
+              {battleStats && (battleStats.wins + battleStats.losses) > 0 && (
+                <div className="mt-4">
+                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                    <span>{battleStats.wins}W</span>
+                    <span>{battleStats.losses}L</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-red-500/30 overflow-hidden">
+                    <div 
+                      className="h-full bg-green-500 rounded-full transition-all"
+                      style={{ width: `${winRate}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </Card>
+
+            {/* Activity Stats */}
+            <Card className="p-4">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Activity className="h-4 w-4 text-purple-500" />
+                Activity
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <StatItem 
+                  icon={Calendar} 
+                  label="Total Visits" 
+                  value={streakData?.total_visits || 0}
+                  color="text-primary"
+                />
+                <StatItem 
+                  icon={Clock} 
+                  label="Days Active" 
+                  value={daysSinceJoined}
+                  color="text-muted-foreground"
+                />
+              </div>
+            </Card>
+          </TabsContent>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {achievements.map((achievement, index) => (
-              <AchievementBadge
-                key={index}
-                icon={achievement.icon}
-                name={achievement.name}
-                description={achievement.description}
-                unlocked={achievement.unlocked}
-                color={achievement.color}
-                rarity={achievement.rarity}
+          <TabsContent value="achievements">
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <Award className="h-4 w-4 text-amber-500" />
+                  Unlocked Achievements
+                </h3>
+                <span className="text-xs text-muted-foreground">
+                  {unlockedAchievements.length}/{achievements.length}
+                </span>
+              </div>
+              
+              <Progress 
+                value={(unlockedAchievements.length / achievements.length) * 100} 
+                className="h-2 mb-4"
               />
-            ))}
-          </div>
-        </Card>
+              
+              {unlockedAchievements.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {unlockedAchievements.map((achievement, i) => (
+                    <AchievementBadge
+                      key={i}
+                      icon={achievement.icon}
+                      name={achievement.name}
+                      unlocked={true}
+                      rarity={achievement.rarity}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Award className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No achievements yet</p>
+                  <p className="text-xs">Make predictions to earn achievements!</p>
+                </div>
+              )}
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

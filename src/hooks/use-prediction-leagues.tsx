@@ -408,50 +408,46 @@ export function usePredictionLeagues() {
 
       const userIds = members.map(m => m.user_id);
 
-      // Get prediction stats for league members from weather_predictions
+      // Get profiles with total_points (PP) for league members
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, total_points')
+        .in('user_id', userIds);
+
+      // Get prediction stats for accuracy calculation
       const { data: predictions } = await supabase
         .from('weather_predictions')
-        .select('user_id, is_correct, points_earned')
+        .select('user_id, is_correct')
         .in('user_id', userIds)
         .not('is_correct', 'is', null);
 
-      // Calculate stats per user
-      const stats: Record<string, { correct: number; total: number; points: number }> = {};
-      
+      // Calculate prediction stats per user
+      const predStats: Record<string, { correct: number; total: number }> = {};
       userIds.forEach(id => {
-        stats[id] = { correct: 0, total: 0, points: 0 };
+        predStats[id] = { correct: 0, total: 0 };
       });
 
       (predictions || []).forEach(pred => {
-        if (stats[pred.user_id]) {
-          stats[pred.user_id].total++;
+        if (predStats[pred.user_id]) {
+          predStats[pred.user_id].total++;
           if (pred.is_correct) {
-            stats[pred.user_id].correct++;
+            predStats[pred.user_id].correct++;
           }
-          stats[pred.user_id].points += pred.points_earned || 0;
         }
       });
 
-      // Get display names and format leaderboard
-      const leaderboard: LeagueLeaderboardEntry[] = await Promise.all(
-        userIds.map(async (userId) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('display_name')
-            .eq('user_id', userId)
-            .single();
-
-          const userStats = stats[userId];
-          return {
-            user_id: userId,
-            display_name: profile?.display_name || 'Unknown',
-            total_points: userStats.points,
-            battles_won: userStats.correct,
-            battles_played: userStats.total,
-            win_rate: userStats.total > 0 ? Math.round((userStats.correct / userStats.total) * 100) : 0
-          };
-        })
-      );
+      // Format leaderboard using PP from profiles
+      const leaderboard: LeagueLeaderboardEntry[] = (profiles || []).map(profile => {
+        const userPredStats = predStats[profile.user_id] || { correct: 0, total: 0 };
+        return {
+          user_id: profile.user_id,
+          display_name: profile.display_name || 'Unknown',
+          total_points: profile.total_points || 0,
+          battles_won: userPredStats.correct,
+          battles_played: userPredStats.total,
+          win_rate: userPredStats.total > 0 ? Math.round((userPredStats.correct / userPredStats.total) * 100) : 0
+        };
+      });
 
       return leaderboard.sort((a, b) => b.total_points - a.total_points);
     } catch (error) {

@@ -195,20 +195,30 @@ export const DailySpinWheel = () => {
           .eq("user_id", user.id);
           
       } else if (reward.type === "streak_freeze") {
+        // Check if inventory exists first
         const { data: inventory } = await supabase
           .from("user_inventory")
-          .select("quantity")
+          .select("id, quantity")
           .eq("user_id", user.id)
           .eq("item_type", "streak_freeze")
           .maybeSingle();
         
-        await supabase
-          .from("user_inventory")
-          .upsert({
-            user_id: user.id,
-            item_type: "streak_freeze",
-            quantity: (inventory?.quantity || 0) + 1,
-          }, { onConflict: "user_id,item_type" });
+        if (inventory) {
+          // Update existing
+          await supabase
+            .from("user_inventory")
+            .update({ quantity: inventory.quantity + 1 })
+            .eq("id", inventory.id);
+        } else {
+          // Insert new
+          await supabase
+            .from("user_inventory")
+            .insert({
+              user_id: user.id,
+              item_type: "streak_freeze",
+              quantity: 1,
+            });
+        }
           
       } else if (reward.type === "double_points") {
         const expiresAt = new Date();

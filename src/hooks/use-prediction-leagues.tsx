@@ -13,6 +13,7 @@ export interface League {
   max_members: number;
   invite_code: string;
   created_at: string;
+  updated_at: string;
   member_count?: number;
   my_role?: string;
   owner_name?: string;
@@ -407,34 +408,27 @@ export function usePredictionLeagues() {
 
       const userIds = members.map(m => m.user_id);
 
-      // Get battle stats for league members
-      const { data: battles } = await supabase
-        .from('prediction_battles')
-        .select('*')
-        .or(`challenger_id.in.(${userIds.join(',')}),opponent_id.in.(${userIds.join(',')})`)
-        .eq('status', 'completed');
+      // Get prediction stats for league members from weather_predictions
+      const { data: predictions } = await supabase
+        .from('weather_predictions')
+        .select('user_id, is_correct, points_earned')
+        .in('user_id', userIds)
+        .not('is_correct', 'is', null);
 
       // Calculate stats per user
-      const stats: Record<string, { wins: number; played: number; points: number }> = {};
+      const stats: Record<string, { correct: number; total: number; points: number }> = {};
       
       userIds.forEach(id => {
-        stats[id] = { wins: 0, played: 0, points: 0 };
+        stats[id] = { correct: 0, total: 0, points: 0 };
       });
 
-      (battles || []).forEach(battle => {
-        if (userIds.includes(battle.challenger_id)) {
-          stats[battle.challenger_id].played++;
-          if (battle.winner_id === battle.challenger_id) {
-            stats[battle.challenger_id].wins++;
-            stats[battle.challenger_id].points += battle.bonus_points || 0;
+      (predictions || []).forEach(pred => {
+        if (stats[pred.user_id]) {
+          stats[pred.user_id].total++;
+          if (pred.is_correct) {
+            stats[pred.user_id].correct++;
           }
-        }
-        if (battle.opponent_id && userIds.includes(battle.opponent_id)) {
-          stats[battle.opponent_id].played++;
-          if (battle.winner_id === battle.opponent_id) {
-            stats[battle.opponent_id].wins++;
-            stats[battle.opponent_id].points += battle.bonus_points || 0;
-          }
+          stats[pred.user_id].points += pred.points_earned || 0;
         }
       });
 
@@ -452,9 +446,9 @@ export function usePredictionLeagues() {
             user_id: userId,
             display_name: profile?.display_name || 'Unknown',
             total_points: userStats.points,
-            battles_won: userStats.wins,
-            battles_played: userStats.played,
-            win_rate: userStats.played > 0 ? Math.round((userStats.wins / userStats.played) * 100) : 0
+            battles_won: userStats.correct,
+            battles_played: userStats.total,
+            win_rate: userStats.total > 0 ? Math.round((userStats.correct / userStats.total) * 100) : 0
           };
         })
       );
@@ -463,6 +457,147 @@ export function usePredictionLeagues() {
     } catch (error) {
       console.error('Error getting league leaderboard:', error);
       return [];
+    }
+  };
+
+  const getLeagueMembers = async (leagueId: string): Promise<LeagueMember[]> => {
+    try {
+      const { data: members, error } = await supabase
+        .from('league_members')
+        .select('*')
+        .eq('league_id', leagueId);
+
+      if (error) throw error;
+
+      // Enrich with display names
+      const enrichedMembers = await Promise.all((members || []).map(async (member) => {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('user_id', member.user_id)
+          .single();
+
+        return {
+          ...member,
+          display_name: profile?.display_name || 'Unknown'
+        };
+      }));
+
+      return enrichedMembers;
+    } catch (error) {
+      console.error('Error getting league members:', error);
+      return [];
+    }
+  };
+
+  const updateLeague = async (leagueId: string, updates: { name?: string; description?: string; icon?: string; is_public?: boolean; max_members?: number }) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('prediction_leagues')
+        .update(updates)
+        .eq('id', leagueId)
+        .eq('created_by', user.id);
+
+      if (error) throw error;
+
+      toast({ title: "League updated!" });
+      await fetchMyLeagues();
+      return true;
+    } catch (error) {
+      console.error('Error updating league:', error);
+      toast({ title: "Failed to update league", variant: "destructive" });
+      return false;
+    }
+  };
+
+  const updateMemberRole = async (memberId: string, newRole: 'member' | 'admin') => {
+    try {
+      const { error } = await supabase
+        .from('league_members')
+        .update({ role: newRole })
+        .eq('id', memberId);
+
+      if (error) throw error;
+
+      toast({ title: `Role updated to ${newRole}` });
+      return true;
+    } catch (error) {
+      console.error('Error updating member role:', error);
+      toast({ title: "Failed to update role", variant: "destructive" });
+      return false;
+    }
+  };
+
+  const removeMember = async (memberId: string) => {
+    try {
+      const { error } = await supabase
+        .from('league_members')
+        .delete()
+        .eq('id', memberId);
+
+      if (error) throw error;
+
+      toast({ title: "Member removed" });
+      return true;
+    } catch (error) {
+      console.error('Error removing member:', error);
+      toast({ title: "Failed to remove member", variant: "destructive" });
+      return false;
+    }
+  };
+
+  const regenerateInviteCode = async (leagueId: string) => {
+    if (!user) return null;
+
+    try {
+      const newCode = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+      
+      const { error } = await supabase
+        .from('prediction_leagues')
+        .update({ invite_code: newCode })
+        .eq('id', leagueId)
+        .eq('created_by', user.id);
+
+      if (error) throw error;
+
+      toast({ title: "Invite code regenerated!" });
+      await fetchMyLeagues();
+      return newCode;
+    } catch (error) {
+      console.error('Error regenerating invite code:', error);
+      toast({ title: "Failed to regenerate code", variant: "destructive" });
+      return null;
+    }
+  };
+
+  const deleteLeague = async (leagueId: string) => {
+    if (!user) return false;
+
+    try {
+      // Delete all members first
+      await supabase
+        .from('league_members')
+        .delete()
+        .eq('league_id', leagueId);
+
+      // Delete the league
+      const { error } = await supabase
+        .from('prediction_leagues')
+        .delete()
+        .eq('id', leagueId)
+        .eq('created_by', user.id);
+
+      if (error) throw error;
+
+      toast({ title: "League deleted" });
+      await fetchMyLeagues();
+      return true;
+    } catch (error) {
+      console.error('Error deleting league:', error);
+      toast({ title: "Failed to delete league", variant: "destructive" });
+      return false;
     }
   };
 
@@ -490,6 +625,12 @@ export function usePredictionLeagues() {
     leaveLeague,
     handleInvite,
     getLeagueLeaderboard,
+    getLeagueMembers,
+    updateLeague,
+    updateMemberRole,
+    removeMember,
+    regenerateInviteCode,
+    deleteLeague,
     refetch: () => Promise.all([fetchMyLeagues(), fetchPublicLeagues(), fetchPendingInvites()])
   };
 }

@@ -67,6 +67,12 @@ export interface HourlyForecast {
   condition: string;
   precipitation: number;
   icon?: string;
+  feelsLike?: number;
+  humidity?: number;
+  windSpeed?: number;
+  windDirection?: number;
+  uvIndex?: number;
+  cloudCover?: number;
 }
 
 export interface DailyForecast {

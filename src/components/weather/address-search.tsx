@@ -204,83 +204,93 @@ export function AddressSearch({ onLocationSelect, isImperial }: AddressSearchPro
   }
 
   return (
-    <Card className="p-4 mb-4">
-      <div className="flex items-center gap-2 mb-2">
-        <MapPin className="w-5 h-5 text-primary" />
-        <h3 className="font-semibold">Search by Address</h3>
-      </div>
-      <div className="relative">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Input
-              ref={inputRef}
-              type="text"
-              placeholder="Type your address..."
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              onFocus={() => {
-                if (suggestions.length > 0) {
-                  setShowSuggestions(true);
-                }
-              }}
-              disabled={loading}
-              className="pr-8"
-            />
-            {address && !loading && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-2 hover:bg-transparent"
-                onClick={handleClearInput}
+    <section className="mb-4 md:mb-8">
+      <div className="overflow-hidden rounded-2xl glass-card">
+        {/* Header - matching main card style */}
+        <div className="p-4 border-b border-border/50">
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-primary" />
+            Search by Address
+          </h2>
+          <p className="text-xs text-muted-foreground mt-1">Find weather for any location</p>
+        </div>
+
+        {/* Content */}
+        <div className="p-4">
+          <div className="relative">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="Type your address..."
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  onFocus={() => {
+                    if (suggestions.length > 0) {
+                      setShowSuggestions(true);
+                    }
+                  }}
+                  disabled={loading}
+                  className="pr-8"
+                />
+                {address && !loading && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-2 hover:bg-transparent"
+                    onClick={handleClearInput}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+                {loadingSuggestions && (
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Autocomplete Suggestions Dropdown */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div
+                ref={suggestionsRef}
+                className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto"
               >
-                <X className="w-4 h-4" />
-              </Button>
-            )}
-            {loadingSuggestions && (
-              <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                {suggestions.map((suggestion, index) => (
+                  <button
+                    key={`${suggestion.lat}-${suggestion.lon}-${index}`}
+                    onClick={() => handleSelectSuggestion(suggestion)}
+                    className={cn(
+                      "w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground",
+                      "flex items-start gap-2 border-b border-border last:border-b-0",
+                      "transition-colors"
+                    )}
+                  >
+                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {suggestion.address.suburb ||
+                          suggestion.address.village ||
+                          suggestion.address.town ||
+                          suggestion.address.city ||
+                          "Unknown Location"}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {suggestion.display_name}
+                      </p>
+                    </div>
+                  </button>
+                ))}
               </div>
             )}
           </div>
+          <p className="text-xs text-muted-foreground mt-3">
+            Address geocoding by OpenStreetMap Nominatim
+          </p>
         </div>
-
-        {/* Autocomplete Suggestions Dropdown */}
-        {showSuggestions && suggestions.length > 0 && (
-          <div
-            ref={suggestionsRef}
-            className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto"
-          >
-            {suggestions.map((suggestion, index) => (
-              <button
-                key={`${suggestion.lat}-${suggestion.lon}-${index}`}
-                onClick={() => handleSelectSuggestion(suggestion)}
-                className={cn(
-                  "w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground",
-                  "flex items-start gap-2 border-b border-border last:border-b-0",
-                  "transition-colors"
-                )}
-              >
-                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
-                    {suggestion.address.suburb ||
-                      suggestion.address.village ||
-                      suggestion.address.town ||
-                      suggestion.address.city ||
-                      "Unknown Location"}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {suggestion.display_name}
-                  </p>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
       </div>
-      <p className="text-xs text-muted-foreground mt-2">
-        Address geocoding by OpenStreetMap Nominatim
-      </p>
-    </Card>
+    </section>
   );
 }

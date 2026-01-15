@@ -461,6 +461,12 @@ export const weatherApi = {
         condition: weatherCodeToText(data?.hourly?.weathercode?.[j], hourTemp, hourSnow),
         precipitation: Math.max(precipProb, totalPrecip > 0 ? Math.min(100, totalPrecip * 20) : 0),
         icon: "",
+        feelsLike: Math.round(data?.hourly?.apparent_temperature?.[j] ?? hourTemp),
+        humidity: Math.round(data?.hourly?.relative_humidity_2m?.[j] ?? 0),
+        windSpeed: Math.round(data?.hourly?.wind_speed_10m?.[j] ?? 0),
+        windDirection: Math.round(data?.hourly?.wind_direction_10m?.[j] ?? 0),
+        uvIndex: Math.round(data?.hourly?.uv_index?.[j] ?? 0),
+        cloudCover: Math.round(data?.hourly?.cloud_cover?.[j] ?? 0),
       };
     });
 

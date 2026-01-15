@@ -24,8 +24,13 @@ function HourDetailDialog({ hour, isOpen, onClose, isImperial, is24Hour }: HourD
   if (!hour) return null;
 
   const temp = isImperial ? hour.temperature : Math.round((hour.temperature - 32) * 5/9);
-  const feelsLike = (hour as any).feelsLike ? (isImperial ? (hour as any).feelsLike : Math.round(((hour as any).feelsLike - 32) * 5/9)) : temp;
-  const windSpeed = isImperial ? ((hour as any).windSpeed || 0) : Math.round(((hour as any).windSpeed || 0) * 1.609);
+  const feelsLike = hour.feelsLike !== undefined 
+    ? (isImperial ? hour.feelsLike : Math.round((hour.feelsLike - 32) * 5/9)) 
+    : temp;
+  const windSpeed = hour.windSpeed !== undefined 
+    ? (isImperial ? hour.windSpeed : Math.round(hour.windSpeed * 1.609)) 
+    : 0;
+  const humidity = hour.humidity ?? 0;
 
   const getConditionIcon = (condition: string, size: string = "w-12 h-12") => {
     const c = condition.toLowerCase();
@@ -71,7 +76,7 @@ function HourDetailDialog({ hour, isOpen, onClose, isImperial, is24Hour }: HourD
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Feels Like</p>
-                <p className="font-semibold">{feelsLike}°</p>
+                <p className="font-semibold">{feelsLike}°{isImperial ? 'F' : 'C'}</p>
               </div>
             </div>
 
@@ -101,7 +106,7 @@ function HourDetailDialog({ hour, isOpen, onClose, isImperial, is24Hour }: HourD
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Humidity</p>
-                <p className="font-semibold">{(hour as any).humidity || '--'}%</p>
+                <p className="font-semibold">{humidity}%</p>
               </div>
             </div>
           </div>

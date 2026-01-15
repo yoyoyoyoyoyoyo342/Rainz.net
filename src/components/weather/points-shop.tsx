@@ -12,7 +12,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/use-subscription";
+import { MysteryBoxReveal } from "./mystery-box-reveal";
 
+interface MysteryBoxReward {
+  type: "shop_points" | "streak_freeze" | "premium_trial" | "double_points";
+  amount?: number;
+  label: string;
+  description: string;
+}
 interface ShopItem {
   id: string;
   name: string;
@@ -113,6 +120,8 @@ export const PointsShop = () => {
   const [buyingPackage, setBuyingPackage] = useState<string | null>(null);
   const [activeTrial, setActiveTrial] = useState<Date | null>(null);
   const [offers, setOffers] = useState<ShopOffer[]>([]);
+  const [mysteryBoxOpen, setMysteryBoxOpen] = useState(false);
+  const [mysteryReward, setMysteryReward] = useState<MysteryBoxReward | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -283,6 +292,48 @@ export const PointsShop = () => {
     }
   };
 
+  const openMysteryBox = async (): Promise<MysteryBoxReward> => {
+    // Random reward logic
+    const roll = Math.random();
+    let reward: MysteryBoxReward;
+    
+    if (roll < 0.35) {
+      // 35% - Shop Points (10-50)
+      const amount = Math.floor(Math.random() * 41) + 10;
+      reward = { type: "shop_points", amount, label: `${amount} Shop Points!`, description: "Added to your balance" };
+      
+      await supabase
+        .from("profiles")
+        .update({ shop_points: shopPoints + amount })
+        .eq("user_id", user!.id);
+    } else if (roll < 0.65) {
+      // 30% - Streak Freeze
+      reward = { type: "streak_freeze", label: "Streak Freeze!", description: "Protects your streak if you miss a day" };
+      
+      await supabase.from("user_inventory").upsert({
+        user_id: user!.id,
+        item_type: "streak_freeze",
+        quantity: inventory.streak_freeze + 1,
+      }, { onConflict: "user_id,item_type" });
+    } else if (roll < 0.85) {
+      // 20% - Double Points (24h)
+      reward = { type: "double_points", label: "Double Points!", description: "2x points for 24 hours" };
+    } else {
+      // 15% - Premium Trial (1 day)
+      reward = { type: "premium_trial", label: "1 Day Rainz+!", description: "Premium features unlocked" };
+      
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 1);
+      await supabase.from("premium_trials").insert({
+        user_id: user!.id,
+        expires_at: expiresAt.toISOString(),
+        source: "mystery_box",
+      });
+    }
+    
+    return reward;
+  };
+
   const purchaseItem = async (item: ShopItem) => {
     if (!user) {
       toast.error("Please sign in to make purchases");
@@ -325,7 +376,15 @@ export const PointsShop = () => {
         points_spent: actualPrice,
       });
 
-      // Handle item logic
+      // Handle item logic - special case for mystery box
+      if (item.id === "gift_box") {
+        const reward = await openMysteryBox();
+        setMysteryReward(reward);
+        setMysteryBoxOpen(true);
+        fetchUserData();
+        return;
+      }
+      
       if (item.type === "streak_freeze") {
         await supabase.from("user_inventory").upsert({
           user_id: user.id,
@@ -582,6 +641,17 @@ export const PointsShop = () => {
           <p>• Get all 3 predictions correct = +300 pts + Free Streak Freeze</p>
         </CardContent>
       </Card>
+
+      {/* Mystery Box Reveal */}
+      <MysteryBoxReveal 
+        isOpen={mysteryBoxOpen} 
+        onClose={() => {
+          setMysteryBoxOpen(false);
+          setMysteryReward(null);
+          setPurchasing(null);
+        }} 
+        reward={mysteryReward} 
+      />
     </div>
   );
 };

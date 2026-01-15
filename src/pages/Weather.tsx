@@ -112,21 +112,40 @@ export default function WeatherPage() {
         // Transform world data to match WeatherResponse structure
         const worldData = data;
         const baseCurrentWeather = {
-          temperature: worldData.temperature,
+          temperature: Math.round(worldData.temperature),
           humidity: worldData.humidity,
           windSpeed: worldData.windSpeed,
-          windDirection: 0,
+          windDirection: worldData.windDirection || 0,
           condition: worldData.condition,
           uvIndex: worldData.uvIndex,
-          feelsLike: worldData.temperature,
-          visibility: 10,
-          sunrise: "06:00",
-          sunset: "18:00",
-          pressure: 1013,
+          feelsLike: Math.round(worldData.feelsLike || worldData.temperature),
+          visibility: worldData.visibility || 10,
+          pressure: worldData.pressure || 1013,
           precipitation: 0,
           precipitationProbability: 0,
+          cloudCover: worldData.cloudCover || 0,
           description: `Global average from ${worldData.citiesPolled} major cities. Hottest: ${worldData.extremes.hottest.city} (${worldData.extremes.hottest.temperature}°), Coldest: ${worldData.extremes.coldest.city} (${worldData.extremes.coldest.temperature}°)`,
         };
+        
+        // Transform hourly forecast
+        const hourlyForecast = (worldData.hourlyForecast || []).map((h: any) => ({
+          time: h.time,
+          temperature: h.temperature,
+          condition: h.condition,
+          precipitation: h.precipitation,
+          icon: "",
+        }));
+        
+        // Transform daily forecast
+        const dailyForecast = (worldData.dailyForecast || []).map((d: any) => ({
+          day: d.day,
+          condition: d.condition,
+          description: d.condition,
+          highTemp: d.highTemp,
+          lowTemp: d.lowTemp,
+          precipitation: d.precipitation,
+          icon: "",
+        }));
         
         const transformedData: WeatherResponse = {
           mostAccurate: {
@@ -136,8 +155,8 @@ export default function WeatherPage() {
             latitude: 0,
             longitude: 0,
             accuracy: 100,
-            hourlyForecast: [],
-            dailyForecast: [],
+            hourlyForecast,
+            dailyForecast,
           },
           sources: [],
           aggregated: {
@@ -147,8 +166,8 @@ export default function WeatherPage() {
             latitude: 0,
             longitude: 0,
             accuracy: 100,
-            hourlyForecast: [],
-            dailyForecast: [],
+            hourlyForecast,
+            dailyForecast,
           },
         };
         
@@ -201,6 +220,31 @@ export default function WeatherPage() {
     return stationInfo?.name || selectedLocation?.name || "Unknown";
   }, [weatherData, selectedLocation]);
 
+  // Helper to convert weather data to the correct units for alerts
+  // Weather data from Open-Meteo is ALWAYS in Fahrenheit, but we need to convert
+  // to match the user's preference before passing to checkWeatherAlerts
+  const getConvertedWeatherForAlerts = useMemo(() => {
+    if (!weatherData?.mostAccurate?.currentWeather) return null;
+    const raw = weatherData.mostAccurate.currentWeather;
+    
+    // Data is already in Fahrenheit (from Open-Meteo)
+    // If user wants Imperial (Fahrenheit), pass isImperial=true and use raw values
+    // If user wants Metric (Celsius), we need to convert values AND pass isImperial=false
+    if (isImperial) {
+      return { weather: raw, isImperial: true };
+    } else {
+      // Convert Fahrenheit to Celsius for proper threshold comparison
+      return {
+        weather: {
+          ...raw,
+          temperature: Math.round((raw.temperature - 32) * 5 / 9),
+          feelsLike: Math.round((raw.feelsLike - 32) * 5 / 9),
+        },
+        isImperial: false,
+      };
+    }
+  }, [weatherData?.mostAccurate?.currentWeather, isImperial]);
+
   useEffect(() => {
     if (weatherData && selectedLocation) {
       setLastUpdated(new Date());
@@ -208,8 +252,9 @@ export default function WeatherPage() {
       // Track weather view
       trackWeatherView(selectedLocation.name, selectedLocation.lat, selectedLocation.lon);
 
-      if (profile?.notification_enabled && weatherData.mostAccurate?.currentWeather) {
-        const alerts = checkWeatherAlerts(weatherData.mostAccurate.currentWeather, isImperial);
+      if (profile?.notification_enabled && getConvertedWeatherForAlerts) {
+        const { weather, isImperial: alertIsImperial } = getConvertedWeatherForAlerts;
+        const alerts = checkWeatherAlerts(weather, alertIsImperial);
         alerts.forEach(alert => {
           toast({
             title: `${alert.icon} ${alert.title}`,
@@ -484,9 +529,9 @@ export default function WeatherPage() {
               </div>
             )}
 
-            {weatherData.mostAccurate?.currentWeather && (
+            {getConvertedWeatherForAlerts && (
               <div className="mb-4">
-                <WinterAlerts alerts={checkWeatherAlerts(weatherData.mostAccurate.currentWeather, isImperial)} />
+                <WinterAlerts alerts={checkWeatherAlerts(getConvertedWeatherForAlerts.weather, getConvertedWeatherForAlerts.isImperial)} />
               </div>
             )}
 

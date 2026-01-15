@@ -108,7 +108,7 @@ export const PredictionDialog = ({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-10 px-4 text-sm sm:h-8 sm:px-3 sm:text-xs flex-1 sm:flex-initial relative">
           <Target className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />
-          Make Prediction
+          Predict & Compete
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

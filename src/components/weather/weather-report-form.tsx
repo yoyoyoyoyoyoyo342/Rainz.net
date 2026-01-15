@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,13 +27,13 @@ export function WeatherReportForm({ location, currentCondition, locationData }: 
   const { toast } = useToast();
   const { user, profile } = useAuth();
 
-  // Check if user has been registered for at least 3 months
+  // Check if user can report weather (logged in and account at least 7 days old)
   const canReportWeather = () => {
     if (!user || !profile?.created_at) return false;
     
     const accountAge = new Date().getTime() - new Date(profile.created_at).getTime();
-    const threeMonthsInMs = 90 * 24 * 60 * 60 * 1000; // 90 days
-    return accountAge >= threeMonthsInMs;
+    const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+    return accountAge >= sevenDaysInMs;
   };
 
   const handleSubmit = async () => {

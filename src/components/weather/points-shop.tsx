@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -101,6 +101,12 @@ interface UserInventory {
   prediction_boost: number;
 }
 
+interface ActivePowerup {
+  type: string;
+  expiresAt?: Date;
+  usesRemaining?: number;
+}
+
 interface ShopOffer {
   id: string;
   item_id: string;
@@ -124,6 +130,7 @@ export const PointsShop = () => {
   const [offers, setOffers] = useState<ShopOffer[]>([]);
   const [mysteryBoxOpen, setMysteryBoxOpen] = useState(false);
   const [mysteryReward, setMysteryReward] = useState<MysteryBoxReward | null>(null);
+  const [activePowerups, setActivePowerups] = useState<ActivePowerup[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -223,6 +230,29 @@ export const PointsShop = () => {
       if (trials && trials.length > 0) {
         setActiveTrial(new Date(trials[0].expires_at));
       }
+
+      // Fetch active powerups
+      const { data: powerups } = await supabase
+        .from("active_powerups")
+        .select("powerup_type, expires_at, uses_remaining")
+        .eq("user_id", user.id);
+
+      const activePowerupsList: ActivePowerup[] = [];
+      powerups?.forEach((p) => {
+        // Check if powerup is still valid
+        if (p.expires_at && new Date(p.expires_at) > new Date()) {
+          activePowerupsList.push({
+            type: p.powerup_type,
+            expiresAt: new Date(p.expires_at),
+          });
+        } else if (p.uses_remaining && p.uses_remaining > 0) {
+          activePowerupsList.push({
+            type: p.powerup_type,
+            usesRemaining: p.uses_remaining,
+          });
+        }
+      });
+      setActivePowerups(activePowerupsList);
     } catch (error) {
       console.error("Error fetching user data:", error);
     } finally {
@@ -483,7 +513,7 @@ export const PointsShop = () => {
       </div>
 
       {/* Inventory Quick View */}
-      {(inventory.streak_freeze > 0 || activeTrial) && (
+      {(inventory.streak_freeze > 0 || activeTrial || activePowerups.length > 0) && (
         <div className="flex flex-wrap gap-2">
           {inventory.streak_freeze > 0 && (
             <Badge variant="secondary" className="gap-1">
@@ -497,6 +527,14 @@ export const PointsShop = () => {
               Trial until {activeTrial.toLocaleDateString()}
             </Badge>
           )}
+          {activePowerups.map((powerup, idx) => (
+            <Badge key={idx} className={`gap-1 ${powerup.type === 'double_points' ? 'bg-purple-500/20 text-purple-600 border-purple-500/30' : 'bg-green-500/20 text-green-600 border-green-500/30'}`}>
+              {powerup.type === 'double_points' ? <Zap className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
+              {powerup.type === 'double_points' 
+                ? `2x Points (${Math.ceil((powerup.expiresAt!.getTime() - Date.now()) / 3600000)}h left)` 
+                : `Shield (${powerup.usesRemaining} uses)`}
+            </Badge>
+          ))}
         </div>
       )}
 

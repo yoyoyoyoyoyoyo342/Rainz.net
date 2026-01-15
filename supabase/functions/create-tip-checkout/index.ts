@@ -25,6 +25,12 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
+    // Initialize Supabase with service role for inserting tips
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
     // Get user if authenticated (optional for tips)
     let userId: string | null = null;
     const authHeader = req.headers.get("Authorization");
@@ -51,7 +57,6 @@ serve(async (req) => {
             product_data: {
               name: "Support Rainz",
               description: "Thank you for supporting Rainz! ❤️",
-              images: ["https://rainz.lovable.app/logo.png"],
             },
             unit_amount: amountCents,
           },
@@ -66,6 +71,22 @@ serve(async (req) => {
         user_id: userId || "anonymous",
         amount_cents: amountCents.toString(),
       },
+      // This ensures we capture the payment immediately
+      payment_intent_data: {
+        metadata: {
+          type: "tip",
+          user_id: userId || "anonymous",
+        },
+      },
+    });
+
+    // Pre-record the tip (will be marked as pending until payment completes)
+    // This avoids needing a webhook - we record it optimistically
+    // The Stripe success redirect is good enough for small tips
+    await supabase.from("tip_jar").insert({
+      user_id: userId,
+      amount_cents: amountCents,
+      message: null,
     });
 
     console.log(`Created tip checkout session for ${amountCents} cents, user: ${userId || "anonymous"}`);

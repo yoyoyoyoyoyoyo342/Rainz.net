@@ -14,10 +14,10 @@ serve(async (req) => {
   }
 
   try {
-    const { session_id } = await req.json();
+    const { sessionId } = await req.json();
     
-    if (!session_id) {
-      throw new Error("Missing session_id");
+    if (!sessionId) {
+      throw new Error("Session ID required");
     }
 
     // Initialize Stripe
@@ -25,57 +25,59 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
-    // Initialize Supabase
+    // Initialize Supabase with service role
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Retrieve the session to verify payment
-    const session = await stripe.checkout.sessions.retrieve(session_id);
+    // Retrieve the Stripe session to verify payment
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    
+    console.log(`Verifying tip session ${sessionId}, status: ${session.payment_status}`);
 
-    if (session.payment_status !== "paid") {
-      throw new Error("Payment not completed");
-    }
+    if (session.payment_status === "paid") {
+      // Update the tip status to completed
+      const { data, error } = await supabase
+        .from("tip_jar")
+        .update({ status: "completed" })
+        .eq("stripe_session_id", sessionId)
+        .eq("status", "pending")
+        .select()
+        .single();
 
-    // Check if this tip was already recorded
-    const { data: existingTip } = await supabase
-      .from("tip_jar")
-      .select("id")
-      .eq("id", session_id)
-      .maybeSingle();
+      if (error) {
+        console.error("Error updating tip:", error);
+        // Still return success if already confirmed
+        return new Response(JSON.stringify({ 
+          confirmed: true, 
+          message: "Tip already confirmed or session not found",
+          amount_cents: session.amount_total
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
 
-    if (existingTip) {
-      return new Response(JSON.stringify({ success: true, message: "Tip already recorded" }), {
+      console.log(`Confirmed tip: ${data?.amount_cents} cents`);
+
+      return new Response(JSON.stringify({ 
+        confirmed: true,
+        amount_cents: data?.amount_cents || session.amount_total
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    } else {
+      // Payment not completed
+      return new Response(JSON.stringify({ 
+        confirmed: false,
+        message: "Payment not completed"
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
-
-    const amountCents = session.metadata?.amount_cents ? parseInt(session.metadata.amount_cents) : session.amount_total;
-    const userId = session.metadata?.user_id !== "anonymous" ? session.metadata?.user_id : null;
-
-    // Record the tip
-    const { error: insertError } = await supabase
-      .from("tip_jar")
-      .insert({
-        id: session_id,
-        user_id: userId,
-        amount_cents: amountCents,
-        message: null,
-      });
-
-    if (insertError) {
-      console.error("Error inserting tip:", insertError);
-      throw insertError;
-    }
-
-    console.log(`Tip recorded: ${amountCents} cents from user ${userId || "anonymous"}`);
-
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
   } catch (error: any) {
     console.error("Error confirming tip:", error);
     return new Response(JSON.stringify({ error: error.message }), {

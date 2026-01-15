@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Coffee, Loader2, CheckCircle, ExternalLink } from "lucide-react";
+import { Heart, Loader2, CheckCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -30,10 +30,11 @@ export const TipJar = () => {
 
   const fetchTipData = async () => {
     try {
-      // Get total raised
+      // Get total raised - ONLY count completed tips
       const { data: tips } = await supabase
         .from("tip_jar")
-        .select("amount_cents, user_id");
+        .select("amount_cents, user_id")
+        .eq("status", "completed");
 
       const total = tips?.reduce((sum, tip) => sum + tip.amount_cents, 0) || 0;
       setTotalRaised(total);
@@ -56,18 +57,34 @@ export const TipJar = () => {
     }
   };
 
-  const checkTipSuccess = () => {
+  const checkTipSuccess = async () => {
     const params = new URLSearchParams(window.location.search);
     const tipResult = params.get("tip");
-    const amount = params.get("amount");
+    const sessionId = params.get("session_id");
     
-    if (tipResult === "success" && amount) {
-      const amountEuros = (parseInt(amount) / 100).toFixed(2);
-      toast.success(`Thank you for your €${amountEuros} tip! ❤️`);
-      // Clean URL
+    if (tipResult === "success" && sessionId) {
+      // Clean URL immediately
       window.history.replaceState({}, "", window.location.pathname);
-      // Refresh tip data
-      fetchTipData();
+      
+      try {
+        // Verify the payment with Stripe and confirm the tip
+        const { data, error } = await supabase.functions.invoke("confirm-tip", {
+          body: { sessionId },
+        });
+
+        if (error) throw error;
+
+        if (data?.confirmed) {
+          const amountEuros = ((data.amount_cents || 0) / 100).toFixed(2);
+          toast.success(`Thank you for your €${amountEuros} tip! ❤️`);
+          // Refresh tip data to show the new total
+          await fetchTipData();
+        } else {
+          console.log("Tip not confirmed:", data?.message);
+        }
+      } catch (error) {
+        console.error("Error confirming tip:", error);
+      }
     }
   };
 

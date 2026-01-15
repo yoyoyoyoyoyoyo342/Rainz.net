@@ -64,32 +64,25 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${origin}/?tip=success&amount=${amountCents}`,
+      success_url: `${origin}/?tip=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?tip=cancelled`,
       metadata: {
         type: "tip",
         user_id: userId || "anonymous",
         amount_cents: amountCents.toString(),
       },
-      // This ensures we capture the payment immediately
-      payment_intent_data: {
-        metadata: {
-          type: "tip",
-          user_id: userId || "anonymous",
-        },
-      },
     });
 
-    // Pre-record the tip (will be marked as pending until payment completes)
-    // This avoids needing a webhook - we record it optimistically
-    // The Stripe success redirect is good enough for small tips
+    // Record the tip as pending with session ID - will be confirmed on success
     await supabase.from("tip_jar").insert({
       user_id: userId,
       amount_cents: amountCents,
       message: null,
+      status: "pending",
+      stripe_session_id: session.id,
     });
 
-    console.log(`Created tip checkout session for ${amountCents} cents, user: ${userId || "anonymous"}`);
+    console.log(`Created tip checkout session ${session.id} for ${amountCents} cents, user: ${userId || "anonymous"}`);
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

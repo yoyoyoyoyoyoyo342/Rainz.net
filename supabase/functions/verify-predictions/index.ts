@@ -168,6 +168,44 @@ serve(async (req) => {
             pointsEarned = -100; // All wrong (penalty)
             break;
         }
+
+        // Check for active double points powerup
+        const { data: doublePointsPowerup } = await supabase
+          .from('active_powerups')
+          .select('*')
+          .eq('user_id', prediction.user_id)
+          .eq('powerup_type', 'double_points')
+          .gte('expires_at', new Date().toISOString())
+          .maybeSingle();
+
+        if (doublePointsPowerup) {
+          console.log(`User ${prediction.user_id} has active double points - doubling ${pointsEarned} points`);
+          pointsEarned = pointsEarned * 2;
+        }
+
+        // Check for prediction shield if points are negative
+        if (pointsEarned < 0) {
+          const { data: shield } = await supabase
+            .from('active_powerups')
+            .select('*')
+            .eq('user_id', prediction.user_id)
+            .eq('powerup_type', 'prediction_shield')
+            .gt('uses_remaining', 0)
+            .maybeSingle();
+
+          if (shield) {
+            console.log(`User ${prediction.user_id} prediction shield activated - preventing ${pointsEarned} point loss`);
+            pointsEarned = 0; // Shield prevents the loss
+            
+            // Decrement shield uses
+            const newUses = (shield.uses_remaining || 1) - 1;
+            if (newUses <= 0) {
+              await supabase.from('active_powerups').delete().eq('id', shield.id);
+            } else {
+              await supabase.from('active_powerups').update({ uses_remaining: newUses }).eq('id', shield.id);
+            }
+          }
+        }
         
         // is_correct is true if at least 1 part is correct
         const isCorrect = correctParts >= 1;

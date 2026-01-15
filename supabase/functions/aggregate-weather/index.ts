@@ -120,6 +120,7 @@ serve(async (req: Request) => {
 
     // Fetch user-submitted weather reports as a community data source
     // Reports are only valid for the first hour after submission and for the same location (within ~10km)
+    // Admin-approved reports bypass the 2+ report requirement
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
@@ -128,8 +129,20 @@ serve(async (req: Request) => {
         const supabase = createClient(supabaseUrl, supabaseKey);
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
         
-        // Fetch recent weather reports within ~0.1 degrees (~10km) of the requested location
-        const { data: reports, error } = await supabase
+        // Fetch recent approved reports (these bypass the 2+ requirement)
+        const { data: approvedReports, error: approvedError } = await supabase
+          .from('weather_reports')
+          .select('*')
+          .gte('created_at', oneHourAgo)
+          .gte('latitude', lat - 0.1)
+          .lte('latitude', lat + 0.1)
+          .gte('longitude', lon - 0.1)
+          .lte('longitude', lon + 0.1)
+          .eq('status', 'approved')
+          .order('created_at', { ascending: false });
+        
+        // Fetch recent pending reports (require 2+ for consensus)
+        const { data: pendingReports, error: pendingError } = await supabase
           .from('weather_reports')
           .select('*')
           .gte('created_at', oneHourAgo)
@@ -140,28 +153,44 @@ serve(async (req: Request) => {
           .eq('status', 'pending')
           .order('created_at', { ascending: false });
         
-        if (!error && reports && reports.length >= 2) {
-          // Only add as a source if we have at least 2 reports for consensus
-          console.log(`Found ${reports.length} community weather reports for this location`);
+        // Combine reports: approved reports always count, pending require 2+
+        const validApproved = (!approvedError && approvedReports) ? approvedReports : [];
+        const validPending = (!pendingError && pendingReports && pendingReports.length >= 2) ? pendingReports : [];
+        
+        const allValidReports = [...validApproved, ...validPending];
+        
+        if (allValidReports.length > 0) {
+          const approvedCount = validApproved.length;
+          const pendingCount = validPending.length;
+          console.log(`Found ${approvedCount} approved + ${pendingCount} pending community weather reports for this location`);
           
           // Calculate consensus condition from reports
           const conditionCounts: Record<string, number> = {};
-          reports.forEach((r: any) => {
+          allValidReports.forEach((r: any) => {
             const cond = r.actual_condition || r.reported_condition;
             if (cond) {
-              conditionCounts[cond] = (conditionCounts[cond] || 0) + 1;
+              // Approved reports get double weight in consensus
+              const weight = r.status === 'approved' ? 2 : 1;
+              conditionCounts[cond] = (conditionCounts[cond] || 0) + weight;
             }
           });
           
           const mostReportedCondition = Object.entries(conditionCounts)
             .sort((a, b) => b[1] - a[1])[0]?.[0] || "Unknown";
           
-          // Accuracy based on number of reports (more reports = higher confidence)
-          // 2 reports = 0.70, 3 reports = 0.78, 4+ reports = 0.85
-          const reportAccuracy = Math.min(0.85, 0.62 + (reports.length * 0.08));
+          // Accuracy calculation:
+          // - Approved reports give higher base accuracy (0.80 per report)
+          // - Pending reports give lower base accuracy (0.08 per report beyond the first 2)
+          // - Cap at 0.90 for approved, 0.85 for pending-only
+          let reportAccuracy: number;
+          if (approvedCount > 0) {
+            reportAccuracy = Math.min(0.90, 0.75 + (approvedCount * 0.05) + (pendingCount * 0.02));
+          } else {
+            reportAccuracy = Math.min(0.85, 0.62 + (pendingCount * 0.08));
+          }
           
           // Get average accuracy rating from reports
-          const accuracyRatings = reports.map((r: any) => {
+          const accuracyRatings = allValidReports.map((r: any) => {
             if (r.accuracy === 'very_accurate') return 1.0;
             if (r.accuracy === 'accurate') return 0.8;
             if (r.accuracy === 'somewhat_accurate') return 0.6;
@@ -170,16 +199,22 @@ serve(async (req: Request) => {
           });
           const avgUserAccuracy = accuracyRatings.reduce((a: number, b: number) => a + b, 0) / accuracyRatings.length;
           
+          const sourceLabel = approvedCount > 0 
+            ? `Community (${approvedCount} verified${pendingCount > 0 ? ` + ${pendingCount} pending` : ''})` 
+            : `Community Reports (${pendingCount})`;
+          
           const communitySource: WeatherSource = {
-            source: `Community Reports (${reports.length})`,
-            location: locationName || reports[0]?.location_name || "Selected Location",
+            source: sourceLabel,
+            location: locationName || allValidReports[0]?.location_name || "Selected Location",
             latitude: lat,
             longitude: lon,
             accuracy: reportAccuracy * avgUserAccuracy,
             currentWeather: {
               temperature: 0, // We don't have temperature from reports
               condition: mostReportedCondition,
-              description: `Based on ${reports.length} user reports in the last hour`,
+              description: approvedCount > 0 
+                ? `Based on ${approvedCount} admin-verified report(s)${pendingCount > 0 ? ` and ${pendingCount} user reports` : ''}` 
+                : `Based on ${pendingCount} user reports in the last hour`,
               humidity: 0,
               windSpeed: 0,
               windDirection: 0,
@@ -194,13 +229,14 @@ serve(async (req: Request) => {
           
           sources.push(communitySource);
           console.log(`Added community source with condition: ${mostReportedCondition}, accuracy: ${(reportAccuracy * avgUserAccuracy).toFixed(2)}`);
-        } else if (reports && reports.length === 1) {
-          console.log("Only 1 community report found - not enough for consensus, skipping community source");
+        } else if (pendingReports && pendingReports.length === 1) {
+          console.log("Only 1 pending community report found - not enough for consensus and not approved, skipping community source");
         }
       } catch (err) {
         console.error("Error fetching community weather reports:", err);
       }
     }
+
 
     // Fetch from multiple Open-Meteo models for ensemble averaging
     const openMeteoModels = [

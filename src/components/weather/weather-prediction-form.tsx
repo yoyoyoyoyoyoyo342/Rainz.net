@@ -8,11 +8,14 @@ import { toast } from "sonner";
 import { 
   CloudRain, CloudSnow, Cloud, Sun, CloudDrizzle, CloudLightning, 
   CloudFog, Wind, Target, ThermometerSnowflake, 
-  ThermometerSun, Sparkles, MapPin, Share2
+  ThermometerSun, Sparkles, MapPin, Share2, Swords
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { z } from "zod";
 import { PredictionShare } from "./prediction-share";
+import { UserSearch } from "./user-search";
+import { usePredictionBattles } from "@/hooks/use-prediction-battles";
+import { Switch } from "@/components/ui/switch";
 
 interface WeatherPredictionFormProps {
   location: string;
@@ -61,11 +64,14 @@ export const WeatherPredictionForm = ({
   returnPredictionId = false
 }: WeatherPredictionFormProps) => {
   const { user } = useAuth();
+  const { createBattle } = usePredictionBattles();
   const [predictedHigh, setPredictedHigh] = useState("");
   const [predictedLow, setPredictedLow] = useState("");
   const [predictedCondition, setPredictedCondition] = useState("");
   const [loading, setLoading] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [enableBattle, setEnableBattle] = useState(false);
+  const [selectedOpponent, setSelectedOpponent] = useState<{ id: string; name: string } | null>(null);
   const [submittedPrediction, setSubmittedPrediction] = useState<{
     high: string;
     low: string;
@@ -141,7 +147,23 @@ export const WeatherPredictionForm = ({
 
       if (error) throw error;
 
-      toast.success("🎯 Prediction submitted!");
+      // Create battle if enabled
+      if (enableBattle && data?.id) {
+        await createBattle(
+          location,
+          latitude,
+          longitude,
+          predictionDate,
+          data.id,
+          selectedOpponent?.id
+        );
+        toast.success(selectedOpponent 
+          ? `🎯 Prediction submitted & challenged ${selectedOpponent.name}!`
+          : "🎯 Prediction submitted & open battle created!"
+        );
+      } else {
+        toast.success("🎯 Prediction submitted!");
+      }
       
       // Store prediction for sharing
       const conditionLabel = weatherConditions.find(c => c.value === predictedCondition)?.label || predictedCondition;
@@ -156,6 +178,8 @@ export const WeatherPredictionForm = ({
       setPredictedHigh("");
       setPredictedLow("");
       setPredictedCondition("");
+      setEnableBattle(false);
+      setSelectedOpponent(null);
       onPredictionMade(returnPredictionId ? data?.id : undefined);
     } catch (error: any) {
       toast.error("Failed to submit prediction");
@@ -284,6 +308,41 @@ export const WeatherPredictionForm = ({
           </div>
         )}
 
+        {/* Battle Challenge Section */}
+        <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Swords className="w-4 h-4 text-purple-500" />
+              <Label htmlFor="enable-battle" className="text-sm font-medium cursor-pointer">
+                Create a Battle
+              </Label>
+            </div>
+            <Switch
+              id="enable-battle"
+              checked={enableBattle}
+              onCheckedChange={setEnableBattle}
+            />
+          </div>
+          
+          {enableBattle && (
+            <div className="space-y-3 pt-2">
+              <p className="text-xs text-muted-foreground">
+                Challenge someone or create an open battle for anyone to join. Winner gets bonus points!
+              </p>
+              <UserSearch
+                onSelectUser={(userId, displayName) => setSelectedOpponent({ id: userId, name: displayName })}
+                selectedUser={selectedOpponent}
+                onClearSelection={() => setSelectedOpponent(null)}
+              />
+              {!selectedOpponent && (
+                <p className="text-xs text-center text-muted-foreground">
+                  Or leave empty for an open challenge anyone can accept
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Submit Button */}
         <Button 
           type="submit" 
@@ -292,6 +351,11 @@ export const WeatherPredictionForm = ({
         >
           {loading ? (
             <>Submitting...</>
+          ) : enableBattle ? (
+            <>
+              <Swords className="w-5 h-5" />
+              {selectedOpponent ? `Challenge ${selectedOpponent.name}` : "Submit & Create Open Battle"}
+            </>
           ) : (
             <>
               <Sparkles className="w-5 h-5" />

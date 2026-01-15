@@ -436,13 +436,15 @@ export function usePredictionLeagues() {
         }
       });
 
-      // Format leaderboard using PP from profiles
+      // Format leaderboard using PP from profiles (ensure non-null)
       const leaderboard: LeagueLeaderboardEntry[] = (profiles || []).map(profile => {
         const userPredStats = predStats[profile.user_id] || { correct: 0, total: 0 };
+        // Use total_points directly from profiles - same as global leaderboard
+        const points = profile.total_points ?? 0;
         return {
           user_id: profile.user_id,
           display_name: profile.display_name || 'Unknown',
-          total_points: profile.total_points || 0,
+          total_points: points,
           battles_won: userPredStats.correct,
           battles_played: userPredStats.total,
           win_rate: userPredStats.total > 0 ? Math.round((userPredStats.correct / userPredStats.total) * 100) : 0

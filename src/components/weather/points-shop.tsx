@@ -13,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/use-subscription";
 import { MysteryBoxReveal } from "./mystery-box-reveal";
+import { DailySpinWheel } from "./daily-spin-wheel";
+import { TipJar } from "./tip-jar";
 
 interface MysteryBoxReward {
   type: "shop_points" | "streak_freeze" | "premium_trial" | "double_points";
@@ -402,6 +404,24 @@ export const PointsShop = () => {
         });
         toast.success("Rainz+ Trial activated!");
         await checkSubscription();
+      } else if (item.type === "double_points") {
+        // Activate double points for 24 hours
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24);
+        await supabase.from("active_powerups").insert({
+          user_id: user.id,
+          powerup_type: "double_points",
+          expires_at: expiresAt.toISOString(),
+        });
+        toast.success("Double Points activated for 24 hours! 🚀");
+      } else if (item.type === "prediction_boost") {
+        // Add prediction shield with 3 uses
+        await supabase.from("active_powerups").insert({
+          user_id: user.id,
+          powerup_type: "prediction_shield",
+          uses_remaining: 3,
+        });
+        toast.success("Prediction Shield activated! (3 uses)");
       } else {
         toast.success(`${item.name} purchased!`);
       }
@@ -435,6 +455,9 @@ export const PointsShop = () => {
 
   return (
     <div className="space-y-6">
+      {/* Daily Spin Wheel */}
+      <DailySpinWheel />
+
       {/* Balances */}
       <div className="grid grid-cols-2 gap-3">
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
@@ -549,6 +572,9 @@ export const PointsShop = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Tip Jar */}
+      <TipJar />
 
       <Separator />
 

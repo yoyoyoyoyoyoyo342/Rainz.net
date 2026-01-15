@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.world-weather-average]
 verify_jwt = false
+
+[functions.create-tip-checkout]
+verify_jwt = false

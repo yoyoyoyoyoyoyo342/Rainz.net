@@ -50,6 +50,33 @@ export type Database = {
         }
         Relationships: []
       }
+      active_powerups: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          powerup_type: string
+          user_id: string
+          uses_remaining: number | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          powerup_type: string
+          user_id: string
+          uses_remaining?: number | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          powerup_type?: string
+          user_id?: string
+          uses_remaining?: number | null
+        }
+        Relationships: []
+      }
       affiliate_applications: {
         Row: {
           business_name: string
@@ -327,6 +354,33 @@ export type Database = {
           id?: string
           title?: string
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_spins: {
+        Row: {
+          created_at: string
+          id: string
+          reward_amount: number | null
+          reward_type: string
+          spin_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reward_amount?: number | null
+          reward_type: string
+          spin_date?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reward_amount?: number | null
+          reward_type?: string
+          spin_date?: string
           user_id?: string
         }
         Relationships: []
@@ -712,6 +766,30 @@ export type Database = {
           points_spent?: number
           purchased_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      tip_jar: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          message: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          message?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          message?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

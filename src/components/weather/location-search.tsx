@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Search, MapPin, Loader2, History, X, Globe } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+
 import { useQuery } from "@tanstack/react-query";
 import { weatherApi } from "@/lib/weather-api";
 import { Location } from "@/types/weather";
@@ -385,18 +385,18 @@ export function LocationSearch({
   }
 
   return (
-    <Card className="glass-card rounded-2xl overflow-hidden relative flex-1 max-w-md z-[9999]">
+    <div className="overflow-hidden rounded-2xl glass-card relative flex-1 max-w-md z-[9999]">
+      {/* Header */}
+      <div className="p-4 border-b border-border/50">
+        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <Search className="w-5 h-5 text-primary" />
+          Search Location
+        </h2>
+        <p className="text-xs text-muted-foreground mt-1">Find weather for any place</p>
+      </div>
+      
+      {/* Content */}
       <div className="p-4">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-xl bg-primary/10">
-            <Search className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground">Search Location</h3>
-            <p className="text-xs text-muted-foreground">Find weather for any place</p>
-          </div>
-        </div>
-        
         <div className="relative">
           <Input 
             type="text" 
@@ -421,7 +421,7 @@ export function LocationSearch({
 
       {/* Search Results Dropdown */}
       {(searchQuery.length > 2 || isLoading || loadingAddresses || (isFocused && searchQuery.length === 0)) && (
-        <CardContent className="p-0 border-t border-border/30">
+        <div className="p-0 border-t border-border/30">
             {searchQuery.length === 0 && isFocused ? (
               <div className="max-h-60 overflow-y-auto">
                 {searchHistory.length > 0 ? (
@@ -553,8 +553,8 @@ export function LocationSearch({
                 )}
               </div>
             )}
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </div>
   );
 }

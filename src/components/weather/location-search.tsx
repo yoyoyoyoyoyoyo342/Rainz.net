@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Search, MapPin, Loader2, History, X, Globe } from "lucide-react";
+import { MapPin, Loader2, History, X, Globe } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 import { useQuery } from "@tanstack/react-query";
 import { weatherApi } from "@/lib/weather-api";
@@ -356,13 +357,18 @@ export function LocationSearch({
       onLocationSelect(latitude, longitude, "Current Location");
       toast({
         title: "Location detected",
-        description: "Using your current location for weather data."
+        description: "Using your current location for weather data.",
       });
-    } catch (error) {
+    } catch (err: any) {
+      const code = typeof err?.code === "number" ? err.code : undefined;
+      const isDenied = code === 1; // GeolocationPositionError.PERMISSION_DENIED
+
       toast({
         title: "Location detection failed",
-        description: "Please search for a location manually.",
-        variant: "destructive"
+        description: isDenied
+          ? "Location permission is blocked. Enable it in your browser settings and try again."
+          : "Please search for a location manually.",
+        variant: "destructive",
       });
     } finally {
       setIsDetecting(false);
@@ -390,176 +396,173 @@ export function LocationSearch({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-card border border-border/50 shadow-lg relative flex-1 max-w-md z-[9999]">
-      {/* Header */}
-      <div className="p-4 border-b border-border/50">
-        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-          <Search className="w-5 h-5 text-primary" />
-          Search Location
-        </h2>
-        <p className="text-xs text-muted-foreground mt-1">Find weather for any place</p>
-      </div>
-      
-      {/* Content */}
-      <div className="p-4">
+    <Card className="bg-card border border-border/50 shadow-md overflow-hidden rounded-2xl relative flex-1 max-w-md z-[9999]">
+      <CardContent className="p-4">
         <div className="relative">
-          <Input 
-            type="text" 
-            placeholder={placeholder} 
-            value={searchQuery} 
-            onChange={e => setSearchQuery(e.target.value)}
+          <Input
+            type="text"
+            placeholder={placeholder}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-            className="w-full pl-4 pr-12 py-3 bg-muted/50 text-foreground border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-muted-foreground rounded-xl" 
+            className="w-full pl-4 pr-12 py-3 bg-muted/30 text-foreground border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-muted-foreground rounded-xl"
           />
-          <Button 
-            onClick={handleLocationDetection} 
-            disabled={isDetecting || loadingStations} 
-            variant="ghost" 
-            size="sm" 
-            className="absolute right-1 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors p-2 rounded-lg"
+          <Button
+            onMouseDown={(e) => {
+              // Keep the click from being swallowed by input focus (mobile Safari)
+              e.preventDefault();
+            }}
+            onClick={handleLocationDetection}
+            disabled={isDetecting || loadingStations}
+            variant="ghost"
+            size="sm"
+            aria-label="Use my current location"
+            className="absolute right-1 top-1/2 z-10 -translate-y-1/2 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors p-2 rounded-lg"
           >
-            {isDetecting || loadingStations ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+            {isDetecting || loadingStations ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <MapPin className="w-4 h-4" />
+            )}
           </Button>
         </div>
-      </div>
+      </CardContent>
 
       {/* Search Results Dropdown */}
       {(searchQuery.length > 2 || isLoading || loadingAddresses || (isFocused && searchQuery.length === 0)) && (
         <div className="p-0 border-t border-border/30">
-            {searchQuery.length === 0 && isFocused ? (
-              <div className="max-h-60 overflow-y-auto">
-                {searchHistory.length > 0 ? (
-                  <>
-                    <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30">
-                      Recent Searches
-                    </div>
-                    {searchHistory.map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => handleHistoryClick(item)}
-                        className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0 flex items-start gap-2 group"
-                      >
-                        <History className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-foreground truncate">
-                            {item.location_name}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {item.search_type === 'location' ? 'Location' : 'Address'}
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => handleDeleteHistoryItem(item.id, e)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto"
-                        >
-                          <X className="w-3 h-3 text-muted-foreground" />
-                        </Button>
-                      </button>
-                    ))}
-                  </>
-                ) : (
-                  <div className="p-4 text-center text-muted-foreground">
-                    <History className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No recent searches</p>
+          {searchQuery.length === 0 && isFocused ? (
+            <div className="max-h-60 overflow-y-auto">
+              {searchHistory.length > 0 ? (
+                <>
+                  <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30">
+                    Recent Searches
                   </div>
-                )}
-              </div>
-            ) : (isLoading || loadingAddresses) && !isWorldSearch ? (
-              <div className="p-4 text-center text-muted-foreground">
-                <Loader2 className="w-4 h-4 animate-spin inline-block mr-2" />
-                {t('search.searching')}
-              </div>
-            ) : isWorldSearch ? (
-              <div className="max-h-60 overflow-y-auto">
-                <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30">
-                  Global Weather
+                  {searchHistory.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => handleHistoryClick(item)}
+                      className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0 flex items-start gap-2 group"
+                    >
+                      <History className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-foreground truncate">{item.location_name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {item.search_type === "location" ? "Location" : "Address"}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => handleDeleteHistoryItem(item.id, e)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto"
+                      >
+                        <X className="w-3 h-3 text-muted-foreground" />
+                      </Button>
+                    </button>
+                  ))}
+                </>
+              ) : (
+                <div className="p-4 text-center text-muted-foreground">
+                  <History className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No recent searches</p>
                 </div>
-                <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    onLocationSelect(0, 0, "World Average");
-                    toast({
-                      title: "World Weather",
-                      description: "Loading global weather average from 20 major cities worldwide",
-                    });
-                  }}
-                  className="w-full text-left p-4 hover:bg-muted/50 transition-colors flex items-start gap-2"
-                >
-                  <Globe className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-foreground">World Average</div>
-                    <div className="text-xs text-muted-foreground">
-                      Global average from 20 major cities
-                    </div>
-                  </div>
-                </button>
+              )}
+            </div>
+          ) : (isLoading || loadingAddresses) && !isWorldSearch ? (
+            <div className="p-4 text-center text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin inline-block mr-2" />
+              {t("search.searching")}
+            </div>
+          ) : isWorldSearch ? (
+            <div className="max-h-60 overflow-y-auto">
+              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30">
+                Global Weather
               </div>
-            ) : (
-              <div className="max-h-80 overflow-y-auto">
-                {locations.length > 0 && (
-                  <>
-                    <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30">
-                      Locations
-                    </div>
-                    {locations.slice(0, 5).map((location, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleLocationClick(location)}
-                        className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0 flex items-start gap-2"
-                      >
-                        <MapPin className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-foreground truncate">
-                            {location.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            {location.state ? `${location.state}, ` : ''}{location.country}
-                          </div>
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  onLocationSelect(0, 0, "World Average");
+                  toast({
+                    title: "World Weather",
+                    description: "Loading global weather average from 20 major cities worldwide",
+                  });
+                }}
+                className="w-full text-left p-4 hover:bg-muted/50 transition-colors flex items-start gap-2"
+              >
+                <Globe className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-foreground">World Average</div>
+                  <div className="text-xs text-muted-foreground">Global average from 20 major cities</div>
+                </div>
+              </button>
+            </div>
+          ) : (
+            <div className="max-h-80 overflow-y-auto">
+              {locations.length > 0 && (
+                <>
+                  <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30">
+                    Locations
+                  </div>
+                  {locations.slice(0, 5).map((location, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleLocationClick(location)}
+                      className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0 flex items-start gap-2"
+                    >
+                      <MapPin className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-foreground truncate">{location.name}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {location.state ? `${location.state}, ` : ""}
+                          {location.country}
                         </div>
-                      </button>
-                    ))}
-                  </>
-                )}
-                
-                {addressResults.length > 0 && (
-                  <>
-                    <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30">
-                      Addresses
-                    </div>
-                    {addressResults.slice(0, 5).map((address, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleAddressClick(address)}
-                        className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0 flex items-start gap-2"
-                      >
-                        <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-foreground truncate">
-                            {address.address.road || address.address.suburb || address.display_name.split(',')[0]}
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            {address.display_name}
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </>
-                )}
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )}
 
-                {locations.length === 0 && addressResults.length === 0 && !isLoading && !loadingAddresses && (
+              {addressResults.length > 0 && (
+                <>
+                  <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30">
+                    Addresses
+                  </div>
+                  {addressResults.slice(0, 5).map((address, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleAddressClick(address)}
+                      className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0 flex items-start gap-2"
+                    >
+                      <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-foreground truncate">
+                          {address.address.road ||
+                            address.address.suburb ||
+                            address.display_name.split(",")[0]}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">{address.display_name}</div>
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )}
+
+              {locations.length === 0 &&
+                addressResults.length === 0 &&
+                !isLoading &&
+                !loadingAddresses && (
                   <div className="p-4 text-center text-muted-foreground">
                     <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No results found</p>
                     <p className="text-xs mt-1">Try a different search term</p>
                   </div>
                 )}
-              </div>
-            )}
+            </div>
+          )}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

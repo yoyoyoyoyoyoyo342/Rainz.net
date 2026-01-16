@@ -59,8 +59,8 @@ const SPIN_REWARDS: SpinReward[] = [
   },
   { 
     id: "double", 
-    label: "Double Points (24h)", 
-    shortLabel: "2x Pts",
+    label: "Double Points (1 use)", 
+    shortLabel: "2x",
     color: "#8b5cf6", 
     bgColor: "#ede9fe",
     icon: <Zap className="w-4 h-4" />,
@@ -221,15 +221,13 @@ export const DailySpinWheel = () => {
         }
           
       } else if (reward.type === "double_points") {
-        const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 24);
-        
+        // Use-based double points instead of time-based
         await supabase
           .from("active_powerups")
           .insert({
             user_id: user.id,
             powerup_type: "double_points",
-            expires_at: expiresAt.toISOString(),
+            uses_remaining: 1,
           });
       }
     } catch (error) {

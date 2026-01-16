@@ -347,12 +347,35 @@ export function LocationSearch({
     setDebouncedQuery("");
     setAddressResults([]);
     setIsDetecting(true);
+    setLoadingStations(true);
 
     try {
       const position = await weatherApi.getCurrentLocation();
       const { latitude, longitude } = position.coords;
 
       trackLocationDetect();
+
+      // Prefer nearest station (matches how address search works)
+      try {
+        const { data, error } = await supabase.functions.invoke('find-nearby-stations', {
+          body: { latitude, longitude },
+        });
+
+        if (!error) {
+          const stations = (data?.stations || []) as WeatherStation[];
+          if (stations.length > 0) {
+            const nearestStation = stations[0];
+            onLocationSelect(nearestStation.latitude, nearestStation.longitude, nearestStation.name);
+            toast({
+              title: "Station selected",
+              description: `Using weather data from ${nearestStation.name}`,
+            });
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('find-nearby-stations failed:', e);
+      }
 
       onLocationSelect(latitude, longitude, "Current Location");
       toast({
@@ -372,6 +395,7 @@ export function LocationSearch({
       });
     } finally {
       setIsDetecting(false);
+      setLoadingStations(false);
     }
   };
 

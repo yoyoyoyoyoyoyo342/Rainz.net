@@ -183,22 +183,27 @@ export function AIWeatherCompanion({ weatherData, location, isImperial }: AIWeat
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b border-border flex-shrink-0 bg-card">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center p-1.5 overflow-hidden">
-          <img 
-            src={rainzLogo} 
-            alt="Rainz AI" 
-            className={`w-full h-full object-contain rounded-lg ${isLoading ? 'animate-pulse' : ''}`}
-          />
+      <div className="p-4 border-b border-border/50 flex-shrink-0 bg-card">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center p-1.5 overflow-hidden">
+            <img 
+              src={rainzLogo} 
+              alt="Rainz AI" 
+              className={`w-full h-full object-contain rounded-lg ${isLoading ? 'animate-pulse' : ''}`}
+            />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-foreground">Rainz AI</h3>
+            <div className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full ${isLoading ? 'bg-yellow-500' : 'bg-green-500'}`}></span>
+              <p className="text-xs text-muted-foreground">{isLoading ? "Thinking..." : "Online"}</p>
+            </div>
+          </div>
+          <Badge variant="secondary" className="text-xs">
+            <Sparkles className="w-3 h-3 mr-1" />
+            Beta
+          </Badge>
         </div>
-        <div className="flex-1">
-          <h3 className="text-base font-semibold">Rainz AI</h3>
-          <p className="text-xs text-muted-foreground">{isLoading ? "Thinking..." : "Online"}</p>
-        </div>
-        <Badge variant="secondary" className="text-xs">
-          <Sparkles className="w-3 h-3 mr-1" />
-          Beta
-        </Badge>
       </div>
       
       {/* Messages Area - iMessage style */}
@@ -208,7 +213,7 @@ export function AIWeatherCompanion({ weatherData, location, isImperial }: AIWeat
             <div className={`flex gap-2 max-w-[75%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
               {/* Avatar - only show for assistant */}
               {message.role === 'assistant' && (
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center flex-shrink-0 self-end p-1 overflow-hidden">
+                <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 self-end p-1 overflow-hidden">
                   <img src={rainzLogo} alt="Rainz AI" className="w-full h-full object-contain rounded" />
                 </div>
               )}
@@ -241,7 +246,7 @@ export function AIWeatherCompanion({ weatherData, location, isImperial }: AIWeat
         {isLoading && (
           <div className="flex justify-start">
             <div className="flex gap-2 max-w-[75%]">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center flex-shrink-0 self-end p-1 overflow-hidden">
+              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 self-end p-1 overflow-hidden">
                 <img src={rainzLogo} alt="Rainz AI thinking" className="w-full h-full object-contain rounded animate-pulse" />
               </div>
               <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">

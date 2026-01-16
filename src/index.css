@@ -9,13 +9,14 @@
 
 @layer base {
   :root {
-    --background: 0 0% 96%;
+    /* Softer light mode (less "blinding" whites) */
+    --background: 0 0% 94%;
     --foreground: 0 0% 9%;
 
-    --card: 0 0% 98%;
+    --card: 0 0% 96%;
     --card-foreground: 0 0% 9%;
 
-    --popover: 0 0% 89%;
+    --popover: 0 0% 92%;
     --popover-foreground: 0 0% 9%;
 
     --primary: 217 91% 60%;

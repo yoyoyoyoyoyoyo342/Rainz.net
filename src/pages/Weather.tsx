@@ -307,7 +307,7 @@ export default function WeatherPage() {
   useEffect(() => {
     // Only detect location once per session
     if (locationDetectedRef.current) return;
-    
+
     const detectLocation = async () => {
       // Check if we're offline and have cached data (premium feature)
       if (!navigator.onLine && offlineCacheEnabled) {
@@ -315,7 +315,7 @@ export default function WeatherPage() {
           const cachedLocation = await getFromCache(0, 0); // This won't work, need different approach
           const { getMostRecentCachedLocation } = await import('@/lib/offline-cache');
           const cached = await getMostRecentCachedLocation();
-          
+
           if (cached) {
             locationDetectedRef.current = true;
             setSelectedLocation({
@@ -340,36 +340,53 @@ export default function WeatherPage() {
         const position = await weatherApi.getCurrentLocation();
         const { latitude, longitude } = position.coords;
 
+        const pickLocationNameFromGeocode = (data: any): string => {
+          // Prefer human-friendly locality/city; never return just the country (e.g. "Denmark")
+          return (
+            data?.locality ||
+            data?.city ||
+            data?.principalSubdivision ||
+            data?.principalSubdivisionCode ||
+            data?.countryName ||
+            "Current Location"
+          );
+        };
+
+        // 1) Prefer the nearest *station* for detected locations
         try {
-          const geocodeResponse = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+          const { data, error } = await supabase.functions.invoke('find-nearby-stations', {
+            body: { latitude, longitude },
+          });
+
+          if (!error) {
+            const stations = (data?.stations || []) as Array<{ latitude: number; longitude: number; name: string }>;
+            if (stations.length > 0) {
+              const nearest = stations[0];
+              const newLocation = { lat: nearest.latitude, lon: nearest.longitude, name: nearest.name };
+              locationDetectedRef.current = true;
+              setSelectedLocation(newLocation);
+              setIsAutoDetected(true);
+              saveLocationToAccount(newLocation);
+              return;
+            }
+          }
+        } catch (e) {
+          // fall through to city name
+          console.warn('find-nearby-stations failed:', e);
+        }
+
+        // 2) Fallback: reverse geocode a friendly city/locality label
+        try {
+          const geocodeResponse = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+          );
           const geocodeData = await geocodeResponse.json();
 
-          const getBestLocationName = (data: any): string => {
-            try {
-              const localityInfo = data.localityInfo;
-              const candidateGroups = [localityInfo?.locality, localityInfo?.administrative, localityInfo?.informative].filter(Boolean) as Array<any[]>;
-              for (const group of candidateGroups) {
-                if (Array.isArray(group) && group.length > 0) {
-                  const sorted = [...group].sort((a, b) => {
-                    const da = typeof a.distance === "number" ? a.distance : Number.POSITIVE_INFINITY;
-                    const db = typeof b.distance === "number" ? b.distance : Number.POSITIVE_INFINITY;
-                    return da - db;
-                  });
-                  const nearest = sorted[0];
-                  if (nearest?.name) {
-                    return nearest.name as string;
-                  }
-                }
-              }
-            } catch {}
-            return data.locality || data.city || data.principalSubdivision || data.localityInfo?.administrative?.[0]?.name || "Current Location";
-          };
-          const cityName = getBestLocationName(geocodeData);
+          const cityName = pickLocationNameFromGeocode(geocodeData);
           const newLocation = { lat: latitude, lon: longitude, name: cityName };
           locationDetectedRef.current = true;
           setSelectedLocation(newLocation);
           setIsAutoDetected(true);
-          // Save to account for logged-in users, localStorage for guests
           saveLocationToAccount(newLocation);
         } catch {
           const newLocation = { lat: latitude, lon: longitude, name: "Current Location" };
@@ -378,8 +395,11 @@ export default function WeatherPage() {
           setIsAutoDetected(true);
           saveLocationToAccount(newLocation);
         }
-      } catch {}
+      } catch {
+        // ignore
+      }
     };
+
     detectLocation();
   }, [offlineCacheEnabled]); // Add offlineCacheEnabled dependency
 
@@ -469,7 +489,7 @@ export default function WeatherPage() {
               </div>
               {weatherData && (
                 <WeatherReportForm 
-                  location={selectedLocation?.name || "Unknown"} 
+                  location={actualStationName}
                   currentCondition={weatherData.mostAccurate.currentWeather.condition} 
                   locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }} 
                 />

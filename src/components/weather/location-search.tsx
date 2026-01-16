@@ -341,7 +341,12 @@ export function LocationSearch({
   };
 
   const handleLocationDetection = async () => {
+    // UX: reset search UI before jumping back to "my location"
+    setSearchQuery("");
+    setDebouncedQuery("");
+    setAddressResults([]);
     setIsDetecting(true);
+
     try {
       const position = await weatherApi.getCurrentLocation();
       const { latitude, longitude } = position.coords;

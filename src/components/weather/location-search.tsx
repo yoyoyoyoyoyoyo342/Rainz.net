@@ -385,7 +385,7 @@ export function LocationSearch({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl glass-card relative flex-1 max-w-md z-[9999]">
+    <div className="overflow-hidden rounded-2xl bg-card border border-border/50 shadow-lg relative flex-1 max-w-md z-[9999]">
       {/* Header */}
       <div className="p-4 border-b border-border/50">
         <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">

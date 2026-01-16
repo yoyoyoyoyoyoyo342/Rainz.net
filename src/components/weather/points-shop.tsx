@@ -128,6 +128,7 @@ export const PointsShop = () => {
   const [buyingPackage, setBuyingPackage] = useState<string | null>(null);
   const [activeTrial, setActiveTrial] = useState<Date | null>(null);
   const [offers, setOffers] = useState<ShopOffer[]>([]);
+  const [usedOfferIds, setUsedOfferIds] = useState<string[]>([]);
   const [mysteryBoxOpen, setMysteryBoxOpen] = useState(false);
   const [mysteryReward, setMysteryReward] = useState<MysteryBoxReward | null>(null);
   const [activePowerups, setActivePowerups] = useState<ActivePowerup[]>([]);
@@ -135,6 +136,7 @@ export const PointsShop = () => {
   useEffect(() => {
     if (user) {
       fetchUserData();
+      fetchUsedOffers();
     }
     fetchOffers();
   }, [user]);
@@ -151,16 +153,33 @@ export const PointsShop = () => {
     }
   };
 
+  const fetchUsedOffers = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from("user_offer_purchases")
+        .select("offer_id")
+        .eq("user_id", user.id);
+      setUsedOfferIds(data?.map(d => d.offer_id) || []);
+    } catch (error) {
+      console.error("Error fetching used offers:", error);
+    }
+  };
+
   const getItemPrice = (itemId: string, defaultPrice: number) => {
     const offer = offers.find((o) => o.item_id === itemId);
     if (offer) {
       // Check if offer is still valid (not expired)
       if (offer.ends_at && new Date(offer.ends_at) < new Date()) {
-        return { price: defaultPrice, isOnSale: false, originalPrice: defaultPrice };
+        return { price: defaultPrice, isOnSale: false, originalPrice: defaultPrice, offerId: null };
       }
-      return { price: offer.offer_price, isOnSale: true, originalPrice: offer.original_price };
+      // Check if user already used this offer
+      if (usedOfferIds.includes(offer.id)) {
+        return { price: defaultPrice, isOnSale: false, originalPrice: defaultPrice, offerId: null };
+      }
+      return { price: offer.offer_price, isOnSale: true, originalPrice: offer.original_price, offerId: offer.id };
     }
-    return { price: defaultPrice, isOnSale: false, originalPrice: defaultPrice };
+    return { price: defaultPrice, isOnSale: false, originalPrice: defaultPrice, offerId: null };
   };
 
   // Handle SP purchase confirmation from URL
@@ -430,7 +449,7 @@ export const PointsShop = () => {
     }
 
     // Get actual price (may be on sale) - check affordability with OFFER price, not original
-    const { price: actualPrice } = getItemPrice(item.id, item.price);
+    const { price: actualPrice, offerId } = getItemPrice(item.id, item.price);
     
     if (shopPoints < actualPrice) {
       toast.error("Not enough Shop Points!");
@@ -464,6 +483,15 @@ export const PointsShop = () => {
         item_name: item.name,
         points_spent: actualPrice,
       });
+
+      // If this was an offer purchase, record it so user can't use same offer again
+      if (offerId) {
+        await supabase.from("user_offer_purchases").insert({
+          user_id: user.id,
+          offer_id: offerId,
+        });
+        setUsedOfferIds(prev => [...prev, offerId]);
+      }
 
       // Handle item logic - special case for mystery box
       if (item.id === "gift_box") {

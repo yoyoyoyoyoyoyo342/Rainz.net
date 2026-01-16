@@ -1025,6 +1025,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_offer_purchases: {
+        Row: {
+          id: string
+          offer_id: string
+          purchased_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          offer_id: string
+          purchased_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          offer_id?: string
+          purchased_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_offer_purchases_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "shop_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_preferences: {
         Row: {
           card_order: Json

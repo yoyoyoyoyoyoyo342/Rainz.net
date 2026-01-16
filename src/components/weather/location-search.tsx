@@ -385,9 +385,18 @@ export function LocationSearch({
   }
 
   return (
-    <Card className="relative flex-1 max-w-md z-[9999] overflow-hidden rounded-2xl glass-card">
-      {/* Clean header without gradient */}
-      <div className="p-4 border-b border-border/50">
+    <Card className="glass-card rounded-2xl overflow-hidden relative flex-1 max-w-md z-[9999]">
+      <div className="p-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-xl bg-primary/10">
+            <Search className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground">Search Location</h3>
+            <p className="text-xs text-muted-foreground">Find weather for any place</p>
+          </div>
+        </div>
+        
         <div className="relative">
           <Input 
             type="text" 
@@ -396,16 +405,14 @@ export function LocationSearch({
             onChange={e => setSearchQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-            className="w-full pl-12 pr-16 py-3 bg-muted/50 text-foreground border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-muted-foreground rounded-xl text-ellipsis" 
-            style={{ textAlign: 'left' }} 
+            className="w-full pl-4 pr-12 py-3 bg-muted/50 text-foreground border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-muted-foreground rounded-xl" 
           />
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
           <Button 
             onClick={handleLocationDetection} 
             disabled={isDetecting || loadingStations} 
             variant="ghost" 
             size="sm" 
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors p-2"
+            className="absolute right-1 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors p-2 rounded-lg"
           >
             {isDetecting || loadingStations ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
           </Button>

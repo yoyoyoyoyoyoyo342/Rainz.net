@@ -2,17 +2,14 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, Send, Loader2, Bot, User, X } from "lucide-react";
+import { MessageCircle, Send, Loader2, Sparkles, User, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import rainzLogo from "@/assets/rainz-logo-new.png";
-import { trackAIChatMessage, trackEvent } from "@/lib/track-event";
+import { trackAIChatMessage } from "@/lib/track-event";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 
@@ -48,7 +45,6 @@ export function AISupportChat() {
     const userMessage = input.trim();
     setInput("");
     
-    // Track AI chat message
     trackAIChatMessage();
 
     setMessages(prev => [...prev, {
@@ -64,7 +60,7 @@ export function AISupportChat() {
         body: {
           type: 'support_chat',
           message: userMessage,
-          conversationHistory: messages.slice(-10) // Last 10 messages for context
+          conversationHistory: messages.slice(-10)
         }
       });
 
@@ -96,6 +92,10 @@ export function AISupportChat() {
     }
   };
 
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -104,74 +104,107 @@ export function AISupportChat() {
           AI Support Chat
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg h-[600px] flex flex-col p-0">
-        <DialogHeader className="p-4 pb-2 border-b">
-          <DialogTitle className="flex items-center gap-2">
-            <img src={rainzLogo} alt="Rainz" className="h-6 w-6 rounded-full" />
-            Rainz Support
-          </DialogTitle>
-          <DialogDescription>
-            Get help with Rainz features, weather data, and more.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-lg h-[650px] flex flex-col p-0 gap-0 overflow-hidden">
+        {/* Modern Header */}
+        <div className="p-4 border-b border-border/50 bg-card">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="p-2 h-auto hover:bg-muted/50 rounded-xl sm:hidden"
+              onClick={() => setIsOpen(false)}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div className="relative">
+              <img src={rainzLogo} alt="Rainz" className="h-10 w-10 rounded-xl" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-card" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-foreground">Rainz Assistant</h3>
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-primary" />
+                <span className="text-xs text-muted-foreground">AI-powered support</span>
+              </div>
+            </div>
+          </div>
+        </div>
         
+        {/* Messages Area */}
         <ScrollArea className="flex-1 p-4" ref={scrollRef}>
           <div className="space-y-4">
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex gap-2 ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 {message.role === "assistant" && (
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <Bot className="h-4 w-4 text-primary" />
+                  <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Sparkles className="h-4 w-4 text-primary" />
                   </div>
                 )}
-                <div
-                  className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
-                  }`}
-                >
-                  {message.content}
+                <div className={`max-w-[75%] ${message.role === "user" ? "order-first" : ""}`}>
+                  <div
+                    className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground rounded-br-md"
+                        : "bg-muted/70 text-foreground rounded-bl-md"
+                    }`}
+                  >
+                    {message.content}
+                  </div>
+                  <p className={`text-[10px] text-muted-foreground mt-1 ${message.role === "user" ? "text-right" : "text-left"}`}>
+                    {formatTime(message.timestamp)}
+                  </p>
                 </div>
                 {message.role === "user" && (
-                  <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                    <User className="h-4 w-4" />
+                  <div className="h-8 w-8 rounded-xl bg-secondary flex items-center justify-center shrink-0">
+                    <User className="h-4 w-4 text-secondary-foreground" />
                   </div>
                 )}
               </div>
             ))}
             {isLoading && (
-              <div className="flex gap-2 justify-start">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Bot className="h-4 w-4 text-primary" />
+              <div className="flex gap-3 justify-start">
+                <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Sparkles className="h-4 w-4 text-primary" />
                 </div>
-                <div className="bg-muted rounded-lg px-3 py-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                <div className="bg-muted/70 rounded-2xl rounded-bl-md px-4 py-3">
+                  <div className="flex gap-1.5">
+                    <div className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
                 </div>
               </div>
             )}
           </div>
         </ScrollArea>
 
-        <div className="p-4 border-t">
-          <div className="flex gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Ask a question..."
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button onClick={sendMessage} disabled={isLoading || !input.trim()}>
+        {/* Modern Input Area */}
+        <div className="p-4 border-t border-border/50 bg-card/50">
+          <div className="flex gap-2 items-end">
+            <div className="flex-1 relative">
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Type your message..."
+                disabled={isLoading}
+                className="pr-4 py-3 rounded-xl bg-muted/50 border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <Button 
+              onClick={sendMessage} 
+              disabled={isLoading || !input.trim()}
+              size="icon"
+              className="h-11 w-11 rounded-xl shrink-0"
+            >
               <Send className="h-4 w-4" />
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            AI-powered support. For urgent issues, email support@rainz.app
+          <p className="text-[10px] text-muted-foreground mt-2 text-center">
+            For urgent issues, email support@rainz.app
           </p>
         </div>
       </DialogContent>

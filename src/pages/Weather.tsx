@@ -420,12 +420,12 @@ export default function WeatherPage() {
       )}
 
       <div className="container mx-auto px-4 py-4 sm:py-6 max-w-7xl relative z-10">
-        <Card className="mb-6 relative z-[1000] overflow-hidden rounded-2xl border-white/20 shadow-xl">
-          <div className="bg-gradient-to-r from-sky-500/70 via-blue-600/60 to-indigo-700/70 p-4 sm:p-6">
+        <Card className="mb-6 relative z-[1000] overflow-hidden rounded-2xl glass-card-strong">
+          <div className="p-4 sm:p-6 border-b border-border/50">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex flex-col">
-                <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">Rainz Weather</h1>
-                <p className="text-sm text-white/80">Be prepared.</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight leading-tight">Rainz Weather</h1>
+                <p className="text-sm text-muted-foreground">Be prepared.</p>
               </div>
 
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
@@ -434,21 +434,26 @@ export default function WeatherPage() {
                   <SettingsDialog isImperial={isImperial} onUnitsChange={setIsImperial} mostAccurate={weatherData?.mostAccurate} />
                 </LockedFeature>
                 {!user && (
-                  <Button variant="outline" size="default" onClick={() => window.location.href = "/auth"} className="gap-2 bg-white/20 border-white/30 text-white hover:bg-white/30 hover:text-white">
+                  <Button
+                    variant="outline"
+                    size="default"
+                    onClick={() => window.location.href = "/auth"}
+                    className="gap-2"
+                  >
                     <LogIn className="w-4 h-4" />
                     <span>{t("header.signIn")}</span>
                   </Button>
                 )}
-                <div className="flex items-center gap-2 px-3 py-2 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30">
-                  <span className="text-sm font-medium text-white">°F</span>
+                <div className="flex items-center gap-2 px-3 py-2 bg-muted/40 rounded-lg border border-border/60">
+                  <span className="text-sm font-medium text-foreground">°F</span>
                   <Switch checked={!isImperial} onCheckedChange={checked => setIsImperial(!checked)} />
-                  <span className="text-sm font-medium text-white">°C</span>
+                  <span className="text-sm font-medium text-foreground">°C</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <CardContent className="p-4 sm:p-6 bg-background/50 backdrop-blur-md space-y-4">
+          <CardContent className="p-4 sm:p-6 bg-card space-y-4">
             {/* Offline cache indicator for premium users */}
             {isUsingCachedData && (
               <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300">

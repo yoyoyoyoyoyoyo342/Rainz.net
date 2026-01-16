@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Globe, LogOut, User, Eye, RotateCcw, GripVertical, Languages, Moon, Sun, Shield, Bell, Smartphone, Cookie, FileText, FlaskConical, Crown, Lock, Thermometer, Droplets, Wind, Gauge, Sunrise, MoonIcon } from "lucide-react";
+import { Settings, Globe, LogOut, User, Eye, RotateCcw, GripVertical, Languages, Moon, Sun, Shield, Bell, Smartphone, Cookie, FlaskConical, Crown, Lock, Thermometer, Droplets, Wind, Gauge, Sunrise, MoonIcon, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage, Language, languageFlags } from "@/contexts/language-context";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
@@ -30,6 +29,53 @@ interface SettingsDialogProps {
   onUnitsChange: (isImperial: boolean) => void;
   mostAccurate?: any;
 }
+
+// Reusable section wrapper with glass styling
+function SettingsSection({ title, icon: Icon, children, badge }: { 
+  title: string; 
+  icon?: any; 
+  children: React.ReactNode;
+  badge?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-card/50 overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-3 bg-muted/30 border-b border-border/40">
+        {Icon && <Icon className="w-4 h-4 text-muted-foreground" />}
+        <span className="font-medium text-sm">{title}</span>
+        {badge}
+      </div>
+      <div className="p-4 space-y-4">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// Toggle row component for consistent styling
+function ToggleRow({ icon: Icon, label, description, checked, onCheckedChange, disabled }: {
+  icon?: any;
+  label: string;
+  description?: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          {Icon && <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
+          <span className="text-sm font-medium">{label}</span>
+        </div>
+        {description && (
+          <p className="text-xs text-muted-foreground mt-0.5 ml-6">{description}</p>
+        )}
+      </div>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
+    </div>
+  );
+}
+
 function SortableCardItem({
   cardKey,
   label,
@@ -48,37 +94,32 @@ function SortableCardItem({
     transform,
     transition,
     isDragging
-  } = useSortable({
-    id: cardKey
-  });
+  } = useSortable({ id: cardKey });
+  
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1
   };
-  return <div ref={setNodeRef} style={style} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border cursor-move">
-      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+  
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2 p-3 rounded-lg bg-muted/40 border border-border/60">
+      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded">
         <GripVertical className="w-4 h-4 text-muted-foreground" />
       </div>
-      <div className="flex items-center gap-2 flex-1">
-        <Eye className="w-4 h-4 text-muted-foreground" />
-        <span className="text-sm">{label}</span>
-      </div>
+      <span className="text-sm flex-1">{label}</span>
       <Switch checked={visible} onCheckedChange={onVisibilityChange} />
-    </div>;
+    </div>
+  );
 }
+
 export function SettingsDialog({
   isImperial,
   onUnitsChange,
   mostAccurate
 }: SettingsDialogProps) {
-  const {
-    user,
-    signOut
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
   const {
     visibleCards,
     cardOrder,
@@ -146,13 +187,11 @@ export function SettingsDialog({
   async function updateNotificationSettings(enabled: boolean, time?: string) {
     if (!user) return;
 
-    // If user is on iOS and not installed, show install guide instead
     if (enabled && needsPWAInstall) {
       setShowIOSInstallGuide(true);
       return;
     }
 
-    // Request browser notification permission if enabling
     if (enabled && !needsPWAInstall) {
       const permissionGranted = await requestNotificationPermission();
       if (!permissionGranted) {
@@ -223,6 +262,7 @@ export function SettingsDialog({
       });
     }
   }
+
   const cardLabels = {
     pollen: t('pollen.pollenIndex'),
     hourly: t('pollen.hourlyForecast'),
@@ -232,6 +272,7 @@ export function SettingsDialog({
     aqi: 'Air Quality Index',
     alerts: 'Weather Alerts'
   };
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -243,14 +284,14 @@ export function SettingsDialog({
       });
     }
   };
-  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, {
-    coordinateGetter: sortableKeyboardCoordinates
-  }));
+
+  const sensors = useSensors(
+    useSensor(PointerSensor), 
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
   const handleDragEnd = (event: DragEndEvent) => {
-    const {
-      active,
-      over
-    } = event;
+    const { active, over } = event;
     if (over && active.id !== over.id) {
       const oldIndex = cardOrder.indexOf(active.id as any);
       const newIndex = cardOrder.indexOf(over.id as any);
@@ -262,6 +303,7 @@ export function SettingsDialog({
       });
     }
   };
+
   return (
     <>
       <Dialog>
@@ -270,854 +312,432 @@ export function SettingsDialog({
             <Settings className="w-5 h-5" />
           </Button>
         </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] max-h-[90vh] flex flex-col overflow-x-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            {t('settings.title')}
-          </DialogTitle>
-          <DialogDescription>
-            {t('settings.customise')}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-6 py-4 overflow-y-auto flex-1 px-1">
-          {/* User Profile */}
-          {user && <>
-              <div className="space-y-3">
-                <Label className="text-base font-medium">{t('settings.account')}</Label>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm">{user.email}</span>
+        <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col overflow-hidden p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/50 bg-muted/30">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Settings className="w-5 h-5" />
+              {t('settings.title')}
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              {t('settings.customise')}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+            {/* Account Section */}
+            {user && (
+              <SettingsSection title={t('settings.account')} icon={User}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{user.email}</p>
+                    <p className="text-xs text-muted-foreground">Signed in</p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={handleSignOut}>
-                    <LogOut className="w-3 h-3 mr-2" />
+                  <Button variant="outline" size="sm" onClick={handleSignOut} className="gap-1.5">
+                    <LogOut className="w-3.5 h-3.5" />
                     {t('settings.signOut')}
                   </Button>
                 </div>
+              </SettingsSection>
+            )}
+
+            {/* Language Section */}
+            <SettingsSection title={t('settings.language')} icon={Languages}>
+              <div className="grid grid-cols-2 gap-2">
+                {(['en-GB', 'en-US', 'da', 'sv', 'no', 'fr', 'it'] as Language[]).map((lang) => (
+                  <button
+                    key={lang}
+                    onClick={() => {
+                      setLanguage(lang);
+                      toast({
+                        title: t('settings.languageChanged'),
+                        description: `${t('settings.changedTo')} ${t(`language.${lang}`)}`,
+                      });
+                    }}
+                    className={`flex items-center gap-2 p-2.5 rounded-lg border text-left transition-all ${
+                      language === lang
+                        ? 'border-primary bg-primary/10 ring-1 ring-primary/50'
+                        : 'border-border/60 hover:border-primary/50 hover:bg-muted/50'
+                    }`}
+                  >
+                    <span className="text-lg">{languageFlags[lang]}</span>
+                    <span className="text-xs font-medium flex-1">{t(`language.${lang}`)}</span>
+                    {language === lang && <span className="text-xs text-primary">✓</span>}
+                  </button>
+                ))}
               </div>
-              <Separator />
-            </>}
+            </SettingsSection>
 
-          {/* Language Selection */}
-          <div className="space-y-3">
-            <Label className="text-base font-medium flex items-center gap-2">
-              <Languages className="w-4 h-4" />
-              {t('settings.language')}
-            </Label>
-            <div className="grid gap-2">
-              {(['en-GB', 'en-US', 'da', 'sv', 'no', 'fr', 'it'] as Language[]).map((lang) => (
-                <button
-                  key={lang}
-                  onClick={() => {
-                    setLanguage(lang);
-                    toast({
-                      title: t('settings.languageChanged'),
-                      description: `${t('settings.changedTo')} ${t(`language.${lang}`)}`,
-                    });
-                  }}
-                  className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                    language === lang
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                  }`}
-                >
-                  <span className="text-2xl">{languageFlags[lang]}</span>
-                  <span className="text-sm font-medium">{t(`language.${lang}`)}</span>
-                  {language === lang && (
-                    <span className="ml-auto text-xs text-primary">✓</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
+            {/* Display Settings Section */}
+            <SettingsSection title="Display" icon={Eye}>
+              <ToggleRow
+                icon={theme === 'dark' ? Moon : Sun}
+                label="Dark mode"
+                description={theme === 'dark' ? 'Currently using dark mode' : 'Currently using light mode'}
+                checked={theme === 'dark'}
+                onCheckedChange={(checked) => {
+                  setTheme(checked ? 'dark' : 'light');
+                  toast({ title: "Theme updated", description: `Switched to ${checked ? 'dark' : 'light'} mode` });
+                }}
+              />
+              <ToggleRow
+                icon={Globe}
+                label={t('settings.useCelsius')}
+                description={isImperial ? t('settings.currentlyFahrenheit') : t('settings.currentlyCelsius')}
+                checked={!isImperial}
+                onCheckedChange={(checked) => onUnitsChange(!checked)}
+              />
+              <ToggleRow
+                icon={Globe}
+                label="Use 24-hour time"
+                description={is24Hour ? 'Currently using 24-hour format' : 'Currently using 12-hour format'}
+                checked={is24Hour}
+                onCheckedChange={(checked) => {
+                  updateTimeFormat(checked);
+                  toast({ title: "Time format updated", description: `Now using ${checked ? '24-hour' : '12-hour'} format` });
+                }}
+              />
+              <ToggleRow
+                icon={Eye}
+                label="High contrast mode"
+                description={isHighContrast ? 'Enhanced contrast enabled' : 'Normal contrast'}
+                checked={isHighContrast}
+                onCheckedChange={(checked) => {
+                  updateHighContrast(checked);
+                  toast({ title: "High contrast mode updated", description: checked ? 'Enabled' : 'Disabled' });
+                }}
+              />
+            </SettingsSection>
 
-          <Separator />
-
-          {/* Feedback & Support */}
-          <div className="space-y-3">
-            <Label className="text-base font-medium">Help & Feedback</Label>
-            <AISupportChat />
-            <FeedbackForm />
-          </div>
-
-          <Separator />
-
-          {/* Display Settings */}
-          <div className="space-y-4">
-            <Label className="text-base font-medium">Display Settings</Label>
-            
-            {/* Dark Mode */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {theme === 'dark' ? (
-                    <Moon className="w-4 h-4 text-muted-foreground" />
-                  ) : (
-                    <Sun className="w-4 h-4 text-muted-foreground" />
-                  )}
-                  <span className="text-sm">Dark mode</span>
-                </div>
-                <Switch 
-                  checked={theme === 'dark'} 
-                  onCheckedChange={(checked) => {
-                    setTheme(checked ? 'dark' : 'light');
-                    toast({
-                      title: "Theme updated",
-                      description: `Switched to ${checked ? 'dark' : 'light'} mode`
-                    });
-                  }} 
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {theme === 'dark' ? 'Currently using dark mode' : 'Currently using light mode'}
-              </p>
-            </div>
-
-            {/* Temperature Units */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">{t('settings.useCelsius')}</span>
-                </div>
-                <Switch checked={!isImperial} onCheckedChange={checked => onUnitsChange(!checked)} />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {isImperial ? t('settings.currentlyFahrenheit') : t('settings.currentlyCelsius')}
-              </p>
-            </div>
-
-            {/* Time Format */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">Use 24-hour time</span>
-                </div>
-                <Switch 
-                  checked={is24Hour} 
-                  onCheckedChange={(checked) => {
-                    updateTimeFormat(checked);
-                    toast({
-                      title: "Time format updated",
-                      description: `Now using ${checked ? '24-hour' : '12-hour'} time format`
-                    });
-                  }} 
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {is24Hour ? 'Currently using 24-hour format (e.g., 15:30)' : 'Currently using 12-hour format (e.g., 3:30 PM)'}
-              </p>
-            </div>
-
-            {/* High Contrast Mode */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">High contrast mode</span>
-                </div>
-                <Switch 
-                  checked={isHighContrast} 
-                  onCheckedChange={(checked) => {
-                    updateHighContrast(checked);
-                    toast({
-                      title: "High contrast mode updated",
-                      description: `High contrast mode ${checked ? 'enabled' : 'disabled'}`
-                    });
-                  }} 
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {isHighContrast ? 'Text is displayed with enhanced contrast' : 'Text is displayed with normal contrast'}
-              </p>
-            </div>
-
-            {/* Experimental Data - Premium Feature (Always on for subscribers) */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FlaskConical className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">AI Enhanced Data</span>
-                  {isSubscribed ? (
-                    <span className="flex items-center gap-1 text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">
-                      Active
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full">
-                      <Crown className="w-3 h-3" />
-                      Plus
-                    </span>
-                  )}
-                </div>
-                {!isSubscribed && (
+            {/* Rainz+ Settings */}
+            <SettingsSection 
+              title="Rainz+" 
+              icon={Crown}
+              badge={
+                isSubscribed ? (
+                  <span className="text-xs bg-green-500/20 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full ml-auto">Active</span>
+                ) : (
+                  <span className="text-xs bg-amber-500/20 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full ml-auto">Upgrade</span>
+                )
+              }
+            >
+              {!isSubscribed ? (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Unlock AI-enhanced weather data, animated backgrounds, notifications, and more.
+                  </p>
                   <Button 
                     size="sm" 
-                    variant="outline" 
-                    onClick={() => {
-                      // Errors are surfaced via toast inside openCheckout
-                      void openCheckout().catch(() => {});
-                    }}
-                    className="text-xs"
+                    onClick={() => void openCheckout().catch(() => {})}
+                    className="w-full gap-2"
                   >
-                    <Lock className="w-3 h-3 mr-1" />
-                    Upgrade
+                    <Crown className="w-4 h-4" />
+                    Upgrade to Rainz+
                   </Button>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {isSubscribed 
-                  ? 'Weather data is processed by AI for enhanced accuracy (always on with Rainz+)'
-                  : 'Upgrade to Rainz+ to use AI-processed weather data'}
-              </p>
-            </div>
-          </div>
-
-          {/* Rainz+ Premium Settings */}
-          {isSubscribed && (
-            <>
-              <Separator />
-              <div className="space-y-4">
-                <Label className="text-base font-medium flex items-center gap-2">
-                  <Crown className="w-4 h-4 text-amber-500" />
-                  Rainz+ Display Settings
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  These settings are synced to your account and apply across all devices.
-                </p>
-                
-                {/* AI Enhanced Data Toggle */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <FlaskConical className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">AI Enhanced Data</span>
-                    </div>
-                    <Switch 
-                      checked={useExperimental}
-                      onCheckedChange={(checked) => {
-                        setUseExperimental(checked);
-                        toast({
-                          title: "AI Enhanced Data",
-                          description: checked ? 'Enabled - Weather data will be AI-processed' : 'Disabled'
-                        });
-                      }}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Use AI-processed weather data for enhanced accuracy
-                  </p>
                 </div>
-
-                {/* Animated Weather Background Toggle */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm">Animated backgrounds</span>
+              ) : (
+                <>
+                  <ToggleRow
+                    icon={FlaskConical}
+                    label="AI Enhanced Data"
+                    description="Weather data processed by AI for enhanced accuracy"
+                    checked={useExperimental}
+                    onCheckedChange={(checked) => {
+                      setUseExperimental(checked);
+                      toast({ title: "AI Enhanced Data", description: checked ? 'Enabled' : 'Disabled' });
+                    }}
+                  />
+                  <ToggleRow
+                    label="Animated backgrounds"
+                    description="Show animated weather effects"
+                    checked={premiumSettings.animatedBackgrounds}
+                    onCheckedChange={(checked) => {
+                      updatePremiumSetting('animatedBackgrounds', checked);
+                      toast({ title: "Animated Backgrounds", description: checked ? 'Enabled' : 'Disabled' });
+                    }}
+                  />
+                  <ToggleRow
+                    label="Compact mode"
+                    description="Use smaller, condensed cards"
+                    checked={premiumSettings.compactMode}
+                    onCheckedChange={(checked) => {
+                      updatePremiumSetting('compactMode', checked);
+                      toast({ title: "Compact Mode", description: checked ? 'Enabled' : 'Disabled' });
+                    }}
+                  />
+                  
+                  <div className="pt-2 border-t border-border/40">
+                    <p className="text-xs text-muted-foreground mb-3">Data to display:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { key: 'showFeelsLike', label: 'Feels like', icon: Thermometer },
+                        { key: 'showWindChill', label: 'Wind chill', icon: Wind },
+                        { key: 'showHumidity', label: 'Humidity', icon: Droplets },
+                        { key: 'showUV', label: 'UV index', icon: Sun },
+                        { key: 'showPrecipChance', label: 'Precip %', icon: Droplets },
+                        { key: 'showDewPoint', label: 'Dew point', icon: Droplets },
+                        { key: 'showPressure', label: 'Pressure', icon: Gauge },
+                        { key: 'showVisibility', label: 'Visibility', icon: Eye },
+                        { key: 'showSunTimes', label: 'Sun times', icon: Sunrise },
+                        { key: 'showMoonPhase', label: 'Moon phase', icon: MoonIcon },
+                      ].map(({ key, label, icon: ItemIcon }) => (
+                        <label key={key} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/40 cursor-pointer hover:bg-muted/50 transition-colors">
+                          <Switch
+                            checked={(premiumSettings as any)[key]}
+                            onCheckedChange={(checked) => updatePremiumSetting(key as any, checked)}
+                            className="scale-75"
+                          />
+                          <ItemIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span className="text-xs">{label}</span>
+                        </label>
+                      ))}
                     </div>
-                    <Switch 
-                      checked={premiumSettings.animatedBackgrounds}
-                      onCheckedChange={(checked) => {
-                        updatePremiumSetting('animatedBackgrounds', checked);
-                        toast({
-                          title: "Animated Backgrounds",
-                          description: checked ? 'Weather animations enabled' : 'Animations disabled for better performance'
-                        });
-                      }}
-                    />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Show animated weather effects in the background
-                  </p>
-                </div>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => void openPortal().catch(() => {})}
+                    className="w-full mt-2"
+                  >
+                    Manage Subscription
+                  </Button>
+                </>
+              )}
+            </SettingsSection>
 
-                {/* Compact Mode Toggle */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm">Compact mode</span>
-                    </div>
-                    <Switch 
-                      checked={premiumSettings.compactMode}
-                      onCheckedChange={(checked) => {
-                        updatePremiumSetting('compactMode', checked);
-                        toast({
-                          title: "Compact Mode",
-                          description: checked ? 'Showing condensed weather cards' : 'Showing full weather cards'
-                        });
-                      }}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Use smaller, more condensed weather cards
-                  </p>
-                </div>
-
-                {/* Show Feels Like Toggle */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Thermometer className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">Show "feels like" temperature</span>
-                    </div>
-                    <Switch 
-                      checked={premiumSettings.showFeelsLike}
-                      onCheckedChange={(checked) => {
-                        updatePremiumSetting('showFeelsLike', checked);
-                        toast({
-                          title: "Feels Like Temperature",
-                          description: checked ? 'Showing feels like temperature' : 'Hiding feels like temperature'
-                        });
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Show Wind Chill/Heat Index Toggle */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Wind className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">Show wind chill & heat index</span>
-                    </div>
-                    <Switch 
-                      checked={premiumSettings.showWindChill}
-                      onCheckedChange={(checked) => {
-                        updatePremiumSetting('showWindChill', checked);
-                        toast({
-                          title: "Wind Chill & Heat Index",
-                          description: checked ? 'Showing wind chill and heat index' : 'Hidden'
-                        });
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Show Humidity Toggle */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Droplets className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">Show humidity on main display</span>
-                    </div>
-                    <Switch 
-                      checked={premiumSettings.showHumidity}
-                      onCheckedChange={(checked) => {
-                        updatePremiumSetting('showHumidity', checked);
-                        toast({
-                          title: "Humidity Display",
-                          description: checked ? 'Showing humidity' : 'Hiding humidity from main display'
-                        });
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Show UV Index Toggle */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Sun className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">Show UV index</span>
-                    </div>
-                    <Switch 
-                      checked={premiumSettings.showUV}
-                      onCheckedChange={(checked) => {
-                        updatePremiumSetting('showUV', checked);
-                        toast({
-                          title: "UV Index",
-                          description: checked ? 'Showing UV index' : 'Hiding UV index'
-                        });
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Show Precipitation Chance Toggle */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm">Show precipitation chance</span>
-                    </div>
-                    <Switch 
-                      checked={premiumSettings.showPrecipChance}
-                      onCheckedChange={(checked) => {
-                        updatePremiumSetting('showPrecipChance', checked);
-                        toast({
-                          title: "Precipitation Chance",
-                          description: checked ? 'Showing precipitation chance' : 'Hidden'
-                        });
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Show Dew Point Toggle */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Droplets className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">Show dew point</span>
-                    </div>
-                    <Switch 
-                      checked={premiumSettings.showDewPoint}
-                      onCheckedChange={(checked) => {
-                        updatePremiumSetting('showDewPoint', checked);
-                        toast({
-                          title: "Dew Point",
-                          description: checked ? 'Showing dew point' : 'Hidden'
-                        });
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Show Pressure Toggle */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Gauge className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">Show barometric pressure</span>
-                    </div>
-                    <Switch 
-                      checked={premiumSettings.showPressure}
-                      onCheckedChange={(checked) => {
-                        updatePremiumSetting('showPressure', checked);
-                        toast({
-                          title: "Barometric Pressure",
-                          description: checked ? 'Showing pressure readings' : 'Hidden'
-                        });
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Show Visibility Toggle */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Eye className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">Show visibility</span>
-                    </div>
-                    <Switch 
-                      checked={premiumSettings.showVisibility}
-                      onCheckedChange={(checked) => {
-                        updatePremiumSetting('showVisibility', checked);
-                        toast({
-                          title: "Visibility",
-                          description: checked ? 'Showing visibility distance' : 'Hidden'
-                        });
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Show Sun Times Toggle */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Sunrise className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">Show sunrise/sunset times</span>
-                    </div>
-                    <Switch 
-                      checked={premiumSettings.showSunTimes}
-                      onCheckedChange={(checked) => {
-                        updatePremiumSetting('showSunTimes', checked);
-                        toast({
-                          title: "Sun Times",
-                          description: checked ? 'Showing sunrise and sunset' : 'Hidden'
-                        });
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Show Moon Phase Toggle */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <MoonIcon className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">Show moon phase</span>
-                    </div>
-                    <Switch 
-                      checked={premiumSettings.showMoonPhase}
-                      onCheckedChange={(checked) => {
-                        updatePremiumSetting('showMoonPhase', checked);
-                        toast({
-                          title: "Moon Phase",
-                          description: checked ? 'Showing current moon phase' : 'Hidden'
-                        });
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Manage Subscription */}
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    openPortal().catch(() => {});
-                  }}
-                  className="w-full mt-2"
-                >
-                  Manage Subscription
-                </Button>
-              </div>
-            </>
-          )}
-
-          <Separator />
-
-          {/* Notification Settings - Premium Only */}
-          <div className="space-y-4">
-            <Label className="text-base font-medium flex items-center gap-2">
-              Notifications
-              {!isSubscribed && (
-                <span className="flex items-center gap-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full">
-                  <Crown className="w-3 h-3" />
-                  Plus
+            {/* Notifications Section */}
+            <SettingsSection 
+              title="Notifications" 
+              icon={Bell}
+              badge={!isSubscribed && (
+                <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full ml-auto flex items-center gap-1">
+                  <Crown className="w-3 h-3" /> Plus
                 </span>
               )}
-            </Label>
-            
-            {!isSubscribed ? (
-              <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
-                    Premium Feature
-                  </span>
+            >
+              {!isSubscribed ? (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Upgrade to Rainz+ for AI-powered daily weather notifications with personalized insights.
+                  </p>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => void openCheckout().catch(() => {})}
+                    className="w-full gap-2"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    Upgrade to Enable
+                  </Button>
                 </div>
-                <p className="text-xs text-amber-600/90 dark:text-amber-400/90">
-                  Upgrade to Rainz+ to receive AI-powered daily weather notifications with personalized insights.
-                </p>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => {
-                    void openCheckout().catch(() => {});
-                  }}
-                  className="w-full border-amber-500/30 hover:bg-amber-500/10"
-                >
-                  <Lock className="w-3 h-3 mr-2" />
-                  Upgrade to Rainz+
-                </Button>
-              </div>
-            ) : (
-              <>
-                {/* iOS PWA Installation Status */}
-                {isIOS && (
-                  <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Smartphone className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                        {isPWAInstalled ? 'PWA Installed ✓' : 'Installation Required'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-blue-600/90 dark:text-blue-400/90">
-                      {isPWAInstalled 
-                        ? 'Rainz is installed. You can enable notifications below.'
-                        : 'Notifications only work when Rainz is installed to your home screen.'}
-                    </p>
-                    {!isPWAInstalled && (
+              ) : (
+                <>
+                  {isIOS && !isPWAInstalled && (
+                    <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Smartphone className="w-4 h-4 text-blue-500" />
+                        <span className="text-sm font-medium text-blue-600 dark:text-blue-400">Installation Required</span>
+                      </div>
+                      <p className="text-xs text-blue-600/80 dark:text-blue-400/80">
+                        Notifications require Rainz to be installed to your home screen.
+                      </p>
                       <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={() => setShowIOSInstallGuide(true)}
-                        className="w-full mt-2 border-blue-500/30 hover:bg-blue-500/10"
+                        className="w-full border-blue-500/30"
                       >
-                        View Installation Instructions
+                        View Instructions
                       </Button>
-                    )}
-                  </div>
-                )}
-                
-                {/* Enable Notifications */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Bell className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">Daily weather notifications</span>
                     </div>
-                    <Switch 
-                      checked={notificationsEnabled}
-                      disabled={loadingNotifications || (isIOS && !isPWAInstalled)}
-                      onCheckedChange={(checked) => {
-                        setNotificationsEnabled(checked);
-                        updateNotificationSettings(checked);
-                      }} 
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {notificationsEnabled 
-                      ? 'Receive AI-powered morning weather updates' 
-                      : isIOS && !isPWAInstalled
-                        ? 'Install Rainz to enable notifications'
-                        : 'Enable to get daily weather notifications'}
-                  </p>
-                </div>
+                  )}
+                  
+                  <ToggleRow
+                    icon={Bell}
+                    label="Daily weather notifications"
+                    description={notificationsEnabled ? 'Receive AI-powered morning updates' : 'Enable to get daily notifications'}
+                    checked={notificationsEnabled}
+                    disabled={loadingNotifications || (isIOS && !isPWAInstalled)}
+                    onCheckedChange={(checked) => {
+                      setNotificationsEnabled(checked);
+                      updateNotificationSettings(checked);
+                    }}
+                  />
 
-                {/* Notification Time */}
-                {notificationsEnabled && (
-                  <div className="space-y-2">
-                    <Label htmlFor="notification-time" className="text-sm">
-                      Notification time
-                    </Label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        id="notification-time"
-                        type="time"
-                        value={notificationTime}
-                        onChange={(e) => {
-                          const newTime = e.target.value;
-                          setNotificationTime(newTime);
-                          updateNotificationSettings(true, newTime);
+                  {notificationsEnabled && (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <Label htmlFor="notification-time" className="text-sm flex-shrink-0">Time</Label>
+                        <input
+                          id="notification-time"
+                          type="time"
+                          value={notificationTime}
+                          onChange={(e) => {
+                            const newTime = e.target.value;
+                            setNotificationTime(newTime);
+                            updateNotificationSettings(true, newTime);
+                          }}
+                          className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2 pt-2 border-t border-border/40">
+                        <p className="text-xs text-muted-foreground">Notification types:</p>
+                        {[
+                          { key: 'severe_weather', label: 'Severe weather alerts' },
+                          { key: 'pollen', label: 'Pollen alerts' },
+                          { key: 'daily_summary', label: 'Daily summary' },
+                          { key: 'ai_preview', label: 'AI weather preview' },
+                        ].map(({ key, label }) => (
+                          <div key={key} className="flex items-center justify-between">
+                            <span className="text-sm">{label}</span>
+                            <Switch 
+                              checked={notifySettings[key as keyof typeof notifySettings]}
+                              onCheckedChange={(checked) => updateNotificationPreference(key as keyof typeof notifySettings, checked)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={async () => {
+                          await sendTestNotification({
+                            temperature: 72,
+                            condition: 'Partly Cloudy',
+                            highTemp: 78,
+                            lowTemp: 65,
+                            pollenAlerts: ['Grass pollen: Moderate']
+                          });
                         }}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      You'll receive notifications at {notificationTime} daily
-                    </p>
-                  </div>
-                )}
+                      >
+                        <Bell className="w-4 h-4 mr-2" />
+                        Send Test Notification
+                      </Button>
+                    </>
+                  )}
+                </>
+              )}
+            </SettingsSection>
 
-                {/* Test Notification Button */}
-                {notificationsEnabled && (
-                  <div className="space-y-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={async () => {
-                        await sendTestNotification({
-                          temperature: 72,
-                          condition: 'Partly Cloudy',
-                          highTemp: 78,
-                          lowTemp: 65,
-                          pollenAlerts: ['Grass pollen: Moderate']
-                        });
-                      }}
-                    >
-                      <Bell className="w-4 h-4 mr-2" />
-                      Send Test Notification
-                    </Button>
-                    <p className="text-xs text-muted-foreground">
-                      Test your notification settings with a sample weather update
-                    </p>
-                  </div>
-                )}
-
-                {/* Notification Type Preferences */}
-                {notificationsEnabled && (
-                  <div className="space-y-3 pt-2">
-                    <Label className="text-sm font-medium">Notification types</Label>
-                    
-                    <div className="space-y-2 pl-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Severe weather alerts</span>
-                        <Switch 
-                          checked={notifySettings.severe_weather}
-                          onCheckedChange={(checked) => updateNotificationPreference('severe_weather', checked)}
-                        />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Pollen alerts</span>
-                        <Switch 
-                          checked={notifySettings.pollen}
-                          onCheckedChange={(checked) => updateNotificationPreference('pollen', checked)}
-                        />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Daily summary</span>
-                        <Switch 
-                          checked={notifySettings.daily_summary}
-                          onCheckedChange={(checked) => updateNotificationPreference('daily_summary', checked)}
-                        />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">AI weather preview</span>
-                        <Switch 
-                          checked={notifySettings.ai_preview}
-                          onCheckedChange={(checked) => updateNotificationPreference('ai_preview', checked)}
-                        />
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-muted-foreground">
-                      Choose which types of weather notifications you want to receive
-                    </p>
-                  </div>
-                )}
-
-                {/* Offline Cache Status */}
-                <div className="space-y-2 pt-2 border-t border-border/50">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Offline Weather Cache</span>
-                    <span className="text-xs bg-green-500/20 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">
-                      Active
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Weather data is cached for offline access. Data expires after 6 hours.
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-
-          <Separator />
-
-          {/* Data & Privacy Settings */}
-          <div className="space-y-3">
-            <Label className="text-base font-medium">Data & Privacy Settings</Label>
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => navigate('/data-settings')}
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                Manage Data & Privacy
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => navigate('/terms')}
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Terms of Service
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => navigate('/privacy')}
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                Privacy Policy
-              </Button>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Cookie Preferences */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Cookie className="w-4 h-4" />
-              <Label className="text-base font-medium">Cookie Preferences</Label>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Manage your cookie and privacy settings
-            </p>
-
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <span className="text-sm font-medium">Necessary Cookies</span>
-                  <p className="text-xs text-muted-foreground">Required for app functionality</p>
-                </div>
-                <Switch checked disabled />
+            {/* Help & Feedback */}
+            <SettingsSection title="Help & Feedback">
+              <div className="space-y-2">
+                <AISupportChat />
+                <FeedbackForm />
               </div>
+            </SettingsSection>
 
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <span className="text-sm font-medium">Analytics Cookies</span>
-                  <p className="text-xs text-muted-foreground">Help us improve the app</p>
-                </div>
-                <Switch
-                  checked={cookiePreferences?.analytics || false}
-                  onCheckedChange={(checked) => {
-                    if (cookiePreferences) {
-                      saveCookiePreferences({ ...cookiePreferences, analytics: checked });
-                      toast({
-                        title: "Cookie preferences updated",
-                        description: checked 
-                          ? "Analytics tracking enabled" 
-                          : "Analytics tracking disabled",
-                      });
-                    }
-                  }}
-                />
+            {/* Privacy & Data */}
+            <SettingsSection title="Privacy & Data" icon={Shield}>
+              <div className="space-y-2">
+                <Button variant="ghost" className="w-full justify-between h-auto py-2.5" onClick={() => navigate('/data-settings')}>
+                  <span className="text-sm">Manage Data & Privacy</span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </Button>
+                <Button variant="ghost" className="w-full justify-between h-auto py-2.5" onClick={() => navigate('/terms')}>
+                  <span className="text-sm">Terms of Service</span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </Button>
+                <Button variant="ghost" className="w-full justify-between h-auto py-2.5" onClick={() => navigate('/privacy')}>
+                  <span className="text-sm">Privacy Policy</span>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </Button>
               </div>
+            </SettingsSection>
 
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <span className="text-sm font-medium">Functional Cookies</span>
-                  <p className="text-xs text-muted-foreground">Enhanced features and personalization</p>
-                </div>
-                <Switch
-                  checked={cookiePreferences?.functional || false}
-                  onCheckedChange={(checked) => {
-                    if (cookiePreferences) {
-                      saveCookiePreferences({ ...cookiePreferences, functional: checked });
-                      toast({
-                        title: "Cookie preferences updated",
-                        description: checked 
-                          ? "Functional features enabled" 
-                          : "Functional features disabled",
-                      });
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-
-          {/* Card Visibility - Only for authenticated users */}
-          {user && <>
+            {/* Cookie Preferences */}
+            <SettingsSection title="Cookie Preferences" icon={Cookie}>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label className="text-base font-medium">{t('settings.cardVisibility')}</Label>
-                  <Button variant="ghost" size="sm" onClick={resetToDefaults} className="h-8 text-xs">
-                    <RotateCcw className="w-3 h-3 mr-1" />
+                  <div>
+                    <span className="text-sm font-medium">Necessary</span>
+                    <p className="text-xs text-muted-foreground">Required for app functionality</p>
+                  </div>
+                  <Switch checked disabled />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-sm font-medium">Analytics</span>
+                    <p className="text-xs text-muted-foreground">Help us improve the app</p>
+                  </div>
+                  <Switch
+                    checked={cookiePreferences?.analytics || false}
+                    onCheckedChange={(checked) => {
+                      if (cookiePreferences) {
+                        saveCookiePreferences({ ...cookiePreferences, analytics: checked });
+                        toast({ title: "Cookie preferences updated" });
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-sm font-medium">Functional</span>
+                    <p className="text-xs text-muted-foreground">Enhanced features</p>
+                  </div>
+                  <Switch
+                    checked={cookiePreferences?.functional || false}
+                    onCheckedChange={(checked) => {
+                      if (cookiePreferences) {
+                        saveCookiePreferences({ ...cookiePreferences, functional: checked });
+                        toast({ title: "Cookie preferences updated" });
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </SettingsSection>
+
+            {/* Card Visibility - Only for authenticated users */}
+            {user && (
+              <SettingsSection title={t('settings.cardVisibility')} icon={Eye}>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs text-muted-foreground">{t('settings.reloadChanges')}</p>
+                  <Button variant="ghost" size="sm" onClick={resetToDefaults} className="h-7 text-xs gap-1">
+                    <RotateCcw className="w-3 h-3" />
                     {t('settings.reset')}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">{t('settings.reloadChanges')}</p>
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={cardOrder} strategy={verticalListSortingStrategy}>
                     <div className="space-y-2">
-                      {cardOrder.map(cardKey => <SortableCardItem key={cardKey} cardKey={cardKey} label={cardLabels[cardKey]} visible={visibleCards[cardKey]} onVisibilityChange={checked => updateVisibility(cardKey, checked)} />)}
+                      {cardOrder.map(cardKey => (
+                        <SortableCardItem 
+                          key={cardKey} 
+                          cardKey={cardKey} 
+                          label={cardLabels[cardKey]} 
+                          visible={visibleCards[cardKey]} 
+                          onVisibilityChange={checked => updateVisibility(cardKey, checked)} 
+                        />
+                      ))}
                     </div>
                   </SortableContext>
                 </DndContext>
-              </div>
-            </>}
+              </SettingsSection>
+            )}
 
-          {/* Admin Panel Button - Only for admins */}
-          {isAdmin && (
-            <>
-              <Separator />
-              <div className="space-y-3">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => navigate('/admin')}
-                >
-                  <Shield className="w-4 h-4 mr-2" />
-                  Admin Panel
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-    
-    {/* iOS Install Guide Dialog */}
-    <IOSInstallGuide 
-      open={showIOSInstallGuide} 
-      onOpenChange={setShowIOSInstallGuide} 
-    />
+            {/* Admin Panel Button */}
+            {isAdmin && (
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => navigate('/admin')}
+              >
+                <Shield className="w-4 h-4" />
+                Admin Panel
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      <IOSInstallGuide 
+        open={showIOSInstallGuide} 
+        onOpenChange={setShowIOSInstallGuide} 
+      />
     </>
   );
 }

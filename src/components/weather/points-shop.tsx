@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { 
-  Snowflake, Crown, Coins, ShoppingBag, Package, Loader2, CheckCircle, 
+  Snowflake, Crown, Coins, ShoppingBag, Loader2, 
   ArrowRightLeft, CreditCard, Sparkles, Zap, Shield, Star, Gift
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -55,11 +55,11 @@ const SHOP_ITEMS: ShopItem[] = [
   {
     id: "double_points",
     name: "Double Points",
-    description: "Earn 2x prediction points for 24 hours",
+    description: "Earn 2x points on your next prediction",
     price: 50,
     icon: <Zap className="w-5 h-5 text-purple-400" />,
     type: "double_points",
-    duration: "24 hours",
+    duration: "1 use",
   },
   {
     id: "prediction_boost",
@@ -328,21 +328,30 @@ export const PointsShop = () => {
   };
 
   const openMysteryBox = async (): Promise<MysteryBoxReward> => {
-    // Random reward logic
+    // Random reward logic with more variety
+    // Adjust probabilities if user already has Rainz+ (exclude premium_trial)
     const roll = Math.random();
     let reward: MysteryBoxReward;
     
-    if (roll < 0.35) {
-      // 35% - Shop Points (10-50)
-      const amount = Math.floor(Math.random() * 41) + 10;
+    // Probability ranges (adjusted if subscribed to exclude premium_trial)
+    // Base: SP 25%, Freeze 20%, Double 15%, Bonus PP 15%, Badge XP 10%, Premium 15%
+    // If subscribed: SP 30%, Freeze 22%, Double 18%, Bonus PP 18%, Badge XP 12%
+    
+    const thresholds = isSubscribed 
+      ? { sp: 0.30, freeze: 0.52, double: 0.70, bonusPP: 0.88, badgeXP: 1.0 }
+      : { sp: 0.25, freeze: 0.45, double: 0.60, bonusPP: 0.75, badgeXP: 0.85, premium: 1.0 };
+    
+    if (roll < thresholds.sp) {
+      // Shop Points (15-75)
+      const amount = Math.floor(Math.random() * 61) + 15;
       reward = { type: "shop_points", amount, label: `${amount} Shop Points!`, description: "Added to your balance" };
       
       await supabase
         .from("profiles")
         .update({ shop_points: shopPoints + amount })
         .eq("user_id", user!.id);
-    } else if (roll < 0.65) {
-      // 30% - Streak Freeze
+    } else if (roll < thresholds.freeze) {
+      // Streak Freeze
       reward = { type: "streak_freeze", label: "Streak Freeze!", description: "Protects your streak if you miss a day" };
       
       await supabase.from("user_inventory").upsert({
@@ -350,11 +359,47 @@ export const PointsShop = () => {
         item_type: "streak_freeze",
         quantity: inventory.streak_freeze + 1,
       }, { onConflict: "user_id,item_type" });
-    } else if (roll < 0.85) {
-      // 20% - Double Points (24h)
-      reward = { type: "double_points", label: "Double Points!", description: "2x points for 24 hours" };
-    } else {
-      // 15% - Premium Trial (1 day)
+    } else if (roll < thresholds.double) {
+      // Double Points (1 use, not 24h)
+      reward = { type: "double_points", label: "Double Points!", description: "2x points on your next prediction" };
+      
+      // Insert as uses_remaining instead of time-based
+      await supabase.from("active_powerups").insert({
+        user_id: user!.id,
+        powerup_type: "double_points",
+        uses_remaining: 1,
+      });
+    } else if (roll < thresholds.bonusPP) {
+      // Bonus Prediction Points (25-100)
+      const amount = Math.floor(Math.random() * 76) + 25;
+      reward = { type: "shop_points", amount, label: `${amount} Bonus PP!`, description: "Prediction Points added" };
+      
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("total_points")
+        .eq("user_id", user!.id)
+        .single();
+      
+      await supabase
+        .from("profiles")
+        .update({ total_points: (profile?.total_points || 0) + amount })
+        .eq("user_id", user!.id);
+    } else if (roll < thresholds.badgeXP) {
+      // Weather Trivia XP Boost - gives 50 PP
+      reward = { type: "shop_points", amount: 50, label: "XP Boost!", description: "50 bonus prediction points" };
+      
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("total_points")
+        .eq("user_id", user!.id)
+        .single();
+      
+      await supabase
+        .from("profiles")
+        .update({ total_points: (profile?.total_points || 0) + 50 })
+        .eq("user_id", user!.id);
+    } else if (!isSubscribed) {
+      // Premium Trial (1 day) - only for non-subscribers
       reward = { type: "premium_trial", label: "1 Day Rainz+!", description: "Premium features unlocked" };
       
       const expiresAt = new Date();
@@ -364,6 +409,15 @@ export const PointsShop = () => {
         expires_at: expiresAt.toISOString(),
         source: "mystery_box",
       });
+    } else {
+      // Fallback for edge case (shouldn't happen)
+      const amount = 30;
+      reward = { type: "shop_points", amount, label: `${amount} Shop Points!`, description: "Added to your balance" };
+      
+      await supabase
+        .from("profiles")
+        .update({ shop_points: shopPoints + amount })
+        .eq("user_id", user!.id);
     }
     
     return reward;
@@ -438,15 +492,13 @@ export const PointsShop = () => {
         toast.success("Rainz+ Trial activated!");
         await checkSubscription();
       } else if (item.type === "double_points") {
-        // Activate double points for 24 hours
-        const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 24);
+        // Activate double points for 1 use (next prediction)
         await supabase.from("active_powerups").insert({
           user_id: user.id,
           powerup_type: "double_points",
-          expires_at: expiresAt.toISOString(),
+          uses_remaining: 1,
         });
-        toast.success("Double Points activated for 24 hours! 🚀");
+        toast.success("Double Points activated! 2x on your next prediction 🚀");
       } else if (item.type === "prediction_boost") {
         // Add prediction shield with 3 uses
         await supabase.from("active_powerups").insert({
@@ -534,7 +586,7 @@ export const PointsShop = () => {
             <Badge key={idx} className={`gap-1 ${powerup.type === 'double_points' ? 'bg-purple-500/20 text-purple-600 border-purple-500/30' : 'bg-green-500/20 text-green-600 border-green-500/30'}`}>
               {powerup.type === 'double_points' ? <Zap className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
               {powerup.type === 'double_points' 
-                ? `2x Points (${Math.ceil((powerup.expiresAt!.getTime() - Date.now()) / 3600000)}h left)` 
+                ? (powerup.usesRemaining ? `2x Points (${powerup.usesRemaining} use${powerup.usesRemaining > 1 ? 's' : ''})` : powerup.expiresAt ? `2x Points (${Math.ceil((powerup.expiresAt.getTime() - Date.now()) / 3600000)}h left)` : '2x Points')
                 : `Shield (${powerup.usesRemaining} uses)`}
             </Badge>
           ))}

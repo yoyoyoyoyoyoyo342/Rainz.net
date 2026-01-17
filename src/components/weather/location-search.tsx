@@ -420,7 +420,7 @@ export function LocationSearch({
   }
 
   return (
-    <Card className="bg-card border border-border/50 shadow-md overflow-hidden rounded-2xl relative flex-1 max-w-md z-[9999]">
+    <Card className="glass-card border border-border/50 shadow-md overflow-hidden rounded-2xl relative flex-1 max-w-md z-[9999]">
       <CardContent className="p-4">
         <div className="relative">
           <Input

@@ -420,17 +420,10 @@ export function LocationSearch({
 
   return (
     <div className="overflow-hidden rounded-2xl glass-card flex-1 max-w-md z-[9999]">
-      {/* Header */}
-      <div className="p-4 border-b border-border/50">
-        <div className="flex items-center gap-2">
-          <Search className="w-5 h-5 text-primary" />
-          <h3 className="font-semibold text-foreground">Search Location</h3>
-        </div>
-      </div>
-
       {/* Search Input */}
       <div className="p-4">
         <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <Input
             type="text"
             placeholder={placeholder}
@@ -438,7 +431,7 @@ export function LocationSearch({
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-            className="w-full pl-4 pr-12 py-3 bg-muted/30 text-foreground border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-muted-foreground rounded-xl"
+            className="w-full pl-10 pr-12 py-3 bg-muted/30 text-foreground border-border/30 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-muted-foreground rounded-xl"
           />
           <Button
             onMouseDown={(e) => {
@@ -462,19 +455,19 @@ export function LocationSearch({
 
       {/* Search Results Dropdown */}
       {(searchQuery.length > 2 || isLoading || loadingAddresses || (isFocused && searchQuery.length === 0)) && (
-        <div className="p-0 border-t border-border/30">
+        <div className="border-t border-border/20">
           {searchQuery.length === 0 && isFocused ? (
             <div className="max-h-60 overflow-y-auto">
               {searchHistory.length > 0 ? (
                 <>
-                  <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30">
+                  <div className="px-4 py-2 text-xs text-muted-foreground">
                     Recent Searches
                   </div>
                   {searchHistory.map((item) => (
                     <button
                       key={item.id}
                       onClick={() => handleHistoryClick(item)}
-                      className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0 flex items-start gap-2 group"
+                      className="w-full text-left px-4 py-3 hover:bg-muted/20 transition-colors flex items-start gap-3 group"
                     >
                       <History className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                       <div className="flex-1 min-w-0">
@@ -508,7 +501,7 @@ export function LocationSearch({
             </div>
           ) : isWorldSearch ? (
             <div className="max-h-60 overflow-y-auto">
-              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30">
+              <div className="px-4 py-2 text-xs text-muted-foreground">
                 Global Weather
               </div>
               <button
@@ -520,7 +513,7 @@ export function LocationSearch({
                     description: "Loading global weather average from 20 major cities worldwide",
                   });
                 }}
-                className="w-full text-left p-4 hover:bg-muted/50 transition-colors flex items-start gap-2"
+                className="w-full text-left px-4 py-3 hover:bg-muted/20 transition-colors flex items-start gap-3"
               >
                 <Globe className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -533,14 +526,14 @@ export function LocationSearch({
             <div className="max-h-80 overflow-y-auto">
               {locations.length > 0 && (
                 <>
-                  <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30">
+                  <div className="px-4 py-2 text-xs text-muted-foreground">
                     Locations
                   </div>
                   {locations.slice(0, 5).map((location, index) => (
                     <button
                       key={index}
                       onClick={() => handleLocationClick(location)}
-                      className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0 flex items-start gap-2"
+                      className="w-full text-left px-4 py-3 hover:bg-muted/20 transition-colors flex items-start gap-3"
                     >
                       <MapPin className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
                       <div className="flex-1 min-w-0">
@@ -557,14 +550,14 @@ export function LocationSearch({
 
               {addressResults.length > 0 && (
                 <>
-                  <div className="px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30">
+                  <div className="px-4 py-2 text-xs text-muted-foreground">
                     Addresses
                   </div>
                   {addressResults.slice(0, 5).map((address, index) => (
                     <button
                       key={index}
                       onClick={() => handleAddressClick(address)}
-                      className="w-full text-left p-4 hover:bg-muted/50 transition-colors border-b border-border/30 last:border-b-0 flex items-start gap-2"
+                      className="w-full text-left px-4 py-3 hover:bg-muted/20 transition-colors flex items-start gap-3"
                     >
                       <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                       <div className="flex-1 min-w-0">

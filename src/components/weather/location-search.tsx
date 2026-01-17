@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { MapPin, Loader2, History, X, Globe } from "lucide-react";
+import { MapPin, Loader2, History, X, Globe, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 
 import { useQuery } from "@tanstack/react-query";
 import { weatherApi } from "@/lib/weather-api";
@@ -420,8 +419,17 @@ export function LocationSearch({
   }
 
   return (
-    <Card className="glass-card border border-border/50 shadow-md overflow-hidden rounded-2xl relative flex-1 max-w-md z-[9999]">
-      <CardContent className="p-4">
+    <div className="overflow-hidden rounded-2xl glass-card flex-1 max-w-md z-[9999]">
+      {/* Header */}
+      <div className="p-4 border-b border-border/50">
+        <div className="flex items-center gap-2">
+          <Search className="w-5 h-5 text-primary" />
+          <h3 className="font-semibold text-foreground">Search Location</h3>
+        </div>
+      </div>
+
+      {/* Search Input */}
+      <div className="p-4">
         <div className="relative">
           <Input
             type="text"
@@ -434,7 +442,6 @@ export function LocationSearch({
           />
           <Button
             onMouseDown={(e) => {
-              // Keep the click from being swallowed by input focus (mobile Safari)
               e.preventDefault();
             }}
             onClick={handleLocationDetection}
@@ -451,7 +458,7 @@ export function LocationSearch({
             )}
           </Button>
         </div>
-      </CardContent>
+      </div>
 
       {/* Search Results Dropdown */}
       {(searchQuery.length > 2 || isLoading || loadingAddresses || (isFocused && searchQuery.length === 0)) && (
@@ -587,6 +594,6 @@ export function LocationSearch({
           )}
         </div>
       )}
-    </Card>
+    </div>
   );
 }

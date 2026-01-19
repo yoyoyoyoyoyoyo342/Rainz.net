@@ -455,7 +455,7 @@ export function LocationSearch({
 
       {/* Search Results Dropdown */}
       {(searchQuery.length > 2 || isLoading || loadingAddresses || (isFocused && searchQuery.length === 0)) && (
-        <div className="border-t border-border/20">
+        <div className="border-t border-border/20 animate-fade-in origin-top">
           {searchQuery.length === 0 && isFocused ? (
             <div className="max-h-60 overflow-y-auto">
               {searchHistory.length > 0 ? (

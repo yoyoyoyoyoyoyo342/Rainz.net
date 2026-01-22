@@ -1,38 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
   <url>
-    <loc>https://rainz.net/</loc>
-    <lastmod>2025-12-06</lastmod>
-    <changefreq>daily</changefreq>
+    <loc>https://rainz.lovable.app/</loc>
+    <lastmod>2026-01-22</lastmod>
+    <changefreq>hourly</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://rainz.lovable.app/logo-icon.png</image:loc>
+      <image:title>Rainz Weather Logo</image:title>
+      <image:caption>Rainz Weather - AI-Powered Hyper-Local Weather Forecasts</image:caption>
+    </image:image>
   </url>
   <url>
-    <loc>https://rainz.net/about</loc>
-    <lastmod>2025-12-06</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://rainz.lovable.app/about</loc>
+    <lastmod>2026-01-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://rainz.lovable.app/articles</loc>
+    <lastmod>2026-01-22</lastmod>
+    <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://rainz.net/auth</loc>
-    <lastmod>2025-12-06</lastmod>
+    <loc>https://rainz.lovable.app/auth</loc>
+    <lastmod>2026-01-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://rainz.net/privacy</loc>
-    <lastmod>2025-12-06</lastmod>
+    <loc>https://rainz.lovable.app/download</loc>
+    <lastmod>2026-01-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://rainz.lovable.app/affiliate</loc>
+    <lastmod>2026-01-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://rainz.lovable.app/privacy</loc>
+    <lastmod>2026-01-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://rainz.net/terms</loc>
-    <lastmod>2025-12-06</lastmod>
+    <loc>https://rainz.lovable.app/terms</loc>
+    <lastmod>2026-01-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://rainz.net/data-settings</loc>
-    <lastmod>2025-12-06</lastmod>
+    <loc>https://rainz.lovable.app/data-settings</loc>
+    <lastmod>2026-01-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://rainz.lovable.app/affiliate-policy</loc>
+    <lastmod>2026-01-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>

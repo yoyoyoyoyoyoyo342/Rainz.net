@@ -47,6 +47,7 @@ import { useAccountStorage } from "@/hooks/use-account-storage";
 import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
 import { useOfflineCache } from "@/hooks/use-offline-cache";
 import { InlineAd } from "@/components/ui/inline-ad";
+import { SEOHead } from "@/components/seo/seo-head";
 
 export default function WeatherPage() {
   const [selectedLocation, setSelectedLocation] = useState<{
@@ -416,7 +417,15 @@ export default function WeatherPage() {
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden relative">
+    <>
+      <SEOHead 
+        title={selectedLocation ? `${selectedLocation.name} Weather - Rainz Weather` : 'Rainz Weather - AI-Powered Hyper-Local Weather Forecasts'}
+        description={selectedLocation 
+          ? `Get accurate AI-enhanced weather forecast for ${selectedLocation.name}. Current conditions, hourly forecast, 10-day outlook, pollen levels, and severe weather alerts.`
+          : 'Get accurate AI-powered weather forecasts with Rainz Weather. Hyper-local predictions, pollen tracking, weather alerts, and gamified weather predictions. Free weather app.'}
+        keywords={`Rainz Weather, ${selectedLocation?.name || 'local'} weather, weather forecast, AI weather, pollen tracker, weather alerts, accurate weather`}
+      />
+      <div className="min-h-screen overflow-x-hidden relative">
       {/* Animated backgrounds - always render both to avoid hook count issues */}
       {premiumSettings.animatedBackgrounds && (
         <>
@@ -694,5 +703,6 @@ export default function WeatherPage() {
       {weatherData && <AIChatButton weatherData={weatherData.mostAccurate} location={selectedLocation.name} isImperial={isImperial} />}
       {user && <MobileLocationNav onLocationSelect={handleLocationSelect} currentLocation={selectedLocation} isImperial={isImperial} />}
     </div>
+    </>
   );
 }

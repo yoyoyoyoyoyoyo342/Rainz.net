@@ -1,0 +1,73 @@
+openapi: 3.0.0
+info:
+  title: Rainz Weather API
+  description: |
+    Rainz Weather provides AI-enhanced weather forecasts using multi-model ensemble predictions.
+    This API returns real-time weather data aggregated from multiple sources including ECMWF, GFS, 
+    Met.no, WeatherAPI, Tomorrow.io, and Open-Meteo, processed through AI for enhanced accuracy.
+  version: 1.0.0
+  contact:
+    name: Rainz Weather Support
+    url: https://rainz.lovable.app
+servers:
+  - url: https://rainz.lovable.app
+    description: Production server
+
+paths:
+  /:
+    get:
+      operationId: getWeatherApp
+      summary: Access the Rainz Weather application
+      description: |
+        The main Rainz Weather web application providing:
+        - Real-time weather conditions
+        - Hourly and 10-day forecasts
+        - AI-enhanced weather predictions
+        - Pollen and air quality tracking
+        - Weather alerts and notifications
+        - Gamified weather prediction games
+      responses:
+        '200':
+          description: The Rainz Weather web application
+
+  /about:
+    get:
+      operationId: getAboutPage
+      summary: Learn about Rainz Weather
+      description: Information about Rainz Weather features, mission, and premium subscription options.
+      responses:
+        '200':
+          description: About page content
+
+  /articles:
+    get:
+      operationId: getBlogArticles
+      summary: Weather blog and articles
+      description: Weather-related blog posts, tips, and educational content.
+      responses:
+        '200':
+          description: List of blog articles
+
+components:
+  schemas:
+    WeatherData:
+      type: object
+      properties:
+        temperature:
+          type: number
+          description: Current temperature
+        condition:
+          type: string
+          description: Weather condition (sunny, cloudy, rainy, etc.)
+        humidity:
+          type: number
+          description: Humidity percentage
+        wind_speed:
+          type: number
+          description: Wind speed
+        uv_index:
+          type: number
+          description: UV index
+        air_quality:
+          type: number
+          description: Air quality index

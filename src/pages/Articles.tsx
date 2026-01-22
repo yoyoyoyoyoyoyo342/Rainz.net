@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, Calendar } from 'lucide-react';
 import { ArticleTopAd, ArticleBottomAd } from '@/components/ui/article-adsense';
+import { SEOHead } from '@/components/seo/seo-head';
 
 interface BlogPost {
   id: string;
@@ -55,7 +56,13 @@ export default function Articles() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <SEOHead 
+        title="Rainz Weather Blog - Weather News & Tips"
+        description="Read the latest weather news, tips, and updates from the Rainz Weather team. Stay informed about weather forecasting and features."
+        keywords="Rainz blog, weather articles, weather news, weather tips, forecast updates"
+      />
+      <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8 px-4 max-w-6xl">
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" onClick={() => navigate('/')}>
@@ -165,5 +172,6 @@ export default function Articles() {
         )}
       </div>
     </div>
+    </>
   );
 }

@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Rainz Weather",
+  "name_for_model": "rainz_weather",
+  "description_for_human": "Get accurate, AI-enhanced weather forecasts with hyper-local predictions, pollen tracking, and weather alerts.",
+  "description_for_model": "Rainz Weather is an AI-powered weather application that provides hyper-local weather forecasts using multi-model ensemble predictions. It aggregates data from ECMWF, GFS, Met.no, WeatherAPI, Tomorrow.io, and Open-Meteo, then processes through AI for enhanced accuracy. Features include: real-time weather, hourly/daily forecasts, severe weather alerts, pollen tracking, air quality, UV index, precipitation radar, gamified weather predictions with leaderboards, and an AI Weather Companion chat. Available as a free Progressive Web App at rainz.lovable.app with optional Rainz+ premium subscription for ad-free experience and extended features.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://rainz.lovable.app/openapi.yaml"
+  },
+  "logo_url": "https://rainz.lovable.app/logo-icon.png",
+  "contact_email": "support@rainz.net",
+  "legal_info_url": "https://rainz.lovable.app/terms"
+}

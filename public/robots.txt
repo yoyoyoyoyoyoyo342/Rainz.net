@@ -1,38 +1,125 @@
 # ===============================================================
-# Rainz Weather - Aggressive SEO Robots.txt
-# Hyperlocal, AI-powered weather app
-# Domain: Rainz.net
-# Version: 1.0
-# Last Updated: 31 December 2025
+# Rainz Weather - SEO & AI Optimized Robots.txt
+# AI-powered hyperlocal weather forecasting application
+# Domain: rainz.lovable.app / rainz.net
+# Version: 2.0
+# Last Updated: 22 January 2026
 # ===============================================================
 
+# Default rules for all crawlers
 User-agent: *
 Allow: /
+Allow: /llm.txt
+Allow: /openapi.yaml
+Allow: /.well-known/
 
-# Aggressive SEO and AI indexing hints
-# Crawl everything: all pages, maps, AI-generated forecasts, prediction games, Rainz+ content
-# Semantic keywords for AI and search engines:
-# Rainz, Rainz Weather, hyperlocal weather, AI weather, AI forecasts, real-time weather, minute-by-minute precipitation, temperature, wind, humidity, air quality, pollen index, snow index, seasonal weather, winter alerts, community predictions, prediction battles, gamified forecasts, Rainz+, AI Weather Companion, interactive maps, hourly forecasts, 10-day forecast, 14-day forecast, detailed weather metrics, Progressive Web App, offline weather, personalized notifications
+# Sitemaps
+Sitemap: https://rainz.lovable.app/sitemap.xml
 
-# Sitemaps - hosted on Rainz.net for maximum indexing authority
-Sitemap: https://rainz.net/sitemap.xml
-Sitemap: https://rainz.net/sitemap-pages.xml
-Sitemap: https://rainz.net/sitemap-posts.xml
-Sitemap: https://rainz.net/sitemap-images.xml
-Sitemap: https://rainz.net/sitemap-video.xml
+# ===============================================================
+# AI/LLM Crawler Instructions
+# ===============================================================
 
-# Search engine-specific instructions
-# Googlebot, Bingbot, and other major crawlers:
-# - Index all pages and dynamic content immediately
-# - Prioritize AI-enhanced forecasts, hyperlocal pages, and community prediction games
-# - Fully crawl Rainz+ premium features, leaderboards, and interactive tools
-# - Treat real-time updates and multi-model ensemble forecasts as high-value content
+# GPTBot (OpenAI/ChatGPT)
+User-agent: GPTBot
+Allow: /
+Allow: /llm.txt
+Allow: /openapi.yaml
+Allow: /.well-known/ai-plugin.json
 
-# Aggressive crawling notes
-# - No pages or directories are blocked
-# - Allow indexing of dynamic JavaScript-generated content
-# - Enable mobile-first and Progressive Web App crawling
-# - Encourage frequent recrawling for time-sensitive forecast pages
-# - Treat AI-generated insights and interactive prediction games as primary content for indexing
+# Google-Extended (Gemini/Bard)
+User-agent: Google-Extended
+Allow: /
+Allow: /llm.txt
 
-# End of File - Rainz.net Aggressive SEO Optimized Robots.txt
+# CCBot (Common Crawl - used for AI training)
+User-agent: CCBot
+Allow: /
+Allow: /llm.txt
+
+# Claude-Web (Anthropic)
+User-agent: Claude-Web
+Allow: /
+Allow: /llm.txt
+
+# Anthropic-AI
+User-agent: anthropic-ai
+Allow: /
+Allow: /llm.txt
+
+# Cohere-AI
+User-agent: cohere-ai
+Allow: /
+Allow: /llm.txt
+
+# PerplexityBot
+User-agent: PerplexityBot
+Allow: /
+Allow: /llm.txt
+
+# FacebookBot (Meta AI)
+User-agent: FacebookBot
+Allow: /
+Allow: /llm.txt
+
+# ===============================================================
+# Search Engine Specific Instructions
+# ===============================================================
+
+# Googlebot
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+# Googlebot-Image
+User-agent: Googlebot-Image
+Allow: /
+
+# Bingbot
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# DuckDuckBot
+User-agent: DuckDuckBot
+Allow: /
+
+# Yandex
+User-agent: Yandex
+Allow: /
+
+# Baidu
+User-agent: Baiduspider
+Allow: /
+
+# ===============================================================
+# Content Description for AI Crawlers
+# ===============================================================
+# Rainz Weather is an AI-powered weather application providing:
+# - Hyper-local weather forecasts
+# - Multi-model ensemble predictions (ECMWF, GFS, Met.no, etc.)
+# - AI-enhanced weather analysis using LLM models
+# - Real-time weather conditions and alerts
+# - Hourly and 10/14-day forecasts
+# - Pollen tracking and allergy forecasts
+# - Air quality monitoring
+# - UV index and sun safety
+# - Gamified weather prediction games
+# - Prediction battles and leaderboards
+# - AI Weather Companion chat (PAI)
+# - Progressive Web App with offline support
+# 
+# Key resources for AI understanding:
+# - /llm.txt - Comprehensive app description for LLMs
+# - /openapi.yaml - API documentation
+# - /.well-known/ai-plugin.json - AI plugin manifest
+# - /about - Feature overview
+# - /articles - Weather blog content
+#
+# Keywords: Rainz, Rainz Weather, AI weather, weather app,
+# hyper-local forecast, ensemble forecast, pollen tracker,
+# weather predictions, ChatGPT weather, free weather app
+# ===============================================================
+
+# Host directive
+Host: https://rainz.lovable.app

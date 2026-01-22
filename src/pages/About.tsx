@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ArrowLeft, Cloud, Users, Target, Zap, Shield, Globe, Crown, Sparkles, Bell, Gamepad2 } from "lucide-react";
+import { SEOHead } from "@/components/seo/seo-head";
 
 export default function About() {
   const navigate = useNavigate();
@@ -105,7 +106,13 @@ export default function About() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <SEOHead 
+        title="About Rainz Weather - AI-Powered Weather Forecasts"
+        description="Learn about Rainz Weather, the free AI-powered weather app with hyper-local forecasts, pollen tracking, gamified predictions, and premium features."
+        keywords="About Rainz, Rainz Weather features, AI weather app, weather predictions, pollen tracker"
+      />
+      <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Button
           variant="ghost"
@@ -280,5 +287,6 @@ export default function About() {
         </div>
       </div>
     </div>
+    </>
   );
 }

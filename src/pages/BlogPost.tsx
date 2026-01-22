@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import rainzLogo from '@/assets/rainz-logo-new.png';
 import { ArticleAd, ArticleTopAd, ArticleBottomAd } from '@/components/ui/article-adsense';
+import { SEOHead } from '@/components/seo/seo-head';
 
 interface BlogPost {
   id: string;
@@ -110,7 +111,17 @@ export default function BlogPost() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <SEOHead 
+        title={`${post.title} - Rainz Weather Blog`}
+        description={post.excerpt || `Read "${post.title}" on the Rainz Weather blog. Weather insights, tips, and updates.`}
+        keywords={`Rainz blog, weather article, ${post.title}, weather tips, weather news`}
+        ogType="article"
+        articlePublishedTime={post.published_at || post.created_at}
+        ogImage={post.cover_image_url || undefined}
+        canonicalUrl={`https://rainz.lovable.app/article/${post.slug}`}
+      />
+      <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -163,5 +174,6 @@ export default function BlogPost() {
         </div>
       </footer>
     </div>
+    </>
   );
 }

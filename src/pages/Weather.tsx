@@ -28,6 +28,8 @@ import { WinterAlerts } from "@/components/weather/winter-alerts";
 import { WeatherStationInfo } from "@/components/weather/weather-station-info";
 import { LockedFeature } from "@/components/ui/locked-feature";
 import { useLanguage } from "@/contexts/language-context";
+import { SocialWeatherCard } from "@/components/weather/social-weather-card";
+import { ARWeatherOverlay } from "@/components/weather/ar-weather-overlay";
 import { WeatherTrendsCard } from "@/components/weather/weather-trends-card";
 import { PredictionDialog } from "@/components/weather/prediction-dialog";
 import { useTimeOfDay } from "@/hooks/use-time-of-day";
@@ -73,18 +75,27 @@ export default function WeatherPage() {
   const { data: savedLocations = [] } = useQuery({
     queryKey: ["saved-locations"],
     queryFn: async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
       if (!authUser) return [];
-      const { data, error } = await supabase.from("saved_locations").select("*").order("is_primary", { ascending: false }).order("name");
+      const { data, error } = await supabase
+        .from("saved_locations")
+        .select("*")
+        .order("is_primary", { ascending: false })
+        .order("name");
       if (error) throw error;
       return data;
     },
-    staleTime: 1000 * 60 * 5
+    staleTime: 1000 * 60 * 5,
   });
 
   const customDisplayName = useMemo(() => {
     if (!selectedLocation || savedLocations.length === 0) return null;
-    const savedLoc = savedLocations.find((loc: any) => Math.abs(loc.latitude - selectedLocation.lat) < 0.01 && Math.abs(loc.longitude - selectedLocation.lon) < 0.01);
+    const savedLoc = savedLocations.find(
+      (loc: any) =>
+        Math.abs(loc.latitude - selectedLocation.lat) < 0.01 && Math.abs(loc.longitude - selectedLocation.lon) < 0.01,
+    );
     return savedLoc?.name || null;
   }, [selectedLocation, savedLocations]);
 
@@ -97,19 +108,24 @@ export default function WeatherPage() {
   }, [isHighContrast]);
 
   usePushNotifications();
-  
-  const { data: weatherData, isLoading, isFetching, error } = useQuery<WeatherResponse, Error>({
+
+  const {
+    data: weatherData,
+    isLoading,
+    isFetching,
+    error,
+  } = useQuery<WeatherResponse, Error>({
     queryKey: ["/api/weather", selectedLocation?.lat, selectedLocation?.lon, selectedLocation?.name],
     enabled: !!selectedLocation,
     queryFn: async () => {
       // Special handling for World Average
       if (selectedLocation?.name === "World Average") {
-        const { data, error } = await supabase.functions.invoke('world-weather-average', {
-          body: { isImperial }
+        const { data, error } = await supabase.functions.invoke("world-weather-average", {
+          body: { isImperial },
         });
-        
+
         if (error) throw error;
-        
+
         // Transform world data to match WeatherResponse structure
         const worldData = data;
         const baseCurrentWeather = {
@@ -127,7 +143,7 @@ export default function WeatherPage() {
           cloudCover: worldData.cloudCover || 0,
           description: `Global average from ${worldData.citiesPolled} major cities. Hottest: ${worldData.extremes.hottest.city} (${worldData.extremes.hottest.temperature}°), Coldest: ${worldData.extremes.coldest.city} (${worldData.extremes.coldest.temperature}°)`,
         };
-        
+
         // Transform hourly forecast
         const hourlyForecast = (worldData.hourlyForecast || []).map((h: any) => ({
           time: h.time,
@@ -136,7 +152,7 @@ export default function WeatherPage() {
           precipitation: h.precipitation,
           icon: "",
         }));
-        
+
         // Transform daily forecast
         const dailyForecast = (worldData.dailyForecast || []).map((d: any) => ({
           day: d.day,
@@ -147,7 +163,7 @@ export default function WeatherPage() {
           precipitation: d.precipitation,
           icon: "",
         }));
-        
+
         const transformedData: WeatherResponse = {
           mostAccurate: {
             currentWeather: baseCurrentWeather,
@@ -171,20 +187,24 @@ export default function WeatherPage() {
             dailyForecast,
           },
         };
-        
+
         setIsUsingCachedData(false);
         return transformedData;
       }
-      
+
       try {
-        const data = await weatherApi.getWeatherData(selectedLocation!.lat, selectedLocation!.lon, selectedLocation!.name);
+        const data = await weatherApi.getWeatherData(
+          selectedLocation!.lat,
+          selectedLocation!.lon,
+          selectedLocation!.name,
+        );
         setIsUsingCachedData(false);
-        
+
         // Save to offline cache for premium users
         if (offlineCacheEnabled && data) {
           saveToCache(selectedLocation!.lat, selectedLocation!.lon, selectedLocation!.name, data);
         }
-        
+
         return data;
       } catch (fetchError) {
         // Try to use cached data if fetch fails (premium feature)
@@ -211,7 +231,7 @@ export default function WeatherPage() {
   const sunrise = weatherData?.mostAccurate?.currentWeather?.sunrise;
   const sunset = weatherData?.mostAccurate?.currentWeather?.sunset;
   const timeOfDay = useTimeOfDay(sunrise, sunset);
-  
+
   useEffect(() => {
     setTimeOfDay(timeOfDay);
   }, [timeOfDay, setTimeOfDay]);
@@ -227,7 +247,7 @@ export default function WeatherPage() {
   const getConvertedWeatherForAlerts = useMemo(() => {
     if (!weatherData?.mostAccurate?.currentWeather) return null;
     const raw = weatherData.mostAccurate.currentWeather;
-    
+
     // Data is already in Fahrenheit (from Open-Meteo)
     // If user wants Imperial (Fahrenheit), pass isImperial=true and use raw values
     // If user wants Metric (Celsius), we need to convert values AND pass isImperial=false
@@ -238,8 +258,8 @@ export default function WeatherPage() {
       return {
         weather: {
           ...raw,
-          temperature: Math.round((raw.temperature - 32) * 5 / 9),
-          feelsLike: Math.round((raw.feelsLike - 32) * 5 / 9),
+          temperature: Math.round(((raw.temperature - 32) * 5) / 9),
+          feelsLike: Math.round(((raw.feelsLike - 32) * 5) / 9),
         },
         isImperial: false,
       };
@@ -249,18 +269,18 @@ export default function WeatherPage() {
   useEffect(() => {
     if (weatherData && selectedLocation) {
       setLastUpdated(new Date());
-      
+
       // Track weather view
       trackWeatherView(selectedLocation.name, selectedLocation.lat, selectedLocation.lon);
 
       if (profile?.notification_enabled && getConvertedWeatherForAlerts) {
         const { weather, isImperial: alertIsImperial } = getConvertedWeatherForAlerts;
         const alerts = checkWeatherAlerts(weather, alertIsImperial);
-        alerts.forEach(alert => {
+        alerts.forEach((alert) => {
           toast({
             title: `${alert.icon} ${alert.title}`,
             description: alert.description,
-            variant: alert.severity === "extreme" || alert.severity === "high" ? "destructive" : "default"
+            variant: alert.severity === "extreme" || alert.severity === "high" ? "destructive" : "default",
           });
         });
       }
@@ -314,7 +334,7 @@ export default function WeatherPage() {
       if (!navigator.onLine && offlineCacheEnabled) {
         try {
           const cachedLocation = await getFromCache(0, 0); // This won't work, need different approach
-          const { getMostRecentCachedLocation } = await import('@/lib/offline-cache');
+          const { getMostRecentCachedLocation } = await import("@/lib/offline-cache");
           const cached = await getMostRecentCachedLocation();
 
           if (cached) {
@@ -333,7 +353,7 @@ export default function WeatherPage() {
             return;
           }
         } catch (error) {
-          console.error('Error loading cached location:', error);
+          console.error("Error loading cached location:", error);
         }
       }
 
@@ -355,7 +375,7 @@ export default function WeatherPage() {
 
         // 1) Prefer the nearest *station* for detected locations
         try {
-          const { data, error } = await supabase.functions.invoke('find-nearby-stations', {
+          const { data, error } = await supabase.functions.invoke("find-nearby-stations", {
             body: { latitude, longitude },
           });
 
@@ -373,13 +393,13 @@ export default function WeatherPage() {
           }
         } catch (e) {
           // fall through to city name
-          console.warn('find-nearby-stations failed:', e);
+          console.warn("find-nearby-stations failed:", e);
         }
 
         // 2) Fallback: reverse geocode a friendly city/locality label
         try {
           const geocodeResponse = await fetch(
-            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
           );
           const geocodeData = await geocodeResponse.json();
 
@@ -418,291 +438,373 @@ export default function WeatherPage() {
 
   return (
     <>
-      <SEOHead 
-        title={selectedLocation ? `${selectedLocation.name} Weather - Rainz Weather` : 'Rainz Weather - AI-Powered Hyper-Local Weather Forecasts'}
-        description={selectedLocation 
-          ? `Get accurate AI-enhanced weather forecast for ${selectedLocation.name}. Current conditions, hourly forecast, 10-day outlook, pollen levels, and severe weather alerts.`
-          : 'Get accurate AI-powered weather forecasts with Rainz Weather. Hyper-local predictions, pollen tracking, weather alerts, and gamified weather predictions. Free weather app.'}
-        keywords={`Rainz Weather, ${selectedLocation?.name || 'local'} weather, weather forecast, AI weather, pollen tracker, weather alerts, accurate weather`}
+      <SEOHead
+        title={
+          selectedLocation
+            ? `${selectedLocation.name} Weather - Rainz Weather`
+            : "Rainz Weather - AI-Powered Hyper-Local Weather Forecasts"
+        }
+        description={
+          selectedLocation
+            ? `Get accurate AI-enhanced weather forecast for ${selectedLocation.name}. Current conditions, hourly forecast, 10-day outlook, pollen levels, and severe weather alerts.`
+            : "Get accurate AI-powered weather forecasts with Rainz Weather. Hyper-local predictions, pollen tracking, weather alerts, and gamified weather predictions. Free weather app."
+        }
+        keywords={`Rainz Weather, ${selectedLocation?.name || "local"} weather, weather forecast, AI weather, pollen tracker, weather alerts, accurate weather`}
       />
       <div className="min-h-screen overflow-x-hidden relative">
-      {/* Animated backgrounds - always render both to avoid hook count issues */}
-      {premiumSettings.animatedBackgrounds && (
-        <>
-          {currentHoliday ? (
-            <HolidayBackground 
-              holiday={currentHoliday} 
-              showWeatherOverlay={true}
-              weatherCondition={weatherData?.mostAccurate?.currentWeather?.condition}
-              sunrise={weatherData?.mostAccurate?.currentWeather?.sunrise}
-              sunset={weatherData?.mostAccurate?.currentWeather?.sunset}
-            />
-          ) : (
-            <AnimatedWeatherBackground 
-              condition={weatherData?.mostAccurate?.currentWeather?.condition} 
-              sunrise={weatherData?.mostAccurate?.currentWeather?.sunrise} 
-              sunset={weatherData?.mostAccurate?.currentWeather?.sunset} 
-              moonPhase={weatherData?.mostAccurate?.currentWeather?.moonPhase} 
-            />
-          )}
-        </>
-      )}
-
-      <div className="container mx-auto px-4 py-4 sm:py-6 max-w-7xl relative z-10">
-        <Card className="mb-6 relative z-[1000] overflow-hidden rounded-2xl glass-card-strong">
-          <div className="p-4 sm:p-6 border-b border-border/50">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex flex-col">
-                <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight leading-tight">Rainz Weather</h1>
-                <p className="text-sm text-muted-foreground">Be prepared.</p>
-              </div>
-
-              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                <HeaderInfoBar user={user} />
-                <LockedFeature isLocked={!user}>
-                  <SettingsDialog isImperial={isImperial} onUnitsChange={setIsImperial} mostAccurate={weatherData?.mostAccurate} />
-                </LockedFeature>
-                {!user && (
-                  <Button
-                    variant="outline"
-                    size="default"
-                    onClick={() => window.location.href = "/auth"}
-                    className="gap-2"
-                  >
-                    <LogIn className="w-4 h-4" />
-                    <span>{t("header.signIn")}</span>
-                  </Button>
-                )}
-                <div className="flex items-center gap-2 px-3 py-2 bg-muted/40 rounded-lg border border-border/60">
-                  <span className="text-sm font-medium text-foreground">°F</span>
-                  <Switch checked={!isImperial} onCheckedChange={checked => setIsImperial(!checked)} />
-                  <span className="text-sm font-medium text-foreground">°C</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <CardContent className="p-4 sm:p-6 bg-card space-y-4">
-            {/* Offline cache indicator for premium users */}
-            {isUsingCachedData && (
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300">
-                <WifiOff className="w-4 h-4" />
-                <span className="text-xs">Using cached weather data • Last updated {lastUpdated?.toLocaleTimeString()}</span>
-              </div>
-            )}
-            
-            <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-start">
-              <div className="space-y-2">
-                <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
-                {weatherData?.aggregated?.stationInfo && <WeatherStationInfo stationInfo={weatherData.aggregated.stationInfo} />}
-              </div>
-              {weatherData && (
-                <WeatherReportForm 
-                  location={actualStationName}
-                  currentCondition={weatherData.mostAccurate.currentWeather.condition} 
-                  locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }} 
-                />
-              )}
-            </div>
-
-            {selectedLocation && (
-              <div className="pt-3 border-t border-border/20">
-                {user ? (
-                  <PredictionDialog 
-                    location={selectedLocation?.name || "Unknown"} 
-                    latitude={selectedLocation?.lat || 0} 
-                    longitude={selectedLocation?.lon || 0} 
-                    isImperial={isImperial} 
-                    onPredictionMade={() => {}} 
-                  />
-                ) : (
-                  <LockedFeature isLocked={true}>
-                    <LockedPredictionButton />
-                  </LockedFeature>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        {selectedLocation && isLoading && !weatherData ? (
-          <WeatherPageSkeleton />
-        ) : !selectedLocation ? (
-          <Card className="glass-card border border-border/20 text-center py-12 rounded-2xl">
-            <CardContent className="space-y-4">
-              <CloudSun className="w-16 h-16 text-primary mx-auto" />
-              <div>
-                <h2 className="text-xl font-semibold text-foreground mb-2">{t("weather.welcome")}</h2>
-                <p className="text-muted-foreground">{t("weather.searchLocation")}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : error && !weatherData ? (
-          <Card className="glass-card border-destructive/30 text-center py-12 rounded-2xl">
-            <CardContent className="space-y-4">
-              <div className="text-4xl">⚠️</div>
-              <div>
-                <h2 className="text-xl font-semibold text-destructive mb-2">{t("weather.failed")}</h2>
-                <p className="text-destructive/80 mb-4">{t("weather.checkConnection")}</p>
-                <Button onClick={handleRefresh} variant="outline" size="default">{t("weather.tryAgain")}</Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : weatherData ? (
+        {/* Animated backgrounds - always render both to avoid hook count issues */}
+        {premiumSettings.animatedBackgrounds && (
           <>
-            {weatherData.demo && (
-              <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
-                    <span className="text-lg">⚠️</span>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-primary">{t("weather.demoData")}</h3>
-                    <p className="text-primary/80 text-sm">{weatherData.message || t("weather.demoMessage")}</p>
+            {currentHoliday ? (
+              <HolidayBackground
+                holiday={currentHoliday}
+                showWeatherOverlay={true}
+                weatherCondition={weatherData?.mostAccurate?.currentWeather?.condition}
+                sunrise={weatherData?.mostAccurate?.currentWeather?.sunrise}
+                sunset={weatherData?.mostAccurate?.currentWeather?.sunset}
+              />
+            ) : (
+              <AnimatedWeatherBackground
+                condition={weatherData?.mostAccurate?.currentWeather?.condition}
+                sunrise={weatherData?.mostAccurate?.currentWeather?.sunrise}
+                sunset={weatherData?.mostAccurate?.currentWeather?.sunset}
+                moonPhase={weatherData?.mostAccurate?.currentWeather?.moonPhase}
+              />
+            )}
+          </>
+        )}
+
+        <div className="container mx-auto px-4 py-4 sm:py-6 max-w-7xl relative z-10">
+          <Card className="mb-6 relative z-[1000] overflow-hidden rounded-2xl glass-card-strong">
+            <div className="p-4 sm:p-6 border-b border-border/50">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex flex-col">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight leading-tight">
+                    Rainz Weather
+                  </h1>
+                  <p className="text-sm text-muted-foreground">Be prepared.</p>
+                </div>
+
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                  <HeaderInfoBar user={user} />
+                  <LockedFeature isLocked={!user}>
+                    <SettingsDialog
+                      isImperial={isImperial}
+                      onUnitsChange={setIsImperial}
+                      mostAccurate={weatherData?.mostAccurate}
+                    />
+                  </LockedFeature>
+                  {!user && (
+                    <Button
+                      variant="outline"
+                      size="default"
+                      onClick={() => (window.location.href = "/auth")}
+                      className="gap-2"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      <span>{t("header.signIn")}</span>
+                    </Button>
+                  )}
+                  <div className="flex items-center gap-2 px-3 py-2 bg-muted/40 rounded-lg border border-border/60">
+                    <span className="text-sm font-medium text-foreground">°F</span>
+                    <Switch checked={!isImperial} onCheckedChange={(checked) => setIsImperial(!checked)} />
+                    <span className="text-sm font-medium text-foreground">°C</span>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
 
-            {getConvertedWeatherForAlerts && (
-              <div className="mb-4">
-                <WinterAlerts alerts={checkWeatherAlerts(getConvertedWeatherForAlerts.weather, getConvertedWeatherForAlerts.isImperial)} />
+            <CardContent className="p-4 sm:p-6 bg-card space-y-4">
+              {/* Offline cache indicator for premium users */}
+              {isUsingCachedData && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300">
+                  <WifiOff className="w-4 h-4" />
+                  <span className="text-xs">
+                    Using cached weather data • Last updated {lastUpdated?.toLocaleTimeString()}
+                  </span>
+                </div>
+              )}
+
+              <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-start">
+                <div className="space-y-2">
+                  <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
+                  {weatherData?.aggregated?.stationInfo && (
+                    <WeatherStationInfo stationInfo={weatherData.aggregated.stationInfo} />
+                  )}
+                </div>
+                {weatherData && (
+                  <WeatherReportForm
+                    location={actualStationName}
+                    currentCondition={weatherData.mostAccurate.currentWeather.condition}
+                    locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }}
+                  />
+                )}
               </div>
-            )}
 
-            <CurrentWeather 
-              weatherData={weatherData.sources} 
-              mostAccurate={weatherData.mostAccurate} 
-              onRefresh={handleRefresh} 
-              isLoading={isFetching} 
-              lastUpdated={lastUpdated} 
-              isImperial={isImperial} 
-              isAutoDetected={isAutoDetected} 
-              currentLocation={selectedLocation} 
-              onLocationSelect={handleLocationSelect} 
-              displayName={customDisplayName} 
-              actualStationName={actualStationName} 
-              premiumSettings={premiumSettings} 
-            />
-
-            {!isSubscribed && <AffiliateCard />}
-
-            {weatherData?.mostAccurate?.currentWeather?.pollenData && (
-              <div className="mb-4">
-                <PollenCard 
-                  pollenData={weatherData.mostAccurate.currentWeather.pollenData} 
-                  userId={user?.id} 
-                  temperature={weatherData.mostAccurate.currentWeather.temperature} 
-                  windSpeed={weatherData.mostAccurate.currentWeather.windSpeed} 
-                  feelsLike={weatherData.mostAccurate.currentWeather.feelsLike} 
-                  snowfall={weatherData.mostAccurate.currentWeather.snowfall} 
-                  snowDepth={weatherData.mostAccurate.currentWeather.snowDepth} 
-                  condition={weatherData.mostAccurate.currentWeather.condition} 
-                  isImperial={isImperial} 
-                  hyperlocalSnow={hyperlocalData?.snow} 
-                />
-              </div>
-            )}
-
-            <MorningWeatherReview weatherData={weatherData.mostAccurate} location={actualStationName} isImperial={isImperial} userId={user?.id} />
-
-            {/* Non-intrusive inline ad - placed in natural content flow */}
-            <InlineAd />
-
-            {cardOrder.map(cardType => {
-              if (!visibleCards[cardType]) return null;
-              switch (cardType) {
-                case "weatherTrends":
-                  return (
-                    <div key="weatherTrends" className="mb-4">
-                      <LockedFeature isLocked={!user}>
-                        <WeatherTrendsCard currentWeather={weatherData.mostAccurate.currentWeather} location={actualStationName} latitude={selectedLocation.lat} longitude={selectedLocation.lon} isImperial={isImperial} />
-                      </LockedFeature>
+              {selectedLocation && (
+                <div className="pt-3 border-t border-border/20">
+                  {user ? (
+                    <PredictionDialog
+                      location={selectedLocation?.name || "Unknown"}
+                      latitude={selectedLocation?.lat || 0}
+                      longitude={selectedLocation?.lon || 0}
+                      isImperial={isImperial}
+                      onPredictionMade={() => {}}
+                    />
+                  ) : (
+                    <LockedFeature isLocked={true}>
+                      <LockedPredictionButton />
+                    </LockedFeature>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          {selectedLocation && isLoading && !weatherData ? (
+            <WeatherPageSkeleton />
+          ) : !selectedLocation ? (
+            <Card className="glass-card border border-border/20 text-center py-12 rounded-2xl">
+              <CardContent className="space-y-4">
+                <CloudSun className="w-16 h-16 text-primary mx-auto" />
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground mb-2">{t("weather.welcome")}</h2>
+                  <p className="text-muted-foreground">{t("weather.searchLocation")}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : error && !weatherData ? (
+            <Card className="glass-card border-destructive/30 text-center py-12 rounded-2xl">
+              <CardContent className="space-y-4">
+                <div className="text-4xl">⚠️</div>
+                <div>
+                  <h2 className="text-xl font-semibold text-destructive mb-2">{t("weather.failed")}</h2>
+                  <p className="text-destructive/80 mb-4">{t("weather.checkConnection")}</p>
+                  <Button onClick={handleRefresh} variant="outline" size="default">
+                    {t("weather.tryAgain")}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : weatherData ? (
+            <>
+              {weatherData.demo && (
+                <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                      <span className="text-lg">⚠️</span>
                     </div>
-                  );
-                case "pollen":
-                  return null;
-                case "hourly":
-                  return <HourlyForecast key="hourly" hourlyData={weatherData.mostAccurate.hourlyForecast} isImperial={isImperial} is24Hour={is24Hour} premiumSettings={premiumSettings} />;
-                case "rainMap":
-                  return (
-                    <div key="rainMap" className="mb-4">
-                      <RainMapCard latitude={selectedLocation.lat} longitude={selectedLocation.lon} locationName={actualStationName} />
+                    <div>
+                      <h3 className="font-semibold text-primary">{t("weather.demoData")}</h3>
+                      <p className="text-primary/80 text-sm">{weatherData.message || t("weather.demoMessage")}</p>
                     </div>
-                  );
-                case "tenDay":
-                  return <TenDayForecast key="tenDay" dailyForecast={weatherData.mostAccurate.dailyForecast} weatherSources={weatherData.sources} hourlyForecast={weatherData.mostAccurate.hourlyForecast} isImperial={isImperial} is24Hour={is24Hour} premiumSettings={premiumSettings} />;
-                case "detailedMetrics":
-                  return (
-                    <div key="detailedMetrics">
-                      <DetailedMetrics currentWeather={weatherData.mostAccurate.currentWeather} is24Hour={is24Hour} premiumSettings={premiumSettings} />
-                      {isSubscribed && selectedLocation && (
-                        <ExtendedMoonCard
-                          moonrise={weatherData.mostAccurate.currentWeather.moonrise}
-                          moonset={weatherData.mostAccurate.currentWeather.moonset}
-                          moonPhase={weatherData.mostAccurate.currentWeather.moonPhase}
+                  </div>
+                </div>
+              )}
+
+              {getConvertedWeatherForAlerts && (
+                <div className="mb-4">
+                  <WinterAlerts
+                    alerts={checkWeatherAlerts(
+                      getConvertedWeatherForAlerts.weather,
+                      getConvertedWeatherForAlerts.isImperial,
+                    )}
+                  />
+                </div>
+              )}
+
+              <CurrentWeather
+                weatherData={weatherData.sources}
+                mostAccurate={weatherData.mostAccurate}
+                onRefresh={handleRefresh}
+                isLoading={isFetching}
+                lastUpdated={lastUpdated}
+                isImperial={isImperial}
+                isAutoDetected={isAutoDetected}
+                currentLocation={selectedLocation}
+                onLocationSelect={handleLocationSelect}
+                displayName={customDisplayName}
+                actualStationName={actualStationName}
+                premiumSettings={premiumSettings}
+              />
+
+              {!isSubscribed && <AffiliateCard />}
+
+              {weatherData?.mostAccurate?.currentWeather?.pollenData && (
+                <div className="mb-4">
+                  <PollenCard
+                    pollenData={weatherData.mostAccurate.currentWeather.pollenData}
+                    userId={user?.id}
+                    temperature={weatherData.mostAccurate.currentWeather.temperature}
+                    windSpeed={weatherData.mostAccurate.currentWeather.windSpeed}
+                    feelsLike={weatherData.mostAccurate.currentWeather.feelsLike}
+                    snowfall={weatherData.mostAccurate.currentWeather.snowfall}
+                    snowDepth={weatherData.mostAccurate.currentWeather.snowDepth}
+                    condition={weatherData.mostAccurate.currentWeather.condition}
+                    isImperial={isImperial}
+                    hyperlocalSnow={hyperlocalData?.snow}
+                  />
+                </div>
+              )}
+
+              <MorningWeatherReview
+                weatherData={weatherData.mostAccurate}
+                location={actualStationName}
+                isImperial={isImperial}
+                userId={user?.id}
+              />
+
+              {/* Non-intrusive inline ad - placed in natural content flow */}
+              <InlineAd />
+
+              {cardOrder.map((cardType) => {
+                if (!visibleCards[cardType]) return null;
+                switch (cardType) {
+                  case "weatherTrends":
+                    return (
+                      <div key="weatherTrends" className="mb-4">
+                        <LockedFeature isLocked={!user}>
+                          <WeatherTrendsCard
+                            currentWeather={weatherData.mostAccurate.currentWeather}
+                            location={actualStationName}
+                            latitude={selectedLocation.lat}
+                            longitude={selectedLocation.lon}
+                            isImperial={isImperial}
+                          />
+                        </LockedFeature>
+                      </div>
+                    );
+                  case "pollen":
+                    return null;
+                  case "hourly":
+                    return (
+                      <HourlyForecast
+                        key="hourly"
+                        hourlyData={weatherData.mostAccurate.hourlyForecast}
+                        isImperial={isImperial}
+                        is24Hour={is24Hour}
+                        premiumSettings={premiumSettings}
+                      />
+                    );
+                  case "rainMap":
+                    return (
+                      <div key="rainMap" className="mb-4">
+                        <RainMapCard
                           latitude={selectedLocation.lat}
                           longitude={selectedLocation.lon}
-                          is24Hour={is24Hour}
+                          locationName={actualStationName}
                         />
-                      )}
-                    </div>
-                  );
-                case "aqi":
-                  return hyperlocalData?.aqi ? (
-                    <div key="aqi" className="mb-4">
-                      <AQICard data={hyperlocalData.aqi} />
-                    </div>
-                  ) : null;
-                case "alerts":
-                  return hyperlocalData?.alerts?.length > 0 ? (
-                    <div key="alerts" className="mb-4">
-                      {hyperlocalData.alerts.map((alert, index) => (
-                        <Card key={index} className="glass-card rounded-2xl shadow-lg border border-destructive/50 mb-2">
-                          <CardContent className="p-4">
-                            <div className="flex items-start gap-2">
-                              <span className="text-xl">⚠️</span>
-                              <div>
-                                <h3 className="font-semibold text-destructive">{alert.headline}</h3>
-                                <p className="text-sm text-muted-foreground mt-1">{alert.description}</p>
+                      </div>
+                    );
+                  case "tenDay":
+                    return (
+                      <TenDayForecast
+                        key="tenDay"
+                        dailyForecast={weatherData.mostAccurate.dailyForecast}
+                        weatherSources={weatherData.sources}
+                        hourlyForecast={weatherData.mostAccurate.hourlyForecast}
+                        isImperial={isImperial}
+                        is24Hour={is24Hour}
+                        premiumSettings={premiumSettings}
+                      />
+                    );
+                  case "detailedMetrics":
+                    return (
+                      <div key="detailedMetrics">
+                        <DetailedMetrics
+                          currentWeather={weatherData.mostAccurate.currentWeather}
+                          is24Hour={is24Hour}
+                          premiumSettings={premiumSettings}
+                        />
+                        {isSubscribed && selectedLocation && (
+                          <ExtendedMoonCard
+                            moonrise={weatherData.mostAccurate.currentWeather.moonrise}
+                            moonset={weatherData.mostAccurate.currentWeather.moonset}
+                            moonPhase={weatherData.mostAccurate.currentWeather.moonPhase}
+                            latitude={selectedLocation.lat}
+                            longitude={selectedLocation.lon}
+                            is24Hour={is24Hour}
+                          />
+                        )}
+                      </div>
+                    );
+                  case "aqi":
+                    return hyperlocalData?.aqi ? (
+                      <div key="aqi" className="mb-4">
+                        <AQICard data={hyperlocalData.aqi} />
+                      </div>
+                    ) : null;
+                  case "alerts":
+                    return hyperlocalData?.alerts?.length > 0 ? (
+                      <div key="alerts" className="mb-4">
+                        {hyperlocalData.alerts.map((alert, index) => (
+                          <Card
+                            key={index}
+                            className="glass-card rounded-2xl shadow-lg border border-destructive/50 mb-2"
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-2">
+                                <span className="text-xl">⚠️</span>
+                                <div>
+                                  <h3 className="font-semibold text-destructive">{alert.headline}</h3>
+                                  <p className="text-sm text-muted-foreground mt-1">{alert.description}</p>
+                                </div>
                               </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : null;
-                case "barometer":
-                  return isAutoDetected ? (
-                    <div key="barometer" className="mb-4">
-                      <BarometerCard />
-                    </div>
-                  ) : null;
-                default:
-                  return null;
-              }
-            })}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : null;
+                  case "barometer":
+                    return isAutoDetected ? (
+                      <div key="barometer" className="mb-4">
+                        <BarometerCard />
+                      </div>
+                    ) : null;
+                  default:
+                    return null;
+                }
+              })}
 
-            <footer className="text-center py-2 mt-4 glass-header rounded-lg p-4">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-                <div className="text-muted-foreground text-xs">
-                  {t("footer.dataFrom")} <span className="font-medium text-foreground">ECMWF</span>,{" "}
-                  <span className="font-medium text-foreground">GFS</span>,{" "}
-                  <span className="font-medium text-foreground">DWD ICON</span>,{" "}
-                  <span className="font-medium text-foreground">Open-meteo</span>, and{" "}
-                  <span className="font-medium text-foreground">WeatherAPI</span>. {t("footer.disclaimer")}
+              <footer className="text-center py-2 mt-4 glass-header rounded-lg p-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                  <div className="text-muted-foreground text-xs">
+                    {t("footer.dataFrom")} <span className="font-medium text-foreground">ECMWF</span>,{" "}
+                    <span className="font-medium text-foreground">GFS</span>,{" "}
+                    <span className="font-medium text-foreground">DWD ICON</span>,{" "}
+                    <span className="font-medium text-foreground">Open-meteo</span>, and{" "}
+                    <span className="font-medium text-foreground">WeatherAPI</span>. {t("footer.disclaimer")}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Button
+                      onClick={handleRefresh}
+                      variant="ghost"
+                      size="sm"
+                      className="text-primary hover:text-primary/80 h-5 px-1 text-xs"
+                    >
+                      🔄
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Button onClick={handleRefresh} variant="ghost" size="sm" className="text-primary hover:text-primary/80 h-5 px-1 text-xs">🔄</Button>
-                </div>
-              </div>
-            </footer>
-          </>
-        ) : null}
+              </footer>
+            </>
+          ) : null}
+        </div>
+
+        {weatherData && (
+          <AIChatButton
+            weatherData={weatherData.mostAccurate}
+            location={selectedLocation.name}
+            isImperial={isImperial}
+          />
+        )}
+        {user && (
+          <MobileLocationNav
+            onLocationSelect={handleLocationSelect}
+            currentLocation={selectedLocation}
+            isImperial={isImperial}
+          />
+        )}
       </div>
-
-      {weatherData && <AIChatButton weatherData={weatherData.mostAccurate} location={selectedLocation.name} isImperial={isImperial} />}
-      {user && <MobileLocationNav onLocationSelect={handleLocationSelect} currentLocation={selectedLocation} isImperial={isImperial} />}
-    </div>
     </>
   );
 }

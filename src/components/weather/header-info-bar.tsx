@@ -6,6 +6,7 @@ import { useUserStreaks } from "@/hooks/use-user-streaks";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/hooks/use-subscription";
+import { NotificationBattleActions } from "./notification-battle-actions";
 
 interface BroadcastMessage {
   id: string;
@@ -292,6 +293,20 @@ export function HeaderInfoBar({ user }: HeaderInfoBarProps) {
                         <p className="text-xs text-muted-foreground mt-1">
                           {new Date(notification.created_at).toLocaleDateString()}
                         </p>
+                        
+                        {/* Battle challenge actions */}
+                        {notification.type === "battle_challenge" && notification.metadata?.battle_id && (
+                          <NotificationBattleActions
+                            battleId={notification.metadata.battle_id}
+                            metadata={notification.metadata}
+                            onActionComplete={() => {
+                              // Remove from list after action
+                              setUserNotifications((prev) => 
+                                prev.filter((n) => n.id !== notification.id)
+                              );
+                            }}
+                          />
+                        )}
                       </div>
                       <Button
                         variant="ghost"

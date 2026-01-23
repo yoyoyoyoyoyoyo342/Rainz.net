@@ -246,24 +246,79 @@ serve(async (req) => {
       logStep("Hyperlocal fetch error", { error: hyperlocalError.message });
     }
 
+    // Convert Fahrenheit to Celsius helper
+    const fToC = (f: number) => Math.round((f - 32) * 5 / 9);
+    
+    // Convert a source's temperatures to Celsius
+    const convertSourceToCelsius = (src: WeatherSource) => ({
+      ...src,
+      currentWeather: {
+        ...src.currentWeather,
+        temperature: fToC(src.currentWeather.temperature),
+        feelsLike: fToC(src.currentWeather.feelsLike),
+      },
+      hourlyForecast: src.hourlyForecast?.map(h => ({
+        ...h,
+        temperature: fToC(h.temperature),
+      })),
+      dailyForecast: src.dailyForecast?.map(d => ({
+        ...d,
+        highTemp: fToC(d.highTemp),
+        lowTemp: fToC(d.lowTemp),
+      })),
+    });
+    
+    // Convert all sources to Celsius
+    const celsiusSources = sources.map(convertSourceToCelsius);
+
     // Find most accurate source (handle empty array)
-    const mostAccurate = sources.length > 0 ? sources.reduce((best, current) => {
+    const mostAccurate = celsiusSources.length > 0 ? celsiusSources.reduce((best, current) => {
       const bestAccuracy = (best as any).accuracy || 0;
       const currentAccuracy = (current as any).accuracy || 0;
       return currentAccuracy > bestAccuracy ? current : best;
-    }, sources[0]) : null;
+    }, celsiusSources[0]) : null;
 
-    // Construct comprehensive response
+    // Convert LLM forecast to Celsius if present
+    const celsiusLlmForecast = llmForecast ? {
+      ...llmForecast,
+      current: llmForecast.current ? {
+        ...llmForecast.current,
+        temperature: fToC(llmForecast.current.temperature),
+        feelsLike: fToC(llmForecast.current.feelsLike),
+      } : undefined,
+      hourly: llmForecast.hourly?.map((h: any) => ({
+        ...h,
+        temperature: fToC(h.temperature),
+      })),
+      daily: llmForecast.daily?.map((d: any) => ({
+        ...d,
+        highTemp: fToC(d.highTemp),
+        lowTemp: fToC(d.lowTemp),
+      })),
+    } : null;
+
+    // Convert hyperlocal snow data to Celsius if present
+    const celsiusHyperlocal = hyperlocalData ? {
+      ...hyperlocalData,
+      snow: hyperlocalData.snow ? {
+        ...hyperlocalData.snow,
+        temperature: fToC(hyperlocalData.snow.temperature || 32),
+        windChill: fToC(hyperlocalData.snow.windChill || 32),
+      } : undefined,
+    } : null;
+
+    // Construct comprehensive response (all temps in Celsius)
     const response = {
       success: true,
       timestamp: new Date().toISOString(),
       authMethod,
+      units: 'celsius',
       location: {
         name: locationName || 'API Request',
         latitude: lat,
         longitude: lon,
       },
-      sources: sources.map(s => ({
+      sources: celsiusSources.map(s => ({
         name: s.source,
         current: s.currentWeather,
         hourly: s.hourlyForecast?.slice(0, 24),
@@ -275,27 +330,27 @@ serve(async (req) => {
         hourly: mostAccurate.hourlyForecast?.slice(0, 24),
         daily: mostAccurate.dailyForecast?.slice(0, 7),
       } : null,
-      aiEnhanced: llmForecast ? {
-        current: llmForecast.current,
-        hourly: llmForecast.hourly?.slice(0, 24),
-        daily: llmForecast.daily?.slice(0, 7),
-        summary: llmForecast.summary,
-        insights: llmForecast.insights,
-        modelAgreement: llmForecast.modelAgreement,
-        source: llmForecast.source || 'Groq Llama 3.3'
+      aiEnhanced: celsiusLlmForecast ? {
+        current: celsiusLlmForecast.current,
+        hourly: celsiusLlmForecast.hourly?.slice(0, 24),
+        daily: celsiusLlmForecast.daily?.slice(0, 7),
+        summary: celsiusLlmForecast.summary,
+        insights: celsiusLlmForecast.insights,
+        modelAgreement: celsiusLlmForecast.modelAgreement,
+        source: celsiusLlmForecast.source || 'Groq Llama 3.3'
       } : null,
-      hyperlocal: hyperlocalData ? {
-        minuteByMinute: hyperlocalData.minuteByMinute,
-        snow: hyperlocalData.snow,
-        aqi: hyperlocalData.aqi,
-        pollen: hyperlocalData.pollen,
-        astronomy: hyperlocalData.astronomy,
-        alerts: hyperlocalData.alerts,
+      hyperlocal: celsiusHyperlocal ? {
+        minuteByMinute: celsiusHyperlocal.minuteByMinute,
+        snow: celsiusHyperlocal.snow,
+        aqi: celsiusHyperlocal.aqi,
+        pollen: celsiusHyperlocal.pollen,
+        astronomy: celsiusHyperlocal.astronomy,
+        alerts: celsiusHyperlocal.alerts,
       } : null,
       metadata: {
-        sourceCount: sources.length,
-        aiEnhanced: !!llmForecast,
-        hasHyperlocalData: !!hyperlocalData,
+        sourceCount: celsiusSources.length,
+        aiEnhanced: !!celsiusLlmForecast,
+        hasHyperlocalData: !!celsiusHyperlocal,
       }
     };
 

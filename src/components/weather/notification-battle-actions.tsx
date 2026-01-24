@@ -92,7 +92,15 @@ export function NotificationBattleActions({
     }
   };
 
-  const handlePredictionSubmit = async (predictionId: string) => {
+  const handlePredictionSubmit = async (predictionId?: string) => {
+    if (!predictionId) {
+      toast({
+        title: "Error",
+        description: "No prediction ID received. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
     const success = await acceptBattle(battleId, predictionId);
     if (success) {
       setShowPredictionDialog(false);

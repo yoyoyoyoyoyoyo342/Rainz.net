@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Share2, Copy, Check, Twitter, MessageCircle } from "lucide-react";
@@ -17,6 +17,19 @@ interface PredictionShareProps {
 
 export const PredictionShare = ({ prediction, isOpen, onClose }: PredictionShareProps) => {
   const [copied, setCopied] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Sync external isOpen prop with internal state using useEffect
+  useEffect(() => {
+    if (isOpen) {
+      setIsDialogOpen(true);
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    setIsDialogOpen(false);
+    onClose();
+  };
 
   const shareText = `🌤️ My prediction on Rainz was...
 
@@ -63,7 +76,7 @@ You can also make your prediction at Rainz.net!`;
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

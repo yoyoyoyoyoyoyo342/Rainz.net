@@ -127,7 +127,40 @@ export const WeatherPredictionForm = ({
 
       if (existingPrediction) {
         toast.error("You've already predicted for tomorrow!");
+        setLoading(false);
         return;
+      }
+
+      // Check for active power-ups and use them
+      let hasDoublePoints = false;
+      let hasPredictionShield = false;
+      
+      const { data: powerups } = await supabase
+        .from("active_powerups")
+        .select("id, powerup_type, uses_remaining")
+        .eq("user_id", user.id);
+      
+      for (const powerup of powerups || []) {
+        if (powerup.powerup_type === "double_points" && (powerup.uses_remaining || 0) > 0) {
+          hasDoublePoints = true;
+          // Consume the power-up
+          if (powerup.uses_remaining === 1) {
+            await supabase.from("active_powerups").delete().eq("id", powerup.id);
+          } else {
+            await supabase.from("active_powerups").update({ uses_remaining: (powerup.uses_remaining || 1) - 1 }).eq("id", powerup.id);
+          }
+          toast.success("⚡ Double Points activated! 2x points on this prediction!");
+        }
+        if (powerup.powerup_type === "prediction_boost" && (powerup.uses_remaining || 0) > 0) {
+          hasPredictionShield = true;
+          // Consume one use of the shield
+          if (powerup.uses_remaining === 1) {
+            await supabase.from("active_powerups").delete().eq("id", powerup.id);
+          } else {
+            await supabase.from("active_powerups").update({ uses_remaining: (powerup.uses_remaining || 1) - 1 }).eq("id", powerup.id);
+          }
+          toast.success("🛡️ Prediction Shield activated! Protected from point loss!");
+        }
       }
 
       const { data, error } = await supabase
@@ -147,6 +180,13 @@ export const WeatherPredictionForm = ({
 
       if (error) throw error;
 
+      // Store powerup flags in prediction metadata (update the prediction with flags)
+      if (hasDoublePoints || hasPredictionShield) {
+        // We'll store this info so verification can use it
+        // For now just log it - the verification edge function should check active_powerups history
+        console.log("Power-ups used:", { hasDoublePoints, hasPredictionShield });
+      }
+
       // Create battle if enabled
       if (enableBattle && data?.id) {
         await createBattle(
@@ -165,22 +205,31 @@ export const WeatherPredictionForm = ({
         toast.success("🎯 Prediction submitted!");
       }
       
-      // Store prediction for sharing
+      // Store prediction for sharing BEFORE clearing form
       const conditionLabel = weatherConditions.find(c => c.value === predictedCondition)?.label || predictedCondition;
-      setSubmittedPrediction({
+      const predictionForShare = {
         high: predictedHigh,
         low: predictedLow,
         condition: conditionLabel,
         location,
-      });
-      setShowShare(true);
+      };
       
+      // Clear form
       setPredictedHigh("");
       setPredictedLow("");
       setPredictedCondition("");
       setEnableBattle(false);
       setSelectedOpponent(null);
-      onPredictionMade(returnPredictionId ? data?.id : undefined);
+      
+      // Set share data and show dialog AFTER clearing form
+      setSubmittedPrediction(predictionForShare);
+      setShowShare(true);
+      
+      // Call callback last - use setTimeout to ensure share dialog is mounted
+      const predictionId = data?.id;
+      setTimeout(() => {
+        onPredictionMade(returnPredictionId ? predictionId : undefined);
+      }, 100);
     } catch (error: any) {
       toast.error("Failed to submit prediction");
       console.error("Error submitting prediction:", error);

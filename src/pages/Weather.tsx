@@ -647,6 +647,7 @@ export default function WeatherPage() {
                   longitude={selectedLocation?.lon || 0}
                   condition={weatherData.mostAccurate.currentWeather.condition}
                   uvIndex={weatherData.mostAccurate.currentWeather.uvIndex}
+                  isImperial={isImperial}
                 />
               </div>
 

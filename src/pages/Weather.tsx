@@ -627,6 +627,29 @@ export default function WeatherPage() {
                 premiumSettings={premiumSettings}
               />
 
+              {/* Share & AR Buttons */}
+              <div className="flex gap-2 mb-4">
+                <SocialWeatherCard
+                  location={selectedLocation?.name || "Unknown"}
+                  temperature={weatherData.mostAccurate.currentWeather.temperature}
+                  feelsLike={weatherData.mostAccurate.currentWeather.feelsLike}
+                  condition={weatherData.mostAccurate.currentWeather.condition}
+                  humidity={weatherData.mostAccurate.currentWeather.humidity}
+                  windSpeed={weatherData.mostAccurate.currentWeather.windSpeed}
+                  isImperial={isImperial}
+                  highTemp={weatherData.mostAccurate.dailyForecast?.[0]?.highTemp}
+                  lowTemp={weatherData.mostAccurate.dailyForecast?.[0]?.lowTemp}
+                />
+                <ARWeatherOverlay
+                  windSpeed={weatherData.mostAccurate.currentWeather.windSpeed}
+                  windDirection={weatherData.mostAccurate.currentWeather.windDirection || 0}
+                  latitude={selectedLocation?.lat || 0}
+                  longitude={selectedLocation?.lon || 0}
+                  condition={weatherData.mostAccurate.currentWeather.condition}
+                  uvIndex={weatherData.mostAccurate.currentWeather.uvIndex}
+                />
+              </div>
+
               {!isSubscribed && <AffiliateCard />}
 
               {weatherData?.mostAccurate?.currentWeather?.pollenData && (

@@ -12,6 +12,7 @@ interface ARWeatherOverlayProps {
   condition: string;
   uvIndex?: number;
   auroraChance?: number;
+  isImperial?: boolean;
 }
 
 // Calculate aurora probability based on latitude and conditions
@@ -47,6 +48,7 @@ export function ARWeatherOverlay({
   condition,
   uvIndex,
   auroraChance: providedAuroraChance,
+  isImperial = false,
 }: ARWeatherOverlayProps) {
   const [open, setOpen] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
@@ -217,7 +219,7 @@ export function ARWeatherOverlay({
                 <div className="flex items-center gap-3">
                   <Wind className="h-8 w-8 text-cyan-400" />
                   <div>
-                    <p className="text-lg font-bold">{windSpeed} mph</p>
+                    <p className="text-lg font-bold">{windSpeed} {isImperial ? "mph" : "km/h"}</p>
                     <p className="text-sm opacity-70">
                       {getCardinalDirection(windDirection)} ({Math.round(windDirection)}°)
                     </p>

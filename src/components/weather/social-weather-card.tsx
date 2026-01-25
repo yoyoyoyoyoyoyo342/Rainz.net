@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Download, Share2, Loader2, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Wind, Droplets, Thermometer } from "lucide-react";
@@ -27,21 +27,6 @@ const getConditionIcon = (condition: string) => {
   return Sun;
 };
 
-const getGradient = (condition: string) => {
-  const c = condition.toLowerCase();
-  if (c.includes("thunder") || c.includes("storm")) return "from-slate-800 via-purple-900 to-slate-900";
-  if (c.includes("rain") || c.includes("drizzle")) return "from-slate-600 via-blue-700 to-slate-800";
-  if (c.includes("snow") || c.includes("ice")) return "from-blue-200 via-white to-blue-300";
-  if (c.includes("cloud") || c.includes("overcast")) return "from-gray-400 via-gray-500 to-gray-600";
-  if (c.includes("fog") || c.includes("mist")) return "from-gray-300 via-gray-400 to-gray-500";
-  return "from-sky-400 via-blue-500 to-indigo-600";
-};
-
-const needsDarkText = (condition: string) => {
-  const c = condition.toLowerCase();
-  return c.includes("snow") || c.includes("fog") || c.includes("mist");
-};
-
 export function SocialWeatherCard({
   location,
   temperature,
@@ -57,13 +42,36 @@ export function SocialWeatherCard({
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [open, setOpen] = useState(false);
+  const [locationImage, setLocationImage] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
 
   const ConditionIcon = getConditionIcon(condition);
-  const gradient = getGradient(condition);
-  const darkText = needsDarkText(condition);
-  const textColor = darkText ? "text-gray-900" : "text-white";
 
   const formatTemp = (t: number) => `${Math.round(t)}°${isImperial ? "F" : "C"}`;
+
+  // Fetch location image when dialog opens
+  useEffect(() => {
+    if (open && location && !locationImage) {
+      setImageLoading(true);
+      // Use Unsplash Source for location-based images (no API key needed)
+      const cityName = location.split(",")[0].trim();
+      const imageUrl = `https://source.unsplash.com/800x1000/?${encodeURIComponent(cityName)},city,landmark`;
+      
+      // Preload the image
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        setLocationImage(imageUrl);
+        setImageLoading(false);
+      };
+      img.onerror = () => {
+        // Fallback to a generic weather/landscape image
+        setLocationImage(`https://source.unsplash.com/800x1000/?weather,sky,${condition.toLowerCase()}`);
+        setImageLoading(false);
+      };
+      img.src = imageUrl;
+    }
+  }, [open, location, locationImage, condition]);
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
@@ -127,70 +135,85 @@ export function SocialWeatherCard({
         {/* Preview Card */}
         <div
           ref={cardRef}
-          className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} p-6 aspect-[4/5]`}
+          className="relative overflow-hidden rounded-2xl aspect-[4/5]"
           style={{ width: "100%", maxWidth: "360px", margin: "0 auto" }}
         >
-          {/* Background pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-10 right-10 w-32 h-32 rounded-full bg-white/30 blur-3xl" />
-            <div className="absolute bottom-20 left-10 w-24 h-24 rounded-full bg-white/20 blur-2xl" />
-          </div>
+          {/* Background Image */}
+          {imageLoading ? (
+            <div className="absolute inset-0 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 text-white animate-spin" />
+            </div>
+          ) : locationImage ? (
+            <img 
+              src={locationImage} 
+              alt={location}
+              className="absolute inset-0 w-full h-full object-cover"
+              crossOrigin="anonymous"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600" />
+          )}
+          
+          {/* Dark overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60" />
 
           {/* Content */}
-          <div className={`relative z-10 h-full flex flex-col justify-between ${textColor}`}>
+          <div className="relative z-10 h-full flex flex-col justify-between p-6 text-white">
             {/* Header */}
             <div>
-              <p className="text-sm opacity-80 mb-1">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}</p>
-              <h2 className="text-xl font-bold truncate">{location}</h2>
+              <p className="text-sm opacity-90 mb-1 drop-shadow-md">
+                {new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+              </p>
+              <h2 className="text-xl font-bold truncate drop-shadow-lg">{location}</h2>
             </div>
 
             {/* Main temp & icon */}
             <div className="flex items-center justify-between py-6">
               <div>
-                <div className="text-7xl font-bold tracking-tight">{formatTemp(temperature)}</div>
-                <p className="text-lg opacity-90 mt-1">{condition}</p>
+                <div className="text-7xl font-bold tracking-tight drop-shadow-lg">{formatTemp(temperature)}</div>
+                <p className="text-lg opacity-95 mt-1 drop-shadow-md">{condition}</p>
               </div>
-              <ConditionIcon className="h-24 w-24 opacity-90" />
+              <ConditionIcon className="h-24 w-24 opacity-95 drop-shadow-lg" />
             </div>
 
             {/* Details */}
-            <div className="grid grid-cols-3 gap-4 py-4 border-t border-white/20">
+            <div className="grid grid-cols-3 gap-4 py-4 border-t border-white/30 backdrop-blur-sm bg-black/20 -mx-6 px-6">
               <div className="text-center">
-                <Thermometer className="h-5 w-5 mx-auto mb-1 opacity-70" />
-                <p className="text-xs opacity-70">Feels like</p>
-                <p className="font-semibold">{formatTemp(feelsLike)}</p>
+                <Thermometer className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                <p className="text-xs opacity-80">Feels like</p>
+                <p className="font-semibold drop-shadow-sm">{formatTemp(feelsLike)}</p>
               </div>
               <div className="text-center">
-                <Wind className="h-5 w-5 mx-auto mb-1 opacity-70" />
-                <p className="text-xs opacity-70">Wind</p>
-                <p className="font-semibold">{windSpeed} {isImperial ? "mph" : "km/h"}</p>
+                <Wind className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                <p className="text-xs opacity-80">Wind</p>
+                <p className="font-semibold drop-shadow-sm">{windSpeed} {isImperial ? "mph" : "km/h"}</p>
               </div>
               <div className="text-center">
-                <Droplets className="h-5 w-5 mx-auto mb-1 opacity-70" />
-                <p className="text-xs opacity-70">Humidity</p>
-                <p className="font-semibold">{humidity}%</p>
+                <Droplets className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                <p className="text-xs opacity-80">Humidity</p>
+                <p className="font-semibold drop-shadow-sm">{humidity}%</p>
               </div>
             </div>
 
             {/* High/Low */}
             {highTemp !== undefined && lowTemp !== undefined && (
               <div className="flex justify-center gap-6 py-2">
-                <span className="opacity-80">H: {formatTemp(highTemp)}</span>
-                <span className="opacity-80">L: {formatTemp(lowTemp)}</span>
+                <span className="opacity-90 drop-shadow-sm">H: {formatTemp(highTemp)}</span>
+                <span className="opacity-90 drop-shadow-sm">L: {formatTemp(lowTemp)}</span>
               </div>
             )}
 
             {/* Branding */}
-            <div className="flex items-center justify-center gap-2 pt-4 border-t border-white/10">
+            <div className="flex items-center justify-center gap-2 pt-4 border-t border-white/20">
               <img src={rainzLogo} alt="Rainz" className="h-6 w-6 rounded" />
-              <span className="text-sm font-medium opacity-80">rainz.lovable.app</span>
+              <span className="text-sm font-medium opacity-90 drop-shadow-sm">rainz.lovable.app</span>
             </div>
           </div>
         </div>
 
         {/* Actions */}
         <div className="flex gap-3 mt-4">
-          <Button className="flex-1" onClick={handleDownload} disabled={isGenerating}>
+          <Button className="flex-1" onClick={handleDownload} disabled={isGenerating || imageLoading}>
             {isGenerating ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (

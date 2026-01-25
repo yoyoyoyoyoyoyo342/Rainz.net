@@ -639,6 +639,7 @@ export default function WeatherPage() {
                   isImperial={isImperial}
                   highTemp={weatherData.mostAccurate.dailyForecast?.[0]?.highTemp}
                   lowTemp={weatherData.mostAccurate.dailyForecast?.[0]?.lowTemp}
+                  actualStationName={actualStationName}
                 />
                 <ARWeatherOverlay
                   windSpeed={weatherData.mostAccurate.currentWeather.windSpeed}

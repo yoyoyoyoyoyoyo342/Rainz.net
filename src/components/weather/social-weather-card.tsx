@@ -1,10 +1,11 @@
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Download, Share2, Loader2, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Wind, Droplets, Thermometer } from "lucide-react";
+import { Download, Camera, Loader2, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Wind, Droplets, Thermometer } from "lucide-react";
 import { toPng } from "html-to-image";
 import { useToast } from "@/hooks/use-toast";
 import rainzLogo from "@/assets/rainz-logo-new.png";
+import { LocationCard } from "./location-card";
 
 interface SocialWeatherCardProps {
   location: string;
@@ -16,6 +17,7 @@ interface SocialWeatherCardProps {
   isImperial: boolean;
   highTemp?: number;
   lowTemp?: number;
+  actualStationName?: string;
 }
 
 const getConditionIcon = (condition: string) => {
@@ -37,6 +39,7 @@ export function SocialWeatherCard({
   isImperial,
   highTemp,
   lowTemp,
+  actualStationName,
 }: SocialWeatherCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -44,6 +47,7 @@ export function SocialWeatherCard({
   const [open, setOpen] = useState(false);
   const [locationImage, setLocationImage] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
+  const [showLocationCard, setShowLocationCard] = useState(false);
 
   const ConditionIcon = getConditionIcon(condition);
 
@@ -120,109 +124,127 @@ export function SocialWeatherCard({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Share2 className="h-4 w-4" />
-          Share
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Share Weather Card</DialogTitle>
-        </DialogHeader>
+    <>
+      {/* This button now opens the LocationCard (landmark photo card) */}
+      <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowLocationCard(true)}>
+        <Camera className="h-4 w-4" />
+        Share Card
+      </Button>
 
-        {/* Preview Card */}
-        <div
-          ref={cardRef}
-          className="relative overflow-hidden rounded-2xl aspect-[4/5]"
-          style={{ width: "100%", maxWidth: "360px", margin: "0 auto" }}
-        >
-          {/* Background Image */}
-          {imageLoading ? (
-            <div className="absolute inset-0 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 text-white animate-spin" />
-            </div>
-          ) : locationImage ? (
-            <img 
-              src={locationImage} 
-              alt={location}
-              className="absolute inset-0 w-full h-full object-cover"
-              crossOrigin="anonymous"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600" />
-          )}
-          
-          {/* Dark overlay for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60" />
+      <LocationCard
+        open={showLocationCard}
+        onOpenChange={setShowLocationCard}
+        temperature={temperature}
+        location={location}
+        actualStationName={actualStationName || location}
+        isImperial={isImperial}
+      />
 
-          {/* Content */}
-          <div className="relative z-10 h-full flex flex-col justify-between p-6 text-white">
-            {/* Header */}
-            <div>
-              <p className="text-sm opacity-90 mb-1 drop-shadow-md">
-                {new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
-              </p>
-              <h2 className="text-xl font-bold truncate drop-shadow-lg">{location}</h2>
-            </div>
+      {/* Hidden dialog - the SocialWeatherCard photo card is now opened from CurrentWeather */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Share Weather Card</DialogTitle>
+          </DialogHeader>
 
-            {/* Main temp & icon */}
-            <div className="flex items-center justify-between py-6">
-              <div>
-                <div className="text-7xl font-bold tracking-tight drop-shadow-lg">{formatTemp(temperature)}</div>
-                <p className="text-lg opacity-95 mt-1 drop-shadow-md">{condition}</p>
+          {/* Preview Card */}
+          <div
+            ref={cardRef}
+            className="relative overflow-hidden rounded-2xl aspect-[4/5]"
+            style={{ width: "100%", maxWidth: "360px", margin: "0 auto" }}
+          >
+            {/* Background Image */}
+            {imageLoading ? (
+              <div className="absolute inset-0 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 text-white animate-spin" />
               </div>
-              <ConditionIcon className="h-24 w-24 opacity-95 drop-shadow-lg" />
-            </div>
-
-            {/* Details */}
-            <div className="grid grid-cols-3 gap-4 py-4 border-t border-white/30 backdrop-blur-sm bg-black/20 -mx-6 px-6">
-              <div className="text-center">
-                <Thermometer className="h-5 w-5 mx-auto mb-1 opacity-80" />
-                <p className="text-xs opacity-80">Feels like</p>
-                <p className="font-semibold drop-shadow-sm">{formatTemp(feelsLike)}</p>
-              </div>
-              <div className="text-center">
-                <Wind className="h-5 w-5 mx-auto mb-1 opacity-80" />
-                <p className="text-xs opacity-80">Wind</p>
-                <p className="font-semibold drop-shadow-sm">{windSpeed} {isImperial ? "mph" : "km/h"}</p>
-              </div>
-              <div className="text-center">
-                <Droplets className="h-5 w-5 mx-auto mb-1 opacity-80" />
-                <p className="text-xs opacity-80">Humidity</p>
-                <p className="font-semibold drop-shadow-sm">{humidity}%</p>
-              </div>
-            </div>
-
-            {/* High/Low */}
-            {highTemp !== undefined && lowTemp !== undefined && (
-              <div className="flex justify-center gap-6 py-2">
-                <span className="opacity-90 drop-shadow-sm">H: {formatTemp(highTemp)}</span>
-                <span className="opacity-90 drop-shadow-sm">L: {formatTemp(lowTemp)}</span>
-              </div>
+            ) : locationImage ? (
+              <img 
+                src={locationImage} 
+                alt={location}
+                className="absolute inset-0 w-full h-full object-cover"
+                crossOrigin="anonymous"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600" />
             )}
+            
+            {/* Dark overlay for text readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60" />
 
-            {/* Branding */}
-            <div className="flex items-center justify-center gap-2 pt-4 border-t border-white/20">
-              <img src={rainzLogo} alt="Rainz" className="h-6 w-6 rounded" />
-              <span className="text-sm font-medium opacity-90 drop-shadow-sm">rainz.lovable.app</span>
+            {/* Content */}
+            <div className="relative z-10 h-full flex flex-col justify-between p-6 text-white">
+              {/* Header */}
+              <div>
+                <p className="text-sm opacity-90 mb-1 drop-shadow-md">
+                  {new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+                </p>
+                <h2 className="text-xl font-bold truncate drop-shadow-lg">{location}</h2>
+              </div>
+
+              {/* Main temp & icon */}
+              <div className="flex items-center justify-between py-6">
+                <div>
+                  <div className="text-7xl font-bold tracking-tight drop-shadow-lg">{formatTemp(temperature)}</div>
+                  <p className="text-lg opacity-95 mt-1 drop-shadow-md">{condition}</p>
+                </div>
+                <ConditionIcon className="h-24 w-24 opacity-95 drop-shadow-lg" />
+              </div>
+
+              {/* Details */}
+              <div className="grid grid-cols-3 gap-4 py-4 border-t border-white/30 backdrop-blur-sm bg-black/20 -mx-6 px-6">
+                <div className="text-center">
+                  <Thermometer className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                  <p className="text-xs opacity-80">Feels like</p>
+                  <p className="font-semibold drop-shadow-sm">{formatTemp(feelsLike)}</p>
+                </div>
+                <div className="text-center">
+                  <Wind className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                  <p className="text-xs opacity-80">Wind</p>
+                  <p className="font-semibold drop-shadow-sm">{windSpeed} {isImperial ? "mph" : "km/h"}</p>
+                </div>
+                <div className="text-center">
+                  <Droplets className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                  <p className="text-xs opacity-80">Humidity</p>
+                  <p className="font-semibold drop-shadow-sm">{humidity}%</p>
+                </div>
+              </div>
+
+              {/* High/Low */}
+              {highTemp !== undefined && lowTemp !== undefined && (
+                <div className="flex justify-center gap-6 py-2">
+                  <span className="opacity-90 drop-shadow-sm">H: {formatTemp(highTemp)}</span>
+                  <span className="opacity-90 drop-shadow-sm">L: {formatTemp(lowTemp)}</span>
+                </div>
+              )}
+
+              {/* Branding */}
+              <div className="flex items-center justify-center gap-2 pt-4 border-t border-white/20">
+                <img src={rainzLogo} alt="Rainz" className="h-6 w-6 rounded" />
+                <span className="text-sm font-medium opacity-90 drop-shadow-sm">rainz.lovable.app</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Actions */}
-        <div className="flex gap-3 mt-4">
-          <Button className="flex-1" onClick={handleDownload} disabled={isGenerating || imageLoading}>
-            {isGenerating ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4 mr-2" />
-            )}
-            {navigator.share ? "Share" : "Download"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          {/* Actions */}
+          <div className="flex gap-3 mt-4">
+            <Button className="flex-1" onClick={handleDownload} disabled={isGenerating || imageLoading}>
+              {isGenerating ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              {navigator.share ? "Share" : "Download"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
+}
+
+// Export a function to open the social card dialog externally
+export function useSocialWeatherCardTrigger() {
+  const [isOpen, setIsOpen] = useState(false);
+  return { isOpen, open: () => setIsOpen(true), close: () => setIsOpen(false), setIsOpen };
 }

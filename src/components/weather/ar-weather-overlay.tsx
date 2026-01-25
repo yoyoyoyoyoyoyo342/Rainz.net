@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
@@ -15,29 +15,21 @@ interface ARWeatherOverlayProps {
   isImperial?: boolean;
 }
 
-// Calculate aurora probability based on latitude and conditions
-const calculateAuroraChance = (lat: number, cloudCover?: number) => {
-  // Best viewing between 65-72° latitude
-  const absLat = Math.abs(lat);
-  if (absLat < 50) return 0;
-  if (absLat > 75) return 10;
-  
-  let base = 0;
-  if (absLat >= 65 && absLat <= 72) base = 40;
-  else if (absLat >= 60) base = 25;
-  else if (absLat >= 55) base = 15;
-  else base = 5;
-  
-  // Reduce for cloud cover
-  if (cloudCover && cloudCover > 50) base *= (100 - cloudCover) / 100;
-  
-  return Math.round(base);
-};
-
 // Convert wind direction to cardinal
 const getCardinalDirection = (deg: number) => {
   const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
   return directions[Math.round(deg / 22.5) % 16];
+};
+
+// Calculate base aurora probability from latitude (used as fallback)
+const getLatitudeAuroraBase = (lat: number): number => {
+  const absLat = Math.abs(lat);
+  if (absLat < 50) return 0;
+  if (absLat > 75) return 10;
+  if (absLat >= 65 && absLat <= 72) return 40;
+  if (absLat >= 60) return 25;
+  if (absLat >= 55) return 15;
+  return 5;
 };
 
 export function ARWeatherOverlay({
@@ -52,11 +44,78 @@ export function ARWeatherOverlay({
 }: ARWeatherOverlayProps) {
   const [open, setOpen] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
-  const [deviceOrientation, setDeviceOrientation] = useState<{ alpha: number; beta: number; gamma: number } | null>(null);
+  const [heading, setHeading] = useState<number | null>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [auroraChance, setAuroraChance] = useState<number>(providedAuroraChance ?? 0);
+  const [kpIndex, setKpIndex] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const auroraChance = providedAuroraChance ?? calculateAuroraChance(latitude);
+  // Fetch real aurora probability from NOAA Kp index
+  useEffect(() => {
+    if (!open) return;
+    const absLat = Math.abs(latitude);
+    // Only fetch for latitudes that could see aurora
+    if (absLat < 45) {
+      setAuroraChance(0);
+      return;
+    }
+
+    const fetchKpIndex = async () => {
+      try {
+        // NOAA Space Weather Prediction Center - planetary Kp index
+        const response = await fetch(
+          "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"
+        );
+        if (!response.ok) throw new Error("Failed to fetch Kp");
+        const data = await response.json();
+        // Data is array of arrays: [time_tag, Kp, Kp_fraction, a_running, station_count]
+        // Skip header row, get most recent
+        if (data && data.length > 1) {
+          const latest = data[data.length - 1];
+          const kp = parseFloat(latest[1]);
+          setKpIndex(kp);
+          
+          // Calculate aurora probability based on Kp and latitude
+          // Kp 0-1: aurora visible only at very high latitudes (>67°)
+          // Kp 3: aurora visible at ~65°
+          // Kp 5: aurora visible at ~55°
+          // Kp 7: aurora visible at ~50°
+          // Kp 9: aurora visible at ~45°
+          
+          const latitudeThresholds: Record<number, number> = {
+            9: 45, 8: 48, 7: 50, 6: 52, 5: 55, 4: 58, 3: 62, 2: 65, 1: 68, 0: 70
+          };
+          
+          const kpRounded = Math.min(9, Math.floor(kp));
+          const minLat = latitudeThresholds[kpRounded] || 70;
+          
+          if (absLat < minLat) {
+            setAuroraChance(0);
+          } else {
+            // Calculate probability based on how far north of threshold
+            const latBonus = Math.min(30, (absLat - minLat) * 3);
+            const kpBonus = kp * 8; // Higher Kp = more activity
+            
+            // Cloud cover penalty (rough estimate from condition)
+            const c = condition.toLowerCase();
+            let cloudPenalty = 0;
+            if (c.includes("overcast") || c.includes("fog")) cloudPenalty = 70;
+            else if (c.includes("cloud")) cloudPenalty = 40;
+            else if (c.includes("partly")) cloudPenalty = 20;
+            
+            const rawChance = Math.round(20 + latBonus + kpBonus - cloudPenalty);
+            setAuroraChance(Math.max(0, Math.min(95, rawChance)));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch Kp index:", error);
+        // Fallback to latitude-based estimate
+        setAuroraChance(getLatitudeAuroraBase(latitude));
+      }
+    };
+
+    fetchKpIndex();
+  }, [open, latitude, condition]);
 
   // Start camera
   const startCamera = async () => {
@@ -73,33 +132,52 @@ export function ARWeatherOverlay({
     }
   };
 
-  // Handle device orientation
+  // Handle device orientation for compass - CONTINUOUS updates
+  const handleOrientation = useCallback((e: DeviceOrientationEvent) => {
+    // Use webkitCompassHeading for iOS (gives true heading), otherwise use alpha
+    const webkitHeading = (e as any).webkitCompassHeading;
+    if (typeof webkitHeading === "number") {
+      // iOS: webkitCompassHeading is degrees from true north, 0-360
+      setHeading(webkitHeading);
+    } else if (e.alpha !== null) {
+      // Android/other: alpha is rotation around z-axis
+      // If absolute is true, alpha is compass heading
+      // If not, we need to use it as relative heading
+      if (e.absolute) {
+        // Absolute orientation - alpha 0 means north
+        setHeading(360 - e.alpha);
+      } else {
+        // Relative orientation - still usable for compass display
+        setHeading(360 - e.alpha);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (!open) return;
 
-    const handleOrientation = (e: DeviceOrientationEvent) => {
-      setDeviceOrientation({
-        alpha: e.alpha || 0,
-        beta: e.beta || 0,
-        gamma: e.gamma || 0,
-      });
-    };
-
-    // Request permission on iOS
+    // Request permission on iOS 13+
     if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
-      (DeviceOrientationEvent as any).requestPermission().then((response: string) => {
-        if (response === "granted") {
-          window.addEventListener("deviceorientation", handleOrientation);
-        }
-      });
+      (DeviceOrientationEvent as any)
+        .requestPermission()
+        .then((response: string) => {
+          if (response === "granted") {
+            window.addEventListener("deviceorientationabsolute", handleOrientation as EventListener, true);
+            window.addEventListener("deviceorientation", handleOrientation as EventListener, true);
+          }
+        })
+        .catch(console.error);
     } else {
-      window.addEventListener("deviceorientation", handleOrientation);
+      // Try absolute orientation first (more accurate compass), fallback to regular
+      window.addEventListener("deviceorientationabsolute", handleOrientation as EventListener, true);
+      window.addEventListener("deviceorientation", handleOrientation as EventListener, true);
     }
 
     return () => {
-      window.removeEventListener("deviceorientation", handleOrientation);
+      window.removeEventListener("deviceorientationabsolute", handleOrientation as EventListener, true);
+      window.removeEventListener("deviceorientation", handleOrientation as EventListener, true);
     };
-  }, [open]);
+  }, [open, handleOrientation]);
 
   // Set video source
   useEffect(() => {
@@ -123,18 +201,21 @@ export function ARWeatherOverlay({
     }
   };
 
-  // Calculate compass rotation (north direction)
-  const compassRotation = deviceOrientation ? -deviceOrientation.alpha : 0;
-  
-  // Calculate wind arrow direction relative to device
-  const windArrowRotation = deviceOrientation 
-    ? windDirection - deviceOrientation.alpha 
+  // Compass needle rotation: points to north
+  // heading = current device heading (degrees from north)
+  // To point needle north, rotate it by -heading
+  const compassRotation = heading !== null ? -heading : 0;
+
+  // Wind arrow: shows where wind is coming FROM relative to user's view
+  // windDirection is meteorological (direction wind comes FROM)
+  const windArrowRotation = heading !== null
+    ? windDirection - heading
     : windDirection;
 
-  // Calculate aurora direction (north for Northern Hemisphere, south for Southern)
+  // Aurora direction: north for Northern Hemisphere, south for Southern
   const auroraDirection = latitude >= 0 ? 0 : 180;
-  const auroraArrowRotation = deviceOrientation
-    ? auroraDirection - deviceOrientation.alpha
+  const auroraArrowRotation = heading !== null
+    ? auroraDirection - heading
     : auroraDirection;
 
   return (
@@ -186,7 +267,7 @@ export function ARWeatherOverlay({
             <div className="absolute top-20 left-1/2 -translate-x-1/2">
               <div className="relative w-24 h-24">
                 <div
-                  className="absolute inset-0 flex items-center justify-center"
+                  className="absolute inset-0 flex items-center justify-center transition-transform duration-100"
                   style={{ transform: `rotate(${compassRotation}deg)` }}
                 >
                   <div className="w-20 h-20 rounded-full border-2 border-white/50 bg-black/30 backdrop-blur-sm flex items-center justify-center">
@@ -194,7 +275,7 @@ export function ARWeatherOverlay({
                   </div>
                 </div>
                 <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black/50 px-2 py-1 rounded text-xs text-white whitespace-nowrap">
-                  {deviceOrientation ? `${Math.round(deviceOrientation.alpha)}°` : "N"}
+                  {heading !== null ? `${Math.round(heading)}° ${getCardinalDirection(heading)}` : "Calibrating..."}
                 </div>
               </div>
             </div>
@@ -202,7 +283,7 @@ export function ARWeatherOverlay({
             {/* Wind Direction Arrow */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
               <div
-                className="flex flex-col items-center"
+                className="flex flex-col items-center transition-transform duration-100"
                 style={{ transform: `rotate(${windArrowRotation}deg)` }}
               >
                 <Wind className="h-16 w-16 text-cyan-400 drop-shadow-lg" />
@@ -240,7 +321,10 @@ export function ARWeatherOverlay({
                     <Sparkles className="h-8 w-8 text-purple-400" />
                     <div>
                       <p className="text-lg font-bold">{auroraChance}% Chance</p>
-                      <p className="text-sm opacity-70">Aurora Borealis</p>
+                      <p className="text-sm opacity-70">
+                        Aurora {latitude >= 0 ? "Borealis" : "Australis"}
+                        {kpIndex !== null && <span className="ml-2 text-purple-300">(Kp {kpIndex.toFixed(1)})</span>}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -248,7 +332,7 @@ export function ARWeatherOverlay({
                       Look {latitude >= 0 ? "North" : "South"}
                     </p>
                     <div
-                      className="inline-block mt-1"
+                      className="inline-block mt-1 transition-transform duration-100"
                       style={{ transform: `rotate(${auroraArrowRotation}deg)` }}
                     >
                       <Navigation className="h-5 w-5 text-purple-400" />

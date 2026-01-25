@@ -1,14 +1,17 @@
-import { MapPin, RefreshCw, Eye, Droplets, Wind, Sun, Cloud, CloudSun, CloudRain, CloudDrizzle, CloudSnow, CloudLightning, CloudFog, Camera, Plus, Minus, Snowflake, Thermometer } from "lucide-react";
+import { MapPin, RefreshCw, Eye, Droplets, Wind, Sun, Cloud, CloudSun, CloudRain, CloudDrizzle, CloudSnow, CloudLightning, CloudFog, Share2, Plus, Minus, Snowflake, Thermometer } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { WeatherSource } from "@/types/weather";
-import { useState } from "react";
-import { LocationCard } from "./location-card";
+import { useState, useRef, useEffect } from "react";
 import { useLanguage } from "@/contexts/language-context";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PremiumSettings } from "@/hooks/use-premium-settings";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Download, Loader2 } from "lucide-react";
+import { toPng } from "html-to-image";
+import rainzLogo from "@/assets/rainz-logo-new.png";
 
 interface SavedLocation {
   id: string;
@@ -49,7 +52,11 @@ export function CurrentWeather({
   actualStationName,
   premiumSettings
 }: CurrentWeatherProps) {
-  const [showLocationCard, setShowLocationCard] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
+  const [locationImage, setLocationImage] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
   const queryClient = useQueryClient();
 
@@ -275,22 +282,246 @@ export function CurrentWeather({
 
         <CardContent className="p-2 bg-background/60 backdrop-blur-md border-t border-border/30">
           <div className="flex gap-2">
-            <Button onClick={() => setShowLocationCard(true)} variant="ghost" size="sm" className="flex-1 h-8 text-xs">
-              <Camera className="w-3 h-3 mr-1.5" />
-              Share Card
+            <Button onClick={() => setShowShareCard(true)} variant="ghost" size="sm" className="flex-1 h-8 text-xs">
+              <Share2 className="w-3 h-3 mr-1.5" />
+              Share
             </Button>
           </div>
         </CardContent>
       </Card>
       
-      <LocationCard 
-        open={showLocationCard} 
-        onOpenChange={setShowLocationCard}
-        temperature={mostAccurate.currentWeather.temperature}
+      {/* Social Weather Card Dialog with Photo Background */}
+      <SocialShareCardDialog
+        open={showShareCard}
+        onOpenChange={setShowShareCard}
         location={displayName || mostAccurate.location}
-        actualStationName={actualStationName || mostAccurate.location}
+        temperature={mostAccurate.currentWeather.temperature}
+        feelsLike={mostAccurate.currentWeather.feelsLike}
+        condition={mostAccurate.currentWeather.condition}
+        humidity={mostAccurate.currentWeather.humidity}
+        windSpeed={mostAccurate.currentWeather.windSpeed}
         isImperial={isImperial}
+        highTemp={mostAccurate.dailyForecast[0]?.highTemp}
+        lowTemp={mostAccurate.dailyForecast[0]?.lowTemp}
+        cardRef={cardRef}
+        locationImage={locationImage}
+        setLocationImage={setLocationImage}
+        imageLoading={imageLoading}
+        setImageLoading={setImageLoading}
+        isGenerating={isGenerating}
+        setIsGenerating={setIsGenerating}
       />
     </section>
+  );
+}
+
+// Inline Social Share Card Dialog Component
+interface SocialShareCardDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  location: string;
+  temperature: number;
+  feelsLike: number;
+  condition: string;
+  humidity: number;
+  windSpeed: number;
+  isImperial: boolean;
+  highTemp?: number;
+  lowTemp?: number;
+  cardRef: React.RefObject<HTMLDivElement>;
+  locationImage: string | null;
+  setLocationImage: (url: string | null) => void;
+  imageLoading: boolean;
+  setImageLoading: (loading: boolean) => void;
+  isGenerating: boolean;
+  setIsGenerating: (generating: boolean) => void;
+}
+
+function SocialShareCardDialog({
+  open,
+  onOpenChange,
+  location,
+  temperature,
+  feelsLike,
+  condition,
+  humidity,
+  windSpeed,
+  isImperial,
+  highTemp,
+  lowTemp,
+  cardRef,
+  locationImage,
+  setLocationImage,
+  imageLoading,
+  setImageLoading,
+  isGenerating,
+  setIsGenerating,
+}: SocialShareCardDialogProps) {
+  const getConditionIcon = (cond: string) => {
+    const c = cond.toLowerCase();
+    if (c.includes("thunder") || c.includes("storm")) return CloudLightning;
+    if (c.includes("rain") || c.includes("drizzle") || c.includes("shower")) return CloudRain;
+    if (c.includes("snow") || c.includes("sleet") || c.includes("ice")) return CloudSnow;
+    if (c.includes("cloud") || c.includes("overcast") || c.includes("fog")) return Cloud;
+    return Sun;
+  };
+
+  const ConditionIcon = getConditionIcon(condition);
+  const formatTemp = (t: number) => `${Math.round(isImperial ? t : (t - 32) * 5 / 9)}°${isImperial ? "F" : "C"}`;
+
+  // Fetch location image when dialog opens
+  useEffect(() => {
+    if (open && location && !locationImage) {
+      setImageLoading(true);
+      const cityName = location.split(",")[0].trim();
+      const imageUrl = `https://source.unsplash.com/800x1000/?${encodeURIComponent(cityName)},city,landmark`;
+      
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        setLocationImage(imageUrl);
+        setImageLoading(false);
+      };
+      img.onerror = () => {
+        setLocationImage(`https://source.unsplash.com/800x1000/?weather,sky,${condition.toLowerCase()}`);
+        setImageLoading(false);
+      };
+      img.src = imageUrl;
+    }
+  }, [open, location, locationImage, condition, setLocationImage, setImageLoading]);
+
+  const handleDownload = async () => {
+    if (!cardRef.current) return;
+    setIsGenerating(true);
+
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        quality: 1,
+        pixelRatio: 2,
+        cacheBust: true,
+      });
+
+      if (navigator.share && navigator.canShare) {
+        try {
+          const blob = await (await fetch(dataUrl)).blob();
+          const file = new File([blob], `rainz-weather-${location.replace(/\s+/g, "-")}.png`, { type: "image/png" });
+          
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: `Weather in ${location}`,
+              text: `Current weather: ${Math.round(temperature)}° ${condition}`,
+            });
+            setIsGenerating(false);
+            return;
+          }
+        } catch (e) {
+          console.log("Share failed, falling back to download:", e);
+        }
+      }
+
+      const link = document.createElement("a");
+      link.download = `rainz-weather-${location.replace(/\s+/g, "-")}.png`;
+      link.href = dataUrl;
+      link.click();
+
+      toast.success("Downloaded!");
+    } catch (error) {
+      console.error("Error generating image:", error);
+      toast.error("Failed to generate image");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Share Weather Card</DialogTitle>
+        </DialogHeader>
+
+        <div
+          ref={cardRef}
+          className="relative overflow-hidden rounded-2xl aspect-[4/5]"
+          style={{ width: "100%", maxWidth: "360px", margin: "0 auto" }}
+        >
+          {imageLoading ? (
+            <div className="absolute inset-0 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 text-white animate-spin" />
+            </div>
+          ) : locationImage ? (
+            <img 
+              src={locationImage} 
+              alt={location}
+              className="absolute inset-0 w-full h-full object-cover"
+              crossOrigin="anonymous"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600" />
+          )}
+          
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60" />
+
+          <div className="relative z-10 h-full flex flex-col justify-between p-6 text-white">
+            <div>
+              <p className="text-sm opacity-90 mb-1 drop-shadow-md">
+                {new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+              </p>
+              <h2 className="text-xl font-bold truncate drop-shadow-lg">{location}</h2>
+            </div>
+
+            <div className="flex items-center justify-between py-6">
+              <div>
+                <div className="text-7xl font-bold tracking-tight drop-shadow-lg">{formatTemp(temperature)}</div>
+                <p className="text-lg opacity-95 mt-1 drop-shadow-md">{condition}</p>
+              </div>
+              <ConditionIcon className="h-24 w-24 opacity-95 drop-shadow-lg" />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4 py-4 border-t border-white/30 backdrop-blur-sm bg-black/20 -mx-6 px-6">
+              <div className="text-center">
+                <Thermometer className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                <p className="text-xs opacity-80">Feels like</p>
+                <p className="font-semibold drop-shadow-sm">{formatTemp(feelsLike)}</p>
+              </div>
+              <div className="text-center">
+                <Wind className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                <p className="text-xs opacity-80">Wind</p>
+                <p className="font-semibold drop-shadow-sm">{windSpeed} {isImperial ? "mph" : "km/h"}</p>
+              </div>
+              <div className="text-center">
+                <Droplets className="h-5 w-5 mx-auto mb-1 opacity-80" />
+                <p className="text-xs opacity-80">Humidity</p>
+                <p className="font-semibold drop-shadow-sm">{humidity}%</p>
+              </div>
+            </div>
+
+            {highTemp !== undefined && lowTemp !== undefined && (
+              <div className="flex justify-center gap-6 py-2">
+                <span className="opacity-90 drop-shadow-sm">H: {formatTemp(highTemp)}</span>
+                <span className="opacity-90 drop-shadow-sm">L: {formatTemp(lowTemp)}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-center gap-2 pt-4 border-t border-white/20">
+              <img src={rainzLogo} alt="Rainz" className="h-6 w-6 rounded" />
+              <span className="text-sm font-medium opacity-90 drop-shadow-sm">rainz.lovable.app</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3 mt-4">
+          <Button className="flex-1" onClick={handleDownload} disabled={isGenerating || imageLoading}>
+            {isGenerating ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            {navigator.share ? "Share" : "Download"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

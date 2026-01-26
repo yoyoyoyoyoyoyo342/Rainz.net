@@ -1262,6 +1262,7 @@ export type Database = {
           location_name: string
           longitude: number
           points_earned: number | null
+          powerup_flags: Json | null
           predicted_condition: string
           predicted_high: number
           predicted_low: number
@@ -1281,6 +1282,7 @@ export type Database = {
           location_name: string
           longitude: number
           points_earned?: number | null
+          powerup_flags?: Json | null
           predicted_condition: string
           predicted_high: number
           predicted_low: number
@@ -1300,6 +1302,7 @@ export type Database = {
           location_name?: string
           longitude?: number
           points_earned?: number | null
+          powerup_flags?: Json | null
           predicted_condition?: string
           predicted_high?: number
           predicted_low?: number

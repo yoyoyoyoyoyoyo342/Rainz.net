@@ -163,6 +163,11 @@ export const WeatherPredictionForm = ({
         }
       }
 
+      // Build powerup flags object to store with prediction
+      const powerupFlags: Record<string, boolean> = {};
+      if (hasDoublePoints) powerupFlags.double_points = true;
+      if (hasPredictionShield) powerupFlags.prediction_shield = true;
+
       const { data, error } = await supabase
         .from("weather_predictions")
         .insert({
@@ -174,18 +179,12 @@ export const WeatherPredictionForm = ({
           location_name: location,
           latitude,
           longitude,
+          powerup_flags: powerupFlags,
         })
         .select("id")
         .single();
 
       if (error) throw error;
-
-      // Store powerup flags in prediction metadata (update the prediction with flags)
-      if (hasDoublePoints || hasPredictionShield) {
-        // We'll store this info so verification can use it
-        // For now just log it - the verification edge function should check active_powerups history
-        console.log("Power-ups used:", { hasDoublePoints, hasPredictionShield });
-      }
 
       // Create battle if enabled
       if (enableBattle && data?.id) {

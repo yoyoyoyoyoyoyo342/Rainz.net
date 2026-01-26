@@ -169,41 +169,19 @@ serve(async (req) => {
             break;
         }
 
-        // Check for active double points powerup
-        const { data: doublePointsPowerup } = await supabase
-          .from('active_powerups')
-          .select('*')
-          .eq('user_id', prediction.user_id)
-          .eq('powerup_type', 'double_points')
-          .gte('expires_at', new Date().toISOString())
-          .maybeSingle();
-
-        if (doublePointsPowerup) {
-          console.log(`User ${prediction.user_id} has active double points - doubling ${pointsEarned} points`);
+        // Check powerup flags stored with prediction
+        const powerupFlags = prediction.powerup_flags || {};
+        
+        if (powerupFlags.double_points) {
+          console.log(`User ${prediction.user_id} used double points powerup - doubling ${pointsEarned} points`);
           pointsEarned = pointsEarned * 2;
         }
 
         // Check for prediction shield if points are negative
         if (pointsEarned < 0) {
-          const { data: shield } = await supabase
-            .from('active_powerups')
-            .select('*')
-            .eq('user_id', prediction.user_id)
-            .eq('powerup_type', 'prediction_shield')
-            .gt('uses_remaining', 0)
-            .maybeSingle();
-
-          if (shield) {
-            console.log(`User ${prediction.user_id} prediction shield activated - preventing ${pointsEarned} point loss`);
+          if (powerupFlags.prediction_shield) {
+            console.log(`User ${prediction.user_id} used prediction shield - preventing ${pointsEarned} point loss`);
             pointsEarned = 0; // Shield prevents the loss
-            
-            // Decrement shield uses
-            const newUses = (shield.uses_remaining || 1) - 1;
-            if (newUses <= 0) {
-              await supabase.from('active_powerups').delete().eq('id', shield.id);
-            } else {
-              await supabase.from('active_powerups').update({ uses_remaining: newUses }).eq('id', shield.id);
-            }
           }
         }
         

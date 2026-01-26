@@ -57,23 +57,41 @@ export function SocialWeatherCard({
   useEffect(() => {
     if (open && location && !locationImage) {
       setImageLoading(true);
-      // Use Unsplash Source for location-based images (no API key needed)
       const cityName = location.split(",")[0].trim();
-      const imageUrl = `https://source.unsplash.com/800x1000/?${encodeURIComponent(cityName)},city,landmark`;
       
-      // Preload the image
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        setLocationImage(imageUrl);
-        setImageLoading(false);
-      };
-      img.onerror = () => {
-        // Fallback to a generic weather/landscape image
-        setLocationImage(`https://source.unsplash.com/800x1000/?weather,sky,${condition.toLowerCase()}`);
-        setImageLoading(false);
-      };
-      img.src = imageUrl;
+      // Use Unsplash API for better quality and reliability
+      const query = `${cityName} famous landmark iconic monument`;
+      fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=portrait&client_id=3dwfGypVu-CE24TrzhVMVx0kNu58z6uPmDRCF0XuUVQ`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.results && data.results.length > 0) {
+            const photo = data.results[0];
+            const imageUrl = `${photo.urls.regular}&w=800&h=1000&fit=crop`;
+            setLocationImage(imageUrl);
+            console.log(`Loaded social card photo for ${cityName}:`, imageUrl);
+          } else {
+            // Fallback to weather-themed image
+            const fallbackQuery = `${condition.toLowerCase()} weather sky`;
+            return fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(fallbackQuery)}&per_page=1&orientation=portrait&client_id=3dwfGypVu-CE24TrzhVMVx0kNu58z6uPmDRCF0XuUVQ`)
+              .then(res => res.json())
+              .then(data => {
+                if (data.results && data.results.length > 0) {
+                  const photo = data.results[0];
+                  setLocationImage(`${photo.urls.regular}&w=800&h=1000&fit=crop`);
+                } else {
+                  // Final fallback to gradient
+                  setLocationImage(null);
+                }
+              });
+          }
+        })
+        .catch(error => {
+          console.error("Error fetching social card photo:", error);
+          setLocationImage(null);
+        })
+        .finally(() => {
+          setImageLoading(false);
+        });
     }
   }, [open, location, locationImage, condition]);
 

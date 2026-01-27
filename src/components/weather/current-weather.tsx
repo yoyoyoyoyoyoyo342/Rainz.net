@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Download, Loader2 } from "lucide-react";
 import { toPng } from "html-to-image";
 import rainzLogo from "@/assets/rainz-logo-new.png";
+import { HourlyForecastCarousel } from "@/components/weather/hourly-forecast-carousel";
 
 interface SavedLocation {
   id: string;
@@ -36,6 +37,8 @@ interface CurrentWeatherProps {
   displayName?: string | null;
   actualStationName?: string;
   premiumSettings?: PremiumSettings;
+  hourlyData?: any[];
+  is24Hour?: boolean;
 }
 
 export function CurrentWeather({
@@ -50,7 +53,9 @@ export function CurrentWeather({
   onLocationSelect,
   displayName,
   actualStationName,
-  premiumSettings
+  premiumSettings,
+  hourlyData,
+  is24Hour = true,
 }: CurrentWeatherProps) {
   const [showShareCard, setShowShareCard] = useState(false);
   const [locationImage, setLocationImage] = useState<string | null>(null);
@@ -281,11 +286,25 @@ export function CurrentWeather({
         </div>
 
         <CardContent className="p-2 bg-background/60 backdrop-blur-md border-t border-border/30">
-          <div className="flex gap-2">
-            <Button onClick={() => setShowShareCard(true)} variant="ghost" size="sm" className="flex-1 h-8 text-xs">
-              <Share2 className="w-3 h-3 mr-1.5" />
-              Share
-            </Button>
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <Button onClick={() => setShowShareCard(true)} variant="ghost" size="sm" className="flex-1 h-8 text-xs">
+                <Share2 className="w-3 h-3 mr-1.5" />
+                Share
+              </Button>
+            </div>
+
+            {hourlyData && hourlyData.length > 0 && (
+              <div className="overflow-hidden rounded-2xl glass-card">
+                <HourlyForecastCarousel
+                  hourlyData={hourlyData as any}
+                  isImperial={isImperial}
+                  is24Hour={is24Hour}
+                  isCompact={!!premiumSettings?.compactMode}
+                  showHeader={true}
+                />
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -371,23 +390,45 @@ function SocialShareCardDialog({
 
   // Fetch location image when dialog opens
   useEffect(() => {
-    if (open && location && !locationImage) {
+    if (!open || !location || locationImage) return;
+
+    let cancelled = false;
+    const load = async () => {
       setImageLoading(true);
-      const cityName = location.split(",")[0].trim();
-      const imageUrl = `https://source.unsplash.com/800x1000/?${encodeURIComponent(cityName)},city,landmark`;
-      
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        setLocationImage(imageUrl);
-        setImageLoading(false);
-      };
-      img.onerror = () => {
-        setLocationImage(`https://source.unsplash.com/800x1000/?weather,sky,${condition.toLowerCase()}`);
-        setImageLoading(false);
-      };
-      img.src = imageUrl;
-    }
+      try {
+        // Use our server-side Unsplash integration (avoids CORS/redirect issues from source.unsplash.com)
+        const { data, error } = await supabase.functions.invoke("generate-landmark-image", {
+          body: { location },
+        });
+
+        const imageUrl: string | null = !error ? (data?.image ?? null) : null;
+        if (!imageUrl) {
+          if (!cancelled) setLocationImage(null);
+          return;
+        }
+
+        // Preload before setting to avoid a blank frame
+        await new Promise<void>((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error("Image preload failed"));
+          img.src = imageUrl;
+        });
+
+        if (!cancelled) setLocationImage(imageUrl);
+      } catch (e) {
+        console.error("Error fetching social card photo:", e);
+        if (!cancelled) setLocationImage(null);
+      } finally {
+        if (!cancelled) setImageLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, [open, location, locationImage, condition, setLocationImage, setImageLoading]);
 
   const handleDownload = async () => {

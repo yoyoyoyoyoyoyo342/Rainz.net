@@ -168,13 +168,19 @@ export const WeatherPredictionForm = ({
       if (hasDoublePoints) powerupFlags.double_points = true;
       if (hasPredictionShield) powerupFlags.prediction_shield = true;
 
+      // IMPORTANT: predictions are stored in CELSIUS for fair verification against Open-Meteo (Celsius).
+      const predictedHighValue = parseFloat(predictedHigh);
+      const predictedLowValue = parseFloat(predictedLow);
+      const predictedHighC = isImperial ? Math.round(((predictedHighValue - 32) * 5) / 9) : predictedHighValue;
+      const predictedLowC = isImperial ? Math.round(((predictedLowValue - 32) * 5) / 9) : predictedLowValue;
+
       const { data, error } = await supabase
         .from("weather_predictions")
         .insert({
           user_id: user.id,
           prediction_date: predictionDate,
-          predicted_high: parseFloat(predictedHigh),
-          predicted_low: parseFloat(predictedLow),
+          predicted_high: predictedHighC,
+          predicted_low: predictedLowC,
           predicted_condition: predictedCondition,
           location_name: location,
           latitude,

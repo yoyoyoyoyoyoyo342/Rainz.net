@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Trophy, Medal, Award, TrendingUp, Crown, Target, Flame, Info } from "lucide-react";
@@ -29,6 +29,10 @@ export const Leaderboard = () => {
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [hasDisplayName, setHasDisplayName] = useState(false);
   const [currentUserRank, setCurrentUserRank] = useState<LeaderboardEntry | null>(null);
+  const [previousLeaderboard, setPreviousLeaderboard] = useState<LeaderboardEntry[] | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const cacheKey = useMemo(() => "rainz_leaderboard_cache_v1", []);
 
   useEffect(() => {
     checkDisplayName();
@@ -39,6 +43,22 @@ export const Leaderboard = () => {
       fetchLeaderboard();
     }
   }, [hasDisplayName]);
+
+  // Load cached leaderboard instantly so we can fade into the fresh values.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as LeaderboardEntry[];
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        setLeaderboard(parsed);
+        setLoading(false);
+        setPreviousLeaderboard(parsed);
+      }
+    } catch {
+      // ignore cache
+    }
+  }, [cacheKey]);
 
   const checkDisplayName = async () => {
     if (!user) return;
@@ -62,6 +82,7 @@ export const Leaderboard = () => {
 
   const fetchLeaderboard = async () => {
     try {
+      const old = leaderboard;
       // Get leaderboard data with user_ids
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
@@ -134,13 +155,151 @@ export const Leaderboard = () => {
         }
       }
 
-      setLeaderboard(leaderboardWithStreaks.slice(0, 5));
+      const next = leaderboardWithStreaks.slice(0, 5);
+
+      // Cache for next open
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+
+      // Fade transition: old -> new
+      if (old && old.length > 0) {
+        setPreviousLeaderboard(old);
+        setIsTransitioning(true);
+        // next tick so CSS transition applies
+        requestAnimationFrame(() => setLeaderboard(next));
+        setTimeout(() => {
+          setIsTransitioning(false);
+          setPreviousLeaderboard(null);
+        }, 350);
+      } else {
+        setLeaderboard(next);
+      }
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
     } finally {
       setLoading(false);
     }
   };
+
+  const renderList = (entries: LeaderboardEntry[], overlayClassName: string) => (
+    <div className={overlayClassName}>
+      <div className="space-y-2">
+        {entries.map((entry, index) => {
+          const accuracy = entry.total_predictions > 0
+            ? Math.round((entry.correct_predictions / entry.total_predictions) * 100)
+            : 0;
+          const isCurrentUser = user?.id === entry.user_id;
+
+          return (
+            <div
+              key={`${entry.rank}-${entry.user_id}-${overlayClassName}`}
+              className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${getRankStyle(index)} ${isCurrentUser ? "ring-2 ring-primary" : ""}`}
+            >
+              <div className="flex items-center justify-center w-8">{getRankIcon(index)}</div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => navigate(`/profile/${entry.user_id}`)}
+                    className="font-bold text-foreground truncate hover:text-primary hover:underline transition-colors text-left"
+                  >
+                    {entry.display_name}
+                  </button>
+                  {isCurrentUser && <Badge variant="outline" className="text-xs">You</Badge>}
+                  {entry.is_subscriber && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <span className="flex items-center gap-0.5 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-1.5 py-0.5 rounded-full">
+                            <Crown className="w-3 h-3" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Rainz+ Subscriber</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex items-center gap-1">
+                          <Target className="w-3 h-3" />
+                          {accuracy}%
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          Prediction accuracy ({entry.correct_predictions}/{entry.total_predictions} correct)
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex items-center gap-1">
+                          <Flame className="w-3 h-3 text-orange-500" />
+                          {entry.current_streak}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Current streak (Best: {entry.longest_streak})</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <span className="text-muted-foreground/60">{entry.total_predictions} predictions</span>
+                </div>
+              </div>
+
+              <div className="text-right">
+                <p className="text-2xl font-bold text-primary">{entry.total_points.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">pts</p>
+              </div>
+            </div>
+          );
+        })}
+
+        {currentUserRank && (
+          <>
+            <div className="text-center text-muted-foreground py-1">• • •</div>
+            <div className="flex items-center gap-4 p-4 rounded-lg border bg-primary/5 border-primary/30 ring-2 ring-primary">
+              <div className="flex items-center justify-center w-8">
+                <span className="text-sm font-bold text-primary">#{currentUserRank.rank}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold">{currentUserRank.display_name}</span>
+                  <Badge variant="outline" className="text-xs">You</Badge>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                  <span className="flex items-center gap-1">
+                    <Target className="w-3 h-3" />
+                    {currentUserRank.total_predictions > 0
+                      ? Math.round((currentUserRank.correct_predictions / currentUserRank.total_predictions) * 100)
+                      : 0}%
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Flame className="w-3 h-3 text-orange-500" />
+                    {currentUserRank.current_streak}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-primary">{currentUserRank.total_points.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">pts</p>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
 
   const handleNameSet = (name: string | null) => {
     setShowNameDialog(false);
@@ -214,123 +373,16 @@ export const Leaderboard = () => {
           <p>No predictions yet. Be the first!</p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {leaderboard.map((entry, index) => {
-            const accuracy = entry.total_predictions > 0
-              ? Math.round((entry.correct_predictions / entry.total_predictions) * 100)
-              : 0;
-            const isCurrentUser = user?.id === entry.user_id;
-
-            return (
-              <div
-                key={entry.rank}
-                className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${getRankStyle(index)} ${isCurrentUser ? "ring-2 ring-primary" : ""}`}
-              >
-                <div className="flex items-center justify-center w-8">
-                  {getRankIcon(index)}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                      onClick={() => navigate(`/profile/${entry.user_id}`)}
-                      className="font-bold text-foreground truncate hover:text-primary hover:underline transition-colors text-left"
-                    >
-                      {entry.display_name}
-                    </button>
-                    {isCurrentUser && (
-                      <Badge variant="outline" className="text-xs">You</Badge>
-                    )}
-                    {entry.is_subscriber && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <span className="flex items-center gap-0.5 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-1.5 py-0.5 rounded-full">
-                              <Crown className="w-3 h-3" />
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Rainz+ Subscriber</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="flex items-center gap-1">
-                            <Target className="w-3 h-3" />
-                            {accuracy}%
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Prediction accuracy ({entry.correct_predictions}/{entry.total_predictions} correct)</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="flex items-center gap-1">
-                            <Flame className="w-3 h-3 text-orange-500" />
-                            {entry.current_streak}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Current streak (Best: {entry.longest_streak})</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <span className="text-muted-foreground/60">
-                      {entry.total_predictions} predictions
-                    </span>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-primary">
-                    {entry.total_points.toLocaleString()}
-                  </p>
-                  <p className="text-xs text-muted-foreground">pts</p>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Show current user if not in top 5 */}
-          {currentUserRank && (
-            <>
-              <div className="text-center text-muted-foreground py-1">• • •</div>
-              <div className={`flex items-center gap-4 p-4 rounded-lg border bg-primary/5 border-primary/30 ring-2 ring-primary`}>
-                <div className="flex items-center justify-center w-8">
-                  <span className="text-sm font-bold text-primary">#{currentUserRank.rank}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold">{currentUserRank.display_name}</span>
-                    <Badge variant="outline" className="text-xs">You</Badge>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                    <span className="flex items-center gap-1">
-                      <Target className="w-3 h-3" />
-                      {currentUserRank.total_predictions > 0
-                        ? Math.round((currentUserRank.correct_predictions / currentUserRank.total_predictions) * 100)
-                        : 0}%
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Flame className="w-3 h-3 text-orange-500" />
-                      {currentUserRank.current_streak}
-                    </span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-primary">{currentUserRank.total_points.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">pts</p>
-                </div>
-              </div>
-            </>
+        <div className="relative">
+          {renderList(leaderboard, "transition-opacity duration-300 opacity-100")}
+          {previousLeaderboard && (
+            <div
+              className={`absolute inset-0 transition-opacity duration-300 pointer-events-none ${
+                isTransitioning ? "opacity-0" : "opacity-100"
+              }`}
+            >
+              {renderList(previousLeaderboard, "")}
+            </div>
           )}
         </div>
       )}

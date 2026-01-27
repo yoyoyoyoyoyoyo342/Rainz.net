@@ -9,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { weatherApi } from "@/lib/weather-api";
 import { LocationSearch } from "@/components/weather/location-search";
 import { CurrentWeather } from "@/components/weather/current-weather";
-import { HourlyForecast } from "@/components/weather/hourly-forecast";
 import { TenDayForecast } from "@/components/weather/ten-day-forecast";
 import { DetailedMetrics } from "@/components/weather/detailed-metrics";
 import { PollenCard } from "@/components/weather/pollen-card";
@@ -625,6 +624,8 @@ export default function WeatherPage() {
                 displayName={customDisplayName}
                 actualStationName={actualStationName}
                 premiumSettings={premiumSettings}
+                hourlyData={weatherData.mostAccurate.hourlyForecast}
+                is24Hour={is24Hour}
               />
 
               {/* Share & AR Buttons */}
@@ -652,7 +653,18 @@ export default function WeatherPage() {
                 />
               </div>
 
+              {/* Requested card order */}
               {!isSubscribed && <AffiliateCard />}
+
+              <TenDayForecast
+                key="tenDay"
+                dailyForecast={weatherData.mostAccurate.dailyForecast}
+                weatherSources={weatherData.sources}
+                hourlyForecast={weatherData.mostAccurate.hourlyForecast}
+                isImperial={isImperial}
+                is24Hour={is24Hour}
+                premiumSettings={premiumSettings}
+              />
 
               {weatherData?.mostAccurate?.currentWeather?.pollenData && (
                 <div className="mb-4">
@@ -678,117 +690,47 @@ export default function WeatherPage() {
                 userId={user?.id}
               />
 
-              {/* Non-intrusive inline ad - placed in natural content flow */}
               <InlineAd />
 
-              {cardOrder.map((cardType) => {
-                if (!visibleCards[cardType]) return null;
-                switch (cardType) {
-                  case "weatherTrends":
-                    return (
-                      <div key="weatherTrends" className="mb-4">
-                        <LockedFeature isLocked={!user}>
-                          <WeatherTrendsCard
-                            currentWeather={weatherData.mostAccurate.currentWeather}
-                            location={actualStationName}
-                            latitude={selectedLocation.lat}
-                            longitude={selectedLocation.lon}
-                            isImperial={isImperial}
-                          />
-                        </LockedFeature>
-                      </div>
-                    );
-                  case "pollen":
-                    return null;
-                  case "hourly":
-                    return (
-                      <HourlyForecast
-                        key="hourly"
-                        hourlyData={weatherData.mostAccurate.hourlyForecast}
-                        isImperial={isImperial}
-                        is24Hour={is24Hour}
-                        premiumSettings={premiumSettings}
-                      />
-                    );
-                  case "rainMap":
-                    return (
-                      <div key="rainMap" className="mb-4">
-                        <RainMapCard
-                          latitude={selectedLocation.lat}
-                          longitude={selectedLocation.lon}
-                          locationName={actualStationName}
-                        />
-                      </div>
-                    );
-                  case "tenDay":
-                    return (
-                      <TenDayForecast
-                        key="tenDay"
-                        dailyForecast={weatherData.mostAccurate.dailyForecast}
-                        weatherSources={weatherData.sources}
-                        hourlyForecast={weatherData.mostAccurate.hourlyForecast}
-                        isImperial={isImperial}
-                        is24Hour={is24Hour}
-                        premiumSettings={premiumSettings}
-                      />
-                    );
-                  case "detailedMetrics":
-                    return (
-                      <div key="detailedMetrics">
-                        <DetailedMetrics
-                          currentWeather={weatherData.mostAccurate.currentWeather}
-                          is24Hour={is24Hour}
-                          premiumSettings={premiumSettings}
-                        />
-                        {isSubscribed && selectedLocation && (
-                          <ExtendedMoonCard
-                            moonrise={weatherData.mostAccurate.currentWeather.moonrise}
-                            moonset={weatherData.mostAccurate.currentWeather.moonset}
-                            moonPhase={weatherData.mostAccurate.currentWeather.moonPhase}
-                            latitude={selectedLocation.lat}
-                            longitude={selectedLocation.lon}
-                            is24Hour={is24Hour}
-                          />
-                        )}
-                      </div>
-                    );
-                  case "aqi":
-                    return hyperlocalData?.aqi ? (
-                      <div key="aqi" className="mb-4">
-                        <AQICard data={hyperlocalData.aqi} />
-                      </div>
-                    ) : null;
-                  case "alerts":
-                    return hyperlocalData?.alerts?.length > 0 ? (
-                      <div key="alerts" className="mb-4">
-                        {hyperlocalData.alerts.map((alert, index) => (
-                          <Card
-                            key={index}
-                            className="glass-card rounded-2xl shadow-lg border border-destructive/50 mb-2"
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-start gap-2">
-                                <span className="text-xl">⚠️</span>
-                                <div>
-                                  <h3 className="font-semibold text-destructive">{alert.headline}</h3>
-                                  <p className="text-sm text-muted-foreground mt-1">{alert.description}</p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    ) : null;
-                  case "barometer":
-                    return isAutoDetected ? (
-                      <div key="barometer" className="mb-4">
-                        <BarometerCard />
-                      </div>
-                    ) : null;
-                  default:
-                    return null;
-                }
-              })}
+              <div className="mb-4">
+                <RainMapCard latitude={selectedLocation.lat} longitude={selectedLocation.lon} locationName={actualStationName} />
+              </div>
+
+              <div className="mb-4">
+                <LockedFeature isLocked={!user}>
+                  <WeatherTrendsCard
+                    currentWeather={weatherData.mostAccurate.currentWeather}
+                    location={actualStationName}
+                    latitude={selectedLocation.lat}
+                    longitude={selectedLocation.lon}
+                    isImperial={isImperial}
+                  />
+                </LockedFeature>
+              </div>
+
+              <div className="mb-4">
+                <DetailedMetrics
+                  currentWeather={weatherData.mostAccurate.currentWeather}
+                  is24Hour={is24Hour}
+                  premiumSettings={premiumSettings}
+                />
+                {isSubscribed && selectedLocation && (
+                  <ExtendedMoonCard
+                    moonrise={weatherData.mostAccurate.currentWeather.moonrise}
+                    moonset={weatherData.mostAccurate.currentWeather.moonset}
+                    moonPhase={weatherData.mostAccurate.currentWeather.moonPhase}
+                    latitude={selectedLocation.lat}
+                    longitude={selectedLocation.lon}
+                    is24Hour={is24Hour}
+                  />
+                )}
+              </div>
+
+              {hyperlocalData?.aqi ? (
+                <div className="mb-4">
+                  <AQICard data={hyperlocalData.aqi} />
+                </div>
+              ) : null}
 
               <footer className="text-center py-2 mt-4 glass-header rounded-lg p-4">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2">

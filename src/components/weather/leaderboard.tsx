@@ -374,16 +374,16 @@ export const Leaderboard = () => {
         </div>
       ) : (
         <div className="relative">
-          {renderList(leaderboard, "transition-opacity duration-300 opacity-100")}
-          {previousLeaderboard && (
-            <div
-              className={`absolute inset-0 transition-opacity duration-300 pointer-events-none ${
-                isTransitioning ? "opacity-0" : "opacity-100"
-              }`}
-            >
+          {/* Previous leaderboard fades out */}
+          {previousLeaderboard && isTransitioning && (
+            <div className="absolute inset-0 transition-opacity duration-300 opacity-0 pointer-events-none">
               {renderList(previousLeaderboard, "")}
             </div>
           )}
+          {/* Current leaderboard fades in */}
+          <div className={`transition-opacity duration-300 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
+            {renderList(leaderboard, "")}
+          </div>
         </div>
       )}
 

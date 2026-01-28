@@ -245,7 +245,7 @@ export function SocialWeatherCard({
               {/* Branding */}
               <div className="flex items-center justify-center gap-2 pt-4 border-t border-white/20">
                 <img src={rainzLogo} alt="Rainz" className="h-6 w-6 rounded" />
-                <span className="text-sm font-medium opacity-90 drop-shadow-sm">rainz.lovable.app</span>
+                <span className="text-sm font-medium opacity-90 drop-shadow-sm">Rainz.net</span>
               </div>
             </div>
           </div>

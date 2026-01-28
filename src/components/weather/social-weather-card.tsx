@@ -6,6 +6,7 @@ import { toPng } from "html-to-image";
 import { useToast } from "@/hooks/use-toast";
 import rainzLogo from "@/assets/rainz-logo-new.png";
 import { LocationCard } from "./location-card";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SocialWeatherCardProps {
   location: string;
@@ -55,45 +56,49 @@ export function SocialWeatherCard({
 
   // Fetch location image when dialog opens
   useEffect(() => {
-    if (open && location && !locationImage) {
+    if (!open || !location || locationImage) return;
+
+    let cancelled = false;
+    const load = async () => {
       setImageLoading(true);
-      const cityName = location.split(",")[0].trim();
-      
-      // Use Unsplash API for better quality and reliability
-      const query = `${cityName} famous landmark iconic monument`;
-      fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=portrait&client_id=3dwfGypVu-CE24TrzhVMVx0kNu58z6uPmDRCF0XuUVQ`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.results && data.results.length > 0) {
-            const photo = data.results[0];
-            const imageUrl = `${photo.urls.regular}&w=800&h=1000&fit=crop`;
-            setLocationImage(imageUrl);
-            console.log(`Loaded social card photo for ${cityName}:`, imageUrl);
-          } else {
-            // Fallback to weather-themed image
-            const fallbackQuery = `${condition.toLowerCase()} weather sky`;
-            return fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(fallbackQuery)}&per_page=1&orientation=portrait&client_id=3dwfGypVu-CE24TrzhVMVx0kNu58z6uPmDRCF0XuUVQ`)
-              .then(res => res.json())
-              .then(data => {
-                if (data.results && data.results.length > 0) {
-                  const photo = data.results[0];
-                  setLocationImage(`${photo.urls.regular}&w=800&h=1000&fit=crop`);
-                } else {
-                  // Final fallback to gradient
-                  setLocationImage(null);
-                }
-              });
-          }
-        })
-        .catch(error => {
-          console.error("Error fetching social card photo:", error);
-          setLocationImage(null);
-        })
-        .finally(() => {
-          setImageLoading(false);
+      try {
+        // Match LocationCard behavior: extract a clean city name for better landmark matching.
+        const parts = location.split(",").map((p) => p.trim()).filter(Boolean);
+        const searchLocation = parts.length > 1 ? parts[0] : parts[0] || location;
+
+        const { data, error } = await supabase.functions.invoke("generate-landmark-image", {
+          body: { location: searchLocation },
         });
-    }
-  }, [open, location, locationImage, condition]);
+
+        const imageUrl: string | null = !error ? (data?.image ?? null) : null;
+        if (!imageUrl) {
+          if (!cancelled) setLocationImage(null);
+          return;
+        }
+
+        // Preload to avoid blank frame
+        await new Promise<void>((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error("Image preload failed"));
+          img.src = imageUrl;
+        });
+
+        if (!cancelled) setLocationImage(imageUrl);
+      } catch (error) {
+        console.error("Error fetching social card photo:", error);
+        if (!cancelled) setLocationImage(null);
+      } finally {
+        if (!cancelled) setImageLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, location, locationImage, setLocationImage, setImageLoading]);
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
@@ -182,6 +187,7 @@ export function SocialWeatherCard({
                 alt={location}
                 className="absolute inset-0 w-full h-full object-cover"
                 crossOrigin="anonymous"
+                onError={() => setLocationImage(null)}
               />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600" />

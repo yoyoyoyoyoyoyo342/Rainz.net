@@ -1,4 +1,4 @@
-import { MapPin, RefreshCw, Eye, Droplets, Wind, Sun, Cloud, CloudSun, CloudRain, CloudDrizzle, CloudSnow, CloudLightning, CloudFog, Share2, Plus, Minus, Snowflake, Thermometer } from "lucide-react";
+import { MapPin, RefreshCw, Eye, Droplets, Wind, Sun, Cloud, CloudSun, CloudRain, CloudDrizzle, CloudSnow, CloudLightning, CloudFog, Share2, Plus, Minus, Snowflake, Thermometer, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { WeatherSource } from "@/types/weather";
@@ -283,6 +283,25 @@ export function CurrentWeather({
               </div>
             )}
           </div>
+
+          {hourlyData && hourlyData.length > 0 && (
+            <div className="relative mt-3">
+              <div className={`flex items-center gap-1.5 mb-2 ${textFaded} ${isCompact ? 'text-[10px]' : 'text-xs'}`}>
+                <Clock className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} ${textMuted}`} />
+                <span>24-Hour Forecast</span>
+              </div>
+              <div className="overflow-x-hidden">
+                <HourlyForecastCarousel
+                  hourlyData={hourlyData as any}
+                  isImperial={isImperial}
+                  is24Hour={is24Hour}
+                  isCompact={!!premiumSettings?.compactMode}
+                  showHeader={false}
+                  colorScheme={isSnowCondition ? "default" : "inverse"}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <CardContent className="p-2 bg-background/60 backdrop-blur-md border-t border-border/30">
@@ -293,18 +312,6 @@ export function CurrentWeather({
                 Share
               </Button>
             </div>
-
-            {hourlyData && hourlyData.length > 0 && (
-              <div className="overflow-hidden rounded-2xl glass-card">
-                <HourlyForecastCarousel
-                  hourlyData={hourlyData as any}
-                  isImperial={isImperial}
-                  is24Hour={is24Hour}
-                  isCompact={!!premiumSettings?.compactMode}
-                  showHeader={true}
-                />
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -397,8 +404,12 @@ function SocialShareCardDialog({
       setImageLoading(true);
       try {
         // Use our server-side Unsplash integration (avoids CORS/redirect issues from source.unsplash.com)
+        // Match LocationCard behavior: try a clean city name for more reliable results.
+        const parts = location.split(",").map((p) => p.trim()).filter(Boolean);
+        const searchLocation = parts.length > 1 ? parts[0] : parts[0] || location;
+
         const { data, error } = await supabase.functions.invoke("generate-landmark-image", {
-          body: { location },
+          body: { location: searchLocation },
         });
 
         const imageUrl: string | null = !error ? (data?.image ?? null) : null;
@@ -497,6 +508,7 @@ function SocialShareCardDialog({
               alt={location}
               className="absolute inset-0 w-full h-full object-cover"
               crossOrigin="anonymous"
+              onError={() => setLocationImage(null)}
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600" />

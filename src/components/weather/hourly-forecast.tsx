@@ -20,7 +20,7 @@ export function HourlyForecast({ hourlyData, isImperial = true, is24Hour = true,
           isImperial={isImperial}
           is24Hour={is24Hour}
           isCompact={!!isCompact}
-          showHeader={true}
+          showHeader={false}
         />
       </div>
     </section>

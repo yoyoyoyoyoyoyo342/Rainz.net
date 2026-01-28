@@ -24,6 +24,11 @@ interface HourlyForecastCarouselProps {
   isCompact?: boolean;
   /** When true, shows the "24-Hour Forecast" header + helper copy. */
   showHeader?: boolean;
+  /**
+   * When rendered inside the CurrentWeather gradient header, use inverse colors.
+   * Use default for normal card/background contexts.
+   */
+  colorScheme?: "default" | "inverse";
 }
 
 interface HourDetailDialogProps {
@@ -140,12 +145,19 @@ export function HourlyForecastCarousel({
   is24Hour = true,
   isCompact = false,
   showHeader = true,
+  colorScheme = "default",
 }: HourlyForecastCarouselProps) {
   const [selectedHour, setSelectedHour] = useState<HourlyData | null>(null);
 
+  const fg = colorScheme === "inverse" ? "text-white" : "text-foreground";
+  const muted = colorScheme === "inverse" ? "text-white/70" : "text-muted-foreground";
+  const surface = colorScheme === "inverse" ? "bg-white/10 hover:bg-white/15" : "bg-muted/30 hover:bg-muted/50";
+  const surfaceBorder = colorScheme === "inverse" ? "border-white/20 hover:border-white/30" : "border-border/30 hover:border-primary/30";
+  const iconFg = colorScheme === "inverse" ? "text-white" : "text-primary";
+
   const getConditionIcon = (condition: string, size: string = "w-5 h-5") => {
     const c = condition.toLowerCase();
-    const iconClass = `${size} text-primary drop-shadow`;
+    const iconClass = `${size} ${iconFg} drop-shadow`;
     if (c.includes("thunder")) return <CloudLightning className={iconClass} />;
     if (c.includes("drizzle")) return <CloudDrizzle className={iconClass} />;
     if (c.includes("shower") || c.includes("rain")) return <CloudRain className={iconClass} />;
@@ -181,11 +193,11 @@ export function HourlyForecastCarousel({
     <>
       {showHeader && (
         <div className={`${cardPadding} border-b border-border/50`}>
-          <h2 className={`${isCompact ? "text-sm" : "text-lg"} font-semibold text-foreground flex items-center gap-2`}>
-            <Clock className={`${isCompact ? "w-4 h-4" : "w-5 h-5"} text-primary`} />
+          <h2 className={`${isCompact ? "text-sm" : "text-lg"} font-semibold ${fg} flex items-center gap-2`}>
+            <Clock className={`${isCompact ? "w-4 h-4" : "w-5 h-5"} ${iconFg}`} />
             24-Hour Forecast
           </h2>
-          <p className="text-xs text-muted-foreground mt-1">Tap any hour for details</p>
+          <p className={`text-xs ${muted} mt-1`}>Tap any hour for details</p>
         </div>
       )}
 
@@ -195,20 +207,20 @@ export function HourlyForecastCarousel({
             <button
               key={index}
               onClick={() => setSelectedHour(hour)}
-              className={`flex flex-col items-center ${isCompact ? "p-2 min-w-[60px]" : "p-3 min-w-[72px]"} rounded-xl bg-muted/30 hover:bg-muted/50 border border-border/30 hover:border-primary/30 transition-all cursor-pointer group`}
+              className={`flex flex-col items-center ${isCompact ? "p-2 min-w-[60px]" : "p-3 min-w-[72px]"} rounded-xl ${surface} border ${surfaceBorder} transition-all cursor-pointer group`}
             >
-              <span className={`${textSize} font-medium text-muted-foreground mb-2`}>
+              <span className={`${textSize} font-medium ${muted} mb-2`}>
                 {formatTime(hour.time, is24Hour)}
               </span>
               <div
-                className={`${iconSize} rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center mb-2 transition-colors`}
+                className={`${iconSize} rounded-full ${colorScheme === "inverse" ? "bg-white/10 group-hover:bg-white/15" : "bg-primary/10 group-hover:bg-primary/20"} flex items-center justify-center mb-2 transition-colors`}
               >
                 {getConditionIcon(hour.condition, isCompact ? "w-4 h-4" : "w-5 h-5")}
               </div>
-              <span className={`${tempSize} font-bold text-foreground`}>
+              <span className={`${tempSize} font-bold ${fg}`}>
                 {isImperial ? hour.temperature : Math.round((hour.temperature - 32) * 5 / 9)}°
               </span>
-              <span className="text-[10px] text-muted-foreground mt-1 flex items-center gap-0.5">
+              <span className={`text-[10px] ${muted} mt-1 flex items-center gap-0.5`}>
                 <Droplets className="w-2.5 h-2.5" />
                 {hour.precipitation}%
               </span>

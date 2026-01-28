@@ -11,12 +11,14 @@ interface NotificationBattleActionsProps {
   battleId: string;
   metadata: any;
   onActionComplete?: () => void;
+  onRequestCloseParent?: () => void;
 }
 
 export function NotificationBattleActions({ 
   battleId, 
   metadata,
-  onActionComplete 
+  onActionComplete,
+  onRequestCloseParent,
 }: NotificationBattleActionsProps) {
   const { acceptBattle, declineBattle } = usePredictionBattles();
   const { toast } = useToast();
@@ -31,6 +33,8 @@ export function NotificationBattleActions({
   } | null>(null);
 
   const handleAcceptClick = async () => {
+    // Close the inbox popover immediately so it doesn't block the prediction dialog.
+    onRequestCloseParent?.();
     setIsAccepting(true);
     
     try {
@@ -83,6 +87,7 @@ export function NotificationBattleActions({
   };
 
   const handleDeclineClick = async () => {
+    onRequestCloseParent?.();
     setIsDeclining(true);
     try {
       await declineBattle(battleId);

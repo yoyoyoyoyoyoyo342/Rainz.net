@@ -299,11 +299,10 @@ export function HeaderInfoBar({ user }: HeaderInfoBarProps) {
                           <NotificationBattleActions
                             battleId={notification.metadata.battle_id}
                             metadata={notification.metadata}
+                             onRequestCloseParent={() => setIsOpen(false)}
                             onActionComplete={() => {
-                              // Remove from list after action
-                              setUserNotifications((prev) => 
-                                prev.filter((n) => n.id !== notification.id)
-                              );
+                               // Remove permanently so it doesn't reappear on next load.
+                               handleDismissUserNotification(notification.id);
                             }}
                           />
                         )}

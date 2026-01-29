@@ -12,7 +12,7 @@ interface SEOHeadProps {
   noIndex?: boolean;
 }
 
-const BASE_URL = 'https://rainz.lovable.app';
+const BASE_URL = 'https://rainz.net';
 const DEFAULT_IMAGE = 'https://storage.googleapis.com/gpt-engineer-file-uploads/3vP1NRSCrcNqqRJF2S1MsuHkUdh2/social-images/social-1766508867596-IMG_0173.jpeg';
 
 export function SEOHead({

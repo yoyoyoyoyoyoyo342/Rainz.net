@@ -129,7 +129,7 @@ export default function WidgetPage() {
       {/* Branding */}
       <div className="mt-3 pt-2 border-t border-current/10 text-center">
         <a 
-          href="https://rainz.lovable.app" 
+          href="https://rainz.net" 
           target="_blank" 
           rel="noopener noreferrer"
           className="text-[10px] opacity-50 hover:opacity-70 transition-opacity"

@@ -10,6 +10,7 @@ import { SubscriptionProvider } from "@/hooks/use-subscription";
 import { PremiumSettingsProvider } from "@/hooks/use-premium-settings";
 import { LanguageProvider } from "@/contexts/language-context";
 import { TimeOfDayProvider, useTimeOfDayContext } from "@/contexts/time-of-day-context";
+import { BattleAcceptDialogProvider } from "@/contexts/battle-accept-dialog-context";
 import { CookieConsentProvider } from "@/hooks/use-cookie-consent";
 import { CookieConsentBanner } from "@/components/ui/cookie-consent-banner";
 import { Footer } from "@/components/ui/footer";
@@ -134,63 +135,65 @@ function AppContent() {
         <AuthProvider>
           <SubscriptionProvider>
             <PremiumSettingsProvider>
-              <CookieConsentProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <CookieConsentBanner />
-                  <PWAInstallPopup />
-                  <BrowserRouter>
-                    <div className="flex flex-col min-h-screen">
-                      <div className="flex-1">
-                        <AnalyticsTracker />
-                        <Suspense fallback={<LoadingOverlay isOpen={true} />}>
-                          {isApiSubdomain ? (
-                            <Routes>
-                              <Route path="/" element={<Navigate to="https://rainz.net" replace />} />
-                              <Route path="*" element={<Navigate to="/" replace />} />
-                            </Routes>
-                          ) : isBlogSubdomain ? (
-                            <Routes>
-                              <Route path="/" element={<Articles />} />
-                              <Route path="/articles" element={<Articles />} />
-                              <Route path="/articles/:slug" element={<BlogPost />} />
-                              <Route path="/:slug" element={<BlogPost />} />
-                              <Route path="*" element={<Navigate to="/" replace />} />
-                            </Routes>
-                          ) : (
-                            <Routes>
-                              <Route path="/" element={<Weather />} />
-                              <Route path="/auth" element={<Auth />} />
-                              <Route path="/admin" element={<AdminPanel />} />
-                              
-                              <Route path="/articles" element={<Articles />} />
-                              <Route path="/articles/:slug" element={<BlogPost />} />
-                              <Route path="/blog" element={<Navigate to="/articles" replace />} />
-                              <Route path="/blog/:slug" element={<Navigate to="/articles" replace />} />
-                              <Route path="/terms" element={<TermsOfService />} />
-                              <Route path="/privacy" element={<PrivacyPolicy />} />
-                              <Route path="/data-settings" element={<DataSettings />} />
-                              <Route path="/about" element={<About />} />
-                              <Route path="/profile/:userId" element={<UserProfile />} />
-                              <Route path="/subscription-success" element={<SubscriptionSuccess />} />
-                              <Route path="/subscription-cancel" element={<SubscriptionCancel />} />
-                              <Route path="/affiliate" element={<Affiliate />} />
-                              <Route path="/affiliate-policy" element={<AffiliatePolicy />} />
-                              <Route path="/download" element={<Download />} />
-                              <Route path="/widgets" element={<Widgets />} />
-                              <Route path="/widget" element={<Widget />} />
-                              <Route path="/weather" element={<Navigate to="/" replace />} />
-                              <Route path="*" element={<NotFound />} />
-                            </Routes>
-                          )}
-                        </Suspense>
+              <BattleAcceptDialogProvider>
+                <CookieConsentProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
+                    <CookieConsentBanner />
+                    <PWAInstallPopup />
+                    <BrowserRouter>
+                      <div className="flex flex-col min-h-screen">
+                        <div className="flex-1">
+                          <AnalyticsTracker />
+                          <Suspense fallback={<LoadingOverlay isOpen={true} />}>
+                            {isApiSubdomain ? (
+                              <Routes>
+                                <Route path="/" element={<Navigate to="https://rainz.net" replace />} />
+                                <Route path="*" element={<Navigate to="/" replace />} />
+                              </Routes>
+                            ) : isBlogSubdomain ? (
+                              <Routes>
+                                <Route path="/" element={<Articles />} />
+                                <Route path="/articles" element={<Articles />} />
+                                <Route path="/articles/:slug" element={<BlogPost />} />
+                                <Route path="/:slug" element={<BlogPost />} />
+                                <Route path="*" element={<Navigate to="/" replace />} />
+                              </Routes>
+                            ) : (
+                              <Routes>
+                                <Route path="/" element={<Weather />} />
+                                <Route path="/auth" element={<Auth />} />
+                                <Route path="/admin" element={<AdminPanel />} />
+                                
+                                <Route path="/articles" element={<Articles />} />
+                                <Route path="/articles/:slug" element={<BlogPost />} />
+                                <Route path="/blog" element={<Navigate to="/articles" replace />} />
+                                <Route path="/blog/:slug" element={<Navigate to="/articles" replace />} />
+                                <Route path="/terms" element={<TermsOfService />} />
+                                <Route path="/privacy" element={<PrivacyPolicy />} />
+                                <Route path="/data-settings" element={<DataSettings />} />
+                                <Route path="/about" element={<About />} />
+                                <Route path="/profile/:userId" element={<UserProfile />} />
+                                <Route path="/subscription-success" element={<SubscriptionSuccess />} />
+                                <Route path="/subscription-cancel" element={<SubscriptionCancel />} />
+                                <Route path="/affiliate" element={<Affiliate />} />
+                                <Route path="/affiliate-policy" element={<AffiliatePolicy />} />
+                                <Route path="/download" element={<Download />} />
+                                <Route path="/widgets" element={<Widgets />} />
+                                <Route path="/widget" element={<Widget />} />
+                                <Route path="/weather" element={<Navigate to="/" replace />} />
+                                <Route path="*" element={<NotFound />} />
+                              </Routes>
+                            )}
+                          </Suspense>
+                        </div>
+                        <Footer />
                       </div>
-                      <Footer />
-                    </div>
-                  </BrowserRouter>
-                </TooltipProvider>
-              </CookieConsentProvider>
+                    </BrowserRouter>
+                  </TooltipProvider>
+                </CookieConsentProvider>
+              </BattleAcceptDialogProvider>
             </PremiumSettingsProvider>
           </SubscriptionProvider>
         </AuthProvider>

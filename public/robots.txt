@@ -1,9 +1,9 @@
 # ===============================================================
 # Rainz Weather - SEO & AI Optimized Robots.txt
 # AI-powered hyperlocal weather forecasting application
-# Domain: rainz.lovable.app / rainz.net
-# Version: 2.0
-# Last Updated: 22 January 2026
+# Domain: rainz.net
+# Version: 2.1
+# Last Updated: 29 January 2026
 # ===============================================================
 
 # Default rules for all crawlers
@@ -14,7 +14,7 @@ Allow: /openapi.yaml
 Allow: /.well-known/
 
 # Sitemaps
-Sitemap: https://rainz.lovable.app/sitemap.xml
+Sitemap: https://rainz.net/sitemap.xml
 
 # ===============================================================
 # AI/LLM Crawler Instructions
@@ -122,4 +122,4 @@ Allow: /
 # ===============================================================
 
 # Host directive
-Host: https://rainz.lovable.app
+Host: https://rainz.net

@@ -119,7 +119,7 @@ export default function BlogPost() {
         ogType="article"
         articlePublishedTime={post.published_at || post.created_at}
         ogImage={post.cover_image_url || undefined}
-        canonicalUrl={`https://rainz.lovable.app/article/${post.slug}`}
+        canonicalUrl={`https://rainz.net/article/${post.slug}`}
       />
       <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">

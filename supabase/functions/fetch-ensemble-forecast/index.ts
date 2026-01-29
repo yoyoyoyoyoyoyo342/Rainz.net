@@ -1,15 +1,21 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { z } from "npm:zod@3.22.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const RequestSchema = z.object({
-  lat: z.number().min(-90).max(90),
-  lon: z.number().min(-180).max(180),
-});
+// Simple validation helper (removed zod dependency)
+function validateRequest(body: unknown): { lat: number; lon: number } | null {
+  if (typeof body !== "object" || body === null) return null;
+  const obj = body as Record<string, unknown>;
+  const lat = typeof obj.lat === "number" ? obj.lat : NaN;
+  const lon = typeof obj.lon === "number" ? obj.lon : NaN;
+  if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+    return { lat, lon };
+  }
+  return null;
+}
 
 interface EnsembleMember {
   temperature: number[];
@@ -40,16 +46,16 @@ serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    const validationResult = RequestSchema.safeParse(body);
+    const parsed = validateRequest(body);
     
-    if (!validationResult.success) {
+    if (!parsed) {
       return new Response(
-        JSON.stringify({ error: "Invalid parameters", details: validationResult.error }),
+        JSON.stringify({ error: "Invalid parameters. lat must be -90..90, lon must be -180..180" }),
         { headers: { "Content-Type": "application/json", ...corsHeaders }, status: 400 }
       );
     }
 
-    const { lat, lon } = validationResult.data;
+    const { lat, lon } = parsed;
 
     // Fetch ensemble data from Open-Meteo (uses ICON EPS ensemble)
     const ensembleUrl = new URL("https://ensemble-api.open-meteo.com/v1/ensemble");

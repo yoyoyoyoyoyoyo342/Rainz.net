@@ -8,9 +8,9 @@ info:
   version: 1.0.0
   contact:
     name: Rainz Weather Support
-    url: https://rainz.lovable.app
+    url: https://rainz.net
 servers:
-  - url: https://rainz.lovable.app
+  - url: https://rainz.net
     description: Production server
 
 paths:

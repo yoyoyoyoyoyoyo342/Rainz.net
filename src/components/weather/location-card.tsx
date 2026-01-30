@@ -35,12 +35,17 @@ export function LocationCard({ open, onOpenChange, temperature, location, actual
   const [isGenerating, setIsGenerating] = useState(false);
   const [landmarkName, setLandmarkName] = useState<string>('');
   const [hasError, setHasError] = useState(false);
+  const prevLocationRef = useRef<string>('');
 
   useEffect(() => {
-    if (location && !landmarkImage && !hasError) {
+    // Reset and refetch when location changes
+    if (location && prevLocationRef.current !== actualCity) {
+      prevLocationRef.current = actualCity;
+      setLandmarkImage('');
+      setHasError(false);
       generateLandmarkImage();
     }
-  }, [location]);
+  }, [location, actualCity]);
 
   const generateLandmarkImage = async () => {
     setIsGenerating(true);

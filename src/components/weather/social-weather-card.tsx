@@ -54,13 +54,14 @@ export function SocialWeatherCard({
 
   const formatTemp = (t: number) => `${Math.round(t)}°${isImperial ? "F" : "C"}`;
 
-  // Fetch location image when dialog opens
+  // Fetch location image when dialog opens - reset when location changes
   useEffect(() => {
-    if (!open || !location || locationImage) return;
-
-    let cancelled = false;
+    if (!open) return;
+    
+    // Always reset and refetch when dialog opens with potentially different location
     const load = async () => {
       setImageLoading(true);
+      setLocationImage(null);
       try {
         // Match LocationCard behavior: extract a clean city name for better landmark matching.
         const parts = location.split(",").map((p) => p.trim()).filter(Boolean);
@@ -72,7 +73,7 @@ export function SocialWeatherCard({
 
         const imageUrl: string | null = !error ? (data?.image ?? null) : null;
         if (!imageUrl) {
-          if (!cancelled) setLocationImage(null);
+          setLocationImage(null);
           return;
         }
 
@@ -85,30 +86,36 @@ export function SocialWeatherCard({
           img.src = imageUrl;
         });
 
-        if (!cancelled) setLocationImage(imageUrl);
+        setLocationImage(imageUrl);
       } catch (error) {
         console.error("Error fetching social card photo:", error);
-        if (!cancelled) setLocationImage(null);
+        setLocationImage(null);
       } finally {
-        if (!cancelled) setImageLoading(false);
+        setImageLoading(false);
       }
     };
 
     load();
-    return () => {
-      cancelled = true;
-    };
-  }, [open, location, locationImage, setLocationImage, setImageLoading]);
+  }, [open, location]);
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
     setIsGenerating(true);
 
     try {
+      // Wait for any rendering to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const dataUrl = await toPng(cardRef.current, {
         quality: 1,
         pixelRatio: 2,
         cacheBust: true,
+        skipFonts: true,
+        includeQueryParams: true,
+        fetchRequestInit: {
+          mode: 'cors',
+          credentials: 'omit',
+        },
       });
 
       // Try native share first (mobile)

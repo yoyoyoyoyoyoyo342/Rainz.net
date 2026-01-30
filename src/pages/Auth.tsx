@@ -206,17 +206,29 @@ export default function Auth() {
         await supabase.auth.signOut({ scope: 'global' });
       } catch (err) {}
 
+      // Use origin as redirect - Supabase handles the OAuth callback internally
       const redirectTo = `${window.location.origin}/`;
 
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'select_account',
+          },
         },
       });
 
       if (error) {
-        toast({ variant: "destructive", title: "Google Sign In Failed", description: error.message });
+        // Provide more helpful error messages
+        let errorMessage = error.message;
+        if (error.message.includes('provider is not enabled')) {
+          errorMessage = 'Google sign-in is not configured. Please contact support.';
+        } else if (error.message.includes('invalid')) {
+          errorMessage = 'Google sign-in configuration error. Please try email sign-in.';
+        }
+        toast({ variant: "destructive", title: "Google Sign In Failed", description: errorMessage });
       }
     } catch (error: any) {
       toast({

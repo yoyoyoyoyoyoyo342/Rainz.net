@@ -62,9 +62,18 @@ export function CurrentWeather({
   const [imageLoading, setImageLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const prevLocationRef = useRef<string | null>(null);
   const { t } = useLanguage();
   const queryClient = useQueryClient();
 
+  // Reset location image when location changes
+  useEffect(() => {
+    const currentLocationKey = currentLocation ? `${currentLocation.lat}-${currentLocation.lon}` : null;
+    if (prevLocationRef.current !== currentLocationKey) {
+      prevLocationRef.current = currentLocationKey;
+      setLocationImage(null);
+    }
+  }, [currentLocation]);
   const { data: savedLocations = [] } = useQuery({
     queryKey: ["saved-locations"],
     queryFn: async () => {
@@ -316,11 +325,11 @@ export function CurrentWeather({
         </CardContent>
       </Card>
       
-      {/* Social Weather Card Dialog with Photo Background */}
+      {/* Social Weather Card Dialog with Photo Background - uses actual station name, not custom display name */}
       <SocialShareCardDialog
         open={showShareCard}
         onOpenChange={setShowShareCard}
-        location={displayName || mostAccurate.location}
+        location={actualStationName || mostAccurate.location}
         temperature={mostAccurate.currentWeather.temperature}
         feelsLike={mostAccurate.currentWeather.feelsLike}
         condition={mostAccurate.currentWeather.condition}
@@ -447,10 +456,20 @@ function SocialShareCardDialog({
     setIsGenerating(true);
 
     try {
+      // Wait a bit for any rendering to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const dataUrl = await toPng(cardRef.current, {
         quality: 1,
         pixelRatio: 2,
         cacheBust: true,
+        skipFonts: true,
+        // Include background and ensure images are captured
+        includeQueryParams: true,
+        fetchRequestInit: {
+          mode: 'cors',
+          credentials: 'omit',
+        },
       });
 
       if (navigator.share && navigator.canShare) {

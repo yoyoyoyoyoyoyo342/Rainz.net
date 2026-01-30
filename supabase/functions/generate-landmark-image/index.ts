@@ -84,8 +84,34 @@ serve(async (req) => {
     'roskilde': { name: 'Roskilde Cathedral', description: 'Roskilde Denmark' },
     'helsingør': { name: 'Kronborg Castle', description: 'Helsingor Denmark' },
     'kolding': { name: 'Koldinghus Castle', description: 'Kolding Denmark' },
-    'ørestad': { name: 'Bella Sky Hotel', description: 'Copenhagen Denmark' },
-    'ørestad syd': { name: 'Bella Sky Hotel', description: 'Copenhagen Denmark' }
+    'ørestad': { name: 'Little Mermaid statue', description: 'Copenhagen Denmark' },
+    'ørestad syd': { name: 'Little Mermaid statue', description: 'Copenhagen Denmark' },
+    'valby': { name: 'Little Mermaid statue', description: 'Copenhagen Denmark' },
+    'amager': { name: 'Little Mermaid statue', description: 'Copenhagen Denmark' },
+    'frederiksberg': { name: 'Little Mermaid statue', description: 'Copenhagen Denmark' },
+    'nørrebro': { name: 'Little Mermaid statue', description: 'Copenhagen Denmark' },
+    'vesterbro': { name: 'Little Mermaid statue', description: 'Copenhagen Denmark' },
+  };
+
+  // Fallback mapping for smaller towns to larger cities
+  const localityFallbacks: Record<string, string> = {
+    'ørestad': 'copenhagen',
+    'ørestad syd': 'copenhagen',
+    'valby': 'copenhagen',
+    'amager': 'copenhagen',
+    'frederiksberg': 'copenhagen',
+    'nørrebro': 'copenhagen',
+    'vesterbro': 'copenhagen',
+    'capital region': 'copenhagen',
+    'bronx': 'new york',
+    'brooklyn': 'new york',
+    'queens': 'new york',
+    'manhattan': 'new york',
+    'staten island': 'new york',
+    'camden': 'london',
+    'westminster': 'london',
+    'hackney': 'london',
+    'greenwich': 'london',
   };
 
   try {
@@ -124,26 +150,49 @@ serve(async (req) => {
     // Format might be: "District, City, Region, Country" or "City, Country"
     const locationParts = location.split(',').map((p: string) => p.trim());
     
+    // Check if any part looks like coordinates (numbers with decimal points)
+    const isCoordinate = (str: string) => /^-?\d+\.?\d*$/.test(str.trim());
+    const nonCoordinateParts = locationParts.filter((p: string) => !isCoordinate(p));
+    
+    // If all parts are coordinates, return null (no image available)
+    if (nonCoordinateParts.length === 0) {
+      console.log('Location appears to be coordinates only, no landmark available');
+      return new Response(
+        JSON.stringify({ 
+          image: null, 
+          landmark: null,
+          error: 'Coordinates-only location, no landmark available'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     // Try to identify the actual city:
-    // - If there are 4+ parts, use the 2nd part (likely the city)
+    // - If there are 4+ non-coordinate parts, use the 2nd part (likely the city)
     // - If there are 3 parts, use the 2nd part
     // - If there are 2 parts, use the 1st part
-    // - Otherwise use the full location
-    let actualCity = location;
-    if (locationParts.length >= 3) {
-      actualCity = locationParts[1]; // Usually the actual city
-    } else if (locationParts.length === 2) {
-      actualCity = locationParts[0]; // First part is likely the city
+    // - Otherwise use the first non-coordinate part
+    let actualCity = nonCoordinateParts[0];
+    if (nonCoordinateParts.length >= 3) {
+      actualCity = nonCoordinateParts[1]; // Usually the actual city
+    } else if (nonCoordinateParts.length === 2) {
+      actualCity = nonCoordinateParts[0]; // First part is likely the city
     }
     
     const cityName = actualCity.trim().toLowerCase();
     console.log('Finding photo for city:', actualCity, 'from full location:', location);
 
-    // Get landmark from database
-    const landmark = landmarkDatabase[cityName];
+    // Check if we need to fallback to a larger city
+    const fallbackCity = localityFallbacks[cityName];
+    const searchCity = fallbackCity || cityName;
+    
+    // Get landmark from database (using fallback city if available)
+    const landmark = landmarkDatabase[searchCity] || landmarkDatabase[cityName];
     const searchQuery = landmark 
       ? `${landmark.name} iconic famous monument ${landmark.description}`
-      : `${cityName} famous landmark iconic monument`;
+      : `${searchCity} famous landmark iconic monument`;
+    
+    console.log('Using search city:', searchCity, 'Landmark:', landmark?.name || 'generic search');
     
     console.log('Searching Unsplash for:', searchQuery);
 

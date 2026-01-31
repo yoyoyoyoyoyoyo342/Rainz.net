@@ -5,7 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, Calendar } from 'lucide-react';
-import { ArticleTopAd, ArticleBottomAd } from '@/components/ui/article-adsense';
 import { SEOHead } from '@/components/seo/seo-head';
 
 interface BlogPost {
@@ -74,9 +73,6 @@ export default function Articles() {
             <p className="text-muted-foreground">Latest news and updates from the Rainz team</p>
           </div>
         </div>
-
-        {/* Top Ad */}
-        <ArticleTopAd className="mb-8" />
 
         {isLoading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -165,9 +161,6 @@ export default function Articles() {
                 </Button>
               </div>
             )}
-
-            {/* Bottom Ad */}
-            <ArticleBottomAd className="mt-8" />
           </>
         )}
       </div>

@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import rainzLogo from '@/assets/rainz-logo-new.png';
-import { ArticleAd, ArticleTopAd, ArticleBottomAd } from '@/components/ui/article-adsense';
 import { SEOHead } from '@/components/seo/seo-head';
 
 interface BlogPost {
@@ -58,13 +57,12 @@ export default function BlogPost() {
     }
   };
 
-  // Insert ads between paragraphs of content
-  const renderContentWithAds = useMemo(() => {
+  // Render content without ads
+  const renderContent = useMemo(() => {
     if (!post?.content) return [];
     
     const lines = post.content.split('\n');
     const result: React.ReactNode[] = [];
-    let paragraphCount = 0;
     
     lines.forEach((line, index) => {
       // Headers
@@ -79,12 +77,6 @@ export default function BlogPost() {
       } else {
         // Regular paragraph
         result.push(<p key={index} className="text-muted-foreground mb-4 leading-relaxed">{line}</p>);
-        paragraphCount++;
-        
-        // Insert ad after every 4 paragraphs
-        if (paragraphCount > 0 && paragraphCount % 4 === 0) {
-          result.push(<ArticleAd key={`ad-${index}`} format="fluid" />);
-        }
       }
     });
     
@@ -135,9 +127,6 @@ export default function BlogPost() {
       </header>
 
       <main className="container mx-auto px-4 py-12 max-w-3xl">
-        {/* Top Ad */}
-        <ArticleTopAd />
-
         {post.cover_image_url && (
           <img
             src={post.cover_image_url}
@@ -160,12 +149,9 @@ export default function BlogPost() {
           )}
 
           <div className="prose prose-invert max-w-none">
-            {renderContentWithAds}
+            {renderContent}
           </div>
         </article>
-
-        {/* Bottom Ad */}
-        <ArticleBottomAd />
       </main>
 
       <footer className="border-t border-border py-8 mt-12">

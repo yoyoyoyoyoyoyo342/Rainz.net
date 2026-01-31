@@ -226,15 +226,22 @@ export const WeatherPredictionForm = ({
       setEnableBattle(false);
       setSelectedOpponent(null);
       
-      // Set share data and show dialog AFTER clearing form
-      setSubmittedPrediction(predictionForShare);
-      setShowShare(true);
+      // Only show share dialog if NOT in battle acceptance mode
+      if (!returnPredictionId) {
+        setSubmittedPrediction(predictionForShare);
+        setShowShare(true);
+      }
       
-      // Call callback last - use setTimeout to ensure share dialog is mounted
+      // Call callback - immediately for battle acceptance, delayed for normal submission
       const predictionId = data?.id;
-      setTimeout(() => {
-        onPredictionMade(returnPredictionId ? predictionId : undefined);
-      }, 100);
+      if (returnPredictionId) {
+        // For battle acceptance, call immediately with the prediction ID
+        onPredictionMade(predictionId);
+      } else {
+        setTimeout(() => {
+          onPredictionMade();
+        }, 100);
+      }
     } catch (error: any) {
       toast.error("Failed to submit prediction");
       console.error("Error submitting prediction:", error);

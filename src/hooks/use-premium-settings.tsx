@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback, createContext, useContext, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./use-auth";
-import { useSubscription } from "@/hooks/use-subscription";
 import { useToast } from "./use-toast";
 
 export interface PremiumSettings {
@@ -47,7 +46,6 @@ const PremiumSettingsContext = createContext<PremiumSettingsContextValue | undef
 
 function usePremiumSettingsState(): PremiumSettingsContextValue {
   const { user } = useAuth();
-  const { isSubscribed } = useSubscription();
   const { toast } = useToast();
   const [settings, setSettings] = useState<PremiumSettings>(DEFAULT_PREMIUM_SETTINGS);
   const [loading, setLoading] = useState(true);
@@ -74,7 +72,6 @@ function usePremiumSettingsState(): PremiumSettingsContextValue {
         }
 
         if (data?.premium_settings) {
-          // Merge with defaults to handle new settings
           setSettings({
             ...DEFAULT_PREMIUM_SETTINGS,
             ...(data.premium_settings as Partial<PremiumSettings>),
@@ -90,10 +87,10 @@ function usePremiumSettingsState(): PremiumSettingsContextValue {
     fetchSettings();
   }, [user]);
 
-  // Update a single setting
+  // Update a single setting - now available to all users
   const updateSetting = useCallback(
     async <K extends keyof PremiumSettings>(key: K, value: PremiumSettings[K]) => {
-      if (!user || !isSubscribed) return;
+      if (!user) return;
 
       const prevSettings = settings;
       const newSettings = { ...settings, [key]: value };
@@ -108,7 +105,7 @@ function usePremiumSettingsState(): PremiumSettingsContextValue {
           .eq("user_id", user.id);
 
         if (error) {
-          console.error("Error updating premium setting:", error);
+          console.error("Error updating setting:", error);
           toast({
             title: "Failed to save setting",
             description: error.message,
@@ -121,13 +118,13 @@ function usePremiumSettingsState(): PremiumSettingsContextValue {
         setSettings(prevSettings);
       }
     },
-    [user, isSubscribed, settings, toast]
+    [user, settings, toast]
   );
 
   // Update multiple settings at once
   const updateSettings = useCallback(
     async (newSettings: Partial<PremiumSettings>) => {
-      if (!user || !isSubscribed) return;
+      if (!user) return;
 
       const prevSettings = settings;
       const mergedSettings = { ...settings, ...newSettings };
@@ -142,7 +139,7 @@ function usePremiumSettingsState(): PremiumSettingsContextValue {
           .eq("user_id", user.id);
 
         if (error) {
-          console.error("Error updating premium settings:", error);
+          console.error("Error updating settings:", error);
           toast({
             title: "Failed to save settings",
             description: error.message,
@@ -155,7 +152,7 @@ function usePremiumSettingsState(): PremiumSettingsContextValue {
         setSettings(prevSettings);
       }
     },
-    [user, isSubscribed, settings, toast]
+    [user, settings, toast]
   );
 
   // Reset to defaults
@@ -173,7 +170,7 @@ function usePremiumSettingsState(): PremiumSettingsContextValue {
         .eq("user_id", user.id);
 
       if (error) {
-        console.error("Error resetting premium settings:", error);
+        console.error("Error resetting settings:", error);
         toast({
           title: "Failed to reset settings",
           description: error.message,
@@ -182,7 +179,7 @@ function usePremiumSettingsState(): PremiumSettingsContextValue {
       } else {
         toast({
           title: "Settings reset",
-          description: "Premium display settings have been reset to defaults",
+          description: "Display settings have been reset to defaults",
         });
       }
     } catch (error) {
@@ -193,7 +190,7 @@ function usePremiumSettingsState(): PremiumSettingsContextValue {
   return {
     settings,
     loading,
-    isSubscribed,
+    isSubscribed: true, // All features now free
     updateSetting,
     updateSettings,
     resetToDefaults,
@@ -207,7 +204,5 @@ export function PremiumSettingsProvider({ children }: { children: ReactNode }) {
 
 export function usePremiumSettings() {
   const context = useContext(PremiumSettingsContext);
-  // Backwards-compatible fallback (e.g. if provider not mounted yet)
   return context ?? usePremiumSettingsState();
 }
-

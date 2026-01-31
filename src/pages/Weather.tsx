@@ -47,7 +47,6 @@ import { ExtendedMoonCard } from "@/components/weather/extended-moon-card";
 import { useAccountStorage } from "@/hooks/use-account-storage";
 import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
 import { useOfflineCache } from "@/hooks/use-offline-cache";
-import { InlineAd } from "@/components/ui/inline-ad";
 import { SEOHead } from "@/components/seo/seo-head";
 
 export default function WeatherPage() {
@@ -64,7 +63,7 @@ export default function WeatherPage() {
   const { visibleCards, cardOrder, is24Hour, isHighContrast } = useUserPreferences();
   const { t } = useLanguage();
   const { setTimeOfDay } = useTimeOfDayContext();
-  const { settings: premiumSettings, isSubscribed } = usePremiumSettings();
+  const { settings: premiumSettings } = usePremiumSettings();
   const { data: hyperlocalData } = useHyperlocalWeather(selectedLocation?.lat, selectedLocation?.lon);
   const { setUserLocation: saveLocationToAccount } = useAccountStorage();
   const { saveToCache, getFromCache, isEnabled: offlineCacheEnabled } = useOfflineCache();
@@ -654,7 +653,8 @@ export default function WeatherPage() {
               </div>
 
               {/* Requested card order */}
-              {!isSubscribed && <AffiliateCard />}
+              {/* Affiliate card - shown for everyone */}
+              <AffiliateCard />
 
               <TenDayForecast
                 key="tenDay"
@@ -690,8 +690,6 @@ export default function WeatherPage() {
                 userId={user?.id}
               />
 
-              <InlineAd />
-
               <div className="mb-4">
                 <RainMapCard latitude={selectedLocation.lat} longitude={selectedLocation.lon} locationName={actualStationName} />
               </div>
@@ -708,13 +706,12 @@ export default function WeatherPage() {
                 </LockedFeature>
               </div>
 
-              <div className="mb-4">
                 <DetailedMetrics
                   currentWeather={weatherData.mostAccurate.currentWeather}
                   is24Hour={is24Hour}
                   premiumSettings={premiumSettings}
                 />
-                {isSubscribed && selectedLocation && (
+                {selectedLocation && (
                   <ExtendedMoonCard
                     moonrise={weatherData.mostAccurate.currentWeather.moonrise}
                     moonset={weatherData.mostAccurate.currentWeather.moonset}
@@ -724,7 +721,6 @@ export default function WeatherPage() {
                     is24Hour={is24Hour}
                   />
                 )}
-              </div>
 
               {hyperlocalData?.aqi ? (
                 <div className="mb-4">

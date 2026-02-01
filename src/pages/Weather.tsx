@@ -731,11 +731,34 @@ export default function WeatherPage() {
               <footer className="text-center py-2 mt-4 glass-header rounded-lg p-4">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
                   <div className="text-muted-foreground text-xs">
-                    {t("footer.dataFrom")} <span className="font-medium text-foreground">ECMWF</span>,{" "}
-                    <span className="font-medium text-foreground">GFS</span>,{" "}
-                    <span className="font-medium text-foreground">DWD ICON</span>,{" "}
-                    <span className="font-medium text-foreground">Open-meteo</span>, and{" "}
-                    <span className="font-medium text-foreground">WeatherAPI</span>. {t("footer.disclaimer")}
+                    <Link to="/about" className="hover:text-foreground transition-colors">
+              About
+            </Link>
+            <Link to="/articles" className="hover:text-foreground transition-colors">
+              Blog
+            </Link>
+            <Link to="/download" className="hover:text-foreground transition-colors">
+              Download
+            </Link>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="/terms" className="hover:text-foreground transition-colors">
+              Terms of Service
+            </Link>
+            <Link to="/data-settings" className="hover:text-foreground transition-colors">
+              Data & Privacy Settings
+            </Link>
+          </div>
+          <div className="text-center md:text-right">
+            <p>© 2025-{new Date().getFullYear()} Rainz. All rights reserved.</p>
+          </div>
+        </div>
+        <div className="mt-4 pt-4 border-t border-border/50 text-center">
+          <p className="text-xs text-muted-foreground/70">
+            Disclaimer: Rainz is not affiliated with, endorsed by, or connected to Rains A/S or any of its subsidiaries
+            or affiliates. "Rains" is a registered trademark of Rains A/S.
+          </p>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Button

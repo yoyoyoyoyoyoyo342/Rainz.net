@@ -730,7 +730,12 @@ export default function WeatherPage() {
 
               <footer className="text-center py-2 mt-4 glass-header rounded-lg p-4">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-                  {t("footer.disclaimer")}
+                  <div className="text-muted-foreground text-xs">
+                    {t("footer.dataFrom")} <span className="font-medium text-foreground">ECMWF</span>,{" "}
+                    <span className="font-medium text-foreground">GFS</span>,{" "}
+                    <span className="font-medium text-foreground">DWD ICON</span>,{" "}
+                    <span className="font-medium text-foreground">Open-meteo</span>, and{" "}
+                    <span className="font-medium text-foreground">WeatherAPI</span>. {t("footer.disclaimer")}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Button

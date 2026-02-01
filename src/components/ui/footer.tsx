@@ -26,7 +26,7 @@ export function Footer() {
             </Link>
           </div>
           <div className="text-center md:text-right">
-            <p>© {new Date().getFullYear()} Rainz. All rights reserved.</p>
+            <p>© 2025-{new Date().getFullYear()} Rainz. All rights reserved.</p>
           </div>
         </div>
         <div className="mt-4 pt-4 border-t border-border/50 text-center">

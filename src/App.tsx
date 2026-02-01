@@ -100,7 +100,9 @@ function usePrefetchSavedLocations() {
         await queryClient.prefetchQuery({
           queryKey: ["saved-locations"],
           queryFn: async () => {
-            const { data: { user } } = await supabase.auth.getUser();
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
             if (!user) return [];
 
             const { data } = await supabase
@@ -130,7 +132,7 @@ function AppContent() {
   const isApiSubdomain = window.location.hostname === "api.rainz.net";
 
   return (
-    <ThemeProvider defaultTheme="light" storageKey="weather-app-theme" isNightTime={isNightTime}>
+    <ThemeProvider defaultTheme="dark" storageKey="weather-app-theme" isNightTime={isNightTime}>
       <LanguageProvider>
         <AuthProvider>
           <SubscriptionProvider>
@@ -165,7 +167,7 @@ function AppContent() {
                                 <Route path="/" element={<Weather />} />
                                 <Route path="/auth" element={<Auth />} />
                                 <Route path="/admin" element={<AdminPanel />} />
-                                
+
                                 <Route path="/articles" element={<Articles />} />
                                 <Route path="/articles/:slug" element={<BlogPost />} />
                                 <Route path="/blog" element={<Navigate to="/articles" replace />} />

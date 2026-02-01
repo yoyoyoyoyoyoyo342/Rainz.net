@@ -1,66 +1,89 @@
-## Objective
-Restyle the Location Search card so it visually matches the other “glass-card” cards (same color/transparency), removes the large header strip, avoids the “card inside a card” feel, and keeps 100% of the existing search/detect/history/results functionality.
 
-## Current state (what’s causing the issue)
-- `src/components/weather/location-search.tsx` currently renders an outer `div` with `glass-card` and then a dedicated header block (`p-4 border-b ...`) that visually reads like an “inner card/header panel”.
-- The search results dropdown also introduces extra separators/backgrounds (`bg-muted/30`, `border-t`, etc.) which can feel like nested panels.
+# Embeddable Weather Widget with AI-Enhanced Data
 
-## Approach
-### 1) Match the card shell used across the app
-- Ensure the outer wrapper matches the standard pattern:
-  - `className="glass-card overflow-hidden rounded-2xl border border-border/30 backdrop-blur-xl shadow-md"` (exact border/shadow values will be aligned with whichever is used most consistently in other cards).
-- Keep sizing/z-index behavior the same (`flex-1 max-w-md z-[9999]`) so no functional/layout regression.
+## Overview
+Create a new `/embed` route that auto-detects the visitor's location and displays a clean, minimal weather widget using AI-enhanced data (LLM weather forecast). External sites can embed this via iframe.
 
-### 2) Remove the “big header” without removing useful context
-- Delete the separate header block entirely.
-- Replace it with a minimal, inline label row inside the content area:
-  - A small “Search” label (text-xs / text-sm) above the input OR no label at all and rely on placeholder.
-  - Optionally keep a small Search icon inside the input on the left (subtle, not a header bar).
+## Design (Matching DBU Screenshot)
+```text
++----------------------------------+
+|          Weather Forecast        |
+|                                  |
+|      [Cloud Icon]  -1.6°C        |
+|                                  |
+|   Wind    Sunset    Precip       |
+|  7.6 m/s  16:42     0 mm         |
+|                                  |
+|  Based on data from Rainz.net    |
++----------------------------------+
+```
 
-### 3) Make the input row feel like the other cards
-- Keep one main padded content container (e.g. `p-4`).
-- Input styling:
-  - Use the same translucent surface used elsewhere: `bg-muted/30 border border-border/30 rounded-xl`.
-  - Keep focus ring behavior already present.
-- Keep the “use my location” button as an icon button inside the input (current behavior is good), but adjust hover/fill to match the glass theme.
+## Technical Implementation
 
-### 4) Reduce “inner card” feeling in the dropdown
-- Keep dropdown attached, but visually treat it as part of the same card:
-  - Remove hard section headers with solid fills.
-  - Replace `bg-muted/30` section bars (e.g., “Recent Searches”) with a lighter treatment: `text-xs text-muted-foreground px-4 py-2` without a background, or a very subtle `bg-muted/10`.
-  - Use consistent dividers: `border-border/20`.
-  - Ensure list items use a consistent hover: `hover:bg-muted/20`.
-- Ensure the dropdown uses the same corner rounding and doesn’t create a second “box” inside the first.
+### 1. New Page: `src/pages/Embed.tsx`
 
-### 5) Verify no behavior changes
-We will not change any of:
-- Debounce/search logic and queries
-- Address geocoding invocation
-- Nearby station selection flow
-- Search history read/write/delete
-- Toasts and analytics tracking
-- Focus/blur timing (keeps dropdown usable on mobile)
+**Location Detection:**
+- Use `navigator.geolocation` to auto-detect visitor location
+- Support URL parameter overrides: `?lat=X&lon=Y&location=Name`
+- Reverse geocode using BigDataCloud API for display name
 
-## Files to edit
-- `src/components/weather/location-search.tsx`
-  - Remove header block
-  - Update outer wrapper classes to match the common glass shell
-  - Adjust internal spacing and dropdown section styles
+**AI-Enhanced Data Flow:**
+1. Fetch raw weather data via `weatherApi.getWeatherData()`
+2. Transform sources array for LLM processing
+3. Call `llm-weather-forecast` edge function with sources
+4. Display AI-enhanced temperature, conditions, and insights
 
-## Testing checklist
-- Desktop:
-  - Typing shows location results and address results
-  - Clicking a result selects location and closes dropdown
-  - Recent searches appear on focus (empty query)
-  - Delete history item works and does not select item
-- Mobile:
-  - “Use my current location” button still works (mouseDown preventDefault preserved)
-  - Dropdown remains tappable (blur delay still works)
-- Visual:
-  - Card matches other glass cards for color/transparency
-  - No prominent header strip
-  - Dropdown feels integrated, not like a nested card
+**URL Parameters:**
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `lat`, `lon` | Fixed location coordinates | Auto-detect |
+| `location` | Display name | Reverse geocoded |
+| `units` | `metric` or `imperial` | `metric` |
+| `theme` | `light` or `dark` | `light` |
+| `lang` | `en` or `da` | `en` |
 
-## Notes / design guardrails
-- You asked for “same layout and colour as the other cards” and “no big headers”. We’ll follow the more minimal cards pattern: single padded body, subtle typography, integrated dropdown.
-- If we need an exact reference card, we’ll match whichever card you consider the canonical style (Snow Index or another). If Snow Index is the reference but you don’t want its header style, we’ll match its glass surface + spacing but remove the header bar.
+**UI Components:**
+- Header: "Weather Forecast" / "Vejrudsigt"
+- Large weather icon (condition-based)
+- Temperature with unit
+- 3-column metrics row: Wind speed, Sunset time, Precipitation
+- Footer branding: "Based on data from Rainz.net" linking to main site
+
+### 2. Update Router in `src/App.tsx`
+- Add `/embed` route lazily loaded
+- Render without app chrome (no footer for embed)
+
+## Embedding Usage
+```html
+<!-- Auto-detect visitor location -->
+<iframe 
+  src="https://rainz.net/embed" 
+  width="320" 
+  height="200" 
+  frameborder="0"
+  style="border-radius: 12px;"
+></iframe>
+
+<!-- Fixed location (Copenhagen) -->
+<iframe 
+  src="https://rainz.net/embed?lat=55.68&lon=12.57&location=Copenhagen" 
+  width="320" 
+  height="200"
+  frameborder="0"
+></iframe>
+```
+
+## Files to Create/Modify
+| File | Action |
+|------|--------|
+| `src/pages/Embed.tsx` | Create - Embed widget with AI-enhanced data |
+| `src/App.tsx` | Modify - Add /embed route without footer |
+
+## Key Differences from Existing Widget
+- Uses AI-enhanced data via `llm-weather-forecast` (not raw API)
+- Auto-detects location (existing widget requires lat/lon params)
+- Styled to match DBU screenshot (compact, clean design)
+- Different branding: "Based on data from" vs "Powered by"
+
+## Privacy Note
+Location permission is requested from the visitor's browser. If denied, shows a "Location required" message or uses IP-based fallback.

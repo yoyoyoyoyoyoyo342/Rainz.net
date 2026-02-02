@@ -42,6 +42,7 @@ const AffiliatePolicy = lazy(() => import("./pages/AffiliatePolicy"));
 const Download = lazy(() => import("./pages/Download"));
 const Widgets = lazy(() => import("./pages/Widgets"));
 const Widget = lazy(() => import("./pages/Widget"));
+const Embed = lazy(() => import("./pages/Embed"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -130,6 +131,26 @@ function AppContent() {
 
   const isBlogSubdomain = window.location.hostname === "blog.rainz.net";
   const isApiSubdomain = window.location.hostname === "api.rainz.net";
+  const isEmbedRoute = window.location.pathname === "/embed";
+
+  // Embed route renders without app chrome
+  if (isEmbedRoute) {
+    return (
+      <ThemeProvider defaultTheme="light" storageKey="weather-app-theme" isNightTime={false}>
+        <LanguageProvider>
+          <TooltipProvider>
+            <BrowserRouter>
+              <Suspense fallback={<LoadingOverlay isOpen={true} />}>
+                <Routes>
+                  <Route path="/embed" element={<Embed />} />
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </TooltipProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="weather-app-theme" isNightTime={isNightTime}>
@@ -184,6 +205,7 @@ function AppContent() {
                                 <Route path="/download" element={<Download />} />
                                 <Route path="/widgets" element={<Widgets />} />
                                 <Route path="/widget" element={<Widget />} />
+                                <Route path="/embed" element={<Embed />} />
                                 <Route path="/weather" element={<Navigate to="/" replace />} />
                                 <Route path="*" element={<NotFound />} />
                               </Routes>

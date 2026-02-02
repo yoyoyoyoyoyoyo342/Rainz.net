@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { weatherApi } from "@/lib/weather-api";
 import { supabase } from "@/integrations/supabase/client";
 import { Cloud, Sun, CloudRain, Snowflake, CloudLightning, Wind, Sunset, Droplets } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type EmbedTheme = "light" | "dark";
 type EmbedLang = "en" | "da";
@@ -27,22 +28,6 @@ interface LLMForecastData {
     pressure: number;
     confidence: number;
   };
-  hourly: Array<{
-    time: string;
-    temperature: number;
-    condition: string;
-    precipitation: number;
-    confidence: number;
-  }>;
-  daily: Array<{
-    day: string;
-    condition: string;
-    description: string;
-    highTemp: number;
-    lowTemp: number;
-    precipitation: number;
-    confidence: number;
-  }>;
   summary: string;
   modelAgreement: number;
   insights: string[];
@@ -65,9 +50,6 @@ const translations = {
     wind: "Wind",
     sunset: "Sunset",
     precip: "Precip",
-    loading: "Loading...",
-    locationRequired: "Location required",
-    enableLocation: "Please enable location access",
     basedOn: "Based on data from",
   },
   da: {
@@ -75,12 +57,50 @@ const translations = {
     wind: "Vind",
     sunset: "Solnedgang",
     precip: "Nedbør",
-    loading: "Indlæser...",
-    locationRequired: "Placering påkrævet",
-    enableLocation: "Aktiver venligst placeringsadgang",
     basedOn: "Baseret på data fra",
   },
 };
+
+function SkeletonWidget({ theme, t }: { theme: EmbedTheme; t: typeof translations.en }) {
+  const themeClasses = theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900";
+  const secondaryTextClass = theme === "dark" ? "text-gray-400" : "text-gray-500";
+  const borderClass = theme === "dark" ? "border-gray-700" : "border-gray-200";
+
+  return (
+    <div className={`p-4 ${themeClasses}`}>
+      <p className={`text-xs text-center mb-3 ${secondaryTextClass}`}>{t.title}</p>
+      
+      <div className="flex flex-col items-center mb-4">
+        <Skeleton className="h-12 w-12 rounded-full mb-2" />
+        <Skeleton className="h-10 w-20" />
+      </div>
+
+      <div className={`flex items-center justify-center gap-6 text-center border-t ${borderClass} pt-3 mb-3`}>
+        <div className="flex flex-col items-center gap-1">
+          <Skeleton className="h-3 w-3" />
+          <Skeleton className="h-3 w-8" />
+          <Skeleton className="h-4 w-12" />
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <Skeleton className="h-3 w-3" />
+          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-4 w-10" />
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <Skeleton className="h-3 w-3" />
+          <Skeleton className="h-3 w-10" />
+          <Skeleton className="h-4 w-10" />
+        </div>
+      </div>
+
+      <div className={`text-center border-t ${borderClass} pt-2`}>
+        <span className={`text-[10px] ${secondaryTextClass}`}>
+          {t.basedOn} <span className="font-medium">Rainz.net</span>
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export default function EmbedPage() {
   const [searchParams] = useSearchParams();
@@ -104,7 +124,6 @@ export default function EmbedPage() {
   // Auto-detect location if not provided via URL params
   useEffect(() => {
     if (paramLat && paramLon) {
-      // If location name not provided, reverse geocode
       if (!paramLocation) {
         reverseGeocode(parseFloat(paramLat), parseFloat(paramLon));
       }
@@ -112,32 +131,19 @@ export default function EmbedPage() {
     }
 
     if (!navigator.geolocation) {
-      setLocation(prev => ({
-        ...prev,
-        loading: false,
-        error: "Geolocation not supported",
-      }));
+      setLocation(prev => ({ ...prev, loading: false, error: "Geolocation not supported" }));
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        setLocation(prev => ({
-          ...prev,
-          lat: latitude,
-          lon: longitude,
-          loading: false,
-        }));
+        setLocation(prev => ({ ...prev, lat: latitude, lon: longitude, loading: false }));
         await reverseGeocode(latitude, longitude);
       },
       (error) => {
         console.error("Geolocation error:", error);
-        setLocation(prev => ({
-          ...prev,
-          loading: false,
-          error: error.message,
-        }));
+        setLocation(prev => ({ ...prev, loading: false, error: error.message }));
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
     );
@@ -207,23 +213,55 @@ export default function EmbedPage() {
     retry: 1,
   });
 
-  // Get sunset from raw weather data
+  // Theme classes
+  const themeClasses = theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900";
+  const secondaryTextClass = theme === "dark" ? "text-gray-400" : "text-gray-500";
+  const borderClass = theme === "dark" ? "border-gray-700" : "border-gray-200";
+
+  const isLoading = location.loading || weatherLoading || llmLoading;
+
+  // Show skeleton while loading
+  if (isLoading) {
+    return <SkeletonWidget theme={theme} t={t} />;
+  }
+
+  // Error state - still show skeleton structure with error
+  if (location.error && !location.lat) {
+    return (
+      <div className={`p-4 ${themeClasses}`}>
+        <p className={`text-xs text-center mb-3 ${secondaryTextClass}`}>{t.title}</p>
+        <div className="flex flex-col items-center mb-4">
+          <Cloud className="h-12 w-12 mb-2 opacity-30" />
+          <p className={`text-sm ${secondaryTextClass}`}>Location required</p>
+        </div>
+        <div className={`text-center border-t ${borderClass} pt-2`}>
+          <a href="https://rainz.net" target="_blank" rel="noopener noreferrer" className={`text-[10px] ${secondaryTextClass} hover:opacity-80`}>
+            {t.basedOn} <span className="font-medium">Rainz.net</span>
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  // Get data from raw weather (LLM may still be loading or failed)
   const rawCurrent = weatherData?.mostAccurate?.currentWeather;
+  const displayTemp = llmForecast?.current?.temperature ?? rawCurrent?.temperature ?? 0;
+  const displayCondition = llmForecast?.current?.condition ?? rawCurrent?.condition ?? "Unknown";
+  const displayWind = llmForecast?.current?.windSpeed ?? rawCurrent?.windSpeed ?? 0;
+  const displayPrecip = rawCurrent?.precipitation ?? 0;
   const sunsetTime = rawCurrent?.sunset || "";
 
-  // Format temperature
+  // Format functions
   const formatTemp = (tempF: number) => {
     if (units === "imperial") return `${Math.round(tempF)}°F`;
     return `${Math.round((tempF - 32) * 5 / 9)}°C`;
   };
 
-  // Format wind speed
   const formatWind = (speedMph: number) => {
     if (units === "imperial") return `${Math.round(speedMph)} mph`;
-    return `${(speedMph * 1.60934).toFixed(1)} km/h`;
+    return `${(speedMph * 0.44704).toFixed(1)} m/s`;
   };
 
-  // Format sunset time
   const formatSunset = (time: string) => {
     if (!time) return "--:--";
     try {
@@ -238,97 +276,45 @@ export default function EmbedPage() {
     }
   };
 
-  const isLoading = location.loading || weatherLoading || llmLoading;
-
-  // Theme classes
-  const themeClasses = theme === "dark"
-    ? "bg-gray-900 text-white"
-    : "bg-white text-gray-900";
-
-  const secondaryTextClass = theme === "dark"
-    ? "text-gray-400"
-    : "text-gray-500";
-
-  const borderClass = theme === "dark"
-    ? "border-gray-700"
-    : "border-gray-200";
-
-  // Error state
-  if (location.error && !location.lat) {
-    return (
-      <div className={`h-screen w-screen flex flex-col items-center justify-center p-4 ${themeClasses}`}>
-        <Cloud className="h-12 w-12 mb-3 opacity-50" />
-        <p className="font-medium">{t.locationRequired}</p>
-        <p className={`text-sm ${secondaryTextClass}`}>{t.enableLocation}</p>
-      </div>
-    );
-  }
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className={`h-screen w-screen flex flex-col items-center justify-center p-4 ${themeClasses}`}>
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="h-12 w-12 rounded-full bg-current/10 mb-3" />
-          <div className="h-4 w-24 rounded bg-current/10" />
-        </div>
-        <p className={`text-sm mt-3 ${secondaryTextClass}`}>{t.loading}</p>
-      </div>
-    );
-  }
-
-  // Get display data from LLM forecast or fall back to raw
-  const displayTemp = llmForecast?.current?.temperature ?? rawCurrent?.temperature ?? 0;
-  const displayCondition = llmForecast?.current?.condition ?? rawCurrent?.condition ?? "Unknown";
-  const displayWind = llmForecast?.current?.windSpeed ?? rawCurrent?.windSpeed ?? 0;
-  const displayPrecip = rawCurrent?.precipitation ?? 0;
-
   const ConditionIcon = getConditionIcon(displayCondition);
 
   return (
-    <div className={`h-screen w-screen flex flex-col ${themeClasses}`}>
-      {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4">
-        {/* Title */}
-        <h1 className={`text-sm font-medium mb-4 ${secondaryTextClass}`}>
-          {t.title}
-        </h1>
+    <div className={`p-4 ${themeClasses}`}>
+      {/* Title */}
+      <p className={`text-xs text-center mb-3 ${secondaryTextClass}`}>{t.title}</p>
 
-        {/* Weather icon and temperature */}
-        <div className="flex flex-col items-center mb-6">
-          <ConditionIcon className="h-16 w-16 mb-2 opacity-80" />
-          <span className="text-5xl font-light">
-            {formatTemp(displayTemp)}
-          </span>
+      {/* Weather icon and temperature */}
+      <div className="flex flex-col items-center mb-4">
+        <ConditionIcon className="h-12 w-12 mb-1 opacity-70" />
+        <span className="text-4xl font-light">{formatTemp(displayTemp)}</span>
+      </div>
+
+      {/* Metrics row */}
+      <div className={`flex items-center justify-center gap-6 text-center border-t ${borderClass} pt-3 mb-3`}>
+        <div className="flex flex-col items-center">
+          <Wind className={`h-3 w-3 mb-0.5 ${secondaryTextClass}`} />
+          <span className={`text-[10px] ${secondaryTextClass}`}>{t.wind}</span>
+          <span className="text-xs font-medium">{formatWind(displayWind)}</span>
         </div>
-
-        {/* Metrics row */}
-        <div className={`flex items-center justify-center gap-8 text-center border-t ${borderClass} pt-4 w-full max-w-xs`}>
-          <div className="flex flex-col items-center">
-            <Wind className={`h-4 w-4 mb-1 ${secondaryTextClass}`} />
-            <span className={`text-xs ${secondaryTextClass}`}>{t.wind}</span>
-            <span className="text-sm font-medium">{formatWind(displayWind)}</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <Sunset className={`h-4 w-4 mb-1 ${secondaryTextClass}`} />
-            <span className={`text-xs ${secondaryTextClass}`}>{t.sunset}</span>
-            <span className="text-sm font-medium">{formatSunset(sunsetTime)}</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <Droplets className={`h-4 w-4 mb-1 ${secondaryTextClass}`} />
-            <span className={`text-xs ${secondaryTextClass}`}>{t.precip}</span>
-            <span className="text-sm font-medium">{displayPrecip} mm</span>
-          </div>
+        <div className="flex flex-col items-center">
+          <Sunset className={`h-3 w-3 mb-0.5 ${secondaryTextClass}`} />
+          <span className={`text-[10px] ${secondaryTextClass}`}>{t.sunset}</span>
+          <span className="text-xs font-medium">{formatSunset(sunsetTime)}</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <Droplets className={`h-3 w-3 mb-0.5 ${secondaryTextClass}`} />
+          <span className={`text-[10px] ${secondaryTextClass}`}>{t.precip}</span>
+          <span className="text-xs font-medium">{displayPrecip} mm</span>
         </div>
       </div>
 
       {/* Footer branding */}
-      <div className={`py-3 text-center border-t ${borderClass}`}>
+      <div className={`text-center border-t ${borderClass} pt-2`}>
         <a
           href="https://rainz.net"
           target="_blank"
           rel="noopener noreferrer"
-          className={`text-xs ${secondaryTextClass} hover:opacity-80 transition-opacity`}
+          className={`text-[10px] ${secondaryTextClass} hover:opacity-80 transition-opacity`}
         >
           {t.basedOn} <span className="font-medium">Rainz.net</span>
         </a>

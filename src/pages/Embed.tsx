@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { weatherApi } from "@/lib/weather-api";
-import { supabase } from "@/integrations/supabase/client";
-import { Cloud, Sun, CloudRain, Snowflake, CloudLightning, Wind, Sunset, Droplets } from "lucide-react";
+import { Cloud, Sun, CloudRain, Snowflake, CloudLightning, Wind, Sunset, Droplets, Calendar, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type EmbedTheme = "light" | "dark";
@@ -15,24 +14,6 @@ interface LocationState {
   name: string;
   loading: boolean;
   error: string | null;
-}
-
-interface LLMForecastData {
-  current: {
-    temperature: number;
-    feelsLike: number;
-    condition: string;
-    description: string;
-    humidity: number;
-    windSpeed: number;
-    pressure: number;
-    confidence: number;
-  };
-  summary: string;
-  modelAgreement: number;
-  insights: string[];
-  rawApiData?: boolean;
-  source?: string;
 }
 
 const getConditionIcon = (condition: string) => {
@@ -110,6 +91,8 @@ export default function EmbedPage() {
   const theme = (searchParams.get("theme") || "light") as EmbedTheme;
   const lang = (searchParams.get("lang") || "en") as EmbedLang;
   const units = searchParams.get("units") || "metric";
+  const showDate = searchParams.get("date") === "true";
+  const showTime = searchParams.get("time") === "true";
 
   const t = translations[lang] || translations.en;
 
@@ -145,7 +128,7 @@ export default function EmbedPage() {
         console.error("Geolocation error:", error);
         setLocation(prev => ({ ...prev, loading: false, error: error.message }));
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 600000 }
     );
   }, [paramLat, paramLon, paramLocation]);
 
@@ -163,7 +146,7 @@ export default function EmbedPage() {
     }
   };
 
-  // Fetch raw weather data
+  // Fetch raw weather data - fast, no LLM
   const { data: weatherData, isLoading: weatherLoading } = useQuery({
     queryKey: ["embed-weather", location.lat, location.lon],
     queryFn: () => weatherApi.getWeatherData(location.lat!, location.lon!, location.name),
@@ -172,53 +155,12 @@ export default function EmbedPage() {
     refetchInterval: 10 * 60 * 1000,
   });
 
-  // Transform sources for LLM
-  const sources = weatherData?.sources?.map(source => ({
-    source: source.source,
-    currentWeather: {
-      temperature: source.currentWeather?.temperature || 0,
-      condition: source.currentWeather?.condition || "Unknown",
-      humidity: source.currentWeather?.humidity || 0,
-      windSpeed: source.currentWeather?.windSpeed || 0,
-      feelsLike: source.currentWeather?.feelsLike || 0,
-      pressure: source.currentWeather?.pressure || 1013,
-    },
-    hourlyForecast: source.hourlyForecast?.slice(0, 24).map(h => ({
-      time: h.time,
-      temperature: h.temperature,
-      condition: h.condition,
-      precipitation: h.precipitation || 0,
-    })) || [],
-    dailyForecast: source.dailyForecast?.slice(0, 7).map(d => ({
-      day: d.day,
-      condition: d.condition,
-      highTemp: d.highTemp,
-      lowTemp: d.lowTemp,
-      precipitation: d.precipitation || 0,
-    })) || [],
-  }));
-
-  // Fetch AI-enhanced forecast
-  const { data: llmForecast, isLoading: llmLoading } = useQuery<LLMForecastData>({
-    queryKey: ["embed-llm-forecast", location.name, sources?.length],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("llm-weather-forecast", {
-        body: { sources, location: location.name },
-      });
-      if (error) throw error;
-      return data as LLMForecastData;
-    },
-    enabled: !!sources && sources.length > 0 && !!location.name,
-    staleTime: 10 * 60 * 1000,
-    retry: 1,
-  });
-
   // Theme classes
   const themeClasses = theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900";
   const secondaryTextClass = theme === "dark" ? "text-gray-400" : "text-gray-500";
   const borderClass = theme === "dark" ? "border-gray-700" : "border-gray-200";
 
-  const isLoading = location.loading || weatherLoading || llmLoading;
+  const isLoading = location.loading || weatherLoading;
 
   // Show skeleton while loading
   if (isLoading) {
@@ -243,12 +185,15 @@ export default function EmbedPage() {
     );
   }
 
-  // Get data from raw weather (LLM may still be loading or failed)
+  // Get data from raw weather API directly (fast!)
   const rawCurrent = weatherData?.mostAccurate?.currentWeather;
-  const displayTemp = llmForecast?.current?.temperature ?? rawCurrent?.temperature ?? 0;
-  const displayCondition = llmForecast?.current?.condition ?? rawCurrent?.condition ?? "Unknown";
-  const displayWind = llmForecast?.current?.windSpeed ?? rawCurrent?.windSpeed ?? 0;
+  
+  const displayTemp = rawCurrent?.temperature ?? 0;
+  const displayCondition = rawCurrent?.condition ?? "Unknown";
+  const displayWind = rawCurrent?.windSpeed ?? 0;
   const displayPrecip = rawCurrent?.precipitation ?? 0;
+  
+  // Get sunset from current weather (it's enriched there)
   const sunsetTime = rawCurrent?.sunset || "";
 
   // Format functions
@@ -266,6 +211,7 @@ export default function EmbedPage() {
     if (!time) return "--:--";
     try {
       const date = new Date(time);
+      if (isNaN(date.getTime())) return time;
       return date.toLocaleTimeString(lang === "da" ? "da-DK" : "en-US", {
         hour: "2-digit",
         minute: "2-digit",
@@ -276,12 +222,47 @@ export default function EmbedPage() {
     }
   };
 
+  const formatCurrentDate = () => {
+    const now = new Date();
+    return now.toLocaleDateString(lang === "da" ? "da-DK" : "en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const formatCurrentTime = () => {
+    const now = new Date();
+    return now.toLocaleTimeString(lang === "da" ? "da-DK" : "en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  };
+
   const ConditionIcon = getConditionIcon(displayCondition);
 
   return (
     <div className={`p-4 ${themeClasses}`}>
-      {/* Title */}
-      <p className={`text-xs text-center mb-3 ${secondaryTextClass}`}>{t.title}</p>
+      {/* Title with optional date/time */}
+      <div className="flex items-center justify-center gap-2 mb-3">
+        {showDate && (
+          <span className={`text-xs flex items-center gap-1 ${secondaryTextClass}`}>
+            <Calendar className="h-3 w-3" />
+            {formatCurrentDate()}
+          </span>
+        )}
+        {showDate && showTime && <span className={secondaryTextClass}>•</span>}
+        {showTime && (
+          <span className={`text-xs flex items-center gap-1 ${secondaryTextClass}`}>
+            <Clock className="h-3 w-3" />
+            {formatCurrentTime()}
+          </span>
+        )}
+        {!showDate && !showTime && (
+          <p className={`text-xs ${secondaryTextClass}`}>{t.title}</p>
+        )}
+      </div>
 
       {/* Weather icon and temperature */}
       <div className="flex flex-col items-center mb-4">

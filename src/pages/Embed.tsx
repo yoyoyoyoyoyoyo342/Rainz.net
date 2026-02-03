@@ -3,8 +3,9 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { weatherApi } from "@/lib/weather-api";
 import { useLLMWeatherForecast } from "@/hooks/use-llm-weather-forecast";
+import { EmbedWeatherBackground } from "@/components/weather/embed-weather-background";
 import { Cloud, Sun, CloudRain, Snowflake, CloudLightning, Wind, Sunset, Droplets, Calendar, Clock } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import rainzLogo from "@/assets/rainz-logo-new.png";
 
 type EmbedTheme = "light" | "dark";
 type EmbedLang = "en" | "da";
@@ -32,53 +33,52 @@ const translations = {
     wind: "Wind",
     sunset: "Sunset",
     precip: "Precip",
-    basedOn: "Based on data from",
+    loading: "Loading...",
+    basedOn: "Powered by",
   },
   da: {
     title: "Vejrudsigt",
     wind: "Vind",
     sunset: "Solnedgang",
     precip: "Nedbør",
-    basedOn: "Baseret på data fra",
+    loading: "Indlæser...",
+    basedOn: "Drevet af",
   },
 };
 
 function SkeletonWidget({ theme, t }: { theme: EmbedTheme; t: typeof translations.en }) {
-  const themeClasses = theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900";
-  const secondaryTextClass = theme === "dark" ? "text-gray-400" : "text-gray-500";
-  const borderClass = theme === "dark" ? "border-gray-700" : "border-gray-200";
-
+  const isDark = theme === "dark";
+  
   return (
-    <div className={`p-4 ${themeClasses}`}>
-      <p className={`text-xs text-center mb-3 ${secondaryTextClass}`}>{t.title}</p>
-      
-      <div className="flex flex-col items-center mb-4">
-        <Skeleton className="h-12 w-12 rounded-full mb-2" />
-        <Skeleton className="h-10 w-20" />
-      </div>
-
-      <div className={`flex items-center justify-center gap-6 text-center border-t ${borderClass} pt-3 mb-3`}>
-        <div className="flex flex-col items-center gap-1">
-          <Skeleton className="h-3 w-3" />
-          <Skeleton className="h-3 w-8" />
-          <Skeleton className="h-4 w-12" />
+    <div className={`relative h-full w-full overflow-hidden rounded-2xl ${isDark ? 'bg-slate-900' : 'bg-sky-400'}`}>
+      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-white/10" />
+      <div className="relative h-full flex flex-col p-4">
+        {/* Glass header */}
+        <div className={`flex items-center justify-center gap-2 mb-3 px-3 py-1.5 rounded-full mx-auto ${isDark ? 'bg-white/10' : 'bg-white/20'} backdrop-blur-sm`}>
+          <div className={`w-12 h-3 rounded ${isDark ? 'bg-white/20' : 'bg-white/30'} animate-pulse`} />
         </div>
-        <div className="flex flex-col items-center gap-1">
-          <Skeleton className="h-3 w-3" />
-          <Skeleton className="h-3 w-12" />
-          <Skeleton className="h-4 w-10" />
+        
+        {/* Main content skeleton */}
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <div className={`w-12 h-12 rounded-full ${isDark ? 'bg-white/20' : 'bg-white/30'} animate-pulse mb-2`} />
+          <div className={`w-16 h-8 rounded ${isDark ? 'bg-white/20' : 'bg-white/30'} animate-pulse`} />
         </div>
-        <div className="flex flex-col items-center gap-1">
-          <Skeleton className="h-3 w-3" />
-          <Skeleton className="h-3 w-10" />
-          <Skeleton className="h-4 w-10" />
+        
+        {/* Metrics skeleton */}
+        <div className={`flex items-center justify-center gap-4 py-2 px-3 rounded-xl ${isDark ? 'bg-black/20' : 'bg-white/20'} backdrop-blur-sm`}>
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex flex-col items-center gap-1">
+              <div className={`w-3 h-3 rounded ${isDark ? 'bg-white/20' : 'bg-white/30'} animate-pulse`} />
+              <div className={`w-8 h-2 rounded ${isDark ? 'bg-white/20' : 'bg-white/30'} animate-pulse`} />
+            </div>
+          ))}
         </div>
-      </div>
-
-      <div className={`text-center border-t ${borderClass} pt-2`}>
-        <span className={`text-[10px] ${secondaryTextClass}`}>
-          {t.basedOn} <span className="font-medium">Rainz.net</span>
-        </span>
+        
+        {/* Footer skeleton */}
+        <div className="flex items-center justify-center gap-1.5 mt-2">
+          <div className={`w-4 h-4 rounded ${isDark ? 'bg-white/20' : 'bg-white/30'} animate-pulse`} />
+          <div className={`w-12 h-2 rounded ${isDark ? 'bg-white/20' : 'bg-white/30'} animate-pulse`} />
+        </div>
       </div>
     </div>
   );
@@ -88,7 +88,6 @@ function SkeletonWidget({ theme, t }: { theme: EmbedTheme; t: typeof translation
 function parseDateParam(dateStr: string | null): Date | null {
   if (!dateStr) return null;
   try {
-    // Handle DD/MM/YY format
     if (dateStr.includes("/")) {
       const parts = dateStr.split("/");
       if (parts.length === 3) {
@@ -99,7 +98,6 @@ function parseDateParam(dateStr: string | null): Date | null {
         return new Date(year, month, day);
       }
     }
-    // Handle YYYY-MM-DD format
     const parsed = new Date(dateStr);
     if (!isNaN(parsed.getTime())) return parsed;
   } catch {}
@@ -133,6 +131,7 @@ export default function EmbedPage() {
   const timeParam = searchParams.get("time");
 
   const t = translations[lang] || translations.en;
+  const isDark = theme === "dark";
 
   // Parse forecast date/time from URL params
   const targetDate = useMemo(() => parseDateParam(dateParam), [dateParam]);
@@ -216,11 +215,6 @@ export default function EmbedPage() {
     !!sources && sources.length > 0
   );
 
-  // Theme classes
-  const themeClasses = theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900";
-  const secondaryTextClass = theme === "dark" ? "text-gray-400" : "text-gray-500";
-  const borderClass = theme === "dark" ? "border-gray-700" : "border-gray-200";
-
   const isLoading = location.loading || weatherLoading || llmLoading;
 
   // Show skeleton while loading
@@ -228,18 +222,22 @@ export default function EmbedPage() {
     return <SkeletonWidget theme={theme} t={t} />;
   }
 
-  // Error state - still show skeleton structure with error
+  // Error state
   if (location.error && !location.lat) {
     return (
-      <div className={`p-4 ${themeClasses}`}>
-        <p className={`text-xs text-center mb-3 ${secondaryTextClass}`}>{t.title}</p>
-        <div className="flex flex-col items-center mb-4">
-          <Cloud className="h-12 w-12 mb-2 opacity-30" />
-          <p className={`text-sm ${secondaryTextClass}`}>Location required</p>
-        </div>
-        <div className={`text-center border-t ${borderClass} pt-2`}>
-          <a href="https://rainz.net" target="_blank" rel="noopener noreferrer" className={`text-[10px] ${secondaryTextClass} hover:opacity-80`}>
-            {t.basedOn} <span className="font-medium">Rainz.net</span>
+      <div className={`relative h-full w-full overflow-hidden rounded-2xl ${isDark ? 'bg-slate-900' : 'bg-sky-400'}`}>
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-white/10" />
+        <div className="relative h-full flex flex-col items-center justify-center p-4">
+          <Cloud className="h-12 w-12 mb-2 text-white/50" />
+          <p className="text-sm text-white/70">Location required</p>
+          <a
+            href="https://rainz.net"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 mt-4 opacity-70 hover:opacity-100 transition-opacity"
+          >
+            <img src={rainzLogo} alt="Rainz" className="w-4 h-4 rounded" />
+            <span className="text-[10px] text-white font-medium">Rainz.net</span>
           </a>
         </div>
       </div>
@@ -249,7 +247,6 @@ export default function EmbedPage() {
   // Get data from LLM forecast (AI-enhanced) with fallback to raw
   const rawCurrent = weatherData?.mostAccurate?.currentWeather;
   
-  // Determine which forecast data to use based on date/time params
   let displayTemp = llmForecast?.current?.temperature ?? rawCurrent?.temperature ?? 0;
   let displayCondition = llmForecast?.current?.condition ?? rawCurrent?.condition ?? "Unknown";
   let displayWind = llmForecast?.current?.windSpeed ?? rawCurrent?.windSpeed ?? 0;
@@ -263,11 +260,9 @@ export default function EmbedPage() {
     const forecastDate = targetDate || now;
     const forecastHours = targetTime?.hours ?? now.getHours();
 
-    // Check if we need hourly or daily forecast
     const daysDiff = Math.floor((forecastDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     
     if (daysDiff <= 1 && llmForecast?.hourly?.length) {
-      // Find matching hour in hourly forecast
       const targetHour = forecastHours;
       const hourlyMatch = llmForecast.hourly.find(h => {
         try {
@@ -284,7 +279,6 @@ export default function EmbedPage() {
         displayPrecip = hourlyMatch.precipitation || 0;
       }
     } else if (llmForecast?.daily?.length) {
-      // Find matching day in daily forecast
       const targetDayStr = forecastDate.toLocaleDateString("en-US", { weekday: "short" });
       const dailyMatch = llmForecast.daily.find(d => 
         d.day?.toLowerCase().includes(targetDayStr.toLowerCase())
@@ -297,7 +291,6 @@ export default function EmbedPage() {
       }
     }
 
-    // Format display strings
     displayDateStr = forecastDate.toLocaleDateString(lang === "da" ? "da-DK" : "en-US", {
       weekday: "short",
       month: "short",
@@ -306,10 +299,8 @@ export default function EmbedPage() {
     displayTimeStr = `${forecastHours.toString().padStart(2, "0")}:${(targetTime?.minutes ?? 0).toString().padStart(2, "0")}`;
   }
 
-  // Get sunset from raw weather data
   const sunsetTime = rawCurrent?.sunset || "";
 
-  // Format functions
   const formatTemp = (tempF: number) => {
     if (units === "imperial") return `${Math.round(tempF)}°F`;
     return `${Math.round((tempF - 32) * 5 / 9)}°C`;
@@ -338,64 +329,76 @@ export default function EmbedPage() {
   const ConditionIcon = getConditionIcon(displayCondition);
 
   return (
-    <div className={`p-4 ${themeClasses}`}>
-      {/* Title with forecast date/time */}
-      <div className="flex items-center justify-center gap-2 mb-3">
-        {isFutureForecast ? (
-          <>
-            {targetDate && (
-              <span className={`text-xs flex items-center gap-1 ${secondaryTextClass}`}>
-                <Calendar className="h-3 w-3" />
-                {displayDateStr}
-              </span>
-            )}
-            {targetDate && targetTime && <span className={secondaryTextClass}>•</span>}
-            {targetTime && (
-              <span className={`text-xs flex items-center gap-1 ${secondaryTextClass}`}>
-                <Clock className="h-3 w-3" />
-                {displayTimeStr}
-              </span>
-            )}
-          </>
-        ) : (
-          <p className={`text-xs ${secondaryTextClass}`}>{t.title}</p>
-        )}
-      </div>
-
-      {/* Weather icon and temperature */}
-      <div className="flex flex-col items-center mb-4">
-        <ConditionIcon className="h-12 w-12 mb-1 opacity-70" />
-        <span className="text-4xl font-light">{formatTemp(displayTemp)}</span>
-      </div>
-
-      {/* Metrics row */}
-      <div className={`flex items-center justify-center gap-6 text-center border-t ${borderClass} pt-3 mb-3`}>
-        <div className="flex flex-col items-center">
-          <Wind className={`h-3 w-3 mb-0.5 ${secondaryTextClass}`} />
-          <span className={`text-[10px] ${secondaryTextClass}`}>{t.wind}</span>
-          <span className="text-xs font-medium">{formatWind(displayWind)}</span>
+    <div className="relative h-full w-full overflow-hidden rounded-2xl">
+      {/* Animated weather background */}
+      <EmbedWeatherBackground condition={displayCondition} theme={theme} />
+      
+      {/* Content overlay */}
+      <div className="relative h-full flex flex-col p-4 z-10">
+        {/* Glass header pill */}
+        <div className={`flex items-center justify-center gap-2 mb-2 px-3 py-1.5 rounded-full mx-auto ${isDark ? 'bg-black/30' : 'bg-white/30'} backdrop-blur-md border ${isDark ? 'border-white/10' : 'border-white/40'}`}>
+          {isFutureForecast ? (
+            <>
+              {targetDate && (
+                <span className="text-[11px] flex items-center gap-1 text-white font-medium drop-shadow-sm">
+                  <Calendar className="h-3 w-3" />
+                  {displayDateStr}
+                </span>
+              )}
+              {targetDate && targetTime && <span className="text-white/60">•</span>}
+              {targetTime && (
+                <span className="text-[11px] flex items-center gap-1 text-white font-medium drop-shadow-sm">
+                  <Clock className="h-3 w-3" />
+                  {displayTimeStr}
+                </span>
+              )}
+            </>
+          ) : (
+            <p className="text-[11px] text-white font-medium drop-shadow-sm">{t.title}</p>
+          )}
         </div>
-        <div className="flex flex-col items-center">
-          <Sunset className={`h-3 w-3 mb-0.5 ${secondaryTextClass}`} />
-          <span className={`text-[10px] ${secondaryTextClass}`}>{t.sunset}</span>
-          <span className="text-xs font-medium">{formatSunset(sunsetTime)}</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <Droplets className={`h-3 w-3 mb-0.5 ${secondaryTextClass}`} />
-          <span className={`text-[10px] ${secondaryTextClass}`}>{t.precip}</span>
-          <span className="text-xs font-medium">{displayPrecip} mm</span>
-        </div>
-      </div>
 
-      {/* Footer branding */}
-      <div className={`text-center border-t ${borderClass} pt-2`}>
+        {/* Weather icon and temperature - centered */}
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <ConditionIcon className="h-12 w-12 mb-1 text-white drop-shadow-lg" />
+          <span className="text-4xl font-bold text-white drop-shadow-lg tracking-tight">
+            {formatTemp(displayTemp)}
+          </span>
+          <span className="text-xs text-white/80 mt-1 capitalize drop-shadow-sm">
+            {displayCondition}
+          </span>
+        </div>
+
+        {/* Metrics row - glass card */}
+        <div className={`flex items-center justify-center gap-4 py-2 px-3 rounded-xl ${isDark ? 'bg-black/30' : 'bg-white/25'} backdrop-blur-md border ${isDark ? 'border-white/10' : 'border-white/30'}`}>
+          <div className="flex flex-col items-center">
+            <Wind className="h-3.5 w-3.5 mb-0.5 text-white/80" />
+            <span className="text-[9px] text-white/70">{t.wind}</span>
+            <span className="text-xs font-semibold text-white drop-shadow-sm">{formatWind(displayWind)}</span>
+          </div>
+          <div className={`w-px h-8 ${isDark ? 'bg-white/20' : 'bg-white/40'}`} />
+          <div className="flex flex-col items-center">
+            <Sunset className="h-3.5 w-3.5 mb-0.5 text-white/80" />
+            <span className="text-[9px] text-white/70">{t.sunset}</span>
+            <span className="text-xs font-semibold text-white drop-shadow-sm">{formatSunset(sunsetTime)}</span>
+          </div>
+          <div className={`w-px h-8 ${isDark ? 'bg-white/20' : 'bg-white/40'}`} />
+          <div className="flex flex-col items-center">
+            <Droplets className="h-3.5 w-3.5 mb-0.5 text-white/80" />
+            <span className="text-[9px] text-white/70">{t.precip}</span>
+            <span className="text-xs font-semibold text-white drop-shadow-sm">{displayPrecip} mm</span>
+          </div>
+        </div>
+
+        {/* Footer branding */}
         <a
           href="https://rainz.net"
           target="_blank"
           rel="noopener noreferrer"
-          className={`text-[10px] ${secondaryTextClass} hover:opacity-80 transition-opacity`}
+          className="flex items-center justify-center gap-1.5 mt-2 opacity-80 hover:opacity-100 transition-opacity"
         >
-          {t.basedOn} <span className="font-medium">Rainz.net</span>
+          <img src={rainzLogo} alt="Rainz" className="w-4 h-4 rounded shadow-sm" />
+          <span className="text-[10px] text-white font-medium drop-shadow-sm">Rainz.net</span>
         </a>
       </div>
     </div>

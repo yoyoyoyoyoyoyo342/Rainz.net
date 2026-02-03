@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { weatherApi } from "@/lib/weather-api";
+import { useLLMWeatherForecast } from "@/hooks/use-llm-weather-forecast";
 import { Cloud, Sun, CloudRain, Snowflake, CloudLightning, Wind, Sunset, Droplets, Calendar, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -83,6 +84,43 @@ function SkeletonWidget({ theme, t }: { theme: EmbedTheme; t: typeof translation
   );
 }
 
+// Parse date param like "15/02/26" or "2026-02-15" to Date object
+function parseDateParam(dateStr: string | null): Date | null {
+  if (!dateStr) return null;
+  try {
+    // Handle DD/MM/YY format
+    if (dateStr.includes("/")) {
+      const parts = dateStr.split("/");
+      if (parts.length === 3) {
+        const day = parseInt(parts[0]);
+        const month = parseInt(parts[1]) - 1;
+        let year = parseInt(parts[2]);
+        if (year < 100) year += 2000;
+        return new Date(year, month, day);
+      }
+    }
+    // Handle YYYY-MM-DD format
+    const parsed = new Date(dateStr);
+    if (!isNaN(parsed.getTime())) return parsed;
+  } catch {}
+  return null;
+}
+
+// Parse time param like "10:00" to hours and minutes
+function parseTimeParam(timeStr: string | null): { hours: number; minutes: number } | null {
+  if (!timeStr) return null;
+  try {
+    const parts = timeStr.split(":");
+    if (parts.length >= 2) {
+      return {
+        hours: parseInt(parts[0]),
+        minutes: parseInt(parts[1]),
+      };
+    }
+  } catch {}
+  return null;
+}
+
 export default function EmbedPage() {
   const [searchParams] = useSearchParams();
   const paramLat = searchParams.get("lat");
@@ -91,10 +129,15 @@ export default function EmbedPage() {
   const theme = (searchParams.get("theme") || "light") as EmbedTheme;
   const lang = (searchParams.get("lang") || "en") as EmbedLang;
   const units = searchParams.get("units") || "metric";
-  const showDate = searchParams.get("date") === "true";
-  const showTime = searchParams.get("time") === "true";
+  const dateParam = searchParams.get("date");
+  const timeParam = searchParams.get("time");
 
   const t = translations[lang] || translations.en;
+
+  // Parse forecast date/time from URL params
+  const targetDate = useMemo(() => parseDateParam(dateParam), [dateParam]);
+  const targetTime = useMemo(() => parseTimeParam(timeParam), [timeParam]);
+  const isFutureForecast = !!targetDate || !!targetTime;
 
   const [location, setLocation] = useState<LocationState>({
     lat: paramLat ? parseFloat(paramLat) : null,
@@ -146,7 +189,7 @@ export default function EmbedPage() {
     }
   };
 
-  // Fetch raw weather data - fast, no LLM
+  // Fetch raw weather data
   const { data: weatherData, isLoading: weatherLoading } = useQuery({
     queryKey: ["embed-weather", location.lat, location.lon],
     queryFn: () => weatherApi.getWeatherData(location.lat!, location.lon!, location.name),
@@ -155,12 +198,30 @@ export default function EmbedPage() {
     refetchInterval: 10 * 60 * 1000,
   });
 
+  // Prepare sources for LLM forecast
+  const sources = useMemo(() => {
+    if (!weatherData?.sources) return undefined;
+    return weatherData.sources.map(s => ({
+      source: s.source,
+      currentWeather: s.currentWeather,
+      hourlyForecast: s.hourlyForecast,
+      dailyForecast: s.dailyForecast,
+    }));
+  }, [weatherData?.sources]);
+
+  // Fetch AI-enhanced weather data
+  const { data: llmForecast, isLoading: llmLoading } = useLLMWeatherForecast(
+    sources,
+    location.name,
+    !!sources && sources.length > 0
+  );
+
   // Theme classes
   const themeClasses = theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900";
   const secondaryTextClass = theme === "dark" ? "text-gray-400" : "text-gray-500";
   const borderClass = theme === "dark" ? "border-gray-700" : "border-gray-200";
 
-  const isLoading = location.loading || weatherLoading;
+  const isLoading = location.loading || weatherLoading || llmLoading;
 
   // Show skeleton while loading
   if (isLoading) {
@@ -185,15 +246,67 @@ export default function EmbedPage() {
     );
   }
 
-  // Get data from raw weather API directly (fast!)
+  // Get data from LLM forecast (AI-enhanced) with fallback to raw
   const rawCurrent = weatherData?.mostAccurate?.currentWeather;
   
-  const displayTemp = rawCurrent?.temperature ?? 0;
-  const displayCondition = rawCurrent?.condition ?? "Unknown";
-  const displayWind = rawCurrent?.windSpeed ?? 0;
-  const displayPrecip = rawCurrent?.precipitation ?? 0;
-  
-  // Get sunset from current weather (it's enriched there)
+  // Determine which forecast data to use based on date/time params
+  let displayTemp = llmForecast?.current?.temperature ?? rawCurrent?.temperature ?? 0;
+  let displayCondition = llmForecast?.current?.condition ?? rawCurrent?.condition ?? "Unknown";
+  let displayWind = llmForecast?.current?.windSpeed ?? rawCurrent?.windSpeed ?? 0;
+  let displayPrecip = 0;
+  let displayDateStr = "";
+  let displayTimeStr = "";
+
+  // If specific date/time requested, find matching forecast
+  if (isFutureForecast) {
+    const now = new Date();
+    const forecastDate = targetDate || now;
+    const forecastHours = targetTime?.hours ?? now.getHours();
+
+    // Check if we need hourly or daily forecast
+    const daysDiff = Math.floor((forecastDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff <= 1 && llmForecast?.hourly?.length) {
+      // Find matching hour in hourly forecast
+      const targetHour = forecastHours;
+      const hourlyMatch = llmForecast.hourly.find(h => {
+        try {
+          const hDate = new Date(h.time);
+          return hDate.getHours() === targetHour;
+        } catch {
+          return false;
+        }
+      });
+      
+      if (hourlyMatch) {
+        displayTemp = hourlyMatch.temperature;
+        displayCondition = hourlyMatch.condition;
+        displayPrecip = hourlyMatch.precipitation || 0;
+      }
+    } else if (llmForecast?.daily?.length) {
+      // Find matching day in daily forecast
+      const targetDayStr = forecastDate.toLocaleDateString("en-US", { weekday: "short" });
+      const dailyMatch = llmForecast.daily.find(d => 
+        d.day?.toLowerCase().includes(targetDayStr.toLowerCase())
+      );
+      
+      if (dailyMatch) {
+        displayTemp = (dailyMatch.highTemp + dailyMatch.lowTemp) / 2;
+        displayCondition = dailyMatch.condition;
+        displayPrecip = dailyMatch.precipitation || 0;
+      }
+    }
+
+    // Format display strings
+    displayDateStr = forecastDate.toLocaleDateString(lang === "da" ? "da-DK" : "en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+    displayTimeStr = `${forecastHours.toString().padStart(2, "0")}:${(targetTime?.minutes ?? 0).toString().padStart(2, "0")}`;
+  }
+
+  // Get sunset from raw weather data
   const sunsetTime = rawCurrent?.sunset || "";
 
   // Format functions
@@ -222,44 +335,29 @@ export default function EmbedPage() {
     }
   };
 
-  const formatCurrentDate = () => {
-    const now = new Date();
-    return now.toLocaleDateString(lang === "da" ? "da-DK" : "en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const formatCurrentTime = () => {
-    const now = new Date();
-    return now.toLocaleTimeString(lang === "da" ? "da-DK" : "en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-  };
-
   const ConditionIcon = getConditionIcon(displayCondition);
 
   return (
     <div className={`p-4 ${themeClasses}`}>
-      {/* Title with optional date/time */}
+      {/* Title with forecast date/time */}
       <div className="flex items-center justify-center gap-2 mb-3">
-        {showDate && (
-          <span className={`text-xs flex items-center gap-1 ${secondaryTextClass}`}>
-            <Calendar className="h-3 w-3" />
-            {formatCurrentDate()}
-          </span>
-        )}
-        {showDate && showTime && <span className={secondaryTextClass}>•</span>}
-        {showTime && (
-          <span className={`text-xs flex items-center gap-1 ${secondaryTextClass}`}>
-            <Clock className="h-3 w-3" />
-            {formatCurrentTime()}
-          </span>
-        )}
-        {!showDate && !showTime && (
+        {isFutureForecast ? (
+          <>
+            {targetDate && (
+              <span className={`text-xs flex items-center gap-1 ${secondaryTextClass}`}>
+                <Calendar className="h-3 w-3" />
+                {displayDateStr}
+              </span>
+            )}
+            {targetDate && targetTime && <span className={secondaryTextClass}>•</span>}
+            {targetTime && (
+              <span className={`text-xs flex items-center gap-1 ${secondaryTextClass}`}>
+                <Clock className="h-3 w-3" />
+                {displayTimeStr}
+              </span>
+            )}
+          </>
+        ) : (
           <p className={`text-xs ${secondaryTextClass}`}>{t.title}</p>
         )}
       </div>

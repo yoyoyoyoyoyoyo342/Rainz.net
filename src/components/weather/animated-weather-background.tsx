@@ -8,7 +8,7 @@ interface AnimatedWeatherBackgroundProps {
 }
 
 export function AnimatedWeatherBackground({ condition, sunrise, sunset, moonPhase }: AnimatedWeatherBackgroundProps) {
-  const [weatherType, setWeatherType] = useState<'clear' | 'rain' | 'snow' | 'cloudy' | 'storm' | 'sunrise' | 'sunset' | 'night'>('clear');
+  const [weatherType, setWeatherType] = useState<'clear' | 'partly_cloudy' | 'cloudy' | 'overcast' | 'rain' | 'snow' | 'storm' | 'fog' | 'sunrise' | 'sunset' | 'night'>('clear');
   const [timeOfDay, setTimeOfDay] = useState<'day' | 'night' | 'sunrise' | 'sunset'>('day');
   const [showConditionOverlay, setShowConditionOverlay] = useState(false);
 
@@ -76,15 +76,22 @@ export function AnimatedWeatherBackground({ condition, sunrise, sunset, moonPhas
       return;
     }
     
-    // Regular weather conditions during day
+    // Regular weather conditions during day - more specific matching
     setShowConditionOverlay(false);
-    if (lowerCondition.includes('rain') || lowerCondition.includes('drizzle')) {
-      setWeatherType('rain');
-    } else if (lowerCondition.includes('snow') || lowerCondition.includes('sleet')) {
-      setWeatherType('snow');
-    } else if (lowerCondition.includes('thunder') || lowerCondition.includes('storm')) {
+    
+    if (lowerCondition.includes('thunder') || lowerCondition.includes('storm')) {
       setWeatherType('storm');
-    } else if (lowerCondition.includes('cloud') || lowerCondition.includes('overcast')) {
+    } else if (lowerCondition.includes('rain') || lowerCondition.includes('drizzle') || lowerCondition.includes('shower')) {
+      setWeatherType('rain');
+    } else if (lowerCondition.includes('snow') || lowerCondition.includes('sleet') || lowerCondition.includes('ice') || lowerCondition.includes('blizzard')) {
+      setWeatherType('snow');
+    } else if (lowerCondition.includes('fog') || lowerCondition.includes('mist') || lowerCondition.includes('haze')) {
+      setWeatherType('fog');
+    } else if (lowerCondition.includes('overcast')) {
+      setWeatherType('overcast');
+    } else if (lowerCondition.includes('partly') || lowerCondition.includes('mostly sunny') || lowerCondition.includes('mostly clear')) {
+      setWeatherType('partly_cloudy');
+    } else if (lowerCondition.includes('cloud') || lowerCondition.includes('mostly cloudy')) {
       setWeatherType('cloudy');
     } else {
       setWeatherType('clear');
@@ -117,6 +124,10 @@ export function AnimatedWeatherBackground({ condition, sunrise, sunset, moonPhas
         weatherType === 'sunset' ? 'bg-gradient-to-b from-pink-400 via-orange-400 to-indigo-900' :
         weatherType === 'night' ? 'bg-gradient-to-br from-indigo-950 via-blue-950 to-blue-900' :
         weatherType === 'clear' ? 'bg-gradient-to-br from-blue-400 via-blue-300 to-blue-200' :
+        weatherType === 'partly_cloudy' ? 'bg-gradient-to-br from-sky-400 via-blue-300 to-sky-300' :
+        weatherType === 'cloudy' ? 'bg-gradient-to-br from-gray-400 via-gray-300 to-gray-200' :
+        weatherType === 'overcast' ? 'bg-gradient-to-br from-slate-500 via-gray-500 to-slate-400' :
+        weatherType === 'fog' ? 'bg-gradient-to-br from-gray-300 via-slate-300 to-gray-400' :
         weatherType === 'rain' ? 'bg-gradient-to-br from-gray-500 via-gray-400 to-gray-300' :
         weatherType === 'snow' ? 'bg-gradient-to-br from-blue-200 via-blue-100 to-gray-100' :
         weatherType === 'storm' ? 'bg-gradient-to-br from-gray-700 via-gray-600 to-gray-500' :
@@ -138,8 +149,52 @@ export function AnimatedWeatherBackground({ condition, sunrise, sunset, moonPhas
         <div className="sun sun-set" />
       )}
 
-      {/* Animated clouds */}
-      {(weatherType === 'cloudy' || weatherType === 'rain' || weatherType === 'storm') && (
+      {/* Bright sun for clear weather */}
+      {weatherType === 'clear' && (
+        <div className="clear-sun" />
+      )}
+
+      {/* Partial sun for partly cloudy */}
+      {weatherType === 'partly_cloudy' && (
+        <>
+          <div className="partial-sun" />
+          <div className="cloud cloud-partial-1" />
+          <div className="cloud cloud-partial-2" />
+        </>
+      )}
+
+      {/* Regular clouds for cloudy */}
+      {weatherType === 'cloudy' && (
+        <>
+          <div className="cloud cloud-1" />
+          <div className="cloud cloud-2" />
+          <div className="cloud cloud-3" />
+        </>
+      )}
+
+      {/* Heavy overcast clouds */}
+      {weatherType === 'overcast' && (
+        <>
+          <div className="overcast-layer overcast-1" />
+          <div className="overcast-layer overcast-2" />
+          <div className="overcast-layer overcast-3" />
+          <div className="overcast-cloud overcast-cloud-1" />
+          <div className="overcast-cloud overcast-cloud-2" />
+          <div className="overcast-cloud overcast-cloud-3" />
+        </>
+      )}
+
+      {/* Fog/mist effect */}
+      {weatherType === 'fog' && (
+        <>
+          <div className="fog-layer fog-1" />
+          <div className="fog-layer fog-2" />
+          <div className="fog-layer fog-3" />
+        </>
+      )}
+
+      {/* Animated clouds for rain/storm */}
+      {(weatherType === 'rain' || weatherType === 'storm') && (
         <>
           <div className="cloud cloud-1" />
           <div className="cloud cloud-2" />
@@ -188,7 +243,10 @@ export function AnimatedWeatherBackground({ condition, sunrise, sunset, moonPhas
           
           {/* Show fog/mist overlay */}
           {(condition.toLowerCase().includes('fog') || condition.toLowerCase().includes('mist')) && (
-            <div className="fog-overlay" />
+            <>
+              <div className="fog-layer fog-1 opacity-50" />
+              <div className="fog-layer fog-2 opacity-40" />
+            </>
           )}
         </>
       )}
@@ -376,9 +434,84 @@ export function AnimatedWeatherBackground({ condition, sunrise, sunset, moonPhas
           50% { opacity: 1; }
         }
         
+        /* Clear sun */
+        .clear-sun {
+          position: absolute;
+          width: 120px;
+          height: 120px;
+          top: 10%;
+          right: 15%;
+          background: radial-gradient(circle, rgba(255, 230, 100, 0.9) 0%, rgba(255, 200, 50, 0.6) 50%, transparent 70%);
+          border-radius: 50%;
+          box-shadow: 0 0 80px rgba(255, 230, 100, 0.5), 0 0 120px rgba(255, 200, 50, 0.3);
+          animation: sunPulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes sunPulse {
+          0%, 100% { transform: scale(1); opacity: 0.9; }
+          50% { transform: scale(1.05); opacity: 1; }
+        }
+        
+        /* Partial sun for partly cloudy */
+        .partial-sun {
+          position: absolute;
+          width: 100px;
+          height: 100px;
+          top: 8%;
+          right: 20%;
+          background: radial-gradient(circle, rgba(255, 230, 100, 0.85) 0%, rgba(255, 200, 50, 0.5) 50%, transparent 70%);
+          border-radius: 50%;
+          box-shadow: 0 0 60px rgba(255, 230, 100, 0.4);
+          animation: sunPulse 5s ease-in-out infinite;
+        }
+        
+        /* Partial clouds - lighter, positioned to partially cover sun */
+        .cloud-partial-1 {
+          width: 140px;
+          height: 50px;
+          top: 12%;
+          right: 10%;
+          animation-duration: 35s;
+          background: rgba(255, 255, 255, 0.7);
+        }
+        
+        .cloud-partial-1::before {
+          width: 60px;
+          height: 60px;
+          top: -30px;
+          left: 20px;
+          background: rgba(255, 255, 255, 0.7);
+        }
+        
+        .cloud-partial-1::after {
+          width: 70px;
+          height: 45px;
+          top: -18px;
+          right: 20px;
+          background: rgba(255, 255, 255, 0.7);
+        }
+        
+        .cloud-partial-2 {
+          width: 100px;
+          height: 35px;
+          top: 35%;
+          left: -10%;
+          animation-duration: 40s;
+          animation-delay: 8s;
+          background: rgba(255, 255, 255, 0.5);
+        }
+        
+        .cloud-partial-2::before {
+          width: 45px;
+          height: 45px;
+          top: -20px;
+          left: 15px;
+          background: rgba(255, 255, 255, 0.5);
+        }
+        
         .cloud {
           position: absolute;
-          background: rgba(255, 255, 255, 0.3);
+          background: rgba(255, 255, 255, 0.4);
           border-radius: 100px;
           animation: float 20s infinite ease-in-out;
         }
@@ -387,7 +520,7 @@ export function AnimatedWeatherBackground({ condition, sunrise, sunset, moonPhas
         .cloud::after {
           content: '';
           position: absolute;
-          background: rgba(255, 255, 255, 0.3);
+          background: rgba(255, 255, 255, 0.4);
           border-radius: 100px;
         }
         
@@ -466,6 +599,163 @@ export function AnimatedWeatherBackground({ condition, sunrise, sunset, moonPhas
           50% {
             transform: translateX(120vw) translateY(-20px);
           }
+        }
+        
+        /* Overcast - heavy grey clouds covering the sky */
+        .overcast-layer {
+          position: absolute;
+          width: 100%;
+          height: 40%;
+          background: linear-gradient(to bottom, rgba(100, 100, 110, 0.6), transparent);
+        }
+        
+        .overcast-1 {
+          top: 0;
+          animation: overcastDrift 40s ease-in-out infinite;
+        }
+        
+        .overcast-2 {
+          top: 10%;
+          animation: overcastDrift 50s ease-in-out infinite reverse;
+          opacity: 0.7;
+        }
+        
+        .overcast-3 {
+          top: 20%;
+          animation: overcastDrift 45s ease-in-out infinite;
+          animation-delay: 5s;
+          opacity: 0.5;
+        }
+        
+        @keyframes overcastDrift {
+          0%, 100% { transform: translateX(-5%); }
+          50% { transform: translateX(5%); }
+        }
+        
+        .overcast-cloud {
+          position: absolute;
+          background: rgba(130, 130, 140, 0.8);
+          border-radius: 100px;
+          animation: overcastFloat 30s infinite ease-in-out;
+        }
+        
+        .overcast-cloud::before,
+        .overcast-cloud::after {
+          content: '';
+          position: absolute;
+          background: rgba(130, 130, 140, 0.8);
+          border-radius: 100px;
+        }
+        
+        .overcast-cloud-1 {
+          width: 200px;
+          height: 70px;
+          top: 5%;
+          left: -15%;
+          animation-duration: 35s;
+        }
+        
+        .overcast-cloud-1::before {
+          width: 90px;
+          height: 90px;
+          top: -45px;
+          left: 30px;
+        }
+        
+        .overcast-cloud-1::after {
+          width: 100px;
+          height: 70px;
+          top: -30px;
+          right: 30px;
+        }
+        
+        .overcast-cloud-2 {
+          width: 180px;
+          height: 60px;
+          top: 25%;
+          left: -20%;
+          animation-duration: 40s;
+          animation-delay: 8s;
+        }
+        
+        .overcast-cloud-2::before {
+          width: 80px;
+          height: 80px;
+          top: -40px;
+          left: 25px;
+        }
+        
+        .overcast-cloud-2::after {
+          width: 90px;
+          height: 60px;
+          top: -25px;
+          right: 25px;
+        }
+        
+        .overcast-cloud-3 {
+          width: 160px;
+          height: 55px;
+          top: 45%;
+          left: -10%;
+          animation-duration: 32s;
+          animation-delay: 15s;
+        }
+        
+        .overcast-cloud-3::before {
+          width: 70px;
+          height: 70px;
+          top: -35px;
+          left: 20px;
+        }
+        
+        .overcast-cloud-3::after {
+          width: 80px;
+          height: 55px;
+          top: -22px;
+          right: 20px;
+        }
+        
+        @keyframes overcastFloat {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(110vw); }
+        }
+        
+        /* Fog layers */
+        .fog-layer {
+          position: absolute;
+          width: 200%;
+          height: 40%;
+          background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(200, 200, 210, 0.4) 20%,
+            rgba(220, 220, 230, 0.5) 50%,
+            rgba(200, 200, 210, 0.4) 80%,
+            transparent 100%
+          );
+        }
+        
+        .fog-1 {
+          top: 0;
+          animation: fogDriftSlow 15s ease-in-out infinite;
+        }
+        
+        .fog-2 {
+          top: 30%;
+          animation: fogDriftSlow 20s ease-in-out infinite reverse;
+          opacity: 0.7;
+        }
+        
+        .fog-3 {
+          top: 60%;
+          animation: fogDriftSlow 18s ease-in-out infinite;
+          animation-delay: 3s;
+          opacity: 0.5;
+        }
+        
+        @keyframes fogDriftSlow {
+          0%, 100% { transform: translateX(-25%); }
+          50% { transform: translateX(0%); }
         }
         
         /* Fog overlay */

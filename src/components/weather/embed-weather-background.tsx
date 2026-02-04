@@ -6,20 +6,27 @@ interface EmbedWeatherBackgroundProps {
 }
 
 export function EmbedWeatherBackground({ condition, theme = "light" }: EmbedWeatherBackgroundProps) {
-  const [weatherType, setWeatherType] = useState<'clear' | 'rain' | 'snow' | 'cloudy' | 'storm' | 'night'>('clear');
+  const [weatherType, setWeatherType] = useState<'clear' | 'partly_cloudy' | 'cloudy' | 'overcast' | 'rain' | 'snow' | 'storm' | 'fog' | 'night'>('clear');
 
   useEffect(() => {
     if (!condition) return;
     
     const lowerCondition = condition.toLowerCase();
     
-    if (lowerCondition.includes('rain') || lowerCondition.includes('drizzle') || lowerCondition.includes('shower')) {
-      setWeatherType('rain');
-    } else if (lowerCondition.includes('snow') || lowerCondition.includes('sleet') || lowerCondition.includes('ice')) {
-      setWeatherType('snow');
-    } else if (lowerCondition.includes('thunder') || lowerCondition.includes('storm')) {
+    // More specific condition matching
+    if (lowerCondition.includes('thunder') || lowerCondition.includes('storm')) {
       setWeatherType('storm');
-    } else if (lowerCondition.includes('cloud') || lowerCondition.includes('overcast') || lowerCondition.includes('fog')) {
+    } else if (lowerCondition.includes('rain') || lowerCondition.includes('drizzle') || lowerCondition.includes('shower')) {
+      setWeatherType('rain');
+    } else if (lowerCondition.includes('snow') || lowerCondition.includes('sleet') || lowerCondition.includes('ice') || lowerCondition.includes('blizzard')) {
+      setWeatherType('snow');
+    } else if (lowerCondition.includes('fog') || lowerCondition.includes('mist') || lowerCondition.includes('haze')) {
+      setWeatherType('fog');
+    } else if (lowerCondition.includes('overcast')) {
+      setWeatherType('overcast');
+    } else if (lowerCondition.includes('partly') || lowerCondition.includes('mostly sunny') || lowerCondition.includes('mostly clear')) {
+      setWeatherType('partly_cloudy');
+    } else if (lowerCondition.includes('cloud') || lowerCondition.includes('mostly cloudy')) {
       setWeatherType('cloudy');
     } else if (lowerCondition.includes('night') || lowerCondition.includes('clear night')) {
       setWeatherType('night');
@@ -62,6 +69,18 @@ export function EmbedWeatherBackground({ condition, theme = "light" }: EmbedWeat
         weatherType === 'clear' ? (isDark 
           ? 'bg-gradient-to-br from-blue-900 via-blue-800 to-sky-900' 
           : 'bg-gradient-to-br from-sky-400 via-blue-400 to-blue-500') :
+        weatherType === 'partly_cloudy' ? (isDark
+          ? 'bg-gradient-to-br from-blue-800 via-slate-700 to-blue-900'
+          : 'bg-gradient-to-br from-sky-400 via-blue-300 to-sky-300') :
+        weatherType === 'cloudy' ? (isDark
+          ? 'bg-gradient-to-br from-slate-700 via-gray-700 to-slate-800'
+          : 'bg-gradient-to-br from-gray-400 via-gray-300 to-gray-200') :
+        weatherType === 'overcast' ? (isDark
+          ? 'bg-gradient-to-br from-slate-800 via-gray-800 to-slate-900'
+          : 'bg-gradient-to-br from-slate-500 via-gray-500 to-slate-400') :
+        weatherType === 'fog' ? (isDark
+          ? 'bg-gradient-to-br from-slate-700 via-gray-600 to-slate-700'
+          : 'bg-gradient-to-br from-gray-300 via-slate-300 to-gray-400') :
         weatherType === 'rain' ? (isDark
           ? 'bg-gradient-to-br from-slate-800 via-gray-700 to-slate-800'
           : 'bg-gradient-to-br from-slate-500 via-gray-400 to-slate-400') :
@@ -76,8 +95,49 @@ export function EmbedWeatherBackground({ condition, theme = "light" }: EmbedWeat
           : 'bg-gradient-to-br from-gray-300 via-slate-300 to-gray-400'
       }`} />
 
-      {/* Animated clouds for cloudy weather */}
-      {(weatherType === 'cloudy' || weatherType === 'rain' || weatherType === 'storm') && (
+      {/* Subtle sun glow for clear day */}
+      {weatherType === 'clear' && !isDark && (
+        <div className="embed-clear-sun" />
+      )}
+
+      {/* Partial sun and clouds for partly cloudy */}
+      {weatherType === 'partly_cloudy' && (
+        <>
+          {!isDark && <div className="embed-partial-sun" />}
+          <div className={`embed-cloud embed-cloud-partial-1 ${isDark ? 'opacity-25' : 'opacity-50'}`} />
+          <div className={`embed-cloud embed-cloud-partial-2 ${isDark ? 'opacity-20' : 'opacity-40'}`} />
+        </>
+      )}
+
+      {/* Regular clouds for cloudy weather */}
+      {weatherType === 'cloudy' && (
+        <>
+          <div className={`embed-cloud embed-cloud-1 ${isDark ? 'opacity-20' : 'opacity-35'}`} />
+          <div className={`embed-cloud embed-cloud-2 ${isDark ? 'opacity-15' : 'opacity-30'}`} />
+        </>
+      )}
+
+      {/* Heavy overcast clouds */}
+      {weatherType === 'overcast' && (
+        <>
+          <div className={`embed-overcast-layer embed-overcast-1 ${isDark ? 'opacity-40' : 'opacity-50'}`} />
+          <div className={`embed-overcast-layer embed-overcast-2 ${isDark ? 'opacity-30' : 'opacity-40'}`} />
+          <div className={`embed-overcast-cloud embed-overcast-cloud-1 ${isDark ? 'opacity-50' : 'opacity-60'}`} />
+          <div className={`embed-overcast-cloud embed-overcast-cloud-2 ${isDark ? 'opacity-40' : 'opacity-50'}`} />
+        </>
+      )}
+
+      {/* Fog effect */}
+      {weatherType === 'fog' && (
+        <>
+          <div className={`embed-fog embed-fog-1 ${isDark ? 'opacity-40' : 'opacity-50'}`} />
+          <div className={`embed-fog embed-fog-2 ${isDark ? 'opacity-30' : 'opacity-40'}`} />
+          <div className={`embed-fog embed-fog-3 ${isDark ? 'opacity-20' : 'opacity-30'}`} />
+        </>
+      )}
+
+      {/* Clouds for rain/storm */}
+      {(weatherType === 'rain' || weatherType === 'storm') && (
         <>
           <div className={`embed-cloud embed-cloud-1 ${isDark ? 'opacity-20' : 'opacity-30'}`} />
           <div className={`embed-cloud embed-cloud-2 ${isDark ? 'opacity-15' : 'opacity-25'}`} />
@@ -144,17 +204,79 @@ export function EmbedWeatherBackground({ condition, theme = "light" }: EmbedWeat
         <div className="embed-lightning" />
       )}
 
-      {/* Subtle sun glow for clear day */}
-      {weatherType === 'clear' && !isDark && (
-        <div className="absolute -top-8 -right-8 w-24 h-24 bg-yellow-300/30 rounded-full blur-xl" />
-      )}
-
       {/* Moon glow for night */}
       {weatherType === 'night' && (
         <div className="absolute top-4 right-4 w-10 h-10 bg-slate-200/80 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.3)]" />
       )}
 
       <style>{`
+        /* Clear sun */
+        .embed-clear-sun {
+          position: absolute;
+          width: 50px;
+          height: 50px;
+          top: 8%;
+          right: 10%;
+          background: radial-gradient(circle, rgba(255, 230, 100, 0.9) 0%, rgba(255, 200, 50, 0.5) 50%, transparent 70%);
+          border-radius: 50%;
+          box-shadow: 0 0 40px rgba(255, 230, 100, 0.4);
+          animation: embedSunPulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes embedSunPulse {
+          0%, 100% { transform: scale(1); opacity: 0.9; }
+          50% { transform: scale(1.1); opacity: 1; }
+        }
+        
+        /* Partial sun for partly cloudy */
+        .embed-partial-sun {
+          position: absolute;
+          width: 40px;
+          height: 40px;
+          top: 6%;
+          right: 15%;
+          background: radial-gradient(circle, rgba(255, 230, 100, 0.8) 0%, rgba(255, 200, 50, 0.4) 50%, transparent 70%);
+          border-radius: 50%;
+          box-shadow: 0 0 30px rgba(255, 230, 100, 0.3);
+          animation: embedSunPulse 5s ease-in-out infinite;
+        }
+        
+        /* Partial clouds */
+        .embed-cloud-partial-1 {
+          width: 70px;
+          height: 28px;
+          top: 10%;
+          right: 5%;
+          animation-duration: 20s;
+          background: rgba(255, 255, 255, 0.7) !important;
+        }
+        
+        .embed-cloud-partial-1::before {
+          width: 35px;
+          height: 35px;
+          top: -15px;
+          left: 10px;
+          background: rgba(255, 255, 255, 0.7) !important;
+        }
+        
+        .embed-cloud-partial-2 {
+          width: 50px;
+          height: 20px;
+          top: 35%;
+          left: -10%;
+          animation-duration: 25s;
+          animation-delay: 5s;
+          background: rgba(255, 255, 255, 0.5) !important;
+        }
+        
+        .embed-cloud-partial-2::before {
+          width: 25px;
+          height: 25px;
+          top: -10px;
+          left: 8px;
+          background: rgba(255, 255, 255, 0.5) !important;
+        }
+        
         .embed-cloud {
           position: absolute;
           background: rgba(255, 255, 255, 0.4);
@@ -203,6 +325,115 @@ export function EmbedWeatherBackground({ condition, theme = "light" }: EmbedWeat
         @keyframes embedFloat {
           0%, 100% { transform: translateX(0); }
           50% { transform: translateX(calc(100% + 320px)); }
+        }
+        
+        /* Overcast layers */
+        .embed-overcast-layer {
+          position: absolute;
+          width: 100%;
+          height: 35%;
+          background: linear-gradient(to bottom, rgba(100, 100, 110, 0.5), transparent);
+        }
+        
+        .embed-overcast-1 {
+          top: 0;
+          animation: embedOvercastDrift 25s ease-in-out infinite;
+        }
+        
+        .embed-overcast-2 {
+          top: 15%;
+          animation: embedOvercastDrift 30s ease-in-out infinite reverse;
+        }
+        
+        @keyframes embedOvercastDrift {
+          0%, 100% { transform: translateX(-3%); }
+          50% { transform: translateX(3%); }
+        }
+        
+        .embed-overcast-cloud {
+          position: absolute;
+          background: rgba(130, 130, 140, 0.7);
+          border-radius: 50px;
+          animation: embedOvercastFloat 20s infinite ease-in-out;
+        }
+        
+        .embed-overcast-cloud::before {
+          content: '';
+          position: absolute;
+          background: rgba(130, 130, 140, 0.7);
+          border-radius: 50px;
+        }
+        
+        .embed-overcast-cloud-1 {
+          width: 100px;
+          height: 35px;
+          top: 8%;
+          left: -25%;
+          animation-duration: 22s;
+        }
+        
+        .embed-overcast-cloud-1::before {
+          width: 45px;
+          height: 45px;
+          top: -20px;
+          left: 15px;
+        }
+        
+        .embed-overcast-cloud-2 {
+          width: 80px;
+          height: 28px;
+          top: 30%;
+          left: -20%;
+          animation-duration: 28s;
+          animation-delay: 6s;
+        }
+        
+        .embed-overcast-cloud-2::before {
+          width: 35px;
+          height: 35px;
+          top: -15px;
+          left: 12px;
+        }
+        
+        @keyframes embedOvercastFloat {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(calc(100% + 350px)); }
+        }
+        
+        /* Fog layers */
+        .embed-fog {
+          position: absolute;
+          width: 200%;
+          height: 35%;
+          background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(200, 200, 210, 0.4) 25%,
+            rgba(220, 220, 230, 0.5) 50%,
+            rgba(200, 200, 210, 0.4) 75%,
+            transparent 100%
+          );
+        }
+        
+        .embed-fog-1 {
+          top: 0;
+          animation: embedFogDrift 12s ease-in-out infinite;
+        }
+        
+        .embed-fog-2 {
+          top: 25%;
+          animation: embedFogDrift 16s ease-in-out infinite reverse;
+        }
+        
+        .embed-fog-3 {
+          top: 50%;
+          animation: embedFogDrift 14s ease-in-out infinite;
+          animation-delay: 2s;
+        }
+        
+        @keyframes embedFogDrift {
+          0%, 100% { transform: translateX(-25%); }
+          50% { transform: translateX(0%); }
         }
         
         .embed-raindrop {

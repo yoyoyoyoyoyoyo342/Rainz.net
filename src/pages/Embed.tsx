@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { weatherApi } from "@/lib/weather-api";
 import { useLLMWeatherForecast } from "@/hooks/use-llm-weather-forecast";
-import { EmbedWeatherBackground } from "@/components/weather/embed-weather-background";
+import { EmbedWeatherBackground, isSnowCondition } from "@/components/weather/embed-weather-background";
 import { Cloud, Sun, CloudRain, Snowflake, CloudLightning, Wind, Sunset, Droplets, Calendar, Clock } from "lucide-react";
 import rainzLogo from "@/assets/rainz-logo-new.png";
 
@@ -327,6 +327,14 @@ export default function EmbedPage() {
   };
 
   const ConditionIcon = getConditionIcon(displayCondition);
+  const isSnow = isSnowCondition(displayCondition);
+  
+  // Text colors - black for snow, white for everything else
+  const textPrimary = isSnow ? 'text-slate-900' : 'text-white';
+  const textSecondary = isSnow ? 'text-slate-700' : 'text-white/80';
+  const textMuted = isSnow ? 'text-slate-600' : 'text-white/70';
+  const dropShadow = isSnow ? '' : 'drop-shadow-lg';
+  const dropShadowSm = isSnow ? '' : 'drop-shadow-sm';
 
   return (
     <div className="relative h-full w-full overflow-hidden rounded-2xl">
@@ -336,57 +344,57 @@ export default function EmbedPage() {
       {/* Content overlay */}
       <div className="relative h-full flex flex-col p-4 z-10">
         {/* Glass header pill */}
-        <div className={`flex items-center justify-center gap-2 mb-2 px-3 py-1.5 rounded-full mx-auto ${isDark ? 'bg-black/30' : 'bg-white/30'} backdrop-blur-md border ${isDark ? 'border-white/10' : 'border-white/40'}`}>
+        <div className={`flex items-center justify-center gap-2 mb-2 px-3 py-1.5 rounded-full mx-auto ${isSnow ? 'bg-slate-900/20' : (isDark ? 'bg-black/30' : 'bg-white/30')} backdrop-blur-md border ${isSnow ? 'border-slate-400/30' : (isDark ? 'border-white/10' : 'border-white/40')}`}>
           {isFutureForecast ? (
             <>
               {targetDate && (
-                <span className="text-[11px] flex items-center gap-1 text-white font-medium drop-shadow-sm">
+                <span className={`text-[11px] flex items-center gap-1 ${textPrimary} font-medium ${dropShadowSm}`}>
                   <Calendar className="h-3 w-3" />
                   {displayDateStr}
                 </span>
               )}
-              {targetDate && targetTime && <span className="text-white/60">•</span>}
+              {targetDate && targetTime && <span className={isSnow ? 'text-slate-500' : 'text-white/60'}>•</span>}
               {targetTime && (
-                <span className="text-[11px] flex items-center gap-1 text-white font-medium drop-shadow-sm">
+                <span className={`text-[11px] flex items-center gap-1 ${textPrimary} font-medium ${dropShadowSm}`}>
                   <Clock className="h-3 w-3" />
                   {displayTimeStr}
                 </span>
               )}
             </>
           ) : (
-            <p className="text-[11px] text-white font-medium drop-shadow-sm">{t.title}</p>
+            <p className={`text-[11px] ${textPrimary} font-medium ${dropShadowSm}`}>{t.title}</p>
           )}
         </div>
 
         {/* Weather icon and temperature - centered */}
         <div className="flex-1 flex flex-col items-center justify-center">
-          <ConditionIcon className="h-12 w-12 mb-1 text-white drop-shadow-lg" />
-          <span className="text-4xl font-bold text-white drop-shadow-lg tracking-tight">
+          <ConditionIcon className={`h-12 w-12 mb-1 ${textPrimary} ${dropShadow}`} />
+          <span className={`text-4xl font-bold ${textPrimary} ${dropShadow} tracking-tight`}>
             {formatTemp(displayTemp)}
           </span>
-          <span className="text-xs text-white/80 mt-1 capitalize drop-shadow-sm">
+          <span className={`text-xs ${textSecondary} mt-1 capitalize ${dropShadowSm}`}>
             {displayCondition}
           </span>
         </div>
 
         {/* Metrics row - glass card */}
-        <div className={`flex items-center justify-center gap-4 py-2 px-3 rounded-xl ${isDark ? 'bg-black/30' : 'bg-white/25'} backdrop-blur-md border ${isDark ? 'border-white/10' : 'border-white/30'}`}>
+        <div className={`flex items-center justify-center gap-4 py-2 px-3 rounded-xl ${isSnow ? 'bg-slate-900/15' : (isDark ? 'bg-black/30' : 'bg-white/25')} backdrop-blur-md border ${isSnow ? 'border-slate-400/20' : (isDark ? 'border-white/10' : 'border-white/30')}`}>
           <div className="flex flex-col items-center">
-            <Wind className="h-3.5 w-3.5 mb-0.5 text-white/80" />
-            <span className="text-[9px] text-white/70">{t.wind}</span>
-            <span className="text-xs font-semibold text-white drop-shadow-sm">{formatWind(displayWind)}</span>
+            <Wind className={`h-3.5 w-3.5 mb-0.5 ${textSecondary}`} />
+            <span className={`text-[9px] ${textMuted}`}>{t.wind}</span>
+            <span className={`text-xs font-semibold ${textPrimary} ${dropShadowSm}`}>{formatWind(displayWind)}</span>
           </div>
-          <div className={`w-px h-8 ${isDark ? 'bg-white/20' : 'bg-white/40'}`} />
+          <div className={`w-px h-8 ${isSnow ? 'bg-slate-400/30' : (isDark ? 'bg-white/20' : 'bg-white/40')}`} />
           <div className="flex flex-col items-center">
-            <Sunset className="h-3.5 w-3.5 mb-0.5 text-white/80" />
-            <span className="text-[9px] text-white/70">{t.sunset}</span>
-            <span className="text-xs font-semibold text-white drop-shadow-sm">{formatSunset(sunsetTime)}</span>
+            <Sunset className={`h-3.5 w-3.5 mb-0.5 ${textSecondary}`} />
+            <span className={`text-[9px] ${textMuted}`}>{t.sunset}</span>
+            <span className={`text-xs font-semibold ${textPrimary} ${dropShadowSm}`}>{formatSunset(sunsetTime)}</span>
           </div>
-          <div className={`w-px h-8 ${isDark ? 'bg-white/20' : 'bg-white/40'}`} />
+          <div className={`w-px h-8 ${isSnow ? 'bg-slate-400/30' : (isDark ? 'bg-white/20' : 'bg-white/40')}`} />
           <div className="flex flex-col items-center">
-            <Droplets className="h-3.5 w-3.5 mb-0.5 text-white/80" />
-            <span className="text-[9px] text-white/70">{t.precip}</span>
-            <span className="text-xs font-semibold text-white drop-shadow-sm">{displayPrecip} mm</span>
+            <Droplets className={`h-3.5 w-3.5 mb-0.5 ${textSecondary}`} />
+            <span className={`text-[9px] ${textMuted}`}>{t.precip}</span>
+            <span className={`text-xs font-semibold ${textPrimary} ${dropShadowSm}`}>{displayPrecip} mm</span>
           </div>
         </div>
 
@@ -398,7 +406,7 @@ export default function EmbedPage() {
           className="flex items-center justify-center gap-1.5 mt-2 opacity-80 hover:opacity-100 transition-opacity"
         >
           <img src={rainzLogo} alt="Rainz" className="w-4 h-4 rounded shadow-sm" />
-          <span className="text-[10px] text-white font-medium drop-shadow-sm">Rainz.net</span>
+          <span className={`text-[10px] ${textPrimary} font-medium ${dropShadowSm}`}>Rainz.net</span>
         </a>
       </div>
     </div>

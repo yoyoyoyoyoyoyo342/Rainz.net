@@ -5,6 +5,13 @@ interface EmbedWeatherBackgroundProps {
   theme?: "light" | "dark";
 }
 
+// Export function to check if snow condition for text color
+export function isSnowCondition(condition?: string): boolean {
+  if (!condition) return false;
+  const lowerCondition = condition.toLowerCase();
+  return lowerCondition.includes('snow') || lowerCondition.includes('sleet') || lowerCondition.includes('ice') || lowerCondition.includes('blizzard');
+}
+
 export function EmbedWeatherBackground({ condition, theme = "light" }: EmbedWeatherBackgroundProps) {
   const [weatherType, setWeatherType] = useState<'clear' | 'partly_cloudy' | 'cloudy' | 'overcast' | 'rain' | 'snow' | 'storm' | 'fog' | 'night'>('clear');
 
@@ -210,116 +217,179 @@ export function EmbedWeatherBackground({ condition, theme = "light" }: EmbedWeat
       )}
 
       <style>{`
-        /* Clear sun */
+        /* Clear sun - cartoon style with rays */
         .embed-clear-sun {
           position: absolute;
           width: 50px;
           height: 50px;
           top: 8%;
           right: 10%;
-          background: radial-gradient(circle, rgba(255, 230, 100, 0.9) 0%, rgba(255, 200, 50, 0.5) 50%, transparent 70%);
+          background: radial-gradient(circle, #FFE066 0%, #FFD700 40%, #FFA500 70%, transparent 75%);
           border-radius: 50%;
-          box-shadow: 0 0 40px rgba(255, 230, 100, 0.4);
+          box-shadow: 
+            0 0 20px rgba(255, 200, 50, 0.6),
+            0 0 40px rgba(255, 200, 50, 0.3);
           animation: embedSunPulse 4s ease-in-out infinite;
         }
         
-        @keyframes embedSunPulse {
-          0%, 100% { transform: scale(1); opacity: 0.9; }
-          50% { transform: scale(1.1); opacity: 1; }
+        .embed-clear-sun::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 70px;
+          height: 70px;
+          transform: translate(-50%, -50%);
+          background: radial-gradient(circle, rgba(255, 220, 100, 0.4) 0%, transparent 70%);
+          border-radius: 50%;
+          animation: embedSunRays 3s ease-in-out infinite alternate;
         }
         
-        /* Partial sun for partly cloudy */
+        @keyframes embedSunPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        
+        @keyframes embedSunRays {
+          0% { transform: translate(-50%, -50%) scale(1); opacity: 0.4; }
+          100% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.6; }
+        }
+        
+        /* Partial sun for partly cloudy - cartoon style */
         .embed-partial-sun {
           position: absolute;
-          width: 40px;
-          height: 40px;
+          width: 35px;
+          height: 35px;
           top: 6%;
-          right: 15%;
-          background: radial-gradient(circle, rgba(255, 230, 100, 0.8) 0%, rgba(255, 200, 50, 0.4) 50%, transparent 70%);
+          right: 18%;
+          background: radial-gradient(circle, #FFE066 0%, #FFD700 50%, #FFA500 80%, transparent 85%);
           border-radius: 50%;
-          box-shadow: 0 0 30px rgba(255, 230, 100, 0.3);
+          box-shadow: 0 0 15px rgba(255, 200, 50, 0.5);
           animation: embedSunPulse 5s ease-in-out infinite;
         }
         
-        /* Partial clouds */
-        .embed-cloud-partial-1 {
-          width: 70px;
-          height: 28px;
-          top: 10%;
-          right: 5%;
-          animation-duration: 20s;
-          background: rgba(255, 255, 255, 0.7) !important;
-        }
-        
-        .embed-cloud-partial-1::before {
-          width: 35px;
-          height: 35px;
-          top: -15px;
-          left: 10px;
-          background: rgba(255, 255, 255, 0.7) !important;
-        }
-        
-        .embed-cloud-partial-2 {
-          width: 50px;
-          height: 20px;
-          top: 35%;
-          left: -10%;
-          animation-duration: 25s;
-          animation-delay: 5s;
-          background: rgba(255, 255, 255, 0.5) !important;
-        }
-        
-        .embed-cloud-partial-2::before {
-          width: 25px;
-          height: 25px;
-          top: -10px;
-          left: 8px;
-          background: rgba(255, 255, 255, 0.5) !important;
-        }
-        
+        /* Cartoon cloud base style */
         .embed-cloud {
           position: absolute;
-          background: rgba(255, 255, 255, 0.4);
-          border-radius: 50px;
+          background: #ffffff;
+          border-radius: 100px;
+          box-shadow: 
+            inset -4px -4px 0 rgba(200, 210, 230, 0.5),
+            2px 4px 8px rgba(0, 0, 0, 0.1);
           animation: embedFloat 15s infinite ease-in-out;
         }
         
-        .embed-cloud::before {
+        .embed-cloud::before,
+        .embed-cloud::after {
           content: '';
           position: absolute;
-          background: rgba(255, 255, 255, 0.4);
-          border-radius: 50px;
+          background: #ffffff;
+          border-radius: 50%;
+          box-shadow: inset -3px -3px 0 rgba(200, 210, 230, 0.5);
         }
         
+        /* Partly cloudy - light fluffy clouds */
+        .embed-cloud-partial-1 {
+          width: 55px;
+          height: 22px;
+          top: 12%;
+          right: 3%;
+          animation-duration: 20s;
+          background: rgba(255, 255, 255, 0.85);
+        }
+        
+        .embed-cloud-partial-1::before {
+          width: 28px;
+          height: 28px;
+          top: -14px;
+          left: 8px;
+          background: rgba(255, 255, 255, 0.85);
+        }
+        
+        .embed-cloud-partial-1::after {
+          width: 20px;
+          height: 20px;
+          top: -8px;
+          left: 28px;
+          background: rgba(255, 255, 255, 0.85);
+        }
+        
+        .embed-cloud-partial-2 {
+          width: 40px;
+          height: 16px;
+          top: 38%;
+          left: -15%;
+          animation-duration: 25s;
+          animation-delay: 5s;
+          background: rgba(255, 255, 255, 0.7);
+        }
+        
+        .embed-cloud-partial-2::before {
+          width: 20px;
+          height: 20px;
+          top: -10px;
+          left: 6px;
+          background: rgba(255, 255, 255, 0.7);
+        }
+        
+        .embed-cloud-partial-2::after {
+          width: 14px;
+          height: 14px;
+          top: -5px;
+          left: 20px;
+          background: rgba(255, 255, 255, 0.7);
+        }
+        
+        /* Regular clouds - cartoon puffy style */
         .embed-cloud-1 {
-          width: 60px;
-          height: 24px;
+          width: 50px;
+          height: 20px;
           top: 15%;
           left: -20%;
           animation-duration: 18s;
+          background: rgba(255, 255, 255, 0.9);
         }
         
         .embed-cloud-1::before {
-          width: 30px;
-          height: 30px;
+          width: 24px;
+          height: 24px;
           top: -12px;
-          left: 8px;
+          left: 6px;
+          background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .embed-cloud-1::after {
+          width: 18px;
+          height: 18px;
+          top: -7px;
+          left: 24px;
+          background: rgba(255, 255, 255, 0.9);
         }
         
         .embed-cloud-2 {
-          width: 50px;
-          height: 20px;
-          top: 40%;
+          width: 40px;
+          height: 16px;
+          top: 42%;
           left: -15%;
           animation-duration: 22s;
           animation-delay: 3s;
+          background: rgba(255, 255, 255, 0.8);
         }
         
         .embed-cloud-2::before {
-          width: 25px;
-          height: 25px;
+          width: 20px;
+          height: 20px;
           top: -10px;
-          left: 10px;
+          left: 5px;
+          background: rgba(255, 255, 255, 0.8);
+        }
+        
+        .embed-cloud-2::after {
+          width: 14px;
+          height: 14px;
+          top: -5px;
+          left: 18px;
+          background: rgba(255, 255, 255, 0.8);
         }
         
         @keyframes embedFloat {
@@ -327,12 +397,12 @@ export function EmbedWeatherBackground({ condition, theme = "light" }: EmbedWeat
           50% { transform: translateX(calc(100% + 320px)); }
         }
         
-        /* Overcast layers */
+        /* Overcast - heavy grey cartoon clouds */
         .embed-overcast-layer {
           position: absolute;
           width: 100%;
-          height: 35%;
-          background: linear-gradient(to bottom, rgba(100, 100, 110, 0.5), transparent);
+          height: 40%;
+          background: linear-gradient(to bottom, rgba(120, 125, 135, 0.4), transparent);
         }
         
         .embed-overcast-1 {
@@ -341,7 +411,7 @@ export function EmbedWeatherBackground({ condition, theme = "light" }: EmbedWeat
         }
         
         .embed-overcast-2 {
-          top: 15%;
+          top: 12%;
           animation: embedOvercastDrift 30s ease-in-out infinite reverse;
         }
         
@@ -352,47 +422,66 @@ export function EmbedWeatherBackground({ condition, theme = "light" }: EmbedWeat
         
         .embed-overcast-cloud {
           position: absolute;
-          background: rgba(130, 130, 140, 0.7);
-          border-radius: 50px;
+          background: #9a9ea8;
+          border-radius: 100px;
+          box-shadow: 
+            inset -5px -5px 0 rgba(80, 85, 95, 0.4),
+            3px 5px 10px rgba(0, 0, 0, 0.15);
           animation: embedOvercastFloat 20s infinite ease-in-out;
         }
         
-        .embed-overcast-cloud::before {
+        .embed-overcast-cloud::before,
+        .embed-overcast-cloud::after {
           content: '';
           position: absolute;
-          background: rgba(130, 130, 140, 0.7);
-          border-radius: 50px;
+          background: #9a9ea8;
+          border-radius: 50%;
+          box-shadow: inset -4px -4px 0 rgba(80, 85, 95, 0.4);
         }
         
         .embed-overcast-cloud-1 {
-          width: 100px;
-          height: 35px;
+          width: 80px;
+          height: 28px;
           top: 8%;
           left: -25%;
           animation-duration: 22s;
         }
         
         .embed-overcast-cloud-1::before {
-          width: 45px;
-          height: 45px;
-          top: -20px;
-          left: 15px;
+          width: 35px;
+          height: 35px;
+          top: -18px;
+          left: 12px;
+        }
+        
+        .embed-overcast-cloud-1::after {
+          width: 26px;
+          height: 26px;
+          top: -10px;
+          left: 38px;
         }
         
         .embed-overcast-cloud-2 {
-          width: 80px;
-          height: 28px;
-          top: 30%;
-          left: -20%;
+          width: 60px;
+          height: 22px;
+          top: 32%;
+          left: -18%;
           animation-duration: 28s;
           animation-delay: 6s;
         }
         
         .embed-overcast-cloud-2::before {
-          width: 35px;
-          height: 35px;
-          top: -15px;
-          left: 12px;
+          width: 26px;
+          height: 26px;
+          top: -13px;
+          left: 8px;
+        }
+        
+        .embed-overcast-cloud-2::after {
+          width: 18px;
+          height: 18px;
+          top: -6px;
+          left: 28px;
         }
         
         @keyframes embedOvercastFloat {
@@ -400,7 +489,7 @@ export function EmbedWeatherBackground({ condition, theme = "light" }: EmbedWeat
           50% { transform: translateX(calc(100% + 350px)); }
         }
         
-        /* Fog layers */
+        /* Fog layers - soft misty cartoon style */
         .embed-fog {
           position: absolute;
           width: 200%;
@@ -408,25 +497,26 @@ export function EmbedWeatherBackground({ condition, theme = "light" }: EmbedWeat
           background: linear-gradient(
             90deg,
             transparent 0%,
-            rgba(200, 200, 210, 0.4) 25%,
-            rgba(220, 220, 230, 0.5) 50%,
-            rgba(200, 200, 210, 0.4) 75%,
+            rgba(220, 225, 235, 0.5) 20%,
+            rgba(235, 240, 250, 0.6) 50%,
+            rgba(220, 225, 235, 0.5) 80%,
             transparent 100%
           );
+          border-radius: 100px;
         }
         
         .embed-fog-1 {
-          top: 0;
+          top: 5%;
           animation: embedFogDrift 12s ease-in-out infinite;
         }
         
         .embed-fog-2 {
-          top: 25%;
+          top: 30%;
           animation: embedFogDrift 16s ease-in-out infinite reverse;
         }
         
         .embed-fog-3 {
-          top: 50%;
+          top: 55%;
           animation: embedFogDrift 14s ease-in-out infinite;
           animation-delay: 2s;
         }
@@ -436,12 +526,14 @@ export function EmbedWeatherBackground({ condition, theme = "light" }: EmbedWeat
           50% { transform: translateX(0%); }
         }
         
+        /* Rain - cartoon droplets */
         .embed-raindrop {
           position: absolute;
           top: -10px;
-          width: 2px;
-          height: 12px;
-          background: linear-gradient(to bottom, transparent, rgba(150, 180, 220, 0.6));
+          width: 3px;
+          height: 14px;
+          background: linear-gradient(to bottom, transparent, rgba(100, 150, 200, 0.7), rgba(130, 180, 230, 0.9));
+          border-radius: 0 0 3px 3px;
           animation: embedRain linear infinite;
         }
         
@@ -451,33 +543,38 @@ export function EmbedWeatherBackground({ condition, theme = "light" }: EmbedWeat
           100% { transform: translateY(220px); opacity: 0; }
         }
         
+        /* Snow - cartoon snowflakes */
         .embed-snowflake {
           position: absolute;
           top: -20px;
-          opacity: 0.8;
+          opacity: 0.9;
+          text-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
           animation: embedSnow linear infinite;
         }
         
         @keyframes embedSnow {
           0% { transform: translateY(-20px) rotate(0deg); opacity: 0; }
-          10% { opacity: 0.8; }
+          10% { opacity: 0.9; }
           100% { transform: translateY(220px) rotate(360deg); opacity: 0; }
         }
         
+        /* Stars - twinkling cartoon style */
         .embed-star {
           position: absolute;
-          width: 2px;
-          height: 2px;
+          width: 3px;
+          height: 3px;
           background: white;
           border-radius: 50%;
+          box-shadow: 0 0 4px white;
           animation: embedTwinkle ease-in-out infinite;
         }
         
         @keyframes embedTwinkle {
           0%, 100% { opacity: 0.3; transform: scale(0.8); }
-          50% { opacity: 1; transform: scale(1.2); }
+          50% { opacity: 1; transform: scale(1.3); }
         }
         
+        /* Lightning flash */
         .embed-lightning {
           position: absolute;
           inset: 0;

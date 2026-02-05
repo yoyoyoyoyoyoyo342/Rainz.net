@@ -1,89 +1,109 @@
 
-# Embeddable Weather Widget with AI-Enhanced Data
 
-## Overview
-Create a new `/embed` route that auto-detects the visitor's location and displays a clean, minimal weather widget using AI-enhanced data (LLM weather forecast). External sites can embed this via iframe.
+# Plan: Fix Share Prediction, Location Fallbacks, and Improve AR View
 
-## Design (Matching DBU Screenshot)
-```text
-+----------------------------------+
-|          Weather Forecast        |
-|                                  |
-|      [Cloud Icon]  -1.6°C        |
-|                                  |
-|   Wind    Sunset    Precip       |
-|  7.6 m/s  16:42     0 mm         |
-|                                  |
-|  Based on data from Rainz.net    |
-+----------------------------------+
-```
+## Issue Analysis
 
-## Technical Implementation
+### Issue 1: Share Prediction Pop-up Not Appearing
 
-### 1. New Page: `src/pages/Embed.tsx`
+**Root Cause Identified:**
+The `PredictionShare` component is rendered inside `WeatherPredictionForm`, which is inside the `PredictionDialog`. When a prediction is submitted:
+1. The form sets `showShare(true)` and stores the prediction data
+2. But immediately after, `onPredictionMade()` is called
+3. The parent `PredictionDialog` then calls `setOpen(false)`, closing the entire dialog
+4. This **unmounts** the `PredictionShare` component before it can render
 
-**Location Detection:**
-- Use `navigator.geolocation` to auto-detect visitor location
-- Support URL parameter overrides: `?lat=X&lon=Y&location=Name`
-- Reverse geocode using BigDataCloud API for display name
+This is the same pattern that caused the battle accept dialog issue - components get unmounted when their parent dialog closes.
 
-**AI-Enhanced Data Flow:**
-1. Fetch raw weather data via `weatherApi.getWeatherData()`
-2. Transform sources array for LLM processing
-3. Call `llm-weather-forecast` edge function with sources
-4. Display AI-enhanced temperature, conditions, and insights
+**Solution:** 
+Create a global `PredictionShareContext` (similar to `BattleAcceptDialogContext`) that renders the share dialog at the app root level, outside any other dialogs. This prevents unmounting when the prediction dialog closes.
 
-**URL Parameters:**
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `lat`, `lon` | Fixed location coordinates | Auto-detect |
-| `location` | Display name | Reverse geocoded |
-| `units` | `metric` or `imperial` | `metric` |
-| `theme` | `light` or `dark` | `light` |
-| `lang` | `en` or `da` | `en` |
+---
 
-**UI Components:**
-- Header: "Weather Forecast" / "Vejrudsigt"
-- Large weather icon (condition-based)
-- Temperature with unit
-- 3-column metrics row: Wind speed, Sunset time, Precipitation
-- Footer branding: "Based on data from Rainz.net" linking to main site
+### Issue 2: Smaller Places (Emdrup) Not Linking to Copenhagen
 
-### 2. Update Router in `src/App.tsx`
-- Add `/embed` route lazily loaded
-- Render without app chrome (no footer for embed)
+**Root Cause Identified:**
+In `supabase/functions/generate-landmark-image/index.ts`, there's a `localityFallbacks` map that maps smaller neighborhoods to larger cities. Currently it includes:
+- Ørestad, Valby, Amager, Frederiksberg, Nørrebro, Vesterbro
 
-## Embedding Usage
-```html
-<!-- Auto-detect visitor location -->
-<iframe 
-  src="https://rainz.net/embed" 
-  width="320" 
-  height="200" 
-  frameborder="0"
-  style="border-radius: 12px;"
-></iframe>
+But **Emdrup is missing** from this list, along with many other Copenhagen neighborhoods.
 
-<!-- Fixed location (Copenhagen) -->
-<iframe 
-  src="https://rainz.net/embed?lat=55.68&lon=12.57&location=Copenhagen" 
-  width="320" 
-  height="200"
-  frameborder="0"
-></iframe>
-```
+**Solution:**
+Expand the `localityFallbacks` map to include more Copenhagen neighborhoods and all other cities' suburbs.
 
-## Files to Create/Modify
-| File | Action |
-|------|--------|
-| `src/pages/Embed.tsx` | Create - Embed widget with AI-enhanced data |
-| `src/App.tsx` | Modify - Add /embed route without footer |
+---
 
-## Key Differences from Existing Widget
-- Uses AI-enhanced data via `llm-weather-forecast` (not raw API)
-- Auto-detects location (existing widget requires lat/lon params)
-- Styled to match DBU screenshot (compact, clean design)
-- Different branding: "Based on data from" vs "Powered by"
+### Issue 3: AR View Needs Improvement
 
-## Privacy Note
-Location permission is requested from the visitor's browser. If denied, shows a "Location required" message or uses IP-based fallback.
+**Current State:**
+The AR overlay has:
+- Camera feed with compass
+- Wind direction arrow
+- Aurora probability (from NOAA Kp index)
+- Basic info cards
+
+**Proposed Improvements:**
+1. Better visual design with animated overlays
+2. Add more weather data overlays (temperature, humidity, UV)
+3. Add sun/moon position indicators
+4. Smoother compass animation
+5. Photo capture feature to save AR weather snapshot
+
+---
+
+## Implementation Steps
+
+### Step 1: Create Global Prediction Share Context
+
+Create `src/contexts/prediction-share-context.tsx`:
+- Export `PredictionShareProvider` component
+- Export `usePredictionShare()` hook with `openShareDialog(prediction)` method
+- Render the `PredictionShare` dialog at root level
+- Manage share dialog state independently of prediction dialog
+
+### Step 2: Integrate Share Context
+
+Update `src/App.tsx`:
+- Wrap app with `PredictionShareProvider`
+
+Update `src/components/weather/weather-prediction-form.tsx`:
+- Import and use `usePredictionShare()` hook
+- Replace local share dialog state with global context
+- Call `openShareDialog(predictionForShare)` instead of setting local state
+- Remove the local `PredictionShare` component render
+
+### Step 3: Expand Location Fallbacks
+
+Update `supabase/functions/generate-landmark-image/index.ts`:
+- Add more Copenhagen neighborhoods to `localityFallbacks`:
+  - Emdrup, Brønshøj, Vanløse, Bispebjerg, Østerbro, Christianshavn, Islands Brygge, Sydhavn, Nordvest, Husum, Utterslev, Bellahøj, Hellerup, Gentofte, Charlottenlund
+- Add more international suburb/city mappings
+
+### Step 4: Improve AR View
+
+Update `src/components/weather/ar-weather-overlay.tsx`:
+- Add animated gradient overlays based on weather condition
+- Add temperature display with animated thermometer
+- Add sun position indicator using solar calculation
+- Add UV exposure meter with color gradient
+- Add photo capture button to save AR snapshot
+- Improve compass with smoother spring animation
+- Add humidity and pressure indicators
+- Better visual hierarchy with glassmorphism design
+
+---
+
+## Technical Details
+
+### New Files
+- `src/contexts/prediction-share-context.tsx` - Global share dialog management
+
+### Modified Files
+- `src/App.tsx` - Add PredictionShareProvider wrapper
+- `src/components/weather/weather-prediction-form.tsx` - Use global share context
+- `supabase/functions/generate-landmark-image/index.ts` - Expand locality fallbacks
+- `src/components/weather/ar-weather-overlay.tsx` - Enhanced AR features
+
+### Dependencies
+No new dependencies required.
+

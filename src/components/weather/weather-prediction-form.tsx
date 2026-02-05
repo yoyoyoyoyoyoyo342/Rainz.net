@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { z } from "zod";
-import { PredictionShare } from "./prediction-share";
+ import { usePredictionShare } from "@/contexts/prediction-share-context";
 import { UserSearch } from "./user-search";
 import { usePredictionBattles } from "@/hooks/use-prediction-battles";
 import { Switch } from "@/components/ui/switch";
@@ -65,19 +65,13 @@ export const WeatherPredictionForm = ({
 }: WeatherPredictionFormProps) => {
   const { user } = useAuth();
   const { createBattle } = usePredictionBattles();
+   const { openShareDialog } = usePredictionShare();
   const [predictedHigh, setPredictedHigh] = useState("");
   const [predictedLow, setPredictedLow] = useState("");
   const [predictedCondition, setPredictedCondition] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showShare, setShowShare] = useState(false);
   const [enableBattle, setEnableBattle] = useState(false);
   const [selectedOpponent, setSelectedOpponent] = useState<{ id: string; name: string } | null>(null);
-  const [submittedPrediction, setSubmittedPrediction] = useState<{
-    high: string;
-    low: string;
-    condition: string;
-    location: string;
-  } | null>(null);
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -228,8 +222,8 @@ export const WeatherPredictionForm = ({
       
       // Only show share dialog if NOT in battle acceptance mode
       if (!returnPredictionId) {
-        setSubmittedPrediction(predictionForShare);
-        setShowShare(true);
+         // Use global context to show share dialog - this persists even after dialog closes
+         openShareDialog(predictionForShare);
       }
       
       // Call callback - immediately for battle acceptance, delayed for normal submission
@@ -431,15 +425,6 @@ export const WeatherPredictionForm = ({
           <p>Predictions verified at 10 PM CET daily</p>
         </div>
       </form>
-
-      {/* Share Dialog */}
-      {submittedPrediction && (
-        <PredictionShare
-          prediction={submittedPrediction}
-          isOpen={showShare}
-          onClose={() => setShowShare(false)}
-        />
-      )}
     </div>
   );
 };

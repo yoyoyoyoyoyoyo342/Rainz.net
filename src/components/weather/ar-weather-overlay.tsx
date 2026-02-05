@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
-import { Compass, Wind, Sparkles, Camera, X, Navigation, AlertCircle } from "lucide-react";
+ import { Compass, Wind, Sparkles, Camera, X, Navigation, AlertCircle, Sun, Moon, Droplets, Thermometer, Download } from "lucide-react";
+ import { toast } from "sonner";
 
 interface ARWeatherOverlayProps {
   windSpeed: number;
@@ -13,6 +14,8 @@ interface ARWeatherOverlayProps {
   uvIndex?: number;
   auroraChance?: number;
   isImperial?: boolean;
+   temperature?: number;
+   humidity?: number;
 }
 
 // Convert wind direction to cardinal
@@ -41,6 +44,8 @@ export function ARWeatherOverlay({
   uvIndex,
   auroraChance: providedAuroraChance,
   isImperial = false,
+   temperature,
+   humidity,
 }: ARWeatherOverlayProps) {
   const [open, setOpen] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
@@ -48,7 +53,88 @@ export function ARWeatherOverlay({
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [auroraChance, setAuroraChance] = useState<number>(providedAuroraChance ?? 0);
   const [kpIndex, setKpIndex] = useState<number | null>(null);
+   const [sunPosition, setSunPosition] = useState<{ altitude: number; azimuth: number } | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+   const containerRef = useRef<HTMLDivElement>(null);
+
+   // Calculate sun position
+   useEffect(() => {
+     if (!open) return;
+     
+     const now = new Date();
+     const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
+     const declination = 23.45 * Math.sin((360 / 365) * (dayOfYear - 81) * Math.PI / 180);
+     
+     const hour = now.getHours() + now.getMinutes() / 60;
+     const solarHour = hour + (longitude / 15) - (now.getTimezoneOffset() / 60);
+     const hourAngle = (solarHour - 12) * 15;
+     
+     const latRad = latitude * Math.PI / 180;
+     const decRad = declination * Math.PI / 180;
+     const haRad = hourAngle * Math.PI / 180;
+     
+     const altitude = Math.asin(
+       Math.sin(latRad) * Math.sin(decRad) +
+       Math.cos(latRad) * Math.cos(decRad) * Math.cos(haRad)
+     ) * 180 / Math.PI;
+     
+     const azimuth = Math.atan2(
+       Math.sin(haRad),
+       Math.cos(haRad) * Math.sin(latRad) - Math.tan(decRad) * Math.cos(latRad)
+     ) * 180 / Math.PI + 180;
+     
+     setSunPosition({ altitude, azimuth });
+   }, [open, latitude, longitude]);
+
+   // Check if it's daytime
+   const isDaytime = sunPosition ? sunPosition.altitude > 0 : true;
+
+   // Photo capture functionality
+   const capturePhoto = async () => {
+     if (!videoRef.current || !containerRef.current) return;
+     
+     try {
+       const canvas = document.createElement('canvas');
+       const video = videoRef.current;
+       canvas.width = video.videoWidth || 1920;
+       canvas.height = video.videoHeight || 1080;
+       
+       const ctx = canvas.getContext('2d');
+       if (!ctx) return;
+       
+       // Draw video frame
+       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+       
+       // Add overlay graphics
+       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+       ctx.fillRect(20, canvas.height - 100, 300, 80);
+       
+       ctx.fillStyle = 'white';
+       ctx.font = 'bold 24px system-ui';
+       ctx.fillText(`${windSpeed} ${isImperial ? 'mph' : 'km/h'} ${getCardinalDirection(windDirection)}`, 40, canvas.height - 60);
+       
+       ctx.font = '16px system-ui';
+       ctx.fillText(condition, 40, canvas.height - 35);
+       
+       // Branding
+       ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+       ctx.fillRect(canvas.width - 150, 20, 130, 30);
+       ctx.fillStyle = 'white';
+       ctx.font = '14px system-ui';
+       ctx.fillText('📍 Rainz.net', canvas.width - 140, 40);
+       
+       // Download
+       const link = document.createElement('a');
+       link.download = `rainz-ar-${Date.now()}.jpg`;
+       link.href = canvas.toDataURL('image/jpeg', 0.9);
+       link.click();
+       
+       toast.success("AR snapshot saved!");
+     } catch (error) {
+       console.error("Failed to capture AR photo:", error);
+       toast.error("Failed to save snapshot");
+     }
+   };
 
   // Fetch real aurora probability from NOAA Kp index
   useEffect(() => {
@@ -218,6 +304,15 @@ export function ARWeatherOverlay({
     ? auroraDirection - heading
     : auroraDirection;
 
+   // Get UV index color and label
+   const getUVInfo = (uv: number) => {
+     if (uv <= 2) return { color: 'bg-green-500', label: 'Low' };
+     if (uv <= 5) return { color: 'bg-yellow-500', label: 'Moderate' };
+     if (uv <= 7) return { color: 'bg-orange-500', label: 'High' };
+     if (uv <= 10) return { color: 'bg-red-500', label: 'Very High' };
+     return { color: 'bg-purple-500', label: 'Extreme' };
+   };
+
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>
@@ -227,7 +322,7 @@ export function ARWeatherOverlay({
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-full h-[100dvh] p-0 m-0 border-0 bg-black">
-        <div className="relative w-full h-full overflow-hidden">
+         <div ref={containerRef} className="relative w-full h-full overflow-hidden">
           {/* Camera feed */}
           {cameraStream ? (
             <video
@@ -261,32 +356,90 @@ export function ARWeatherOverlay({
             <X className="h-6 w-6" />
           </Button>
 
+           {/* Capture button */}
+           {cameraStream && (
+             <Button
+               variant="ghost"
+               size="icon"
+               className="absolute top-4 right-16 z-50 bg-black/50 text-white hover:bg-black/70"
+               onClick={capturePhoto}
+             >
+               <Download className="h-6 w-6" />
+             </Button>
+           )}
+
           {/* AR Overlay Elements */}
           <div className="absolute inset-0 pointer-events-none">
+             {/* Weather condition gradient overlay */}
+             <div 
+               className="absolute inset-0 opacity-20 transition-opacity duration-500"
+               style={{
+                 background: condition.toLowerCase().includes('rain') 
+                   ? 'linear-gradient(to bottom, rgba(59, 130, 246, 0.3), transparent)'
+                   : condition.toLowerCase().includes('snow')
+                   ? 'linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent)'
+                   : condition.toLowerCase().includes('cloud') || condition.toLowerCase().includes('overcast')
+                   ? 'linear-gradient(to bottom, rgba(100, 116, 139, 0.3), transparent)'
+                   : isDaytime 
+                   ? 'linear-gradient(to bottom, rgba(251, 191, 36, 0.2), transparent)'
+                   : 'linear-gradient(to bottom, rgba(30, 41, 59, 0.3), transparent)'
+               }}
+             />
+
             {/* Compass */}
-            <div className="absolute top-20 left-1/2 -translate-x-1/2">
+             <div className="absolute top-24 left-1/2 -translate-x-1/2">
               <div className="relative w-24 h-24">
                 <div
-                  className="absolute inset-0 flex items-center justify-center transition-transform duration-100"
-                  style={{ transform: `rotate(${compassRotation}deg)` }}
+                   className="absolute inset-0 flex items-center justify-center"
+                   style={{ 
+                     transform: `rotate(${compassRotation}deg)`,
+                     transition: 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)'
+                   }}
                 >
-                  <div className="w-20 h-20 rounded-full border-2 border-white/50 bg-black/30 backdrop-blur-sm flex items-center justify-center">
+                   <div className="w-20 h-20 rounded-full border-2 border-white/40 bg-black/40 backdrop-blur-md flex items-center justify-center shadow-lg">
                     <Navigation className="h-10 w-10 text-red-500" style={{ transform: "rotate(-45deg)" }} />
                   </div>
                 </div>
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black/50 px-2 py-1 rounded text-xs text-white whitespace-nowrap">
+                 <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm px-3 py-1 rounded-full text-xs text-white whitespace-nowrap font-medium">
                   {heading !== null ? `${Math.round(heading)}° ${getCardinalDirection(heading)}` : "Calibrating..."}
                 </div>
               </div>
             </div>
 
+             {/* Sun/Moon Position Indicator */}
+             {sunPosition && sunPosition.altitude > -18 && (
+               <div 
+                 className="absolute"
+                 style={{
+                   top: `${Math.max(10, 50 - sunPosition.altitude * 0.8)}%`,
+                   left: '50%',
+                   transform: `translateX(-50%) rotate(${heading !== null ? sunPosition.azimuth - heading : 0}deg)`,
+                   transition: 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)'
+                 }}
+               >
+                 <div className="flex flex-col items-center">
+                   {isDaytime ? (
+                     <Sun className="h-12 w-12 text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
+                   ) : (
+                     <Moon className="h-10 w-10 text-slate-200 drop-shadow-[0_0_10px_rgba(226,232,240,0.5)]" />
+                   )}
+                   <span className="text-xs text-white/80 mt-1 bg-black/40 px-2 py-0.5 rounded-full">
+                     {isDaytime ? `${Math.round(sunPosition.altitude)}°` : 'Night'}
+                   </span>
+                 </div>
+               </div>
+             )}
+
             {/* Wind Direction Arrow */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
               <div
-                className="flex flex-col items-center transition-transform duration-100"
-                style={{ transform: `rotate(${windArrowRotation}deg)` }}
+                 className="flex flex-col items-center"
+                 style={{ 
+                   transform: `rotate(${windArrowRotation}deg)`,
+                   transition: 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)'
+                 }}
               >
-                <Wind className="h-16 w-16 text-cyan-400 drop-shadow-lg" />
+                 <Wind className="h-16 w-16 text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]" />
                 <div
                   className="w-1 h-24 bg-gradient-to-b from-cyan-400 to-transparent rounded-full"
                   style={{ transform: "rotate(180deg)" }}
@@ -294,11 +447,55 @@ export function ARWeatherOverlay({
               </div>
             </div>
 
+             {/* Temperature & Humidity HUD */}
+             {(temperature !== undefined || humidity !== undefined) && (
+               <div className="absolute top-24 right-4 flex flex-col gap-2">
+                 {temperature !== undefined && (
+                   <Card className="bg-black/60 backdrop-blur-md border-white/20 text-white px-3 py-2">
+                     <div className="flex items-center gap-2">
+                       <Thermometer className="h-5 w-5 text-orange-400" />
+                       <span className="font-bold text-lg">{Math.round(temperature)}°{isImperial ? 'F' : 'C'}</span>
+                     </div>
+                   </Card>
+                 )}
+                 {humidity !== undefined && (
+                   <Card className="bg-black/60 backdrop-blur-md border-white/20 text-white px-3 py-2">
+                     <div className="flex items-center gap-2">
+                       <Droplets className="h-5 w-5 text-blue-400" />
+                       <span className="font-medium">{humidity}%</span>
+                     </div>
+                   </Card>
+                 )}
+               </div>
+             )}
+
+             {/* UV Index Meter (if daytime and UV data available) */}
+             {isDaytime && uvIndex !== undefined && uvIndex > 0 && (
+               <div className="absolute top-24 left-4">
+                 <Card className="bg-black/60 backdrop-blur-md border-white/20 text-white px-3 py-2">
+                   <div className="flex items-center gap-2">
+                     <Sun className="h-5 w-5 text-yellow-400" />
+                     <div className="flex flex-col">
+                       <span className="text-xs opacity-70">UV Index</span>
+                       <div className="flex items-center gap-2">
+                         <span className="font-bold">{uvIndex}</span>
+                         <span className={`text-xs px-2 py-0.5 rounded-full ${getUVInfo(uvIndex).color}`}>
+                           {getUVInfo(uvIndex).label}
+                         </span>
+                       </div>
+                     </div>
+                   </div>
+                 </Card>
+               </div>
+             )}
+
             {/* Wind Info Card */}
-            <Card className="absolute bottom-32 left-4 right-4 bg-black/60 backdrop-blur-md border-white/20 text-white p-4">
+             <Card className="absolute bottom-32 left-4 right-4 bg-black/60 backdrop-blur-md border-white/20 text-white p-4 shadow-xl">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Wind className="h-8 w-8 text-cyan-400" />
+                   <div className="p-2 rounded-full bg-cyan-400/20">
+                     <Wind className="h-6 w-6 text-cyan-400" />
+                   </div>
                   <div>
                     <p className="text-lg font-bold">{windSpeed} {isImperial ? "mph" : "km/h"}</p>
                     <p className="text-sm opacity-70">
@@ -315,10 +512,12 @@ export function ARWeatherOverlay({
 
             {/* Aurora Card (if in aurora zone) */}
             {auroraChance > 0 && (
-              <Card className="absolute bottom-52 left-4 right-4 bg-black/60 backdrop-blur-md border-purple-500/30 text-white p-4">
+               <Card className="absolute bottom-52 left-4 right-4 bg-gradient-to-r from-purple-900/60 to-pink-900/60 backdrop-blur-md border-purple-500/30 text-white p-4 shadow-xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Sparkles className="h-8 w-8 text-purple-400" />
+                     <div className="p-2 rounded-full bg-purple-400/20 animate-pulse">
+                       <Sparkles className="h-6 w-6 text-purple-400" />
+                     </div>
                     <div>
                       <p className="text-lg font-bold">{auroraChance}% Chance</p>
                       <p className="text-sm opacity-70">
@@ -332,8 +531,11 @@ export function ARWeatherOverlay({
                       Look {latitude >= 0 ? "North" : "South"}
                     </p>
                     <div
-                      className="inline-block mt-1 transition-transform duration-100"
-                      style={{ transform: `rotate(${auroraArrowRotation}deg)` }}
+                       className="inline-block mt-1"
+                       style={{ 
+                         transform: `rotate(${auroraArrowRotation}deg)`,
+                         transition: 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)'
+                       }}
                     >
                       <Navigation className="h-5 w-5 text-purple-400" />
                     </div>
@@ -343,13 +545,10 @@ export function ARWeatherOverlay({
             )}
 
             {/* Current Conditions */}
-            <Card className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border-white/20 text-white px-4 py-2">
+             <Card className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border-white/20 text-white px-4 py-2 shadow-lg">
               <div className="flex items-center gap-2">
                 <Compass className="h-4 w-4 opacity-70" />
                 <span className="text-sm">{condition}</span>
-                {uvIndex !== undefined && uvIndex > 0 && (
-                  <span className="text-xs bg-yellow-500/30 px-2 py-0.5 rounded">UV {uvIndex}</span>
-                )}
               </div>
             </Card>
           </div>

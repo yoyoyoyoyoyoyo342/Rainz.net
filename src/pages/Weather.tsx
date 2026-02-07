@@ -65,7 +65,7 @@ export default function WeatherPage() {
   const { setTimeOfDay } = useTimeOfDayContext();
   const { settings: premiumSettings } = usePremiumSettings();
   const { data: hyperlocalData } = useHyperlocalWeather(selectedLocation?.lat, selectedLocation?.lon);
-  const { setUserLocation: saveLocationToAccount } = useAccountStorage();
+  const { data: accountData, loading: accountLoading, setUserLocation: saveLocationToAccount, setLocationPermission } = useAccountStorage();
   const { saveToCache, getFromCache, isEnabled: offlineCacheEnabled } = useOfflineCache();
   const [isUsingCachedData, setIsUsingCachedData] = useState(false);
   const currentHoliday = getCurrentHoliday();
@@ -324,10 +324,21 @@ export default function WeatherPage() {
   const locationDetectedRef = useRef(false);
 
   useEffect(() => {
+    // Wait for account data to load before detecting location
+    if (accountLoading) return;
+    
     // Only detect location once per session
     if (locationDetectedRef.current) return;
 
     const detectLocation = async () => {
+      // First, check if we have a saved location from account storage
+      if (accountData.userLocation) {
+        locationDetectedRef.current = true;
+        setSelectedLocation(accountData.userLocation);
+        setIsAutoDetected(false);
+        return;
+      }
+      
       // Check if we're offline and have cached data (premium feature)
       if (!navigator.onLine && offlineCacheEnabled) {
         try {
@@ -355,9 +366,18 @@ export default function WeatherPage() {
         }
       }
 
+      // Check if location permission was previously denied - don't auto-request again
+      if (accountData.locationPermissionGranted === false) {
+        // User previously denied, don't auto-request - they can manually click the location button
+        return;
+      }
+
       try {
         const position = await weatherApi.getCurrentLocation();
         const { latitude, longitude } = position.coords;
+        
+        // Save that permission was granted
+        setLocationPermission(true);
 
         const pickLocationNameFromGeocode = (data: any): string => {
           // Prefer human-friendly locality/city; never return just the country (e.g. "Denmark")
@@ -414,13 +434,18 @@ export default function WeatherPage() {
           setIsAutoDetected(true);
           saveLocationToAccount(newLocation);
         }
-      } catch {
-        // ignore
+      } catch (err: any) {
+        // Save that permission was denied
+        const code = typeof err?.code === "number" ? err.code : undefined;
+        const isDenied = code === 1; // GeolocationPositionError.PERMISSION_DENIED
+        if (isDenied) {
+          setLocationPermission(false);
+        }
       }
     };
 
     detectLocation();
-  }, [offlineCacheEnabled]); // Add offlineCacheEnabled dependency
+  }, [offlineCacheEnabled, accountLoading, accountData.userLocation, accountData.locationPermissionGranted]); // Add dependencies
 
   const handleLocationSelect = (lat: number, lon: number, locationName: string) => {
     const newLocation = { lat, lon, name: locationName };

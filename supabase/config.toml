@@ -31,7 +31,7 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.verify-predictions]
-verify_jwt = true
+verify_jwt = false
 
 [functions.process-weather-corrections]
 verify_jwt = true
@@ -94,4 +94,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.confirm-tip]
+verify_jwt = false
+
+[functions.claim-christmas-reward]
+verify_jwt = false
+
+[functions.claim-ramadan-reward]
 verify_jwt = false

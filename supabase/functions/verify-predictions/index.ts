@@ -69,19 +69,30 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Check if current time is 10 PM CET (21:00 UTC in winter, 20:00 UTC in summer)
+    // Check if this is a manual trigger (bypass time check)
     const now = new Date();
     const cetHour = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Paris" })).getHours();
     
-    // Only run at 10 PM CET (22:00 in Europe/Paris timezone)
-    // Allow a 30-minute window (21:45 - 22:15) for cron job timing flexibility
-    if (cetHour !== 22 && cetHour !== 21) {
-      console.log(`Current CET hour is ${cetHour}, waiting for 22:00 CET to verify predictions`);
+    // Parse request body for manual override
+    let forceRun = false;
+    try {
+      const body = await req.json();
+      forceRun = body?.force === true;
+    } catch {
+      // No body or invalid JSON, use default behavior
+    }
+    
+    // Only enforce time check if not a manual/forced run
+    // Allow between 9 PM and 11 PM CET (hours 21, 22) for flexibility
+    if (!forceRun && cetHour !== 22 && cetHour !== 21 && cetHour !== 23) {
+      console.log(`Current CET hour is ${cetHour}, waiting for 21:00-23:00 CET to verify predictions`);
       return new Response(
-        JSON.stringify({ message: 'Not yet 10 PM CET, skipping verification', currentCetHour: cetHour }),
+        JSON.stringify({ message: 'Not yet verification time (21-23 CET), skipping', currentCetHour: cetHour, tip: 'Pass {"force": true} to run anyway' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    console.log(`Running verification at CET hour ${cetHour}${forceRun ? ' (forced)' : ''}`);
 
     // Get today's date (we verify predictions for today at 10 PM, using actual day's data)
     const today = now.toISOString().split('T')[0];

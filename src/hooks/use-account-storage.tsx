@@ -7,6 +7,8 @@ interface AccountStorageData {
   dismissedBroadcasts: string[];
   readBroadcasts: string[];
   morningReviewDismissed: string | null;
+  locationPermissionGranted: boolean | null;
+  locationPermissionAskedAt: string | null;
   gameHighScores: {
     sunshineCollector: number;
     snowSkiing: number;
@@ -22,6 +24,8 @@ const DEFAULT_DATA: AccountStorageData = {
   dismissedBroadcasts: [],
   readBroadcasts: [],
   morningReviewDismissed: null,
+  locationPermissionGranted: null,
+  locationPermissionAskedAt: null,
   gameHighScores: {
     sunshineCollector: 0,
     snowSkiing: 0,
@@ -213,6 +217,13 @@ export function useAccountStorage() {
       } catch {}
     }
 
+    // Load location permission status
+    const permissionGranted = localStorage.getItem("rainz-location-permission-granted");
+    if (permissionGranted !== null) {
+      localData.locationPermissionGranted = permissionGranted === "true";
+    }
+    localData.locationPermissionAskedAt = localStorage.getItem("rainz-location-permission-asked");
+
     setData(localData);
   };
 
@@ -316,6 +327,24 @@ export function useAccountStorage() {
     }
   }, [user]);
 
+  // Set location permission status - stable callback
+  const setLocationPermission = useCallback(async (granted: boolean) => {
+    const currentData = dataRef.current;
+    const newData = { 
+      ...currentData, 
+      locationPermissionGranted: granted,
+      locationPermissionAskedAt: new Date().toISOString()
+    };
+    setData(newData);
+
+    if (user) {
+      await saveToAccount(user.id, newData);
+    } else {
+      localStorage.setItem("rainz-location-permission-granted", String(granted));
+      localStorage.setItem("rainz-location-permission-asked", new Date().toISOString());
+    }
+  }, [user]);
+
   return {
     data,
     loading,
@@ -323,6 +352,7 @@ export function useAccountStorage() {
     setGameHighScore,
     dismissMorningReview,
     dismissBroadcast,
+    setLocationPermission,
     isAuthenticated: !!user,
   };
 }

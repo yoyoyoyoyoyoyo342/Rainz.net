@@ -148,18 +148,27 @@ export const weatherApi = {
     const data: any = await res.json();
 
     const weatherCodeToText = (code?: number, temp?: number, snowfall?: number, humidity?: number, windSpeed?: number): string => {
-      const hasSnow = snowfall !== undefined && snowfall > 0;
-      const isFreezing = temp !== undefined && temp <= 35;
-      const isVeryWet = humidity !== undefined && humidity > 85;
-      const isWindy = windSpeed !== undefined && windSpeed > 15;
+      // Trust Open-Meteo's explicit snow codes - these ARE snow
+      // Codes 71-77: Snow fall (light, moderate, heavy)
+      // Codes 85-86: Snow showers (slight, heavy)
+      const isExplicitSnowCode = code !== undefined && (
+        (code >= 71 && code <= 77) || (code >= 85 && code <= 86)
+      );
       
-      const snowScore = 
-        (hasSnow ? 4 : 0) +
-        (temp !== undefined && temp <= 32 ? 3 : temp !== undefined && temp <= 35 ? 2 : 0) +
-        (isVeryWet && isFreezing ? 1 : 0) +
-        (isWindy && isFreezing ? 1 : 0);
+      if (isExplicitSnowCode) {
+        return "Snow";
+      }
       
-      const isSnowing = snowScore >= 4;
+      // For precipitation codes that could be rain OR snow based on temperature,
+      // use temperature and snowfall data to determine
+      const hasSignificantSnowfall = snowfall !== undefined && snowfall > 0.1;
+      const isBelowFreezing = temp !== undefined && temp <= 32;
+      const isNearFreezing = temp !== undefined && temp <= 35;
+      
+      // Only consider it snowing for ambiguous codes if:
+      // 1. There's actual snowfall data AND temperature is near/below freezing, OR
+      // 2. Temperature is well below freezing (below 28°F)
+      const shouldBeSnow = (hasSignificantSnowfall && isNearFreezing) || (temp !== undefined && temp <= 28);
       
       switch (code) {
         case 0: return "Clear";
@@ -168,18 +177,22 @@ export const weatherApi = {
         case 3: return "Cloudy";
         case 45:
         case 48: return "Fog";
+        // Drizzle codes (51-55) - only show snow if conditions are right
         case 51:
         case 53:
-        case 55: return isSnowing ? "Snow" : "Drizzle";
+        case 55: return shouldBeSnow ? "Snow" : "Drizzle";
+        // Rain codes (61-65) - only show snow if conditions are right  
         case 61:
         case 63:
-        case 65: return isSnowing ? "Snow" : "Rain";
-        case 71:
-        case 73:
-        case 75: return "Snow";
+        case 65: return shouldBeSnow ? "Snow" : "Rain";
+        // Freezing rain/drizzle (66-67) - these are freezing rain, not snow
+        case 66:
+        case 67: return "Freezing Rain";
+        // Shower codes (80-82) - only show snow if conditions are right
         case 80:
         case 81:
-        case 82: return isSnowing ? "Snow" : "Showers";
+        case 82: return shouldBeSnow ? "Snow" : "Showers";
+        // Thunderstorm codes
         case 95:
         case 96:
         case 99: return "Thunderstorm";

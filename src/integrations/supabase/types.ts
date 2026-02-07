@@ -334,6 +334,65 @@ export type Database = {
           },
         ]
       }
+      christmas_calendar: {
+        Row: {
+          created_at: string
+          day_number: number
+          id: string
+          reward_amount: number
+          reward_type: string
+          unlock_date: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          day_number: number
+          id?: string
+          reward_amount?: number
+          reward_type: string
+          unlock_date: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          day_number?: number
+          id?: string
+          reward_amount?: number
+          reward_type?: string
+          unlock_date?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      christmas_claims: {
+        Row: {
+          calendar_id: string
+          claimed_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          calendar_id: string
+          claimed_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          calendar_id?: string
+          claimed_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "christmas_claims_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "christmas_calendar"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           created_at: string | null
@@ -749,6 +808,74 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      ramadan_calendar: {
+        Row: {
+          created_at: string
+          day_number: number
+          gregorian_end_date: string
+          gregorian_start_date: string
+          id: string
+          reward_amount: number
+          reward_type: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          day_number: number
+          gregorian_end_date: string
+          gregorian_start_date: string
+          id?: string
+          reward_amount?: number
+          reward_type: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          day_number?: number
+          gregorian_end_date?: string
+          gregorian_start_date?: string
+          id?: string
+          reward_amount?: number
+          reward_type?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      ramadan_claims: {
+        Row: {
+          calendar_id: string
+          claimed_at: string
+          id: string
+          user_id: string
+          user_latitude: number | null
+          user_longitude: number | null
+        }
+        Insert: {
+          calendar_id: string
+          claimed_at?: string
+          id?: string
+          user_id: string
+          user_latitude?: number | null
+          user_longitude?: number | null
+        }
+        Update: {
+          calendar_id?: string
+          claimed_at?: string
+          id?: string
+          user_id?: string
+          user_latitude?: number | null
+          user_longitude?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ramadan_claims_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "ramadan_calendar"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       saved_locations: {
         Row: {

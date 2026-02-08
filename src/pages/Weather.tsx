@@ -48,6 +48,8 @@ import { useAccountStorage } from "@/hooks/use-account-storage";
 import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
 import { useOfflineCache } from "@/hooks/use-offline-cache";
 import { SEOHead } from "@/components/seo/seo-head";
+import { ChristmasCalendar } from "@/components/weather/christmas-calendar";
+import { RamadanCalendar } from "@/components/weather/ramadan-calendar";
 
 export default function WeatherPage() {
   const [selectedLocation, setSelectedLocation] = useState<{
@@ -752,6 +754,19 @@ export default function WeatherPage() {
                   <AQICard data={hyperlocalData.aqi} />
                 </div>
               ) : null}
+
+              {/* Holiday Calendars */}
+              <div className="mb-4">
+                <ChristmasCalendar />
+              </div>
+              <div className="mb-4">
+                <RamadanCalendar
+                  userLatitude={selectedLocation?.lat}
+                  userLongitude={selectedLocation?.lon}
+                  sunrise={weatherData.mostAccurate.currentWeather.sunrise}
+                  sunset={weatherData.mostAccurate.currentWeather.sunset}
+                />
+              </div>
 
               <footer className="text-center py-2 mt-4 glass-header rounded-lg p-4">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2">

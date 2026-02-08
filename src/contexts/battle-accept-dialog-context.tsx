@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { WeatherPredictionForm } from "@/components/weather/weather-prediction-form";
 import { usePredictionBattles } from "@/hooks/use-prediction-battles";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2, Swords } from "lucide-react";
 
 interface BattleAcceptDialogState {
   isOpen: boolean;
+  isLoading: boolean;
   battleId: string | null;
   battleDetails: {
     locationName: string;
@@ -38,6 +40,7 @@ interface BattleAcceptDialogProviderProps {
 export function BattleAcceptDialogProvider({ children }: BattleAcceptDialogProviderProps) {
   const [state, setState] = useState<BattleAcceptDialogState>({
     isOpen: false,
+    isLoading: false,
     battleId: null,
     battleDetails: null,
   });
@@ -46,6 +49,14 @@ export function BattleAcceptDialogProvider({ children }: BattleAcceptDialogProvi
   const { toast } = useToast();
 
   const openBattleAcceptDialog = useCallback(async (battleId: string) => {
+    // Open dialog immediately with loading state
+    setState({
+      isOpen: true,
+      isLoading: true,
+      battleId,
+      battleDetails: null,
+    });
+
     try {
       // Fetch battle details
       const { data: battle, error } = await supabase
@@ -60,6 +71,12 @@ export function BattleAcceptDialogProvider({ children }: BattleAcceptDialogProvi
           description: "Could not find this battle challenge.",
           variant: "destructive",
         });
+        setState({
+          isOpen: false,
+          isLoading: false,
+          battleId: null,
+          battleDetails: null,
+        });
         return;
       }
 
@@ -69,11 +86,18 @@ export function BattleAcceptDialogProvider({ children }: BattleAcceptDialogProvi
           description: "This challenge has already been accepted or expired.",
           variant: "destructive",
         });
+        setState({
+          isOpen: false,
+          isLoading: false,
+          battleId: null,
+          battleDetails: null,
+        });
         return;
       }
 
       setState({
         isOpen: true,
+        isLoading: false,
         battleId,
         battleDetails: {
           locationName: battle.location_name,
@@ -89,12 +113,19 @@ export function BattleAcceptDialogProvider({ children }: BattleAcceptDialogProvi
         description: "Failed to load battle details.",
         variant: "destructive",
       });
+      setState({
+        isOpen: false,
+        isLoading: false,
+        battleId: null,
+        battleDetails: null,
+      });
     }
   }, [toast]);
 
   const closeBattleAcceptDialog = useCallback(() => {
     setState({
       isOpen: false,
+      isLoading: false,
       battleId: null,
       battleDetails: null,
     });
@@ -124,13 +155,24 @@ export function BattleAcceptDialogProvider({ children }: BattleAcceptDialogProvi
       <Dialog open={state.isOpen} onOpenChange={(open) => !open && closeBattleAcceptDialog()}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Accept Battle Challenge</DialogTitle>
-          </DialogHeader>
-          {state.battleDetails && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
+            <DialogTitle className="flex items-center gap-2">
+              <Swords className="w-5 h-5 text-primary" />
+              Accept Battle Challenge
+            </DialogTitle>
+            {!state.isLoading && state.battleDetails && (
+              <DialogDescription>
                 Make your prediction for <strong>{state.battleDetails.locationName}</strong> to accept this battle.
-              </p>
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          
+          {state.isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-4">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <p className="text-muted-foreground text-sm">Loading battle details...</p>
+            </div>
+          ) : state.battleDetails ? (
+            <div className="space-y-4">
               <WeatherPredictionForm
                 location={state.battleDetails.locationName}
                 latitude={state.battleDetails.latitude}
@@ -140,7 +182,7 @@ export function BattleAcceptDialogProvider({ children }: BattleAcceptDialogProvi
                 returnPredictionId={true}
               />
             </div>
-          )}
+          ) : null}
         </DialogContent>
       </Dialog>
     </BattleAcceptContext.Provider>

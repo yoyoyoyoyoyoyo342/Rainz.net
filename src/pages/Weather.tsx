@@ -50,6 +50,7 @@ import { useOfflineCache } from "@/hooks/use-offline-cache";
 import { SEOHead } from "@/components/seo/seo-head";
 import { ChristmasCalendar } from "@/components/weather/christmas-calendar";
 import { RamadanCalendar } from "@/components/weather/ramadan-calendar";
+import { OnboardingFlow } from "@/components/weather/onboarding-flow";
 
 export default function WeatherPage() {
   const [selectedLocation, setSelectedLocation] = useState<{
@@ -71,6 +72,17 @@ export default function WeatherPage() {
   const { saveToCache, getFromCache, isEnabled: offlineCacheEnabled } = useOfflineCache();
   const [isUsingCachedData, setIsUsingCachedData] = useState(false);
   const currentHoliday = getCurrentHoliday();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Show onboarding for new users
+  useEffect(() => {
+    if (user && !accountLoading) {
+      const onboardingDone = localStorage.getItem("rainz-onboarding-complete");
+      if (!onboardingDone && !profile?.display_name) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [user, accountLoading, profile]);
 
   const { data: savedLocations = [] } = useQuery({
     queryKey: ["saved-locations"],
@@ -805,6 +817,18 @@ export default function WeatherPage() {
             onLocationSelect={handleLocationSelect}
             currentLocation={selectedLocation}
             isImperial={isImperial}
+          />
+        )}
+        {user && showOnboarding && (
+          <OnboardingFlow
+            open={showOnboarding}
+            userId={user.id}
+            onComplete={(loc) => {
+              setShowOnboarding(false);
+              if (loc) {
+                handleLocationSelect(loc.lat, loc.lon, loc.name);
+              }
+            }}
           />
         )}
       </div>

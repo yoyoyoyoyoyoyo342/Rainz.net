@@ -50,7 +50,7 @@ export async function getPushSubscription(): Promise<PushSubscription | null> {
   
   try {
     const registration = await navigator.serviceWorker.ready;
-    return await registration.pushManager.getSubscription();
+    return await (registration as any).pushManager.getSubscription();
   } catch (error) {
     console.error('Error getting push subscription:', error);
     return null;
@@ -75,7 +75,7 @@ export async function subscribeToPush(): Promise<PushSubscriptionData | null> {
     const registration = await navigator.serviceWorker.ready;
     
     // Check existing subscription
-    let subscription = await registration.pushManager.getSubscription();
+    let subscription = await (registration as any).pushManager.getSubscription();
     
     if (subscription) {
       // Already subscribed
@@ -84,7 +84,7 @@ export async function subscribeToPush(): Promise<PushSubscriptionData | null> {
     
     // Subscribe with VAPID key
     const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-    subscription = await registration.pushManager.subscribe({
+    subscription = await (registration as any).pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
     });

@@ -44,6 +44,7 @@ const Download = lazy(() => import("./pages/Download"));
 const Widgets = lazy(() => import("./pages/Widgets"));
 const Widget = lazy(() => import("./pages/Widget"));
 const Embed = lazy(() => import("./pages/Embed"));
+const Info = lazy(() => import("./pages/Info"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -208,6 +209,7 @@ function AppContent() {
                                 <Route path="/widgets" element={<Widgets />} />
                                 <Route path="/widget" element={<Widget />} />
                                 <Route path="/embed" element={<Embed />} />
+                                <Route path="/info" element={<Info />} />
                                 <Route path="/weather" element={<Navigate to="/" replace />} />
                                 <Route path="*" element={<NotFound />} />
                               </Routes>

@@ -1,0 +1,28 @@
+
+-- Seed Christmas Calendar 2026 (Dec 1-25)
+INSERT INTO christmas_calendar (year, day_number, reward_type, reward_amount, unlock_date) VALUES
+(2026, 1, 'shop_points', 50, '2026-12-01'),
+(2026, 2, 'prediction_points', 25, '2026-12-02'),
+(2026, 3, 'shop_points', 75, '2026-12-03'),
+(2026, 4, 'xp_boost', 1, '2026-12-04'),
+(2026, 5, 'streak_freeze', 1, '2026-12-05'),
+(2026, 6, 'shop_points', 100, '2026-12-06'),
+(2026, 7, 'prediction_points', 50, '2026-12-07'),
+(2026, 8, 'mystery_box', 1, '2026-12-08'),
+(2026, 9, 'shop_points', 60, '2026-12-09'),
+(2026, 10, 'double_points', 1, '2026-12-10'),
+(2026, 11, 'shop_points', 80, '2026-12-11'),
+(2026, 12, 'prediction_points', 75, '2026-12-12'),
+(2026, 13, 'streak_freeze', 1, '2026-12-13'),
+(2026, 14, 'shop_points', 100, '2026-12-14'),
+(2026, 15, 'mystery_box', 1, '2026-12-15'),
+(2026, 16, 'xp_boost', 1, '2026-12-16'),
+(2026, 17, 'shop_points', 120, '2026-12-17'),
+(2026, 18, 'prediction_points', 100, '2026-12-18'),
+(2026, 19, 'shop_points', 90, '2026-12-19'),
+(2026, 20, 'double_points', 1, '2026-12-20'),
+(2026, 21, 'streak_freeze', 2, '2026-12-21'),
+(2026, 22, 'shop_points', 150, '2026-12-22'),
+(2026, 23, 'mystery_box', 2, '2026-12-23'),
+(2026, 24, 'prediction_points', 150, '2026-12-24'),
+(2026, 25, 'shop_points', 500, '2026-12-25');

@@ -43,7 +43,7 @@ import RainMapCard from "@/components/weather/rain-map-card";
 import { usePremiumSettings } from "@/hooks/use-premium-settings";
 import { AffiliateCard } from "@/components/weather/affiliate-card";
 import { trackWeatherView } from "@/lib/track-event";
-import { ExtendedMoonCard } from "@/components/weather/extended-moon-card";
+
 import { useAccountStorage } from "@/hooks/use-account-storage";
 import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
 import { useOfflineCache } from "@/hooks/use-offline-cache";
@@ -750,16 +750,6 @@ export default function WeatherPage() {
                   is24Hour={is24Hour}
                   premiumSettings={premiumSettings}
                 />
-                {selectedLocation && (
-                  <ExtendedMoonCard
-                    moonrise={weatherData.mostAccurate.currentWeather.moonrise}
-                    moonset={weatherData.mostAccurate.currentWeather.moonset}
-                    moonPhase={weatherData.mostAccurate.currentWeather.moonPhase}
-                    latitude={selectedLocation.lat}
-                    longitude={selectedLocation.lon}
-                    is24Hour={is24Hour}
-                  />
-                )}
 
               {hyperlocalData?.aqi ? (
                 <div className="mb-4">
@@ -767,18 +757,28 @@ export default function WeatherPage() {
                 </div>
               ) : null}
 
-              {/* Holiday Calendars */}
-              <div className="mb-4">
-                <ChristmasCalendar />
-              </div>
-              <div className="mb-4">
-                <RamadanCalendar
-                  userLatitude={selectedLocation?.lat}
-                  userLongitude={selectedLocation?.lon}
-                  sunrise={weatherData.mostAccurate.currentWeather.sunrise}
-                  sunset={weatherData.mostAccurate.currentWeather.sunset}
-                />
-              </div>
+              {/* Holiday Calendars - only shown in season */}
+              {new Date().getMonth() === 11 && (
+                <div className="mb-4">
+                  <ChristmasCalendar />
+                </div>
+              )}
+              {(() => {
+                const now = new Date();
+                // Ramadan 2026: Feb 18 - Mar 19
+                const ramadanStart = new Date(2026, 1, 18);
+                const ramadanEnd = new Date(2026, 2, 19);
+                return now >= ramadanStart && now <= ramadanEnd;
+              })() && (
+                <div className="mb-4">
+                  <RamadanCalendar
+                    userLatitude={selectedLocation?.lat}
+                    userLongitude={selectedLocation?.lon}
+                    sunrise={weatherData.mostAccurate.currentWeather.sunrise}
+                    sunset={weatherData.mostAccurate.currentWeather.sunset}
+                  />
+                </div>
+              )}
 
               <footer className="text-center py-2 mt-4 glass-header rounded-lg p-4">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2">

@@ -132,8 +132,9 @@ export default function Auth() {
       return;
     }
     
-    if (newPassword.length < 6) {
-      toast({ variant: "destructive", title: "Password Too Short", description: "Password must be at least 6 characters." });
+    const pwErrors = getPasswordErrors(newPassword);
+    if (pwErrors.length > 0) {
+      toast({ variant: "destructive", title: "Weak Password", description: `Missing: ${pwErrors.join(", ")}` });
       return;
     }
     
@@ -156,8 +157,25 @@ export default function Auth() {
     }
   };
 
+  const getPasswordErrors = (pw: string): string[] => {
+    const errors: string[] = [];
+    if (pw.length < 8) errors.push("At least 8 characters");
+    if (!/[A-Z]/.test(pw)) errors.push("One uppercase letter");
+    if (!/[a-z]/.test(pw)) errors.push("One lowercase letter");
+    if (!/[0-9]/.test(pw)) errors.push("One number");
+    if (!/[^A-Za-z0-9]/.test(pw)) errors.push("One special character (!@#$...)");
+    return errors;
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const pwErrors = getPasswordErrors(password);
+    if (pwErrors.length > 0) {
+      toast({ variant: "destructive", title: "Weak Password", description: `Missing: ${pwErrors.join(", ")}` });
+      return;
+    }
+
     setLoading(true);
     try {
       cleanupAuthState();
@@ -521,7 +539,16 @@ export default function Auth() {
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
-                      <p className="text-xs text-muted-foreground">Must be at least 6 characters</p>
+                      <div className="text-xs text-muted-foreground space-y-0.5">
+                        <p>Password must have:</p>
+                        <ul className="list-disc pl-4 space-y-0">
+                          <li className={password.length >= 8 ? "text-green-500" : ""}>8+ characters</li>
+                          <li className={/[A-Z]/.test(password) ? "text-green-500" : ""}>Uppercase letter</li>
+                          <li className={/[a-z]/.test(password) ? "text-green-500" : ""}>Lowercase letter</li>
+                          <li className={/[0-9]/.test(password) ? "text-green-500" : ""}>Number</li>
+                          <li className={/[^A-Za-z0-9]/.test(password) ? "text-green-500" : ""}>Special character</li>
+                        </ul>
+                      </div>
                     </div>
                     <Button type="submit" className="w-full h-11 font-medium" disabled={loading}>
                       {loading ? "Creating account..." : "Create Account"}

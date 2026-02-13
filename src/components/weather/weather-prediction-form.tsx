@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,14 +8,16 @@ import { toast } from "sonner";
 import { 
   CloudRain, CloudSnow, Cloud, Sun, CloudDrizzle, CloudLightning, 
   CloudFog, Wind, Target, ThermometerSnowflake, 
-  ThermometerSun, Sparkles, MapPin, Share2, Swords
+  ThermometerSun, Sparkles, MapPin, Share2, Swords, Bot
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { z } from "zod";
- import { usePredictionShare } from "@/contexts/prediction-share-context";
+import { usePredictionShare } from "@/contexts/prediction-share-context";
 import { UserSearch } from "./user-search";
 import { usePredictionBattles } from "@/hooks/use-prediction-battles";
 import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "@/components/ui/card";
+import { weatherApi } from "@/lib/weather-api";
 
 interface WeatherPredictionFormProps {
   location: string;
@@ -54,6 +56,64 @@ const predictionSchema = z.object({
   message: "High must be ≥ low temperature",
   path: ["predictedHigh"],
 });
+
+// Read-only card showing what Rainz (LLM) predicts for tomorrow
+function RainzPredictionCard({ latitude, longitude, isImperial }: { latitude: number; longitude: number; isImperial: boolean }) {
+  const [prediction, setPrediction] = useState<{ high: number; low: number; condition: string } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await weatherApi.getWeatherData(latitude, longitude, "");
+        const daily = data?.mostAccurate?.dailyForecast;
+        if (daily && daily.length >= 2 && !cancelled) {
+          const tomorrow = daily[1];
+          // Data from API is in Fahrenheit — convert to Celsius for display unless imperial
+          const highC = Math.round(((tomorrow.highTemp - 32) * 5) / 9);
+          const lowC = Math.round(((tomorrow.lowTemp - 32) * 5) / 9);
+          setPrediction({
+            high: isImperial ? tomorrow.highTemp : highC,
+            low: isImperial ? tomorrow.lowTemp : lowC,
+            condition: tomorrow.condition || tomorrow.description || "—",
+          });
+        }
+      } catch {
+        // silently fail
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [latitude, longitude, isImperial]);
+
+  if (!prediction) return null;
+
+  const matchedCondition = weatherConditions.find(c =>
+    prediction.condition.toLowerCase().includes(c.value.replace("-", " ")) ||
+    prediction.condition.toLowerCase().includes(c.label.toLowerCase())
+  );
+  const CondIcon = matchedCondition?.icon || Cloud;
+  const condColor = matchedCondition?.color || "text-muted-foreground";
+
+  return (
+    <div className="p-3 rounded-xl bg-gradient-to-br from-sky-500/10 to-primary/10 border border-sky-500/20">
+      <div className="flex items-center gap-2 mb-2">
+        <Bot className="w-4 h-4 text-primary" />
+        <span className="text-xs font-semibold text-primary">Rainz Prediction</span>
+      </div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <CondIcon className={`w-6 h-6 ${condColor}`} />
+          <span className="text-sm font-medium">{prediction.condition}</span>
+        </div>
+        <div className="flex items-center gap-1 text-sm">
+          <span className="text-blue-400 font-semibold">{prediction.low}°</span>
+          <span className="text-muted-foreground">/</span>
+          <span className="text-orange-400 font-semibold">{prediction.high}°</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export const WeatherPredictionForm = ({ 
   location, 
@@ -362,6 +422,9 @@ export const WeatherPredictionForm = ({
             </div>
           </div>
         )}
+
+        {/* Rainz Prediction Card */}
+        <RainzPredictionCard latitude={latitude} longitude={longitude} isImperial={isImperial} />
 
         {/* Battle Challenge Section */}
         <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 space-y-3">

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Trophy, Medal, Award, TrendingUp, Crown, Target, Flame, Info } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp, Crown, Target, Flame, Info, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DisplayNameDialog } from "./display-name-dialog";
@@ -202,12 +202,19 @@ export const Leaderboard = () => {
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <button
-                    onClick={() => navigate(`/profile/${entry.user_id}`)}
-                    className="font-bold text-foreground truncate hover:text-primary hover:underline transition-colors text-left"
-                  >
-                    {entry.display_name}
-                  </button>
+                  {entry.user_id === "00000000-0000-0000-0000-000000000001" ? (
+                    <span className="font-bold text-primary truncate flex items-center gap-1">
+                      <Bot className="w-4 h-4" />
+                      {entry.display_name}
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => navigate(`/profile/${entry.user_id}`)}
+                      className="font-bold text-foreground truncate hover:text-primary hover:underline transition-colors text-left"
+                    >
+                      {entry.display_name}
+                    </button>
+                  )}
                   {isCurrentUser && <Badge variant="outline" className="text-xs">You</Badge>}
                   {entry.is_subscriber && (
                     <TooltipProvider>

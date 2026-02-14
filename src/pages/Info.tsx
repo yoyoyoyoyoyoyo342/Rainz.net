@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { SEOHead } from "@/components/seo/seo-head";
 import rainzLogo from "@/assets/rainz-logo-new.png";
+import { RainzImageCarousel } from "@/components/weather/rainz-image-carousel";
 
 const features = [
   {
@@ -124,6 +125,14 @@ export default function Info() {
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Image Carousel */}
+        <section className="py-16 border-t border-border/30">
+          <div className="container mx-auto px-4 max-w-5xl">
+            <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8">Learn more about Rainz</h2>
+            <RainzImageCarousel />
           </div>
         </section>
 

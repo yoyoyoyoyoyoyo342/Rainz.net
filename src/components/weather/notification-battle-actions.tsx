@@ -47,11 +47,11 @@ export function NotificationBattleActions({
       onRequestCloseParent?.();
       onActionComplete?.();
       
-      // Then open the global battle accept dialog (after popover is closed)
-      // Use setTimeout to ensure popover closes before dialog opens
+      // Then open the global battle accept dialog (after popover is fully closed)
+      // Use longer timeout to ensure Radix popover fully unmounts before dialog opens
       setTimeout(() => {
         openBattleAcceptDialog(battleId);
-      }, 100);
+      }, 350);
     } catch (err) {
       console.error("Error accepting battle:", err);
       toast({

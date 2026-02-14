@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ArrowLeft, Cloud, Users, Target, Zap, Shield, Globe, Crown, Sparkles, Bell, Gamepad2 } from "lucide-react";
 import { SEOHead } from "@/components/seo/seo-head";
+import { RainzImageCarousel } from "@/components/weather/rainz-image-carousel";
 
 export default function About() {
   const navigate = useNavigate();
@@ -132,6 +133,11 @@ export default function About() {
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             The most accurate hyperlocal weather app, powered by multi-model ensemble forecasting and a passionate community of weather enthusiasts.
           </p>
+        </div>
+
+        {/* Image Carousel */}
+        <div className="mb-12">
+          <RainzImageCarousel />
         </div>
 
         {/* Mission Section */}

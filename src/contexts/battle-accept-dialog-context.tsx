@@ -152,8 +152,8 @@ export function BattleAcceptDialogProvider({ children }: BattleAcceptDialogProvi
       {children}
       
       {/* Global Battle Accept Dialog - rendered at root level so it's never unmounted by popover close */}
-      <Dialog open={state.isOpen} onOpenChange={(open) => !open && closeBattleAcceptDialog()}>
-        <DialogContent className="max-w-md">
+      <Dialog open={state.isOpen} onOpenChange={(open) => !open && closeBattleAcceptDialog()} modal={true}>
+        <DialogContent className="max-w-md z-[200]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Swords className="w-5 h-5 text-primary" />

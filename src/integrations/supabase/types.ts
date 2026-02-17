@@ -1009,6 +1009,102 @@ export type Database = {
         }
         Relationships: []
       }
+      streak_challenge_progress: {
+        Row: {
+          accuracy_score: number | null
+          challenge_id: string
+          created_at: string
+          day_number: number
+          id: string
+          prediction_id: string | null
+          user_id: string
+        }
+        Insert: {
+          accuracy_score?: number | null
+          challenge_id: string
+          created_at?: string
+          day_number: number
+          id?: string
+          prediction_id?: string | null
+          user_id: string
+        }
+        Update: {
+          accuracy_score?: number | null
+          challenge_id?: string
+          created_at?: string
+          day_number?: number
+          id?: string
+          prediction_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streak_challenge_progress_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "streak_challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "streak_challenge_progress_prediction_id_fkey"
+            columns: ["prediction_id"]
+            isOneToOne: false
+            referencedRelation: "weather_predictions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      streak_challenges: {
+        Row: {
+          challenger_id: string
+          created_at: string
+          duration: number
+          end_date: string
+          id: string
+          invite_code: string | null
+          latitude: number
+          location_name: string
+          longitude: number
+          opponent_id: string | null
+          start_date: string
+          status: string
+          updated_at: string
+          winner_id: string | null
+        }
+        Insert: {
+          challenger_id: string
+          created_at?: string
+          duration?: number
+          end_date: string
+          id?: string
+          invite_code?: string | null
+          latitude: number
+          location_name: string
+          longitude: number
+          opponent_id?: string | null
+          start_date: string
+          status?: string
+          updated_at?: string
+          winner_id?: string | null
+        }
+        Update: {
+          challenger_id?: string
+          created_at?: string
+          duration?: number
+          end_date?: string
+          id?: string
+          invite_code?: string | null
+          latitude?: number
+          location_name?: string
+          longitude?: number
+          opponent_id?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+          winner_id?: string | null
+        }
+        Relationships: []
+      }
       tip_jar: {
         Row: {
           amount_cents: number
@@ -1435,6 +1531,42 @@ export type Database = {
           predicted_low?: number
           prediction_date?: string
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      weather_reactions: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          emoji: string
+          id: string
+          latitude: number
+          location_name: string
+          longitude: number
+          message: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          emoji: string
+          id?: string
+          latitude: number
+          location_name: string
+          longitude: number
+          message: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          emoji?: string
+          id?: string
+          latitude?: number
+          location_name?: string
+          longitude?: number
+          message?: string
           user_id?: string
         }
         Relationships: []

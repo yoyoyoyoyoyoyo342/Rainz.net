@@ -51,6 +51,9 @@ import { SEOHead } from "@/components/seo/seo-head";
 import { ChristmasCalendar } from "@/components/weather/christmas-calendar";
 import { RamadanCalendar } from "@/components/weather/ramadan-calendar";
 import { OnboardingFlow } from "@/components/weather/onboarding-flow";
+import { WeatherReactionsFeed } from "@/components/weather/weather-reactions-feed";
+import { WeatherTimeMachine } from "@/components/weather/weather-time-machine";
+import { StreakChallenge } from "@/components/weather/streak-challenge";
 
 export default function WeatherPage() {
   const [selectedLocation, setSelectedLocation] = useState<{
@@ -756,6 +759,28 @@ export default function WeatherPage() {
                   <AQICard data={hyperlocalData.aqi} />
                 </div>
               ) : null}
+
+              {/* Innovation Features */}
+              <WeatherReactionsFeed
+                latitude={selectedLocation.lat}
+                longitude={selectedLocation.lon}
+                locationName={actualStationName}
+              />
+
+              <WeatherTimeMachine
+                latitude={selectedLocation.lat}
+                longitude={selectedLocation.lon}
+                locationName={actualStationName}
+                isImperial={isImperial}
+              />
+
+              {user && (
+                <StreakChallenge
+                  latitude={selectedLocation.lat}
+                  longitude={selectedLocation.lon}
+                  locationName={actualStationName}
+                />
+              )}
 
               {/* Holiday Calendars - only shown in season */}
               {new Date().getMonth() === 11 && (

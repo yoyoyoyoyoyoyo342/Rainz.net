@@ -50,6 +50,7 @@ import {
   Brain,
   Gift
 } from "lucide-react";
+import { WeatherWrapped } from "@/components/weather/weather-wrapped";
 
 interface UserProfileData {
   display_name: string;
@@ -563,6 +564,13 @@ const UserProfile = () => {
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Shop Pts</p>
               </div>
             </div>
+
+            {/* Weather Wrapped Button */}
+            {isOwnProfile && (
+              <div className="mt-4">
+                <WeatherWrapped />
+              </div>
+            )}
           </div>
         </Card>
 

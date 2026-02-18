@@ -225,7 +225,13 @@ export function RamadanCalendar({ userLatitude, userLongitude, sunrise, sunset }
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Extract actual error message from edge function response
+        const actualMessage = (error as any)?.context?.json?.error || 
+                              (error as any)?.message || 
+                              "Failed to claim reward";
+        throw new Error(actualMessage);
+      }
 
       // Trigger special Ramadan confetti (moon and stars theme)
       confetti({

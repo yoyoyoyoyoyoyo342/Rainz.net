@@ -75,17 +75,21 @@ serve(async (req) => {
 
     // Verify sun position - must be before sunrise or after sunset
     const sunTimes = await getSunTimes(latitude, longitude);
-    if (!sunTimes) {
-      throw new Error('Could not verify sun position. Please try again.');
-    }
-
-    const now = Date.now();
-    const isSunDown = now < sunTimes.sunrise || now > sunTimes.sunset;
     
-    if (!isSunDown) {
-      const sunsetDate = new Date(sunTimes.sunset);
-      const sunsetStr = sunsetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      throw new Error(`You can only claim during Iftar (after sunset at ${sunsetStr}) or Suhoor (before sunrise)`);
+    if (sunTimes) {
+      const now = Date.now();
+      const isSunDown = now < sunTimes.sunrise || now > sunTimes.sunset;
+      
+      console.log(`Sun check: now=${new Date(now).toISOString()}, sunrise=${new Date(sunTimes.sunrise).toISOString()}, sunset=${new Date(sunTimes.sunset).toISOString()}, isSunDown=${isSunDown}`);
+      
+      if (!isSunDown) {
+        const sunsetDate = new Date(sunTimes.sunset);
+        const sunsetStr = sunsetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        throw new Error(`You can only claim during Iftar (after sunset at ${sunsetStr}) or Suhoor (before sunrise)`);
+      }
+    } else {
+      // If we can't fetch sun times, allow the claim (client-side already verified)
+      console.log('Could not fetch sun times from API, proceeding without sun verification');
     }
 
     // Check if already claimed

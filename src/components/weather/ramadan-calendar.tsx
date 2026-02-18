@@ -75,22 +75,41 @@ export function RamadanCalendar({ userLatitude, userLongitude, sunrise, sunset }
       const now = new Date();
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-      // Parse sunrise/sunset (format: "7:00 AM" or "6:30 PM")
+      // Robust time parser that handles:
+      // "6:45 AM", "06:45 am", "6:45", "18:45" (24h), "6:45:00 AM"
       const parseTime = (timeStr: string): number => {
-        const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)?/i);
-        if (!match) return 0;
-        let hours = parseInt(match[1]);
-        const minutes = parseInt(match[2]);
-        const period = match[3]?.toUpperCase();
-        
-        if (period === "PM" && hours !== 12) hours += 12;
-        if (period === "AM" && hours === 12) hours = 0;
-        
-        return hours * 60 + minutes;
+        // Strip seconds if present: "6:45:00 AM" -> "6:45 AM"
+        const cleaned = timeStr.replace(/:\d{2}(\s*(AM|PM))?$/i, (m, suf) => suf || '').trim();
+
+        // Try 12h with AM/PM
+        const match12 = cleaned.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+        if (match12) {
+          let hours = parseInt(match12[1]);
+          const minutes = parseInt(match12[2]);
+          const period = match12[3].toUpperCase();
+          if (period === "PM" && hours !== 12) hours += 12;
+          if (period === "AM" && hours === 12) hours = 0;
+          return hours * 60 + minutes;
+        }
+
+        // Try 24h / no period
+        const match24 = cleaned.match(/^(\d{1,2}):(\d{2})$/);
+        if (match24) {
+          return parseInt(match24[1]) * 60 + parseInt(match24[2]);
+        }
+
+        return -1; // unparseable
       };
 
       const sunriseMinutes = parseTime(sunrise);
       const sunsetMinutes = parseTime(sunset);
+
+      if (sunriseMinutes < 0 || sunsetMinutes < 0) {
+        // Can't parse — allow claiming (edge function will do server-side verification)
+        setSunStatus("unknown");
+        setCanClaimNow(true);
+        return;
+      }
 
       // Sun is down if before sunrise or after sunset
       const isSunDown = currentMinutes < sunriseMinutes || currentMinutes > sunsetMinutes;

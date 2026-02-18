@@ -217,11 +217,19 @@ export function RamadanCalendar({ userLatitude, userLongitude, sunrise, sunset }
 
     setIsClaiming(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("You must be logged in to claim rewards");
+      }
+
       const { data, error } = await supabase.functions.invoke("claim-ramadan-reward", {
         body: { 
           calendarId: selectedDay.id,
           latitude: userLatitude,
           longitude: userLongitude
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
 

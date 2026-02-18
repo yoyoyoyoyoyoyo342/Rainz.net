@@ -20,6 +20,8 @@ interface RadarFrame {
   path: string;
 }
 
+type MapMode = 'rain' | 'temperature' | 'wind';
+
 const RainMapCard: React.FC<RainMapCardProps> = ({
   latitude,
   longitude,
@@ -33,6 +35,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [opacity, setOpacity] = useState(0.7);
   const [loading, setLoading] = useState(true);
+  const [mapMode, setMapMode] = useState<MapMode>('rain');
   
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -144,26 +147,27 @@ const RainMapCard: React.FC<RainMapCardProps> = ({
     return () => clearInterval(refreshInterval);
   }, []);
 
-  // Update radar layer when frame changes
+  // Update radar layer when frame/mode changes
   useEffect(() => {
-    if (!mapRef.current || radarFrames.length === 0) return;
-
-    const currentFrame = radarFrames[currentFrameIndex];
-    if (!currentFrame) return;
+    if (!mapRef.current) return;
 
     if (radarLayerRef.current) {
       mapRef.current.removeLayer(radarLayerRef.current);
+      radarLayerRef.current = null;
     }
 
-    radarLayerRef.current = L.tileLayer(
-      `https://tilecache.rainviewer.com${currentFrame.path}/256/{z}/{x}/{y}/2/1_1.png`,
-      {
-        opacity: opacity,
-        zIndex: 1000,
-      }
-    );
-    radarLayerRef.current.addTo(mapRef.current);
-  }, [currentFrameIndex, radarFrames, opacity]);
+    if (mapMode === 'rain') {
+      if (radarFrames.length === 0) return;
+      const currentFrame = radarFrames[currentFrameIndex];
+      if (!currentFrame) return;
+      radarLayerRef.current = L.tileLayer(
+        `https://tilecache.rainviewer.com${currentFrame.path}/256/{z}/{x}/{y}/2/1_1.png`,
+        { opacity, zIndex: 1000 }
+      );
+      radarLayerRef.current.addTo(mapRef.current);
+    }
+    // Temperature and Wind: placeholder overlays shown as info overlay instead
+  }, [currentFrameIndex, radarFrames, opacity, mapMode]);
 
   // Animation playback
   useEffect(() => {
@@ -195,7 +199,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({
 
   return (
     <div className="overflow-hidden rounded-2xl glass-card">
-      {/* Header without gradient */}
+      {/* Header */}
       <div className="p-4 border-b border-border/50">
         <div className="flex items-center gap-2">
           <CloudRain className="w-5 h-5 text-primary" />
@@ -204,6 +208,26 @@ const RainMapCard: React.FC<RainMapCardProps> = ({
         <div className="flex items-center gap-1 text-muted-foreground text-sm mt-1">
           <MapPin className="h-3 w-3" />
           {locationName}
+        </div>
+
+        {/* Mode toggle */}
+        <div className="flex gap-1 mt-3">
+          {(['rain', 'temperature', 'wind'] as MapMode[]).map((mode) => {
+            const labels: Record<MapMode, string> = { rain: '🌧 Rain', temperature: '🌡 Temp', wind: '💨 Wind' };
+            return (
+              <button
+                key={mode}
+                onClick={() => { setMapMode(mode); setIsPlaying(false); }}
+                className={`flex-1 text-xs font-medium py-1.5 rounded-lg border transition-all ${
+                  mapMode === mode
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-muted/50 text-muted-foreground border-border/50 hover:border-primary/50'
+                }`}
+              >
+                {labels[mode]}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -217,8 +241,21 @@ const RainMapCard: React.FC<RainMapCardProps> = ({
         
         <div ref={mapContainerRef} className="h-full w-full" />
         
-        {/* Time indicator */}
-        {currentFrame && (
+        {/* Placeholder overlay for Temperature / Wind modes */}
+        {(mapMode === 'temperature' || mapMode === 'wind') && (
+          <div className="absolute inset-0 z-[1001] flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm">
+            <span className="text-4xl mb-3">{mapMode === 'temperature' ? '🌡' : '💨'}</span>
+            <p className="font-semibold text-foreground text-sm mb-1">
+              {mapMode === 'temperature' ? 'Temperature Heatmap' : 'Wind Layer'}
+            </p>
+            <p className="text-xs text-muted-foreground text-center px-8">
+              Coming soon — live {mapMode === 'temperature' ? 'temperature' : 'wind speed'} tiles are in development.
+            </p>
+          </div>
+        )}
+
+        {/* Time indicator — rain mode only */}
+        {mapMode === 'rain' && currentFrame && (
           <div className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-1.5 text-sm font-medium z-[1000]">
             <span className={isPast ? 'text-muted-foreground' : 'text-primary'}>
               {isPast ? 'Past' : 'Forecast'}
@@ -227,91 +264,89 @@ const RainMapCard: React.FC<RainMapCardProps> = ({
           </div>
         )}
 
-        {/* Legend */}
-        <div className="absolute bottom-16 right-2 bg-background/90 backdrop-blur-sm rounded-lg p-2 z-[1000]">
-          <div className="text-xs font-medium mb-1">Intensity</div>
-          <div className="flex items-center gap-1">
-            <div className="w-4 h-3 rounded-sm" style={{ backgroundColor: '#88DDFF' }}></div>
-            <div className="w-4 h-3 rounded-sm" style={{ backgroundColor: '#00FF00' }}></div>
-            <div className="w-4 h-3 rounded-sm" style={{ backgroundColor: '#FFFF00' }}></div>
-            <div className="w-4 h-3 rounded-sm" style={{ backgroundColor: '#FF8800' }}></div>
-            <div className="w-4 h-3 rounded-sm" style={{ backgroundColor: '#FF0000' }}></div>
+        {/* Legend — rain mode only */}
+        {mapMode === 'rain' && (
+          <div className="absolute bottom-16 right-2 bg-background/90 backdrop-blur-sm rounded-lg p-2 z-[1000]">
+            <div className="text-xs font-medium mb-1">Intensity</div>
+            <div className="flex items-center gap-1">
+              <div className="w-4 h-3 rounded-sm" style={{ backgroundColor: '#88DDFF' }}></div>
+              <div className="w-4 h-3 rounded-sm" style={{ backgroundColor: '#00FF00' }}></div>
+              <div className="w-4 h-3 rounded-sm" style={{ backgroundColor: '#FFFF00' }}></div>
+              <div className="w-4 h-3 rounded-sm" style={{ backgroundColor: '#FF8800' }}></div>
+              <div className="w-4 h-3 rounded-sm" style={{ backgroundColor: '#FF0000' }}></div>
+            </div>
+            <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
+              <span>Light</span>
+              <span>Heavy</span>
+            </div>
           </div>
-          <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
-            <span>Light</span>
-            <span>Heavy</span>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Playback controls */}
-      <div className="p-4 space-y-3 border-t border-border/50">
-        {/* Timeline slider */}
-        <div className="space-y-1">
-          <Slider
-            value={[currentFrameIndex]}
-            min={0}
-            max={Math.max(radarFrames.length - 1, 0)}
-            step={1}
-            onValueChange={(value) => {
-              setCurrentFrameIndex(value[0]);
-              setIsPlaying(false);
-            }}
-            className="w-full"
-          />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{radarFrames[0] ? formatTime(radarFrames[0].time) : '--:--'}</span>
-            <span>{radarFrames[radarFrames.length - 1] ? formatTime(radarFrames[radarFrames.length - 1].time) : '--:--'}</span>
+      {/* Playback controls — rain mode only */}
+      {mapMode === 'rain' && (
+        <div className="p-4 space-y-3 border-t border-border/50">
+          {/* Timeline slider */}
+          <div className="space-y-1">
+            <Slider
+              value={[currentFrameIndex]}
+              min={0}
+              max={Math.max(radarFrames.length - 1, 0)}
+              step={1}
+              onValueChange={(value) => {
+                setCurrentFrameIndex(value[0]);
+                setIsPlaying(false);
+              }}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>{radarFrames[0] ? formatTime(radarFrames[0].time) : '--:--'}</span>
+              <span>{radarFrames[radarFrames.length - 1] ? formatTime(radarFrames[radarFrames.length - 1].time) : '--:--'}</span>
+            </div>
+          </div>
+
+          {/* Control buttons */}
+          <div className="flex items-center justify-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => { setCurrentFrameIndex(0); setIsPlaying(false); }}
+              disabled={radarFrames.length === 0}
+            >
+              <SkipBack className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="default"
+              size="icon"
+              onClick={() => setIsPlaying(!isPlaying)}
+              disabled={radarFrames.length === 0}
+            >
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => { setCurrentFrameIndex(radarFrames.length - 1); setIsPlaying(false); }}
+              disabled={radarFrames.length === 0}
+            >
+              <SkipForward className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Opacity control */}
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Opacity</span>
+            <Slider
+              value={[opacity * 100]}
+              min={20}
+              max={100}
+              step={10}
+              onValueChange={(value) => setOpacity(value[0] / 100)}
+              className="flex-1"
+            />
           </div>
         </div>
-
-        {/* Control buttons */}
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {
-              setCurrentFrameIndex(0);
-              setIsPlaying(false);
-            }}
-            disabled={radarFrames.length === 0}
-          >
-            <SkipBack className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="default"
-            size="icon"
-            onClick={() => setIsPlaying(!isPlaying)}
-            disabled={radarFrames.length === 0}
-          >
-            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {
-              setCurrentFrameIndex(radarFrames.length - 1);
-              setIsPlaying(false);
-            }}
-            disabled={radarFrames.length === 0}
-          >
-            <SkipForward className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Opacity control */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Opacity</span>
-          <Slider
-            value={[opacity * 100]}
-            min={20}
-            max={100}
-            step={10}
-            onValueChange={(value) => setOpacity(value[0] / 100)}
-            className="flex-1"
-          />
-        </div>
-      </div>
+      )}
     </div>
   );
 };

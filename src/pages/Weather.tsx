@@ -29,7 +29,6 @@ import { LockedFeature } from "@/components/ui/locked-feature";
 import { useLanguage } from "@/contexts/language-context";
 import { SocialWeatherCard } from "@/components/weather/social-weather-card";
 import { ARWeatherOverlay } from "@/components/weather/ar-weather-overlay";
-import { WeatherTrendsCard } from "@/components/weather/weather-trends-card";
 import { PredictionDialog } from "@/components/weather/prediction-dialog";
 import { useTimeOfDay } from "@/hooks/use-time-of-day";
 import { useTimeOfDayContext } from "@/contexts/time-of-day-context";
@@ -51,9 +50,8 @@ import { SEOHead } from "@/components/seo/seo-head";
 import { ChristmasCalendar } from "@/components/weather/christmas-calendar";
 import { RamadanCalendar } from "@/components/weather/ramadan-calendar";
 import { OnboardingFlow } from "@/components/weather/onboarding-flow";
-import { WeatherReactionsFeed } from "@/components/weather/weather-reactions-feed";
-import { WeatherTimeMachine } from "@/components/weather/weather-time-machine";
-import { StreakChallenge } from "@/components/weather/streak-challenge";
+import { ExploreSheet, ExploreButton } from "@/components/weather/explore-sheet";
+import { FeatureIdeasCard } from "@/components/weather/feature-ideas-card";
 
 export default function WeatherPage() {
   const [selectedLocation, setSelectedLocation] = useState<{
@@ -76,6 +74,7 @@ export default function WeatherPage() {
   const [isUsingCachedData, setIsUsingCachedData] = useState(false);
   const currentHoliday = getCurrentHoliday();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [exploreOpen, setExploreOpen] = useState(false);
 
   // Show onboarding for new users
   useEffect(() => {
@@ -736,18 +735,6 @@ export default function WeatherPage() {
                 <RainMapCard latitude={selectedLocation.lat} longitude={selectedLocation.lon} locationName={actualStationName} />
               </div>
 
-              <div className="mb-4">
-                <LockedFeature isLocked={!user}>
-                  <WeatherTrendsCard
-                    currentWeather={weatherData.mostAccurate.currentWeather}
-                    location={actualStationName}
-                    latitude={selectedLocation.lat}
-                    longitude={selectedLocation.lon}
-                    isImperial={isImperial}
-                  />
-                </LockedFeature>
-              </div>
-
                 <DetailedMetrics
                   currentWeather={weatherData.mostAccurate.currentWeather}
                   is24Hour={is24Hour}
@@ -760,27 +747,26 @@ export default function WeatherPage() {
                 </div>
               ) : null}
 
-              {/* Innovation Features */}
-              <WeatherReactionsFeed
-                latitude={selectedLocation.lat}
-                longitude={selectedLocation.lon}
-                locationName={actualStationName}
+              {/* Feature Ideas Card */}
+              <FeatureIdeasCard
+                isLoggedIn={!!user}
+                onOpenExplore={() => setExploreOpen(true)}
               />
 
-              <WeatherTimeMachine
+              {/* Explore More button */}
+              <ExploreButton onClick={() => setExploreOpen(true)} />
+
+              {/* Explore Bottom Sheet */}
+              <ExploreSheet
+                open={exploreOpen}
+                onOpenChange={setExploreOpen}
                 latitude={selectedLocation.lat}
                 longitude={selectedLocation.lon}
                 locationName={actualStationName}
+                currentWeather={weatherData.mostAccurate.currentWeather}
                 isImperial={isImperial}
+                userId={user?.id}
               />
-
-              {user && (
-                <StreakChallenge
-                  latitude={selectedLocation.lat}
-                  longitude={selectedLocation.lon}
-                  locationName={actualStationName}
-                />
-              )}
 
               {/* Holiday Calendars - only shown in season */}
               {new Date().getMonth() === 11 && (

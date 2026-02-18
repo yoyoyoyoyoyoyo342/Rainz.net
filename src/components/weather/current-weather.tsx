@@ -1,4 +1,54 @@
-import { MapPin, RefreshCw, Eye, Droplets, Wind, Sun, Cloud, CloudSun, CloudRain, CloudDrizzle, CloudSnow, CloudLightning, CloudFog, Share2, Plus, Minus, Snowflake, Thermometer, Clock } from "lucide-react";
+import { MapPin, RefreshCw, Eye, Droplets, Wind, Sun, Cloud, CloudSun, CloudRain, CloudDrizzle, CloudSnow, CloudLightning, CloudFog, Share2, Plus, Minus, Snowflake, Thermometer, Clock, Star } from "lucide-react";
+
+// ---- Rainz Score ----
+function computeRainzScore(weather: {
+  temperature: number; // always in °F
+  precipitationProbability?: number;
+  windSpeed: number; // mph
+  humidity: number;
+  uvIndex?: number;
+  visibility: number; // miles
+}): number {
+  const { temperature, precipitationProbability = 0, windSpeed, humidity, uvIndex = 3, visibility } = weather;
+
+  // Temperature comfort (30 pts) — peak 68–77°F
+  let tempPts = 0;
+  if (temperature >= 68 && temperature <= 77) tempPts = 30;
+  else if (temperature < 68) tempPts = Math.max(0, 30 - (68 - temperature) * 0.6);
+  else tempPts = Math.max(0, 30 - (temperature - 77) * 0.5);
+
+  // Precipitation probability (20 pts)
+  const precipPts = Math.max(0, 20 - precipitationProbability * 0.2);
+
+  // Wind speed (15 pts)
+  const windPts = Math.max(0, 15 - windSpeed * 0.3);
+
+  // Humidity (15 pts) — sweet spot 40–60%
+  let humPts = 0;
+  if (humidity >= 40 && humidity <= 60) humPts = 15;
+  else if (humidity < 40) humPts = Math.max(0, 15 - (40 - humidity) * 0.3);
+  else humPts = Math.max(0, 15 - (humidity - 60) * 0.3);
+
+  // UV index (10 pts)
+  const uvPts = uvIndex <= 3 ? 10 : Math.max(0, 10 - (uvIndex - 3) * 1.5);
+
+  // Visibility (10 pts)
+  const visPts = Math.min(10, visibility);
+
+  return Math.round(Math.min(100, tempPts + precipPts + windPts + humPts + uvPts + visPts));
+}
+
+function RainzScoreBadge({ score, isSnow, isCompact }: { score: number; isSnow: boolean; isCompact: boolean }) {
+  const color = score >= 70 ? 'text-emerald-400' : score >= 40 ? 'text-amber-400' : 'text-red-400';
+  const label = score >= 70 ? 'Great Day' : score >= 40 ? 'Decent Day' : 'Rough Day';
+  return (
+    <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${isSnow ? 'bg-slate-800/15' : 'bg-white/15'} backdrop-blur-sm`}>
+      <Star className={`w-3 h-3 ${color} fill-current`} />
+      <span className={`text-sm font-bold ${isSnow ? 'text-slate-800' : 'text-white'}`}>{score}</span>
+      {!isCompact && <span className={`text-xs ${color} font-medium hidden sm:inline`}>{label}</span>}
+    </div>
+  );
+}
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { WeatherSource } from "@/types/weather";
@@ -214,7 +264,19 @@ export function CurrentWeather({
                 </button>
               )}
             </div>
-            <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
+              <RainzScoreBadge
+                score={computeRainzScore({
+                  temperature: mostAccurate.currentWeather.temperature,
+                  precipitationProbability: mostAccurate.currentWeather.precipitationProbability,
+                  windSpeed: mostAccurate.currentWeather.windSpeed,
+                  humidity: mostAccurate.currentWeather.humidity,
+                  uvIndex: mostAccurate.currentWeather.uvIndex,
+                  visibility: mostAccurate.currentWeather.visibility,
+                })}
+                isSnow={isSnowCondition}
+                isCompact={!!isCompact}
+              />
               <button
                 onClick={onRefresh}
                 disabled={isLoading}

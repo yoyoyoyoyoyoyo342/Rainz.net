@@ -274,7 +274,7 @@ export function RamadanCalendar({ userLatitude, userLongitude, sunrise, sunset }
             <Moon className="w-5 h-5" />
             Ramadan Calendar
             <span className="text-xs text-muted-foreground ml-auto">
-              {sunStatus === "down" ? "☪️ Claim Now!" : "🌅 Wait for sunset"}
+              {canClaimNow ? "☪️ Claim Now!" : "🌅 Wait for sunset"}
             </span>
           </CardTitle>
         </CardHeader>

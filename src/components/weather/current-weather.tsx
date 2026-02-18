@@ -13,7 +13,6 @@ import { Download, Loader2 } from "lucide-react";
 import { toPng } from "html-to-image";
 import rainzLogo from "@/assets/rainz-logo-new.png";
 import { HourlyForecastCarousel } from "@/components/weather/hourly-forecast-carousel";
-import { CommunityAccuracyBadge } from "@/components/weather/community-accuracy-badge";
 
 interface SavedLocation {
   id: string;
@@ -316,13 +315,6 @@ export function CurrentWeather({
 
         <CardContent className="p-2 bg-background/60 backdrop-blur-md border-t border-border/30">
           <div className="flex flex-col gap-2">
-            {currentLocation && (
-              <CommunityAccuracyBadge
-                locationName={currentLocation.name}
-                latitude={currentLocation.lat}
-                longitude={currentLocation.lon}
-              />
-            )}
             <div className="flex gap-2">
               <Button onClick={() => setShowShareCard(true)} variant="ghost" size="sm" className="flex-1 h-8 text-xs">
                 <Share2 className="w-3 h-3 mr-1.5" />

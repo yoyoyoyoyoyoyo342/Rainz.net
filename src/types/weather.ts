@@ -37,6 +37,8 @@ export interface CurrentWeather {
   // Optional enriched fields
   sunrise?: string;
   sunset?: string;
+  sunriseIso?: string; // raw ISO string for accurate sun-position checks
+  sunsetIso?: string;  // raw ISO string for accurate sun-position checks
   daylight?: string;
   moonrise?: string;
   moonset?: string;

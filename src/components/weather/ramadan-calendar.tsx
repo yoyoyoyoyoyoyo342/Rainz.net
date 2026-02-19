@@ -157,16 +157,27 @@ export function RamadanCalendar({ userLatitude, userLongitude, sunriseIso, sunse
 
     setIsClaiming(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("You must be logged in to claim rewards");
+      const { data: { user: currentUser }, error: authErr } = await supabase.auth.getUser();
+      if (authErr || !currentUser) throw new Error("You must be logged in to claim rewards");
 
       const { data, error } = await supabase.functions.invoke("claim-ramadan-reward", {
         body: { calendarId: selectedDay.id, latitude: userLatitude, longitude: userLongitude },
-        headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
       if (error) {
-        const actualMessage = (error as any)?.context?.json?.error || (error as any)?.message || "Failed to claim reward";
+        // Try to extract the actual error message from the edge function response
+        let actualMessage = "Failed to claim reward";
+        try {
+          const ctx = (error as any)?.context;
+          if (ctx?.json?.error) actualMessage = ctx.json.error;
+          else if (ctx?.body) {
+            const text = await new Response(ctx.body).text();
+            const parsed = JSON.parse(text);
+            if (parsed.error) actualMessage = parsed.error;
+          } else if ((error as any)?.message) {
+            actualMessage = (error as any).message;
+          }
+        } catch { /* use default */ }
         throw new Error(actualMessage);
       }
 

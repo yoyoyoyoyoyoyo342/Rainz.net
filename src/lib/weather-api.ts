@@ -433,6 +433,8 @@ export const weatherApi = {
       pressure: Math.round((data?.hourly?.pressure_msl?.[idx] ?? 1013) * 0.02953),
       sunrise: sunriseStr,
       sunset: sunsetStr,
+      sunriseIso: sunriseIso,
+      sunsetIso: sunsetIso,
       daylight: daylightStr,
       moonrise: moonriseStr,
       moonset: moonsetStr,

@@ -444,6 +444,74 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_idea_votes: {
+        Row: {
+          created_at: string
+          id: string
+          idea_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          idea_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          idea_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_idea_votes_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "feature_ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feature_ideas: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_name: string | null
+          id: string
+          is_pinned: boolean
+          status: string
+          title: string
+          updated_at: string
+          user_id: string | null
+          vote_count: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_name?: string | null
+          id?: string
+          is_pinned?: boolean
+          status?: string
+          title: string
+          updated_at?: string
+          user_id?: string | null
+          vote_count?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_name?: string | null
+          id?: string
+          is_pinned?: boolean
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+          vote_count?: number
+        }
+        Relationships: []
+      }
       games: {
         Row: {
           code: string

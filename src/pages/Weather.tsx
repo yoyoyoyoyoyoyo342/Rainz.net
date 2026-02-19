@@ -748,10 +748,7 @@ export default function WeatherPage() {
               ) : null}
 
               {/* Feature Ideas Card */}
-              <FeatureIdeasCard
-                isLoggedIn={!!user}
-                onOpenExplore={() => setExploreOpen(true)}
-              />
+              <FeatureIdeasCard />
 
               {/* Explore More button */}
               <ExploreButton onClick={() => setExploreOpen(true)} />
@@ -785,8 +782,8 @@ export default function WeatherPage() {
                   <RamadanCalendar
                     userLatitude={selectedLocation?.lat}
                     userLongitude={selectedLocation?.lon}
-                    sunrise={weatherData.mostAccurate.currentWeather.sunrise}
-                    sunset={weatherData.mostAccurate.currentWeather.sunset}
+                    sunriseIso={weatherData.mostAccurate.currentWeather.sunriseIso}
+                    sunsetIso={weatherData.mostAccurate.currentWeather.sunsetIso}
                   />
                 </div>
               )}

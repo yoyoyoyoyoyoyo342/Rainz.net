@@ -42,10 +42,11 @@ function RainzScoreBadge({ score, isSnow, isCompact }: { score: number; isSnow: 
   const color = score >= 70 ? 'text-emerald-400' : score >= 40 ? 'text-amber-400' : 'text-red-400';
   const label = score >= 70 ? 'Great Day' : score >= 40 ? 'Decent Day' : 'Rough Day';
   return (
-    <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${isSnow ? 'bg-slate-800/15' : 'bg-white/15'} backdrop-blur-sm`}>
+    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${isSnow ? 'bg-slate-800/15' : 'bg-white/15'} backdrop-blur-sm`}>
       <Star className={`w-3 h-3 ${color} fill-current`} />
+      <span className={`text-[10px] uppercase tracking-wide font-medium ${isSnow ? 'text-slate-800/70' : 'text-white/70'}`}>Rainz Score</span>
       <span className={`text-sm font-bold ${isSnow ? 'text-slate-800' : 'text-white'}`}>{score}</span>
-      {!isCompact && <span className={`text-xs ${color} font-medium hidden sm:inline`}>{label}</span>}
+      {!isCompact && <span className={`text-xs ${color} font-medium hidden sm:inline`}>· {label}</span>}
     </div>
   );
 }

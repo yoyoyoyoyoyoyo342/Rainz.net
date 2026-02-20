@@ -25,7 +25,7 @@ import { HolidayBackground, getCurrentHoliday } from "@/components/weather/holid
 import { MorningWeatherReview } from "@/components/weather/morning-weather-review";
 import { WinterAlerts } from "@/components/weather/winter-alerts";
 import { WeatherStationInfo } from "@/components/weather/weather-station-info";
-import { LockedFeature } from "@/components/ui/locked-feature";
+
 import { useLanguage } from "@/contexts/language-context";
 import { SocialWeatherCard } from "@/components/weather/social-weather-card";
 import { ARWeatherOverlay } from "@/components/weather/ar-weather-overlay";
@@ -526,13 +526,11 @@ export default function WeatherPage() {
 
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                   <HeaderInfoBar user={user} />
-                  <LockedFeature isLocked={!user}>
-                    <SettingsDialog
-                      isImperial={isImperial}
-                      onUnitsChange={setIsImperial}
-                      mostAccurate={weatherData?.mostAccurate}
-                    />
-                  </LockedFeature>
+                  <SettingsDialog
+                    isImperial={isImperial}
+                    onUnitsChange={setIsImperial}
+                    mostAccurate={weatherData?.mostAccurate}
+                  />
                   {!user && (
                     <Button
                       variant="outline"
@@ -591,9 +589,7 @@ export default function WeatherPage() {
                       onPredictionMade={() => {}}
                     />
                   ) : (
-                    <LockedFeature isLocked={true}>
-                      <LockedPredictionButton />
-                    </LockedFeature>
+                    <LockedPredictionButton />
                   )}
                 </div>
               )}

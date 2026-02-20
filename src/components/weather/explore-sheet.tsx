@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
 import { Compass } from 'lucide-react';
 import { WeatherTimeMachine } from './weather-time-machine';
 import { WeatherReactionsFeed } from './weather-reactions-feed';
 import { WeatherTrendsCard } from './weather-trends-card';
 import { StreakChallenge } from './streak-challenge';
-import { LockedFeature } from '@/components/ui/locked-feature';
 import { WeatherPersonalityQuiz } from './weather-personality-quiz';
+import { WeatherFunFacts } from './weather-fun-facts';
 
 interface ExploreSheetProps {
   open: boolean;
@@ -18,6 +17,8 @@ interface ExploreSheetProps {
   currentWeather: any;
   isImperial: boolean;
   userId?: string;
+  dailyForecast?: any[];
+  hourlyForecast?: any[];
 }
 
 export function ExploreSheet({
@@ -29,6 +30,8 @@ export function ExploreSheet({
   currentWeather,
   isImperial,
   userId,
+  dailyForecast,
+  hourlyForecast,
 }: ExploreSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -41,11 +44,20 @@ export function ExploreSheet({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          {/* Weather Fun Facts / Stats */}
+          <WeatherFunFacts
+            currentWeather={currentWeather}
+            dailyForecast={dailyForecast}
+            hourlyForecast={hourlyForecast}
+            locationName={locationName}
+            isImperial={isImperial}
+          />
+
           {/* Weather Personality Quiz */}
           <WeatherPersonalityQuiz inSheet />
 
           {/* Weather Trends */}
-          <LockedFeature isLocked={!userId}>
+          {userId && (
             <WeatherTrendsCard
               currentWeather={currentWeather}
               location={locationName}
@@ -53,7 +65,7 @@ export function ExploreSheet({
               longitude={longitude}
               isImperial={isImperial}
             />
-          </LockedFeature>
+          )}
 
           {/* Weather Reactions Feed */}
           <WeatherReactionsFeed
@@ -100,7 +112,7 @@ export function ExploreButton({ onClick }: ExploreButtonProps) {
         </div>
         <div className="text-left">
           <p className="text-sm font-semibold text-foreground">Explore Rainz ✨</p>
-          <p className="text-xs text-muted-foreground">Time Machine · Reactions · Trends · Challenges</p>
+          <p className="text-xs text-muted-foreground">Stats · Time Machine · Reactions · Trends · Challenges</p>
         </div>
       </div>
       <span className="text-muted-foreground group-hover:text-primary transition-colors text-lg">→</span>

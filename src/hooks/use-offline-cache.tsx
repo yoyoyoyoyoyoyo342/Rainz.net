@@ -2,7 +2,6 @@
  * Hook for managing offline weather cache for premium users
  */
 import { useCallback, useEffect, useState } from 'react';
-import { useSubscription } from './use-subscription';
 import {
   cacheWeatherData,
   getCachedWeatherData,
@@ -30,9 +29,9 @@ interface CachedLocation {
 }
 
 export function useOfflineCache() {
-  const { isSubscribed } = useSubscription();
+  const isSupported = isOfflineCacheSupported();
   const [state, setState] = useState<OfflineCacheState>({
-    isSupported: isOfflineCacheSupported(),
+    isSupported,
     cacheCount: 0,
     lastCacheTime: null,
     isOffline: typeof navigator !== 'undefined' ? !navigator.onLine : false,
@@ -54,7 +53,7 @@ export function useOfflineCache() {
 
   // Load cache stats on mount
   useEffect(() => {
-    if (!isSubscribed || !state.isSupported) return;
+    if (!state.isSupported) return;
 
     const loadStats = async () => {
       const stats = await getCacheStats();
@@ -69,7 +68,7 @@ export function useOfflineCache() {
     
     // Clean up expired entries
     cleanupExpiredCache();
-  }, [isSubscribed, state.isSupported]);
+  }, [state.isSupported]);
 
   /**
    * Cache weather data for offline access (premium only)
@@ -80,7 +79,7 @@ export function useOfflineCache() {
     locationName: string,
     data: any
   ): Promise<boolean> => {
-    if (!isSubscribed || !state.isSupported) return false;
+    if (!state.isSupported) return false;
     
     const success = await cacheWeatherData(latitude, longitude, locationName, data);
     
@@ -94,7 +93,7 @@ export function useOfflineCache() {
     }
     
     return success;
-  }, [isSubscribed, state.isSupported]);
+  }, [state.isSupported]);
 
   /**
    * Get cached weather data if available
@@ -103,28 +102,25 @@ export function useOfflineCache() {
     latitude: number,
     longitude: number
   ) => {
-    if (!isSubscribed || !state.isSupported) return null;
-    
+    if (!state.isSupported) return null;
     return getCachedWeatherData(latitude, longitude);
-  }, [isSubscribed, state.isSupported]);
+  }, [state.isSupported]);
 
   /**
    * Get the most recent cached location for offline startup
    */
   const getMostRecentCached = useCallback(async (): Promise<CachedLocation | null> => {
-    if (!isSubscribed || !state.isSupported) return null;
-    
+    if (!state.isSupported) return null;
     return getMostRecentCachedLocation();
-  }, [isSubscribed, state.isSupported]);
+  }, [state.isSupported]);
 
   /**
    * Get all cached locations
    */
   const getAllCached = useCallback(async () => {
-    if (!isSubscribed || !state.isSupported) return [];
-    
+    if (!state.isSupported) return [];
     return getAllCachedLocations();
-  }, [isSubscribed, state.isSupported]);
+  }, [state.isSupported]);
 
   return {
     ...state,
@@ -132,6 +128,6 @@ export function useOfflineCache() {
     getFromCache,
     getMostRecentCached,
     getAllCached,
-    isEnabled: isSubscribed && state.isSupported,
+    isEnabled: state.isSupported,
   };
 }

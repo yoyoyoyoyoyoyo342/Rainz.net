@@ -1,15 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingUp, Calendar, Lock, Crown, Sparkles } from "lucide-react";
+import { TrendingUp, Calendar } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { format, subDays } from "date-fns";
 import { CurrentWeather } from "@/types/weather";
 import { useEffect } from "react";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
-import { useSubscription } from "@/hooks/use-subscription";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
 
 interface WeatherTrendsCardProps {
   currentWeather?: CurrentWeather;
@@ -36,51 +32,7 @@ export function WeatherTrendsCard({
   isImperial = false,
 }: WeatherTrendsCardProps) {
   const { is24Hour } = useUserPreferences();
-  const { isSubscribed, openCheckout } = useSubscription();
-  const { user } = useAuth();
-  const navigate = useNavigate();
 
-  const handleUpgrade = () => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    void openCheckout().catch(() => {});
-  };
-
-  // Plus-only feature
-  if (!isSubscribed) {
-    return (
-      <div className="overflow-hidden rounded-2xl glass-card border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-orange-500/5">
-        <div className="p-4 border-b border-border/50">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold text-foreground">Weather Trends</h3>
-            <span className="flex items-center gap-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full ml-auto">
-              <Crown className="w-3 h-3" />
-              Plus
-            </span>
-          </div>
-        </div>
-        <div className="p-6 text-center">
-          <Lock className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-          <p className="text-sm font-medium mb-1">30-Day Weather Trends</p>
-          <p className="text-xs text-muted-foreground mb-3">
-            Track historical temperature and precipitation patterns with Rainz+.
-          </p>
-          <Button 
-            onClick={handleUpgrade}
-            size="sm"
-            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            Upgrade to Rainz+ • €2/month
-          </Button>
-        </div>
-      </div>
-    );
-  }
-  
   const { data: historyData = [], isLoading } = useQuery({
     queryKey: ["weather-history", location],
     queryFn: async () => {

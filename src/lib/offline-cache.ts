@@ -1,5 +1,5 @@
 /**
- * Offline weather caching for Rainz+ premium users
+ * Offline weather caching
  * Stores weather data in IndexedDB for offline access
  */
 

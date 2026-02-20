@@ -72,7 +72,7 @@ export default function About() {
     },
     {
       question: "What data do you collect?",
-      answer: "We collect location data to provide accurate forecasts, account data if you sign up, and anonymized analytics to improve the service. Free users may have data collected by advertising partners. Rainz+ subscribers are not tracked by advertising networks. See our Privacy Policy for complete details."
+      answer: "We collect location data to provide accurate forecasts, account data if you sign up, and anonymized analytics to improve the service. See our Privacy Policy for complete details."
     },
     {
       question: "How do weather alerts work?",

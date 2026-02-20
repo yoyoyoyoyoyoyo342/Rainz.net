@@ -20,10 +20,11 @@ serve(async (req) => {
 
     const TOMORROW_IO_KEY = Deno.env.get('TOMORROW_IO_API_KEY');
     const WEATHER_API_KEY = Deno.env.get('WEATHER_API_KEY');
+    const OWM_API_KEY = Deno.env.get('OWM_API_KEY');
 
     console.log('Fetching hyperlocal weather data for:', { latitude, longitude });
 
-    // Fetch Open-Meteo snow data (FREE, specialized for snow - this overrides other sources)
+    // Fetch Open-Meteo snow data (FREE, specialized for snow)
     const openMeteoSnowUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=snowfall,snow_depth,temperature_2m,apparent_temperature,precipitation,precipitation_probability,weather_code&daily=snowfall_sum,precipitation_sum&timezone=auto&forecast_days=3`;
     
     let openMeteoSnowData: any = null;
@@ -35,6 +36,21 @@ serve(async (req) => {
       }
     } catch (e) {
       console.error('Open-Meteo snow fetch failed:', e);
+    }
+
+    // Fetch OpenWeatherMap snow data (uses OWM_API_KEY)
+    let owmSnowData: any = null;
+    if (OWM_API_KEY) {
+      try {
+        const owmUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${OWM_API_KEY}&units=imperial`;
+        const owmRes = await fetch(owmUrl);
+        if (owmRes.ok) {
+          owmSnowData = await owmRes.json();
+          console.log('OWM snow data fetched successfully');
+        }
+      } catch (e) {
+        console.error('OWM snow fetch failed:', e);
+      }
     }
 
     // Fetch Tomorrow.io minute-by-minute data (hyperlocal precipitation)
@@ -63,36 +79,62 @@ serve(async (req) => {
     const currentHour = new Date().getHours();
     const hourlyOpenMeteo = openMeteoSnowData?.hourly || {};
     
-    // Open-Meteo snow data ALWAYS overrides Tomorrow.io for snow-specific fields
-    // Open-Meteo provides snowfall in cm, snow_depth in meters - convert to inches
+    // Open-Meteo snow data (cm/hour snowfall, meters depth)
     const openMeteoSnowfall = hourlyOpenMeteo.snowfall?.[currentHour] || 0; // cm/hour
     const openMeteoSnowDepth = hourlyOpenMeteo.snow_depth?.[currentHour] || 0; // meters
     const openMeteoTemp = hourlyOpenMeteo.temperature_2m?.[currentHour]; // Celsius
     const openMeteoFeelsLike = hourlyOpenMeteo.apparent_temperature?.[currentHour]; // Celsius
     const dailySnowfallSum = openMeteoSnowData?.daily?.snowfall_sum?.[0] || 0; // cm total for day
     
-    // Convert to imperial
-    const snowfallInchesPerHour = openMeteoSnowfall * 0.3937; // cm to inches
-    const snowDepthInches = openMeteoSnowDepth * 39.37; // meters to inches
-    const dailySnowfallInches = dailySnowfallSum * 0.3937; // cm to inches
-    const tempF = openMeteoTemp !== undefined ? (openMeteoTemp * 9/5) + 32 : (current.temp_f || 32);
-    const feelsLikeF = openMeteoFeelsLike !== undefined ? (openMeteoFeelsLike * 9/5) + 32 : (current.feelslike_f || 32);
+    // OWM snow data (mm in last 1h/3h)
+    const owmSnow1h = owmSnowData?.snow?.['1h'] || 0; // mm
+    const owmSnow3h = owmSnowData?.snow?.['3h'] || 0; // mm
+    const owmSnowIntensityMm = owmSnow1h > 0 ? owmSnow1h : (owmSnow3h / 3); // mm/hour approx
+    const owmSnowIntensityInches = owmSnowIntensityMm * 0.03937; // mm to inches
+    const owmTempF = owmSnowData?.main?.temp; // already imperial
+    const owmFeelsLikeF = owmSnowData?.main?.feels_like; // already imperial
     
-    // Tomorrow.io fallback for ice accumulation (Open-Meteo doesn't provide this)
+    // Convert Open-Meteo to imperial
+    const omSnowfallInchesPerHour = openMeteoSnowfall * 0.3937; // cm to inches
+    const omSnowDepthInches = openMeteoSnowDepth * 39.37; // meters to inches
+    const omDailySnowfallInches = dailySnowfallSum * 0.3937; // cm to inches
+    const omTempF = openMeteoTemp !== undefined ? (openMeteoTemp * 9/5) + 32 : undefined;
+    const omFeelsLikeF = openMeteoFeelsLike !== undefined ? (openMeteoFeelsLike * 9/5) + 32 : undefined;
+    
+    // Merge snow data: average OWM + Open-Meteo when both available, prefer whichever has data
+    const hasOWMSnow = owmSnowIntensityInches > 0;
+    const hasOMSnow = omSnowfallInchesPerHour > 0;
+    
+    let mergedSnowIntensity: number;
+    if (hasOWMSnow && hasOMSnow) {
+      // Average both sources for best accuracy
+      mergedSnowIntensity = (owmSnowIntensityInches + omSnowfallInchesPerHour) / 2;
+    } else if (hasOWMSnow) {
+      mergedSnowIntensity = owmSnowIntensityInches;
+    } else {
+      mergedSnowIntensity = omSnowfallInchesPerHour;
+    }
+    
+    const tempF = owmTempF ?? omTempF ?? (current.temp_f || 32);
+    const feelsLikeF = owmFeelsLikeF ?? omFeelsLikeF ?? (current.feelslike_f || 32);
+
+    // Tomorrow.io fallback for ice accumulation
     const hourlyData = tomorrowData?.timelines?.hourly?.[0]?.values || {};
     
-    // PRIORITY: Open-Meteo snow data overrides Tomorrow.io for all snow fields
+    // Determine primary source label
+    const snowSource = (hasOWMSnow && hasOMSnow) ? 'owm+open-meteo' : hasOWMSnow ? 'owm' : 'open-meteo';
+    
+    // Merged snow data from OWM + Open-Meteo
     const snowData = {
-      snowIntensity: snowfallInchesPerHour, // Open-Meteo (inches/hour)
-      snowAccumulation: dailySnowfallInches, // Open-Meteo daily total (inches)
-      snowDepth: snowDepthInches, // Open-Meteo current depth (inches)
+      snowIntensity: mergedSnowIntensity, // inches/hour (merged)
+      snowAccumulation: omDailySnowfallInches, // Open-Meteo daily total (inches)
+      snowDepth: omSnowDepthInches, // Open-Meteo current depth (inches)
       iceAccumulation: hourlyData.iceAccumulation || 0, // Tomorrow.io fallback (inches)
       temperature: tempF,
       windChill: feelsLikeF,
-      // Additional snow data from Open-Meteo
       precipProbability: hourlyOpenMeteo.precipitation_probability?.[currentHour] || 0,
       weatherCode: hourlyOpenMeteo.weather_code?.[currentHour] || 0,
-      source: 'open-meteo', // Mark that this is authoritative snow data
+      source: snowSource,
     };
     const forecast = weatherApiData?.forecast?.forecastday || [];
     const astronomy = forecast[0]?.astro || {};

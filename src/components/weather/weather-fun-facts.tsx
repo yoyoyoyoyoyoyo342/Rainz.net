@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { BarChart3, Droplets, Thermometer, Wind, Sun, Eye } from "lucide-react";
 
 interface WeatherFunFactsProps {

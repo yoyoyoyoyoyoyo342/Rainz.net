@@ -670,6 +670,78 @@ serve(async (req: Request) => {
       console.error("7Timer fetch failed:", err);
     }
 
+    // OpenWeatherMap (OWM) - uses OWM_API_KEY secret
+    const owmApiKey = Deno.env.get("OWM_API_KEY");
+    if (owmApiKey) {
+      try {
+        const owmUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${owmApiKey}&units=imperial`;
+        const owmCurrentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${owmApiKey}&units=imperial`;
+
+        const [owmForecastRes, owmCurrentRes] = await Promise.all([
+          fetch(owmUrl),
+          fetch(owmCurrentUrl),
+        ]);
+
+        if (!owmForecastRes.ok) throw new Error(`OWM Forecast HTTP ${owmForecastRes.status}`);
+        if (!owmCurrentRes.ok) throw new Error(`OWM Current HTTP ${owmCurrentRes.status}`);
+
+        const owmForecast = await owmForecastRes.json();
+        const owmCurrent = await owmCurrentRes.json();
+
+        const owmCondition = (weather: any[]) => {
+          if (!weather || !weather[0]) return "Unknown";
+          const main = weather[0].main;
+          const id = weather[0].id;
+          if (id >= 200 && id < 300) return "Thunderstorm";
+          if (id >= 300 && id < 400) return "Drizzle";
+          if (id >= 500 && id < 600) return "Rain";
+          if (id >= 600 && id < 700) return "Snow";
+          if (id >= 700 && id < 800) return "Foggy";
+          if (id === 800) return "Clear";
+          if (id > 800) return "Partly Cloudy";
+          return main || "Unknown";
+        };
+
+        // Build hourly from 3-hour forecast list
+        const forecastList = owmForecast?.list || [];
+
+        const source: WeatherSource = {
+          source: "OpenWeatherMap",
+          location: locationName || owmCurrent?.name || "Selected Location",
+          latitude: lat,
+          longitude: lon,
+          accuracy: 0.89,
+          currentWeather: {
+            temperature: Math.round(owmCurrent?.main?.temp ?? 0),
+            condition: owmCondition(owmCurrent?.weather),
+            description: owmCurrent?.weather?.[0]?.description || owmCondition(owmCurrent?.weather),
+            humidity: Math.round(owmCurrent?.main?.humidity ?? 0),
+            windSpeed: Math.round((owmCurrent?.wind?.speed ?? 0) * 2.237), // m/s to mph
+            windDirection: Math.round(owmCurrent?.wind?.deg ?? 0),
+            visibility: Math.round((owmCurrent?.visibility ?? 10000) / 1609.34),
+            feelsLike: Math.round(owmCurrent?.main?.feels_like ?? 0),
+            uvIndex: 0,
+            pressure: Math.round(owmCurrent?.main?.pressure ?? 1013),
+          },
+          hourlyForecast: forecastList.slice(0, 8).map((h: any) => ({
+            time: new Date((h?.dt ?? 0) * 1000).toLocaleTimeString([], { hour: "2-digit" }),
+            temperature: Math.round(h?.main?.temp ?? 0),
+            condition: owmCondition(h?.weather),
+            precipitation: Math.round((h?.pop ?? 0) * 100),
+            icon: "",
+          })),
+          dailyForecast: [],
+        };
+
+        sources.push(source);
+        console.log("Successfully fetched OpenWeatherMap data");
+      } catch (err) {
+        console.error("OpenWeatherMap fetch failed:", err);
+      }
+    } else {
+      console.warn("OWM_API_KEY missing; skipping OpenWeatherMap provider");
+    }
+
     return new Response(JSON.stringify({ sources }), {
       headers: { "Content-Type": "application/json", ...corsHeaders },
       status: 200,

@@ -763,6 +763,8 @@ export default function WeatherPage() {
                 currentWeather={weatherData.mostAccurate.currentWeather}
                 isImperial={isImperial}
                 userId={user?.id}
+                dailyForecast={weatherData.mostAccurate.dailyForecast}
+                hourlyForecast={weatherData.mostAccurate.hourlyForecast}
               />
 
               {/* Holiday Calendars - only shown in season */}
@@ -771,9 +773,8 @@ export default function WeatherPage() {
                   <ChristmasCalendar />
                 </div>
               )}
-              {(() => {
+              {user && (() => {
                 const now = new Date();
-                // Ramadan 2026: Feb 18 - Mar 19
                 const ramadanStart = new Date(2026, 1, 18);
                 const ramadanEnd = new Date(2026, 2, 19);
                 return now >= ramadanStart && now <= ramadanEnd;

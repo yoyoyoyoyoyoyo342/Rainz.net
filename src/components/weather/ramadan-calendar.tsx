@@ -43,8 +43,8 @@ const rewardLabels: Record<string, string> = {
 interface RamadanCalendarProps {
   userLatitude?: number;
   userLongitude?: number;
-  sunriseIso?: string; // raw ISO datetime string e.g. "2026-02-19T06:45"
-  sunsetIso?: string;  // raw ISO datetime string
+  sunriseIso?: string;
+  sunsetIso?: string;
 }
 
 export function RamadanCalendar({ userLatitude, userLongitude, sunriseIso, sunsetIso }: RamadanCalendarProps) {
@@ -61,10 +61,9 @@ export function RamadanCalendar({ userLatitude, userLongitude, sunriseIso, sunse
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
 
-  // Calculate if sun is down using ISO strings — far more reliable than locale strings
+  // Calculate if sun is down using ISO strings
   useEffect(() => {
     if (!sunriseIso || !sunsetIso) {
-      // No sun data — allow claiming; server-side edge function will validate
       setCanClaimNow(true);
       return;
     }
@@ -75,12 +74,10 @@ export function RamadanCalendar({ userLatitude, userLongitude, sunriseIso, sunse
       const sunsetMs = new Date(sunsetIso).getTime();
 
       if (isNaN(sunriseMs) || isNaN(sunsetMs)) {
-        // Can't parse — allow, server validates
         setCanClaimNow(true);
         return;
       }
 
-      // Sun is down if before sunrise or after sunset
       const isSunDown = now < sunriseMs || now > sunsetMs;
       setCanClaimNow(isSunDown);
     };
@@ -142,6 +139,7 @@ export function RamadanCalendar({ userLatitude, userLongitude, sunriseIso, sunse
     setIsClaimDialogOpen(true);
   };
 
+  // Direct client-side claim logic — no edge function needed
   const handleClaimReward = async () => {
     if (!selectedDay || !user) return;
 
@@ -150,39 +148,92 @@ export function RamadanCalendar({ userLatitude, userLongitude, sunriseIso, sunse
       return;
     }
 
-    if (!userLatitude || !userLongitude) {
-      toast.error("Location required to verify sun position");
-      return;
-    }
-
     setIsClaiming(true);
     try {
-      const { data: { user: currentUser }, error: authErr } = await supabase.auth.getUser();
-      if (authErr || !currentUser) throw new Error("You must be logged in to claim rewards");
+      // 1. Check if already claimed (double-check)
+      const { data: existingClaim } = await supabase
+        .from("ramadan_claims")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("calendar_id", selectedDay.id)
+        .maybeSingle();
 
-      const { data, error } = await supabase.functions.invoke("claim-ramadan-reward", {
-        body: { calendarId: selectedDay.id, latitude: userLatitude, longitude: userLongitude },
-      });
+      if (existingClaim) {
+        toast.info("You've already claimed this reward!");
+        setIsClaimDialogOpen(false);
+        return;
+      }
 
-      if (error) {
-        // Try to extract the actual error message from the edge function response
-        let actualMessage = "Failed to claim reward";
-        try {
-          const ctx = (error as any)?.context;
-          if (ctx?.json?.error) actualMessage = ctx.json.error;
-          else if (ctx?.body) {
-            const text = await new Response(ctx.body).text();
-            const parsed = JSON.parse(text);
-            if (parsed.error) actualMessage = parsed.error;
-          } else if ((error as any)?.message) {
-            actualMessage = (error as any).message;
-          }
-        } catch { /* use default */ }
-        throw new Error(actualMessage);
+      // 2. Insert the claim
+      const { error: claimError } = await supabase
+        .from("ramadan_claims")
+        .insert({
+          user_id: user.id,
+          calendar_id: selectedDay.id,
+          user_latitude: userLatitude || null,
+          user_longitude: userLongitude || null,
+        });
+
+      if (claimError) throw claimError;
+
+      // 3. Award the reward based on type
+      const { reward_type, reward_amount } = selectedDay;
+
+      if (reward_type === "shop_points") {
+        // Get current shop_points and add
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("shop_points")
+          .eq("user_id", user.id)
+          .single();
+
+        if (profile) {
+          await supabase
+            .from("profiles")
+            .update({ shop_points: (profile.shop_points || 0) + reward_amount })
+            .eq("user_id", user.id);
+        }
+      } else if (reward_type === "prediction_points") {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("total_points")
+          .eq("user_id", user.id)
+          .single();
+
+        if (profile) {
+          await supabase
+            .from("profiles")
+            .update({ total_points: (profile.total_points || 0) + reward_amount })
+            .eq("user_id", user.id);
+        }
+      } else if (reward_type === "streak_freeze" || reward_type === "double_points" || reward_type === "xp_boost") {
+        // Insert into active_powerups
+        await supabase.from("active_powerups").insert({
+          user_id: user.id,
+          powerup_type: reward_type,
+          uses_remaining: reward_amount,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+        });
+      } else if (reward_type === "mystery_box") {
+        // Mystery box gives random shop points (5-25)
+        const randomPoints = Math.floor(Math.random() * 21) + 5;
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("shop_points")
+          .eq("user_id", user.id)
+          .single();
+
+        if (profile) {
+          await supabase
+            .from("profiles")
+            .update({ shop_points: (profile.shop_points || 0) + randomPoints })
+            .eq("user_id", user.id);
+        }
+        toast.success(`🎁 Mystery Box: You got ${randomPoints} Shop Points!`);
       }
 
       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ["#FFD700", "#C0C0C0", "#1a237e", "#4a148c"] });
-      toast.success(`☪️ ${data.message || "Ramadan Mubarak! Reward claimed!"}`);
+      toast.success("☪️ Ramadan Mubarak! Reward claimed!");
       setClaimedDays([...claimedDays, { calendar_id: selectedDay.id, claimed_at: new Date().toISOString() }]);
       setIsClaimDialogOpen(false);
     } catch (error: any) {

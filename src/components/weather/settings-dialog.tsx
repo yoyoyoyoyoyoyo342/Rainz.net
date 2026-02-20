@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Globe, LogOut, User, Eye, RotateCcw, GripVertical, Languages, Moon, Sun, Shield, Bell, Smartphone, Cookie, FlaskConical, Crown, Lock, Thermometer, Droplets, Wind, Gauge, Sunrise, MoonIcon, ChevronRight } from "lucide-react";
+import { Settings, Globe, LogOut, User, Eye, RotateCcw, GripVertical, Languages, Moon, Sun, Shield, Bell, Smartphone, Cookie, FlaskConical, Thermometer, Droplets, Wind, Gauge, Sunrise, MoonIcon, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage, Language, languageFlags } from "@/contexts/language-context";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
@@ -21,7 +21,6 @@ import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { IOSInstallGuide } from "@/components/ui/ios-install-guide";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
 import { useExperimentalData } from "@/hooks/use-experimental-data";
-import { useSubscription } from "@/hooks/use-subscription";
 import { usePremiumSettings } from "@/hooks/use-premium-settings";
 
 interface SettingsDialogProps {
@@ -138,7 +137,6 @@ export function SettingsDialog({
   const { isIOS, isPWAInstalled, needsPWAInstall, requestPermission: requestNotificationPermission, sendTestNotification } = usePushNotifications();
   const { preferences: cookiePreferences, savePreferences: saveCookiePreferences } = useCookieConsent();
   const { useExperimental, setUseExperimental } = useExperimentalData();
-  const { isSubscribed, openCheckout, openPortal } = useSubscription();
   const { settings: premiumSettings, updateSetting: updatePremiumSetting } = usePremiumSettings();
   const [showIOSInstallGuide, setShowIOSInstallGuide] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -408,131 +406,69 @@ export function SettingsDialog({
               />
             </SettingsSection>
 
-            {/* Rainz+ Settings */}
-            <SettingsSection 
-              title="Rainz+" 
-              icon={Crown}
-              badge={
-                isSubscribed ? (
-                  <span className="text-xs bg-green-500/20 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full ml-auto">Active</span>
-                ) : (
-                  <span className="text-xs bg-amber-500/20 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full ml-auto">Upgrade</span>
-                )
-              }
-            >
-              {!isSubscribed ? (
-                <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground">
-                    Unlock AI-enhanced weather data, animated backgrounds, notifications, and more.
-                  </p>
-                  <Button 
-                    size="sm" 
-                    onClick={() => void openCheckout().catch(() => {})}
-                    className="w-full gap-2"
-                  >
-                    <Crown className="w-4 h-4" />
-                    Upgrade to Rainz+
-                  </Button>
+            {/* Display Settings */}
+            <SettingsSection title="Advanced Display" icon={Eye}>
+              <ToggleRow
+                icon={FlaskConical}
+                label="AI Enhanced Data"
+                description="Weather data processed by AI for enhanced accuracy"
+                checked={useExperimental}
+                onCheckedChange={(checked) => {
+                  setUseExperimental(checked);
+                  toast({ title: "AI Enhanced Data", description: checked ? 'Enabled' : 'Disabled' });
+                }}
+              />
+              <ToggleRow
+                label="Animated backgrounds"
+                description="Show animated weather effects"
+                checked={premiumSettings.animatedBackgrounds}
+                onCheckedChange={(checked) => {
+                  updatePremiumSetting('animatedBackgrounds', checked);
+                  toast({ title: "Animated Backgrounds", description: checked ? 'Enabled' : 'Disabled' });
+                }}
+              />
+              <ToggleRow
+                label="Compact mode"
+                description="Use smaller, condensed cards"
+                checked={premiumSettings.compactMode}
+                onCheckedChange={(checked) => {
+                  updatePremiumSetting('compactMode', checked);
+                  toast({ title: "Compact Mode", description: checked ? 'Enabled' : 'Disabled' });
+                }}
+              />
+              
+              <div className="pt-2 border-t border-border/40">
+                <p className="text-xs text-muted-foreground mb-3">Data to display:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { key: 'showFeelsLike', label: 'Feels like', icon: Thermometer },
+                    { key: 'showWindChill', label: 'Wind chill', icon: Wind },
+                    { key: 'showHumidity', label: 'Humidity', icon: Droplets },
+                    { key: 'showUV', label: 'UV index', icon: Sun },
+                    { key: 'showPrecipChance', label: 'Precip %', icon: Droplets },
+                    { key: 'showDewPoint', label: 'Dew point', icon: Droplets },
+                    { key: 'showPressure', label: 'Pressure', icon: Gauge },
+                    { key: 'showVisibility', label: 'Visibility', icon: Eye },
+                    { key: 'showSunTimes', label: 'Sun times', icon: Sunrise },
+                    { key: 'showMoonPhase', label: 'Moon phase', icon: MoonIcon },
+                  ].map(({ key, label, icon: ItemIcon }) => (
+                    <label key={key} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/40 cursor-pointer hover:bg-muted/50 transition-colors">
+                      <Switch
+                        checked={(premiumSettings as any)[key]}
+                        onCheckedChange={(checked) => updatePremiumSetting(key as any, checked)}
+                        className="scale-75"
+                      />
+                      <ItemIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-xs">{label}</span>
+                    </label>
+                  ))}
                 </div>
-              ) : (
-                <>
-                  <ToggleRow
-                    icon={FlaskConical}
-                    label="AI Enhanced Data"
-                    description="Weather data processed by AI for enhanced accuracy"
-                    checked={useExperimental}
-                    onCheckedChange={(checked) => {
-                      setUseExperimental(checked);
-                      toast({ title: "AI Enhanced Data", description: checked ? 'Enabled' : 'Disabled' });
-                    }}
-                  />
-                  <ToggleRow
-                    label="Animated backgrounds"
-                    description="Show animated weather effects"
-                    checked={premiumSettings.animatedBackgrounds}
-                    onCheckedChange={(checked) => {
-                      updatePremiumSetting('animatedBackgrounds', checked);
-                      toast({ title: "Animated Backgrounds", description: checked ? 'Enabled' : 'Disabled' });
-                    }}
-                  />
-                  <ToggleRow
-                    label="Compact mode"
-                    description="Use smaller, condensed cards"
-                    checked={premiumSettings.compactMode}
-                    onCheckedChange={(checked) => {
-                      updatePremiumSetting('compactMode', checked);
-                      toast({ title: "Compact Mode", description: checked ? 'Enabled' : 'Disabled' });
-                    }}
-                  />
-                  
-                  <div className="pt-2 border-t border-border/40">
-                    <p className="text-xs text-muted-foreground mb-3">Data to display:</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { key: 'showFeelsLike', label: 'Feels like', icon: Thermometer },
-                        { key: 'showWindChill', label: 'Wind chill', icon: Wind },
-                        { key: 'showHumidity', label: 'Humidity', icon: Droplets },
-                        { key: 'showUV', label: 'UV index', icon: Sun },
-                        { key: 'showPrecipChance', label: 'Precip %', icon: Droplets },
-                        { key: 'showDewPoint', label: 'Dew point', icon: Droplets },
-                        { key: 'showPressure', label: 'Pressure', icon: Gauge },
-                        { key: 'showVisibility', label: 'Visibility', icon: Eye },
-                        { key: 'showSunTimes', label: 'Sun times', icon: Sunrise },
-                        { key: 'showMoonPhase', label: 'Moon phase', icon: MoonIcon },
-                      ].map(({ key, label, icon: ItemIcon }) => (
-                        <label key={key} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/40 cursor-pointer hover:bg-muted/50 transition-colors">
-                          <Switch
-                            checked={(premiumSettings as any)[key]}
-                            onCheckedChange={(checked) => updatePremiumSetting(key as any, checked)}
-                            className="scale-75"
-                          />
-                          <ItemIcon className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span className="text-xs">{label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => void openPortal().catch(() => {})}
-                    className="w-full mt-2"
-                  >
-                    Manage Subscription
-                  </Button>
-                </>
-              )}
+              </div>
             </SettingsSection>
 
             {/* Notifications Section */}
-            <SettingsSection 
-              title="Notifications" 
-              icon={Bell}
-              badge={!isSubscribed && (
-                <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full ml-auto flex items-center gap-1">
-                  <Crown className="w-3 h-3" /> Plus
-                </span>
-              )}
-            >
-              {!isSubscribed ? (
-                <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground">
-                    Upgrade to Rainz+ for AI-powered daily weather notifications with personalized insights.
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => void openCheckout().catch(() => {})}
-                    className="w-full gap-2"
-                  >
-                    <Lock className="w-3.5 h-3.5" />
-                    Upgrade to Enable
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  {isIOS && !isPWAInstalled && (
+            <SettingsSection title="Notifications" icon={Bell}>
+              {isIOS && !isPWAInstalled && (
                     <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 space-y-2">
                       <div className="flex items-center gap-2">
                         <Smartphone className="w-4 h-4 text-blue-500" />
@@ -618,8 +554,6 @@ export function SettingsDialog({
                       </Button>
                     </>
                   )}
-                </>
-              )}
             </SettingsSection>
 
             {/* Help & Feedback */}

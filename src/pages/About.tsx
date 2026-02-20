@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ArrowLeft, Cloud, Users, Target, Zap, Shield, Globe, Crown, Sparkles, Bell, Gamepad2 } from "lucide-react";
+import { ArrowLeft, Cloud, Users, Target, Zap, Shield, Globe } from "lucide-react";
 import { SEOHead } from "@/components/seo/seo-head";
 import { RainzImageCarousel } from "@/components/weather/rainz-image-carousel";
 
@@ -37,24 +37,6 @@ export default function About() {
     }
   ];
 
-  const premiumFeatures = [
-    {
-      icon: Sparkles,
-      title: "AI-Powered Insights",
-      description: "Enhanced weather data processed by AI for better accuracy and personalized recommendations."
-    },
-    {
-      icon: Bell,
-      title: "Smart Notifications",
-      description: "Daily weather briefings and severe weather alerts delivered to your device."
-    },
-    {
-      icon: Crown,
-      title: "Ad-Free Experience",
-      description: "Enjoy Rainz without any advertisements interrupting your weather experience."
-    }
-  ];
-
   const faqs = [
     {
       question: "How accurate are Rainz Weather forecasts?",
@@ -65,16 +47,16 @@ export default function About() {
       answer: "You can submit one prediction per day for tomorrow's weather, including high/low temperatures and conditions. Once verified against actual weather data, you earn points based on accuracy. Correct predictions earn up to 300 points, while maintaining daily streaks earns bonus points. This feature is free for all logged-in users!"
     },
     {
-      question: "What is Rainz+?",
-      answer: "Rainz+ is our premium subscription that unlocks advanced features including AI-enhanced weather data, push notifications, the AI Weather Companion, ad-free experience, and extensive display customization options. Weather predictions, battles, and leaderboards are free for everyone!"
+      question: "Is everything really free?",
+      answer: "Yes! All features in Rainz Weather are completely free, including AI-enhanced weather data, push notifications, the AI Weather Companion, predictions, battles, and leaderboards. No paywalls, no premium tiers."
     },
     {
-      question: "Why do I see ads?",
-      answer: "Free users may see advertisements to help support the continued development of Rainz Weather. Rainz+ subscribers enjoy a completely ad-free experience. We carefully select ad partners to ensure a non-intrusive experience."
+      question: "How is Rainz funded?",
+      answer: "Rainz is a passion project maintained by weather enthusiasts. We keep it free for everyone through community support and tips."
     },
     {
       question: "What is the leaderboard?",
-      answer: "The leaderboard ranks users based on their prediction accuracy and streak maintenance. Top predictors are displayed publicly, and Rainz+ subscribers get a special crown badge. The leaderboard is free for all users!"
+      answer: "The leaderboard ranks users based on their prediction accuracy and streak maintenance. Top predictors are displayed publicly. The leaderboard is free for all users!"
     },
     {
       question: "How does the snow/pollen index work?",
@@ -82,11 +64,11 @@ export default function About() {
     },
     {
       question: "Can I save multiple locations?",
-      answer: "Yes! Logged-in users can save multiple locations and quickly switch between them using the mobile navigation bar. Rainz+ subscribers have unlimited saved locations."
+      answer: "Yes! Logged-in users can save multiple locations and quickly switch between them using the mobile navigation bar."
     },
     {
       question: "How do I install Rainz as an app?",
-      answer: "Rainz Weather is a Progressive Web App (PWA). On iOS, tap the Share button and select 'Add to Home Screen'. On Android, tap the menu and select 'Install app' or 'Add to Home Screen'. Installing the PWA enables push notifications for Rainz+ subscribers."
+      answer: "Rainz Weather is a Progressive Web App (PWA). On iOS, tap the Share button and select 'Add to Home Screen'. On Android, tap the menu and select 'Install app'. Installing the PWA enables push notifications."
     },
     {
       question: "What data do you collect?",
@@ -94,11 +76,7 @@ export default function About() {
     },
     {
       question: "How do weather alerts work?",
-      answer: "Weather alerts are filtered to your current location only. Rainz+ subscribers receive push notifications for severe weather, winter conditions, and other important updates based on their notification preferences."
-    },
-    {
-      question: "How can I cancel my Rainz+ subscription?",
-      answer: "You can manage or cancel your subscription at any time through the 'Manage Subscription' button in Settings. This will take you to the Stripe customer portal where you can update your payment method or cancel."
+      answer: "Weather alerts are filtered to your current location only. You can receive push notifications for severe weather, winter conditions, and other important updates based on your notification preferences."
     },
     {
       question: "How can I provide feedback?",
@@ -174,87 +152,6 @@ export default function About() {
             ))}
           </div>
         </div>
-
-        {/* Rainz+ Section */}
-        <Card className="mb-12 border-amber-500/50 bg-gradient-to-br from-amber-500/10 to-orange-500/10">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Crown className="w-6 h-6 text-amber-500" />
-              Rainz+ Premium
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <p className="text-muted-foreground">
-              Unlock the full potential of Rainz Weather with our premium subscription. Get AI-powered insights, 
-              ad-free experience, push notifications, and access to all premium features.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {premiumFeatures.map((feature, index) => (
-                <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-background/50">
-                  <feature.icon className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-medium text-foreground text-sm">{feature.title}</h4>
-                    <p className="text-xs text-muted-foreground">{feature.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="pt-4 border-t border-border/50">
-              <h4 className="font-semibold text-foreground mb-2">All Rainz+ Features Include:</h4>
-              <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span> AI-enhanced weather data
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span> Push notifications
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span> AI Weather Companion
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span> Ad-free experience
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span> Advanced display customization
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span> Premium leaderboard badge
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span> Cloud-synced settings
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span> Extended 14-day forecasts
-                </li>
-              </ul>
-              <p className="text-xs text-muted-foreground mt-3">
-                <strong>Free for everyone:</strong> Weather predictions, prediction battles, and leaderboards!
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Advertising Transparency */}
-        <Card className="mb-12">
-          <CardHeader>
-            <CardTitle>About Advertising</CardTitle>
-          </CardHeader>
-          <CardContent className="text-muted-foreground space-y-4">
-            <p>
-              To keep Rainz Weather free for everyone, we display advertisements to free users. We're committed to:
-            </p>
-            <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Showing non-intrusive ads that don't interrupt your weather experience</li>
-              <li>Partnering with reputable advertising networks</li>
-              <li>Giving you control over your data through cookie preferences</li>
-              <li>Offering an ad-free experience through Rainz+ subscription</li>
-            </ul>
-            <p>
-              Your privacy matters to us. You can manage your advertising preferences in our cookie consent settings, 
-              and Rainz+ subscribers are never tracked by advertising networks within our app.
-            </p>
-          </CardContent>
-        </Card>
 
         {/* FAQ Section */}
         <Card>

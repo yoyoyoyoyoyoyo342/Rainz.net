@@ -1,47 +1,29 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSubscription } from "@/hooks/use-subscription";
 
 const STORAGE_KEY = "rainz_use_experimental_data";
 
 export function useExperimentalData() {
-  const subscriptionData = useSubscription();
-  const isSubscribed = subscriptionData?.isSubscribed ?? false;
-  
-  // Experimental data is always on for subscribers, off for non-subscribers
   const [useExperimental, setUseExperimentalState] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    // Check subscription status from localStorage as fallback for initial render
+    if (typeof window === "undefined") return true;
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === "true";
+    return stored !== "false"; // Default to true for everyone
   });
-
-  // Sync with subscription status - always on for subscribers
-  useEffect(() => {
-    if (isSubscribed) {
-      setUseExperimentalState(true);
-      localStorage.setItem(STORAGE_KEY, "true");
-    } else {
-      setUseExperimentalState(false);
-      localStorage.setItem(STORAGE_KEY, "false");
-    }
-  }, [isSubscribed]);
 
   // Dispatch event so other components can react
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("experimental-data-change", { detail: useExperimental }));
   }, [useExperimental]);
 
-  // No-op setter since it's controlled by subscription
-  const setUseExperimental = useCallback((_value: boolean) => {
-    // Can't manually change - controlled by subscription
-    console.log('Experimental data is controlled by Rainz+ subscription');
+  const setUseExperimental = useCallback((value: boolean) => {
+    setUseExperimentalState(value);
+    localStorage.setItem(STORAGE_KEY, String(value));
   }, []);
 
   // Listen for changes from other tabs
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY) {
-        setUseExperimentalState(e.newValue === "true");
+        setUseExperimentalState(e.newValue !== "false");
       }
     };
     
@@ -58,5 +40,5 @@ export function useExperimentalData() {
     };
   }, []);
 
-  return { useExperimental, setUseExperimental, isSubscribed };
+  return { useExperimental, setUseExperimental, isSubscribed: true };
 }

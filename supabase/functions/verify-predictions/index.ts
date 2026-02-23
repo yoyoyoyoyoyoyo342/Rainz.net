@@ -80,14 +80,6 @@ serve(async (req) => {
       // No body or invalid JSON
     }
     
-    if (!forceRun && cetHour !== 22 && cetHour !== 21 && cetHour !== 23) {
-      console.log(`Current CET hour is ${cetHour}, waiting for 21:00-23:00 CET to verify predictions`);
-      return new Response(
-        JSON.stringify({ message: 'Not yet verification time (21-23 CET), skipping', currentCetHour: cetHour, tip: 'Pass {"force": true} to run anyway' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
     console.log(`Running verification at CET hour ${cetHour}${forceRun ? ' (forced)' : ''}`);
 
     const today = now.toISOString().split('T')[0];

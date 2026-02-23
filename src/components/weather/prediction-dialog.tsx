@@ -191,21 +191,24 @@ export const PredictionDialog = ({
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-green-500/20 text-green-700 text-[10px]">+300</Badge>
-                    <span>All 3 correct + Free Freeze!</span>
+                    <span>All 3 correct (1x)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-blue-500/20 text-blue-700 text-[10px]">+200</Badge>
-                    <span>2 correct</span>
+                    <span>2 correct (1x)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-amber-500/20 text-amber-700 text-[10px]">+100</Badge>
-                    <span>1 correct</span>
+                    <span>1 correct (1x)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-red-500/20 text-red-700 text-[10px]">-100</Badge>
-                    <span>All wrong</span>
+                    <span>All wrong (1x)</span>
                   </div>
                 </div>
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  🔥 Use Confidence Betting to multiply your rewards (and risks)! Up to 2.5x with All-In.
+                </p>
               </CardContent>
             </Card>
 

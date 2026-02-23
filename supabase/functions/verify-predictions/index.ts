@@ -6,56 +6,56 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Fetch LLM-processed weather data for a location and date
-// IMPORTANT: Predictions are stored in CELSIUS, so we fetch and compare in Celsius
-async function fetchLLMWeatherData(lat: number, lon: number, date: string) {
+// Fetch weather data for a location and date (works for past dates too via Open-Meteo archive)
+// IMPORTANT: Always fetches in CELSIUS to match stored predictions
+async function fetchWeatherData(lat: number, lon: number, date: string) {
   try {
-    // Fetch raw weather data from Open-Meteo in CELSIUS (predictions are stored in Celsius)
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&start_date=${date}&end_date=${date}&temperature_unit=celsius&timezone=auto`;
+    // Determine if date is in the past (use archive API) or today/future (use forecast API)
+    const today = new Date().toISOString().split('T')[0];
+    const isPast = date < today;
+    
+    const baseUrl = isPast 
+      ? 'https://archive-api.open-meteo.com/v1/archive'
+      : 'https://api.open-meteo.com/v1/forecast';
+    
+    const weatherUrl = `${baseUrl}?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&start_date=${date}&end_date=${date}&temperature_unit=celsius&timezone=auto`;
     const weatherResponse = await fetch(weatherUrl);
     const weatherData = await weatherResponse.json();
 
     if (!weatherData.daily || !weatherData.daily.temperature_2m_max) {
-      console.log(`No weather data available for ${date}`);
+      console.log(`No weather data available for ${date} (isPast=${isPast})`);
       return null;
     }
 
-    // Keep values in Celsius for comparison with user predictions
-    const actualHighCelsius = Math.round(weatherData.daily.temperature_2m_max[0]);
-    const actualLowCelsius = Math.round(weatherData.daily.temperature_2m_min[0]);
+    // Keep raw Celsius values (no rounding for fairer comparison)
+    const actualHigh = weatherData.daily.temperature_2m_max[0];
+    const actualLow = weatherData.daily.temperature_2m_min[0];
     const rawWeatherCode = weatherData.daily.weathercode[0];
     const rawCondition = mapWeatherCodeToCondition(rawWeatherCode);
 
-    console.log(`Fetched actual weather for ${date}: High=${actualHighCelsius}°C, Low=${actualLowCelsius}°C, Condition=${rawCondition}`);
+    // Sanity check: if values seem like Fahrenheit (> 50°C high), log warning
+    if (actualHigh > 60 || actualLow > 50) {
+      console.warn(`⚠️ SANITY CHECK: Suspiciously high temps for ${date} at ${lat},${lon}: high=${actualHigh}, low=${actualLow}. Possible unit mismatch!`);
+    }
 
-    return { actualHigh: actualHighCelsius, actualLow: actualLowCelsius, actualCondition: rawCondition };
+    console.log(`Fetched actual weather for ${date}: High=${actualHigh}°C, Low=${actualLow}°C, Condition=${rawCondition} (source: ${isPast ? 'archive' : 'forecast'})`);
+
+    return { actualHigh, actualLow, actualCondition: rawCondition };
   } catch (error) {
-    console.error("Error fetching weather data:", error);
+    console.error(`Error fetching weather data for ${date}:`, error);
     return null;
   }
 }
 
 // Normalize user's predicted condition to match the 5 basic API conditions
-// This ensures fair comparison since API only returns: sunny, partly-cloudy, cloudy, rainy, snowy
 function normalizePredictedCondition(condition: string): string {
   const c = condition.toLowerCase();
-  
-  // Sunny conditions
   if (c === 'sunny' || c === 'clear') return 'sunny';
-  
-  // Partly cloudy
   if (c === 'partly-cloudy') return 'partly-cloudy';
-  
-  // Cloudy conditions (overcast, foggy, windy map to cloudy)
   if (c === 'cloudy' || c === 'overcast' || c === 'foggy' || c === 'windy') return 'cloudy';
-  
-  // Rainy conditions (drizzle, rain, heavy-rain, thunderstorm all map to rainy)
   if (c === 'rainy' || c === 'drizzle' || c === 'heavy-rain' || c === 'thunderstorm') return 'rainy';
-  
-  // Snowy conditions (snow, heavy-snow, sleet all map to snowy)
   if (c === 'snowy' || c === 'heavy-snow' || c === 'sleet') return 'snowy';
-  
-  return 'cloudy'; // Default fallback
+  return 'cloudy';
 }
 
 serve(async (req) => {
@@ -69,21 +69,17 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Check if this is a manual trigger (bypass time check)
     const now = new Date();
     const cetHour = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Paris" })).getHours();
     
-    // Parse request body for manual override
     let forceRun = false;
     try {
       const body = await req.json();
       forceRun = body?.force === true;
     } catch {
-      // No body or invalid JSON, use default behavior
+      // No body or invalid JSON
     }
     
-    // Only enforce time check if not a manual/forced run
-    // Allow between 9 PM and 11 PM CET (hours 21, 22) for flexibility
     if (!forceRun && cetHour !== 22 && cetHour !== 21 && cetHour !== 23) {
       console.log(`Current CET hour is ${cetHour}, waiting for 21:00-23:00 CET to verify predictions`);
       return new Response(
@@ -94,22 +90,20 @@ serve(async (req) => {
     
     console.log(`Running verification at CET hour ${cetHour}${forceRun ? ' (forced)' : ''}`);
 
-    // Get today's date (we verify predictions for today at 10 PM, using actual day's data)
     const today = now.toISOString().split('T')[0];
 
-    console.log(`Verifying predictions for date: ${today} at 10 PM CET`);
-
-    // Get all unverified predictions for today that were explicitly created by users
-    // We verify at end of day (10 PM CET) with actual weather data from the day
+    // BACKFILL: Get ALL unverified predictions (today AND past dates)
     const { data: predictions, error: fetchError } = await supabase
       .from('weather_predictions')
       .select('*')
-      .eq('prediction_date', today)
       .eq('is_verified', false)
+      .lte('prediction_date', today)
       .not('user_id', 'is', null)
       .not('predicted_high', 'is', null)
       .not('predicted_low', 'is', null)
-      .not('predicted_condition', 'is', null);
+      .not('predicted_condition', 'is', null)
+      .order('prediction_date', { ascending: true })
+      .limit(200);
 
     if (fetchError) {
       console.error('Error fetching predictions:', fetchError);
@@ -117,89 +111,83 @@ serve(async (req) => {
     }
 
     if (!predictions || predictions.length === 0) {
-      console.log('No valid predictions to verify for today');
+      console.log('No unverified predictions found');
       return new Response(
         JSON.stringify({ message: 'No predictions to verify', verified: 0, date: today }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Found ${predictions.length} valid predictions to verify`);
+    // Group predictions by date for efficient weather fetching
+    const predictionsByDate = new Map<string, typeof predictions>();
+    for (const p of predictions) {
+      const date = p.prediction_date;
+      if (!predictionsByDate.has(date)) predictionsByDate.set(date, []);
+      predictionsByDate.get(date)!.push(p);
+    }
+
+    console.log(`Found ${predictions.length} unverified predictions across ${predictionsByDate.size} dates`);
 
     let verifiedCount = 0;
 
-    // Verify each prediction using actual day's weather data
+    // Cache weather data by location+date to avoid duplicate API calls
+    const weatherCache = new Map<string, Awaited<ReturnType<typeof fetchWeatherData>>>();
+
     for (const prediction of predictions) {
       try {
-        // Fetch actual weather data for today (the day of the prediction)
-        const llmWeather = await fetchLLMWeatherData(
-          prediction.latitude, 
-          prediction.longitude, 
-          today
-        );
-
-        if (!llmWeather) {
-          console.log(`No weather data available for prediction ${prediction.id}`);
+        const cacheKey = `${prediction.latitude},${prediction.longitude},${prediction.prediction_date}`;
+        
+        if (!weatherCache.has(cacheKey)) {
+          weatherCache.set(cacheKey, await fetchWeatherData(
+            prediction.latitude, prediction.longitude, prediction.prediction_date
+          ));
+        }
+        
+        const weather = weatherCache.get(cacheKey);
+        if (!weather) {
+          console.log(`No weather data for prediction ${prediction.id} (date: ${prediction.prediction_date})`);
           continue;
         }
 
-        const actualHigh = llmWeather.actualHigh;
-        const actualLow = llmWeather.actualLow;
-        const actualCondition = llmWeather.actualCondition;
-
-        // Normalize user's condition to compare fairly with API's basic conditions
+        const { actualHigh, actualLow, actualCondition } = weather;
         const normalizedPredictedCondition = normalizePredictedCondition(prediction.predicted_condition);
         
-        // Check if prediction is correct (within 3 degrees for temps, condition categories match)
         const highAccurate = Math.abs(prediction.predicted_high - actualHigh) <= 3;
         const lowAccurate = Math.abs(prediction.predicted_low - actualLow) <= 3;
         const conditionAccurate = normalizedPredictedCondition === actualCondition;
         
-        console.log(`Comparing prediction ${prediction.id}: predicted=${prediction.predicted_high}/${prediction.predicted_low}/${normalizedPredictedCondition} vs actual=${actualHigh}/${actualLow}/${actualCondition}`);
-        console.log(`Results: highAccurate=${highAccurate}, lowAccurate=${lowAccurate}, conditionAccurate=${conditionAccurate}`);
+        console.log(`Prediction ${prediction.id} (${prediction.prediction_date}): predicted=${prediction.predicted_high}/${prediction.predicted_low}/${normalizedPredictedCondition} vs actual=${actualHigh}/${actualLow}/${actualCondition} → high=${highAccurate}, low=${lowAccurate}, cond=${conditionAccurate}`);
         
-        // Count how many parts are correct
         const correctParts = [highAccurate, lowAccurate, conditionAccurate].filter(Boolean).length;
         
-        // Calculate tiered accuracy points
-        let pointsEarned = 0;
+        // Base points
+        let basePoints = 0;
         let awardBonusStreakFreeze = false;
         switch (correctParts) {
-          case 3:
-            pointsEarned = 300;  // All correct
-            awardBonusStreakFreeze = true; // Perfect prediction bonus!
-            break;
-          case 2:
-            pointsEarned = 200;  // 2 correct
-            break;
-          case 1:
-            pointsEarned = 100;  // 1 correct
-            break;
-          case 0:
-            pointsEarned = -100; // All wrong (penalty)
-            break;
+          case 3: basePoints = 300; awardBonusStreakFreeze = true; break;
+          case 2: basePoints = 200; break;
+          case 1: basePoints = 100; break;
+          case 0: basePoints = -100; break;
         }
 
-        // Check powerup flags stored with prediction
+        // Apply confidence multiplier
+        const confidenceMultiplier = prediction.confidence_multiplier || 1;
+        let pointsEarned = Math.round(basePoints * confidenceMultiplier);
+
+        // Apply powerup flags
         const powerupFlags = prediction.powerup_flags || {};
-        
         if (powerupFlags.double_points) {
-          console.log(`User ${prediction.user_id} used double points powerup - doubling ${pointsEarned} points`);
+          console.log(`User ${prediction.user_id} used double points powerup`);
           pointsEarned = pointsEarned * 2;
         }
-
-        // Check for prediction shield if points are negative
-        if (pointsEarned < 0) {
-          if (powerupFlags.prediction_shield) {
-            console.log(`User ${prediction.user_id} used prediction shield - preventing ${pointsEarned} point loss`);
-            pointsEarned = 0; // Shield prevents the loss
-          }
+        if (pointsEarned < 0 && powerupFlags.prediction_shield) {
+          console.log(`User ${prediction.user_id} used prediction shield`);
+          pointsEarned = 0;
         }
         
-        // is_correct is true if at least 1 part is correct
         const isCorrect = correctParts >= 1;
 
-        // Update prediction with verification
+        // Update prediction — the DB trigger `update_prediction_points` handles adding to profiles.total_points
         const { error: updateError } = await supabase
           .from('weather_predictions')
           .update({
@@ -218,26 +206,13 @@ serve(async (req) => {
           continue;
         }
 
-        // Update user's total points in profiles table
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('total_points')
-          .eq('user_id', prediction.user_id)
-          .single();
+        // NOTE: We do NOT manually update profiles.total_points here.
+        // The DB trigger `update_prediction_points` fires on is_verified change and handles it.
+        // This prevents double-counting.
 
-        // Ensure total points don't go below 0
-        const newTotalPoints = Math.max(0, (profile?.total_points || 0) + pointsEarned);
-
-        await supabase
-          .from('profiles')
-          .update({ total_points: newTotalPoints })
-          .eq('user_id', prediction.user_id);
-
-        // Award bonus streak freeze for perfect prediction (this is the only way to go above 5)
+        // Award bonus streak freeze for perfect prediction
         if (awardBonusStreakFreeze) {
-          console.log(`Awarding bonus streak freeze to user ${prediction.user_id} for perfect prediction`);
-          
-          // Get current streak freeze count
+          console.log(`Awarding bonus streak freeze to user ${prediction.user_id}`);
           const { data: inventory } = await supabase
             .from('user_inventory')
             .select('quantity')
@@ -245,40 +220,33 @@ serve(async (req) => {
             .eq('item_type', 'streak_freeze')
             .maybeSingle();
 
-          const currentFreezes = inventory?.quantity || 0;
-          
-          // Upsert to add streak freeze (no cap for perfect predictions!)
           await supabase
             .from('user_inventory')
             .upsert({
               user_id: prediction.user_id,
               item_type: 'streak_freeze',
-              quantity: currentFreezes + 1,
+              quantity: (inventory?.quantity || 0) + 1,
               updated_at: new Date().toISOString(),
             }, { onConflict: 'user_id,item_type' });
 
-          // Notify user about the bonus
           await supabase.from('user_notifications').insert({
             user_id: prediction.user_id,
             type: 'perfect_prediction',
             title: '🎯 Perfect Prediction!',
-            message: `All 3 predictions correct! +300 points AND a free Streak Freeze added to your inventory!`,
-            metadata: { points: 300, bonus: 'streak_freeze' },
+            message: `All 3 correct! +${pointsEarned} points${confidenceMultiplier > 1 ? ` (${confidenceMultiplier}x confidence)` : ''} AND a free Streak Freeze!`,
+            metadata: { points: pointsEarned, bonus: 'streak_freeze', confidence: confidenceMultiplier },
           });
-
-          console.log(`User ${prediction.user_id} now has ${currentFreezes + 1} streak freezes`);
         }
 
-        // Check if this prediction is part of a battle and resolve it
+        // Resolve battles if applicable
         const { data: battles } = await supabase
           .from('prediction_battles')
           .select('*')
-          .eq('battle_date', today)
+          .eq('battle_date', prediction.prediction_date)
           .eq('status', 'accepted')
           .or(`challenger_prediction_id.eq.${prediction.id},opponent_prediction_id.eq.${prediction.id}`);
 
         for (const battle of battles || []) {
-          // Check if both predictions are now verified
           const { data: challengerPred } = await supabase
             .from('weather_predictions')
             .select('points_earned, is_verified')
@@ -304,9 +272,7 @@ serve(async (req) => {
               winnerId = battle.opponent_id;
               loserId = battle.challenger_id;
             }
-            // If tied, no winner or loser
 
-            // Update battle with results
             await supabase
               .from('prediction_battles')
               .update({
@@ -318,92 +284,49 @@ serve(async (req) => {
               })
               .eq('id', battle.id);
 
-            // Award 100 bonus points to the winner, deduct 50 from loser
             if (winnerId && loserId) {
-              // Winner gets +100 points
+              // Battle bonus/penalty handled via direct profile update (not via trigger)
               const { data: winnerProfile } = await supabase
-                .from('profiles')
-                .select('total_points')
-                .eq('user_id', winnerId)
-                .single();
-
-              const newWinnerPoints = (winnerProfile?.total_points || 0) + 100;
-
-              await supabase
-                .from('profiles')
-                .update({ total_points: newWinnerPoints })
+                .from('profiles').select('total_points').eq('user_id', winnerId).single();
+              await supabase.from('profiles')
+                .update({ total_points: (winnerProfile?.total_points || 0) + 100 })
                 .eq('user_id', winnerId);
 
-              // Loser gets -50 points
               const { data: loserProfile } = await supabase
-                .from('profiles')
-                .select('total_points')
-                .eq('user_id', loserId)
-                .single();
-
-              const newLoserPoints = Math.max(0, (loserProfile?.total_points || 0) - 50);
-
-              await supabase
-                .from('profiles')
-                .update({ total_points: newLoserPoints })
+                .from('profiles').select('total_points').eq('user_id', loserId).single();
+              await supabase.from('profiles')
+                .update({ total_points: Math.max(0, (loserProfile?.total_points || 0) - 50) })
                 .eq('user_id', loserId);
 
-              // Notify the winner
-              const { data: loserDisplayName } = await supabase
-                .from('profiles')
-                .select('display_name')
-                .eq('user_id', loserId)
-                .maybeSingle();
+              const { data: loserName } = await supabase
+                .from('profiles').select('display_name').eq('user_id', loserId).maybeSingle();
+              const { data: winnerName } = await supabase
+                .from('profiles').select('display_name').eq('user_id', winnerId).maybeSingle();
 
-              await supabase.from('user_notifications').insert({
-                user_id: winnerId,
-                type: 'battle_won',
-                title: 'Battle Victory! 🏆',
-                message: `You won the weather battle against ${loserDisplayName?.display_name || 'your opponent'}! +100 bonus points!`,
-                metadata: { battle_id: battle.id, bonus_points: 100 },
-              });
-
-              // Notify the loser
-              const { data: winnerProfileName } = await supabase
-                .from('profiles')
-                .select('display_name')
-                .eq('user_id', winnerId)
-                .maybeSingle();
-
-              await supabase.from('user_notifications').insert({
-                user_id: loserId,
-                type: 'battle_lost',
-                title: 'Battle Ended',
-                message: `${winnerProfileName?.display_name || 'Your opponent'} won the weather battle. -50 points. Better luck next time!`,
-                metadata: { battle_id: battle.id, penalty_points: -50 },
-              });
-
-              console.log(`Battle ${battle.id} completed. Winner: ${winnerId} (+100 points), Loser: ${loserId} (-50 points)`);
-            } else {
-              // Notify both users of a tie
               await supabase.from('user_notifications').insert([
                 {
-                  user_id: battle.challenger_id,
-                  type: 'battle_tie',
-                  title: 'Battle Tied!',
-                  message: 'Your weather battle ended in a tie! No bonus points awarded.',
-                  metadata: { battle_id: battle.id },
+                  user_id: winnerId, type: 'battle_won', title: 'Battle Victory! 🏆',
+                  message: `You won against ${loserName?.display_name || 'your opponent'}! +100 bonus points!`,
+                  metadata: { battle_id: battle.id, bonus_points: 100 },
                 },
                 {
-                  user_id: battle.opponent_id,
-                  type: 'battle_tie',
-                  title: 'Battle Tied!',
-                  message: 'Your weather battle ended in a tie! No bonus points awarded.',
-                  metadata: { battle_id: battle.id },
+                  user_id: loserId, type: 'battle_lost', title: 'Battle Ended',
+                  message: `${winnerName?.display_name || 'Your opponent'} won. -50 points. Better luck next time!`,
+                  metadata: { battle_id: battle.id, penalty_points: -50 },
                 },
               ]);
-              console.log(`Battle ${battle.id} completed with a tie.`);
+              console.log(`Battle ${battle.id} completed. Winner: ${winnerId}`);
+            } else {
+              await supabase.from('user_notifications').insert([
+                { user_id: battle.challenger_id, type: 'battle_tie', title: 'Battle Tied!', message: 'Your weather battle ended in a tie!', metadata: { battle_id: battle.id } },
+                { user_id: battle.opponent_id, type: 'battle_tie', title: 'Battle Tied!', message: 'Your weather battle ended in a tie!', metadata: { battle_id: battle.id } },
+              ]);
             }
           }
         }
 
         verifiedCount++;
-        console.log(`Verified prediction ${prediction.id}: ${isCorrect ? 'Correct' : 'Incorrect'} (${pointsEarned} points)`);
+        console.log(`✅ Verified prediction ${prediction.id}: ${correctParts}/3 correct, ${pointsEarned} points (confidence: ${confidenceMultiplier}x)`);
       } catch (error) {
         console.error(`Error processing prediction ${prediction.id}:`, error);
       }
@@ -413,7 +336,8 @@ serve(async (req) => {
       JSON.stringify({ 
         message: 'Predictions verified successfully', 
         verified: verifiedCount,
-        total: predictions.length 
+        total: predictions.length,
+        dates: [...predictionsByDate.keys()],
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -421,10 +345,7 @@ serve(async (req) => {
     console.error('Error in verify-predictions function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
@@ -435,6 +356,6 @@ function mapWeatherCodeToCondition(code: number): string {
   if (code >= 45 && code <= 48) return 'cloudy';
   if (code >= 51 && code <= 67) return 'rainy';
   if (code >= 71 && code <= 86) return 'snowy';
-  if (code >= 95) return 'rainy'; // thunderstorms as rainy
+  if (code >= 95) return 'rainy';
   return 'cloudy';
 }

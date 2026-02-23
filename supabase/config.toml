@@ -101,3 +101,6 @@ verify_jwt = false
 
 [functions.claim-ramadan-reward]
 verify_jwt = false
+
+[functions.submit-rainz-prediction]
+verify_jwt = false

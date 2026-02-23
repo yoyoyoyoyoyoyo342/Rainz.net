@@ -1,43 +1,51 @@
 
-# Fix: Inflated Points from Double-Counting
 
-## What Happened
+# Make Rainz Bot Always Predict + Add Confidence Betting
 
-The old `verify-predictions` edge function had TWO ways of adding points:
-1. A database trigger (`update_prediction_points`) that automatically adds `points_earned` to `total_points` whenever a prediction becomes verified
-2. Manual `UPDATE profiles SET total_points = ...` calls in the edge function itself
+## Current Problem
 
-When the backfill ran, the trigger fired for every prediction being verified, but the old code had already added points manually in previous runs. This resulted in points being counted 2-3x, giving users massively inflated totals.
+The Rainz Bot edge function (`submit-rainz-prediction`) exists but has **no cron job** -- it never runs automatically. The bot also doesn't use the new `confidence_multiplier` column, always defaulting to 1x (Safe).
 
-## The Fix
+## The Fix (Two Parts)
 
-### Step 1: Reset all `total_points` to the correct calculated values
+### Part 1: Schedule the bot to predict daily
 
-Run a single SQL migration that recalculates every user's `total_points` from scratch:
-- Sum of `points_earned` from all verified predictions
-- Plus battle win bonuses (+100 each)
-- Minus battle loss penalties (-50 each)
-- Floor at 0 (no negative totals)
+Create a cron job that calls `submit-rainz-prediction` every day at **20:00 UTC** (before the verify job at 21:00 UTC). This ensures the bot always has a prediction in place before verification runs.
 
-### Correct values after reset:
+### Part 2: Add confidence betting to the bot
 
-```text
-User            Current    Correct
-Karen           19,395     8,100
-Seje_ged        13,570     4,700
-gerda            1,325         0
-SOH 6400           800         0
-Rainz Bot          200       100
-Meloniii            75         0
-```
+Make the bot randomly pick a confidence level for each prediction, giving it personality:
 
-### Step 2: No code changes needed
+- **Safe (1x)** -- 40% chance
+- **Confident (1.5x)** -- 40% chance
+- **All-In (2.5x)** -- 20% chance
 
-The edge function was already fixed in the previous update -- it no longer manually updates `total_points` (relies solely on the trigger). This migration just corrects the historical damage.
+The bot uses real forecast data from Open-Meteo, so it should be fairly accurate. The random confidence selection adds excitement -- sometimes the bot goes all-in and earns big, sometimes it plays it safe.
+
+Update the insert call to include `confidence_multiplier` in the prediction row.
+
+## Files Changed
+
+| Action | File | Change |
+|--------|------|--------|
+| Edit | `supabase/functions/submit-rainz-prediction/index.ts` | Add random confidence multiplier selection (1, 1.5, or 2.5) and include it in the insert |
+| Deploy | `submit-rainz-prediction` | Redeploy edge function |
+| Migration | SQL | `cron.schedule` to run `submit-rainz-prediction` daily at `0 20 * * *` (20:00 UTC) |
 
 ## Technical Details
 
-A single SQL migration will:
-1. Recalculate correct points for every profile using verified predictions + battle results
-2. Update all profiles in one atomic operation
-3. Ensure no profile goes below 0 points
+### Confidence selection logic
+
+```text
+function pickConfidence(): number {
+  const roll = Math.random();
+  if (roll < 0.4) return 1;      // Safe (40%)
+  if (roll < 0.8) return 1.5;    // Confident (40%)
+  return 2.5;                     // All-In (20%)
+}
+```
+
+### Cron schedule
+
+The bot predicts at 20:00 UTC, one hour before verification runs at 21:00 UTC. This ensures the bot's prediction for "today" (which targets tomorrow) is always submitted before any verification cycle.
+

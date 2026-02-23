@@ -12,6 +12,13 @@ const DEFAULT_LAT = 59.91;
 const DEFAULT_LON = 10.75;
 const DEFAULT_LOCATION = "Oslo";
 
+function pickConfidence(): number {
+  const roll = Math.random();
+  if (roll < 0.4) return 1;      // Safe (40%)
+  if (roll < 0.8) return 1.5;    // Confident (40%)
+  return 2.5;                     // All-In (20%)
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -73,6 +80,7 @@ serve(async (req) => {
     };
 
     const condition = mapWeatherCode(weatherCode);
+    const confidence = pickConfidence();
 
     // Submit prediction
     const { error } = await supabase.from("weather_predictions").insert({
@@ -81,6 +89,7 @@ serve(async (req) => {
       predicted_high: highC,
       predicted_low: lowC,
       predicted_condition: condition,
+      confidence_multiplier: confidence,
       location_name: DEFAULT_LOCATION,
       latitude: DEFAULT_LAT,
       longitude: DEFAULT_LON,
@@ -88,8 +97,10 @@ serve(async (req) => {
 
     if (error) throw error;
 
+    console.log(`Rainz Bot predicted ${condition} ${lowC}-${highC}°C for ${predictionDate} with ${confidence}x confidence`);
+
     return new Response(
-      JSON.stringify({ success: true, prediction: { highC, lowC, condition, date: predictionDate } }),
+      JSON.stringify({ success: true, prediction: { highC, lowC, condition, confidence, date: predictionDate } }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

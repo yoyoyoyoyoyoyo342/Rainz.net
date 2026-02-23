@@ -1,100 +1,49 @@
 
 
-# Fix: Prediction Points Stuck at 0 + New Confidence Betting Feature
+# Fix: Prediction Points Stuck at 0 (Cron + Time Guard)
 
-## Problem Analysis
+## Root Cause
 
-Two bugs are preventing users from receiving points:
+The cron job fires at **1:00 AM UTC** (2:00 AM CET), but the edge function rejects any call outside **21:00-23:00 CET**. Every automated run gets rejected, so predictions are never verified and users always get 0 points.
 
-### Bug 1: Cron Schedule Mismatch (Primary -- causes 0 points)
-- The cron job fires at `0 1 * * *` (1:00 AM UTC = 2:00 AM CET)
-- The edge function only allows execution between CET hours 21-23
-- Result: the function rejects every automated call, predictions are NEVER verified, points stay at 0
-- Evidence: No verify-predictions logs exist; dozens of unverified predictions from Feb 14-22
+You tried updating `cron.job` directly via the SQL Editor, but Supabase doesn't allow direct `UPDATE` on that table. You need to use `cron.unschedule()` + `cron.schedule()` instead.
 
-### Bug 2: Fahrenheit/Celsius Mismatch (Secondary -- causes wrong scoring)
-- When verification DID run (Dec 2025, likely manually forced), actual temperatures were stored in Fahrenheit (e.g., actual_high=38.2) while predictions are in Celsius (predicted_high=3)
-- The comparison `|3 - 38.2| = 35.2 > 3` always fails
-- Users only ever got points from condition matches (100 or -100), never from temperature accuracy
-- This means no one can ever score 200 or 300 points
+## The Fix (Two-Part)
 
----
+### Part 1: Remove the time-of-day guard from the edge function
 
-## Fix 1: Cron Schedule
+The CET hour check (lines 83-89 in `verify-predictions/index.ts`) is unnecessary -- the cron job already controls when it runs. Removing this guard means the function will succeed whenever it's called, whether by cron or manually.
 
-Update the cron job from `0 1 * * *` to `0 21 * * *` (21:00 UTC = 22:00 CET winter / 23:00 CEST summer), which falls within the edge function's allowed window.
+### Part 2: Reschedule the cron job via migration
 
-**Method:** Run a SQL migration to update `cron.job` schedule.
-
----
-
-## Fix 2: Edge Function Temperature Verification
-
-In `supabase/functions/verify-predictions/index.ts`:
-
-- Add a sanity check after fetching from Open-Meteo: if the actual values seem to be in Fahrenheit (e.g., the delta between predicted and actual is suspiciously large), log a warning
-- More importantly, remove the `Math.round` that rounds actual values (the DB column is numeric and can store decimals, making comparisons more fair)
-- Add logging to confirm the API is returning Celsius
-- Store the raw Celsius values properly
-
----
-
-## Fix 3: Backfill Unverified Predictions
-
-Update the edge function to also verify PAST unverified predictions (not just today's):
-
-- When running, also query for any `is_verified = false` predictions where `prediction_date < today`
-- Fetch historical weather data from Open-Meteo for those dates (it supports past dates)
-- Verify and award points retroactively
-
-This ensures the dozens of missed predictions from Feb 14-22 get scored.
-
----
-
-## Fix 4: Double-Counting Points (Trigger + Edge Function)
-
-There is a database trigger `update_prediction_points` that adds `points_earned` to `total_points` when `is_verified` changes to true. The edge function ALSO manually updates `total_points`. This causes double-counting.
-
-**Fix:** Remove the manual profile update from the edge function and rely solely on the trigger.
-
----
-
-## New Feature: Confidence Betting
-
-Add a strategic layer to predictions where users choose a confidence multiplier before submitting.
-
-### How it works:
-- When making a prediction, users pick a confidence level: **Safe (1x)**, **Confident (1.5x)**, or **All-In (2.5x)**
-- The multiplier applies to BOTH rewards and penalties
-- Example with "All-In (2.5x)": 3 correct = +750 points, all wrong = -250 points
-- Stored as `confidence_multiplier` in the `weather_predictions` table
-- The verify function applies the multiplier during scoring
-
-### Point table with confidence:
-
-```text
-                Safe (1x)    Confident (1.5x)    All-In (2.5x)
-3 correct       +300         +450                 +750
-2 correct       +200         +300                 +500
-1 correct       +100         +150                 +250
-0 correct       -100         -150                 -250
-```
-
-### UI:
-- Three tappable cards in the prediction form (before the submit button)
-- Each shows the risk/reward clearly
-- Default is "Safe (1x)"
-- Visual flair: Safe = green/calm, Confident = orange/warm, All-In = red/fire with animation
-
----
+Use `cron.unschedule('verify-predictions-daily')` to remove the old job, then `cron.schedule()` to create a new one at `0 21 * * *` (21:00 UTC). This gives Open-Meteo enough time to have the day's data available.
 
 ## Files Changed
 
 | Action | File | Change |
 |--------|------|--------|
-| Migration | SQL | Fix cron schedule to `0 21 * * *`; add `confidence_multiplier` column to `weather_predictions` |
-| Edit | `supabase/functions/verify-predictions/index.ts` | Fix backfill logic, remove manual profile update (rely on trigger), apply confidence multiplier, add temperature sanity logging |
+| Edit | `supabase/functions/verify-predictions/index.ts` | Remove the CET hour 21-23 guard (lines 83-89), always run when called |
 | Deploy | `verify-predictions` | Redeploy edge function |
-| Edit | `src/components/weather/weather-prediction-form.tsx` | Add confidence level selector UI, store multiplier with prediction |
-| Edit | `src/components/weather/prediction-dialog.tsx` | Update "How Points Work" section to mention confidence multiplier |
+| Migration | SQL | `cron.unschedule('verify-predictions-daily')` then `cron.schedule(...)` at `0 21 * * *` |
+
+## Technical Details
+
+The migration SQL will be:
+
+```text
+SELECT cron.unschedule('verify-predictions-daily');
+
+SELECT cron.schedule(
+  'verify-predictions-daily',
+  '0 21 * * *',
+  $$
+  SELECT net.http_post(
+    url:='https://ohwtbkudpkfbakynikyj.supabase.co/functions/v1/verify-predictions',
+    headers:='{"Content-Type": "application/json", "Authorization": "Bearer <anon_key>"}'::jsonb
+  ) as request_id;
+  $$
+);
+```
+
+The edge function change simply removes the `if (!forceRun && cetHour !== 22 ...)` block so any call triggers verification.
 

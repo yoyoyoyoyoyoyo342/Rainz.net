@@ -8,7 +8,8 @@ import { toast } from "sonner";
 import { 
   CloudRain, CloudSnow, Cloud, Sun, CloudDrizzle, CloudLightning, 
   CloudFog, Wind, Target, ThermometerSnowflake, 
-  ThermometerSun, Sparkles, MapPin, Share2, Swords, Bot
+  ThermometerSun, Sparkles, MapPin, Share2, Swords, Bot,
+  Shield, Flame, Zap
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { z } from "zod";
@@ -132,6 +133,7 @@ export const WeatherPredictionForm = ({
   const [loading, setLoading] = useState(false);
   const [enableBattle, setEnableBattle] = useState(false);
   const [selectedOpponent, setSelectedOpponent] = useState<{ id: string; name: string } | null>(null);
+  const [confidenceMultiplier, setConfidenceMultiplier] = useState<number>(1);
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -240,7 +242,8 @@ export const WeatherPredictionForm = ({
           latitude,
           longitude,
           powerup_flags: powerupFlags,
-        })
+          confidence_multiplier: confidenceMultiplier,
+        } as any)
         .select("id")
         .single();
 
@@ -279,6 +282,7 @@ export const WeatherPredictionForm = ({
       setPredictedCondition("");
       setEnableBattle(false);
       setSelectedOpponent(null);
+      setConfidenceMultiplier(1);
       
       // Only show share dialog if NOT in battle acceptance mode
       if (!returnPredictionId) {
@@ -425,6 +429,41 @@ export const WeatherPredictionForm = ({
 
         {/* Rainz Prediction Card */}
         <RainzPredictionCard latitude={latitude} longitude={longitude} isImperial={isImperial} />
+
+        {/* Confidence Betting */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2 text-sm">
+            <Flame className="w-4 h-4 text-orange-500" />
+            Confidence Level
+          </Label>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { value: 1, label: "Safe", sublabel: "1x", icon: Shield, gradient: "from-green-500/15 to-emerald-500/10", border: "border-green-500/30", activeGradient: "from-green-500/30 to-emerald-500/20", activeBorder: "border-green-500/60", textColor: "text-green-600", desc: "+300 / -100" },
+              { value: 1.5, label: "Confident", sublabel: "1.5x", icon: Zap, gradient: "from-orange-500/15 to-amber-500/10", border: "border-orange-500/30", activeGradient: "from-orange-500/30 to-amber-500/20", activeBorder: "border-orange-500/60", textColor: "text-orange-600", desc: "+450 / -150" },
+              { value: 2.5, label: "All-In", sublabel: "2.5x", icon: Flame, gradient: "from-red-500/15 to-pink-500/10", border: "border-red-500/30", activeGradient: "from-red-500/30 to-pink-500/20", activeBorder: "border-red-500/60", textColor: "text-red-600", desc: "+750 / -250" },
+            ].map((level) => {
+              const isActive = confidenceMultiplier === level.value;
+              const LevelIcon = level.icon;
+              return (
+                <button
+                  key={level.value}
+                  type="button"
+                  onClick={() => setConfidenceMultiplier(level.value)}
+                  className={`p-3 rounded-xl border-2 transition-all duration-200 text-center ${
+                    isActive 
+                      ? `bg-gradient-to-br ${level.activeGradient} ${level.activeBorder} scale-[1.02] shadow-md` 
+                      : `bg-gradient-to-br ${level.gradient} ${level.border} hover:scale-[1.01]`
+                  }`}
+                >
+                  <LevelIcon className={`w-5 h-5 mx-auto mb-1 ${level.textColor} ${isActive && level.value === 2.5 ? 'animate-pulse' : ''}`} />
+                  <p className={`text-sm font-bold ${level.textColor}`}>{level.label}</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">{level.sublabel}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">{level.desc}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Battle Challenge Section */}
         <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 space-y-3">

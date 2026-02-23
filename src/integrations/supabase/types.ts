@@ -1545,6 +1545,7 @@ export type Database = {
           actual_condition: string | null
           actual_high: number | null
           actual_low: number | null
+          confidence_multiplier: number
           created_at: string | null
           id: string
           is_correct: boolean | null
@@ -1565,6 +1566,7 @@ export type Database = {
           actual_condition?: string | null
           actual_high?: number | null
           actual_low?: number | null
+          confidence_multiplier?: number
           created_at?: string | null
           id?: string
           is_correct?: boolean | null
@@ -1585,6 +1587,7 @@ export type Database = {
           actual_condition?: string | null
           actual_high?: number | null
           actual_low?: number | null
+          confidence_multiplier?: number
           created_at?: string | null
           id?: string
           is_correct?: boolean | null

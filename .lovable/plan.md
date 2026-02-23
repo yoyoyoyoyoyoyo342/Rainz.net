@@ -1,49 +1,43 @@
 
+# Fix: Inflated Points from Double-Counting
 
-# Fix: Prediction Points Stuck at 0 (Cron + Time Guard)
+## What Happened
 
-## Root Cause
+The old `verify-predictions` edge function had TWO ways of adding points:
+1. A database trigger (`update_prediction_points`) that automatically adds `points_earned` to `total_points` whenever a prediction becomes verified
+2. Manual `UPDATE profiles SET total_points = ...` calls in the edge function itself
 
-The cron job fires at **1:00 AM UTC** (2:00 AM CET), but the edge function rejects any call outside **21:00-23:00 CET**. Every automated run gets rejected, so predictions are never verified and users always get 0 points.
+When the backfill ran, the trigger fired for every prediction being verified, but the old code had already added points manually in previous runs. This resulted in points being counted 2-3x, giving users massively inflated totals.
 
-You tried updating `cron.job` directly via the SQL Editor, but Supabase doesn't allow direct `UPDATE` on that table. You need to use `cron.unschedule()` + `cron.schedule()` instead.
+## The Fix
 
-## The Fix (Two-Part)
+### Step 1: Reset all `total_points` to the correct calculated values
 
-### Part 1: Remove the time-of-day guard from the edge function
+Run a single SQL migration that recalculates every user's `total_points` from scratch:
+- Sum of `points_earned` from all verified predictions
+- Plus battle win bonuses (+100 each)
+- Minus battle loss penalties (-50 each)
+- Floor at 0 (no negative totals)
 
-The CET hour check (lines 83-89 in `verify-predictions/index.ts`) is unnecessary -- the cron job already controls when it runs. Removing this guard means the function will succeed whenever it's called, whether by cron or manually.
+### Correct values after reset:
 
-### Part 2: Reschedule the cron job via migration
+```text
+User            Current    Correct
+Karen           19,395     8,100
+Seje_ged        13,570     4,700
+gerda            1,325         0
+SOH 6400           800         0
+Rainz Bot          200       100
+Meloniii            75         0
+```
 
-Use `cron.unschedule('verify-predictions-daily')` to remove the old job, then `cron.schedule()` to create a new one at `0 21 * * *` (21:00 UTC). This gives Open-Meteo enough time to have the day's data available.
+### Step 2: No code changes needed
 
-## Files Changed
-
-| Action | File | Change |
-|--------|------|--------|
-| Edit | `supabase/functions/verify-predictions/index.ts` | Remove the CET hour 21-23 guard (lines 83-89), always run when called |
-| Deploy | `verify-predictions` | Redeploy edge function |
-| Migration | SQL | `cron.unschedule('verify-predictions-daily')` then `cron.schedule(...)` at `0 21 * * *` |
+The edge function was already fixed in the previous update -- it no longer manually updates `total_points` (relies solely on the trigger). This migration just corrects the historical damage.
 
 ## Technical Details
 
-The migration SQL will be:
-
-```text
-SELECT cron.unschedule('verify-predictions-daily');
-
-SELECT cron.schedule(
-  'verify-predictions-daily',
-  '0 21 * * *',
-  $$
-  SELECT net.http_post(
-    url:='https://ohwtbkudpkfbakynikyj.supabase.co/functions/v1/verify-predictions',
-    headers:='{"Content-Type": "application/json", "Authorization": "Bearer <anon_key>"}'::jsonb
-  ) as request_id;
-  $$
-);
-```
-
-The edge function change simply removes the `if (!forceRun && cetHour !== 22 ...)` block so any call triggers verification.
-
+A single SQL migration will:
+1. Recalculate correct points for every profile using verified predictions + battle results
+2. Update all profiles in one atomic operation
+3. Ensure no profile goes below 0 points

@@ -1,128 +1,100 @@
-# Plan: Ramadan Fix, Remove Rainz+, Hide Calendar When Logged Out, Weather Stats, and UX Improvements
 
-## 1. Fix Ramadan Calendar Claiming (Remove Edge Function Dependency)
 
-The persistent "Unauthorized" error comes from the edge function auth flow. The fix is to bypass the edge function entirely and handle claiming directly on the client using the Supabase client SDK.
+# Fix: Prediction Points Stuck at 0 + New Confidence Betting Feature
 
-**Approach:**
+## Problem Analysis
 
-- Remove the `supabase.functions.invoke("claim-ramadan-reward")` call from `ramadan-calendar.tsx`
-- Instead, perform all claim logic directly using the Supabase client:
-  1. Validate the user is logged in via `useAuth()`
-  2. Check sun position client-side (already done)
-  3. Verify the calendar day matches today
-  4. Check if already claimed via a direct query to `ramadan_claims`
-  5. Insert the claim directly into `ramadan_claims` (RLS already allows `auth.uid() = user_id`)
-  6. Award rewards by updating `profiles` (shop_points/total_points) -- since RLS allows users to update their own profile
-  7. For powerups/inventory, insert into `active_powerups` (RLS allows `auth.uid() = user_id`)
-- The `streak_freeze` reward type uses a `user_inventory` table that may not exist or may not have RLS -- will need a migration if so, or fall back to `active_powerups`
-- Sun verification stays client-side only (acceptable since rewards are small gamification items)
+Two bugs are preventing users from receiving points:
 
-**Files changed:**
+### Bug 1: Cron Schedule Mismatch (Primary -- causes 0 points)
+- The cron job fires at `0 1 * * *` (1:00 AM UTC = 2:00 AM CET)
+- The edge function only allows execution between CET hours 21-23
+- Result: the function rejects every automated call, predictions are NEVER verified, points stay at 0
+- Evidence: No verify-predictions logs exist; dozens of unverified predictions from Feb 14-22
 
-- `src/components/weather/ramadan-calendar.tsx` -- rewrite `handleClaimReward` to use direct Supabase queries
+### Bug 2: Fahrenheit/Celsius Mismatch (Secondary -- causes wrong scoring)
+- When verification DID run (Dec 2025, likely manually forced), actual temperatures were stored in Fahrenheit (e.g., actual_high=38.2) while predictions are in Celsius (predicted_high=3)
+- The comparison `|3 - 38.2| = 35.2 > 3` always fails
+- Users only ever got points from condition matches (100 or -100), never from temperature accuracy
+- This means no one can ever score 200 or 300 points
 
 ---
 
-## 2. Remove All Traces of Rainz+
+## Fix 1: Cron Schedule
 
-The subscription system already returns `isSubscribed: true` for everyone (in `use-subscription.tsx`). But many components still show "Upgrade to Rainz+" UI, locked cards, Crown badges, and premium upsells. All of these need to be cleaned up.
+Update the cron job from `0 1 * * *` to `0 21 * * *` (21:00 UTC = 22:00 CET winter / 23:00 CEST summer), which falls within the edge function's allowed window.
 
-**Files to clean up (removing premium/locked UI, "Upgrade to Rainz+" buttons, Crown badges):**
-
-
-| File                                                | What to remove/change                                                                                                                      |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/components/weather/rain-map-card.tsx`          | Remove `LockedCard` component, remove `useSubscription` import, remove the `if (!isSubscribed)` gate                                       |
-| `src/components/weather/aqi-card.tsx`               | Remove the locked/premium gate UI, always show the card                                                                                    |
-| `src/components/weather/morning-weather-review.tsx` | Remove "Upgrade to Rainz+" button and premium gate                                                                                         |
-| `src/components/weather/weather-trends-card.tsx`    | Remove "Upgrade to Rainz+" button                                                                                                          |
-| `src/components/weather/settings-dialog.tsx`        | Remove all `!isSubscribed` conditional blocks showing upgrade prompts, Crown badges on Notifications section, "Manage Subscription" button |
-| `src/components/weather/explore-sheet.tsx`          | Remove `LockedFeature` wrapper around WeatherTrendsCard                                                                                    |
-| `src/pages/About.tsx`                               | Remove "Rainz+ Premium" section, update FAQ answers to remove Rainz+ mentions                                                              |
-| `src/components/subscription/subscription-card.tsx` | Simplify or remove entirely                                                                                                                |
-| `src/hooks/use-offline-cache.tsx`                   | Remove `isSubscribed` gates (cache for everyone)                                                                                           |
-| `src/hooks/use-experimental-data.tsx`               | Remove Rainz+ reference in console log                                                                                                     |
-| `src/lib/offline-cache.ts`                          | Remove "Rainz+ premium" comment                                                                                                            |
-| `public/llm.txt`                                    | Remove Rainz+ premium section                                                                                                              |
-| `supabase/functions/ai-weather-insights/index.ts`   | Remove Rainz+ mentions from AI system prompt                                                                                               |
-
+**Method:** Run a SQL migration to update `cron.job` schedule.
 
 ---
 
-## 3. Hide Ramadan Calendar When Logged Out
+## Fix 2: Edge Function Temperature Verification
 
-In `src/pages/Weather.tsx`, wrap the Ramadan Calendar rendering in a `{user && (...)}` check so it only shows for logged-in users.
+In `supabase/functions/verify-predictions/index.ts`:
 
-**File changed:** `src/pages/Weather.tsx` (line ~774-789)
-
----
-
-## 4. Add Weather Stats Section to Explore Sheet
-
-Create a new `WeatherFunFacts` component that displays interesting, dynamic weather statistics based on the current location and weather data.
-
-**Examples of stats:**
-
-- "It has rained every day in 2026 in the U.K. so far"
-- "Today is the warmest day this week in [location]"
-- "Wind speeds are 40% above average today"
-- "The sun sets 2 minutes later today than yesterday"
-- "Humidity hasn't dropped below 70% in 5 days"
-
-**Approach:**
-
-- Create `src/components/weather/weather-fun-facts.tsx`
-- Generate facts from the existing weather data passed to the Explore Sheet (current weather, hourly/daily forecasts, location name)
-- No API calls needed -- derive facts from the data already available
-- Add it as the first item in the Explore Sheet
-
-**Files changed:**
-
-- New: `src/components/weather/weather-fun-facts.tsx`
-- Edit: `src/components/weather/explore-sheet.tsx` -- add `WeatherFunFacts` component, pass weather data props
+- Add a sanity check after fetching from Open-Meteo: if the actual values seem to be in Fahrenheit (e.g., the delta between predicted and actual is suspiciously large), log a warning
+- More importantly, remove the `Math.round` that rounds actual values (the DB column is numeric and can store decimals, making comparisons more fair)
+- Add logging to confirm the API is returning Celsius
+- Store the raw Celsius values properly
 
 ---
 
-## 5. Make Rainz a Better Experience (UX Polish)
+## Fix 3: Backfill Unverified Predictions
 
-Small improvements across the app:
+Update the edge function to also verify PAST unverified predictions (not just today's):
 
+- When running, also query for any `is_verified = false` predictions where `prediction_date < today`
+- Fetch historical weather data from Open-Meteo for those dates (it supports past dates)
+- Verify and award points retroactively
 
-| Improvement                   | Details                                                                                |
-| ----------------------------- | -------------------------------------------------------------------------------------- |
-| **Smoother Explore Sheet**    | Add description to ExploreButton: "Stats, Time Machine, Reactions, Trends, Challenges" |
-| **Better empty states**       | When no weather data is loaded, show a friendlier welcome screen                       |
-| **Cleaner footer**            | Simplify the data attribution footer                                                   |
-| **Remove dead premium pages** | Clean up references to subscription success/cancel pages if they serve no purpose now  |
-
+This ensures the dozens of missed predictions from Feb 14-22 get scored.
 
 ---
 
-## Technical Details
+## Fix 4: Double-Counting Points (Trigger + Edge Function)
 
-### Database Changes
+There is a database trigger `update_prediction_points` that adds `points_earned` to `total_points` when `is_verified` changes to true. The edge function ALSO manually updates `total_points`. This causes double-counting.
 
-- Check if `user_inventory` table exists for streak_freeze rewards; if not, use `active_powerups` table instead (which already has proper RLS)
-- No new migrations needed if we use `active_powerups` for all powerup-style rewards
+**Fix:** Remove the manual profile update from the edge function and rely solely on the trigger.
 
-### Files Summary
+---
 
+## New Feature: Confidence Betting
 
-| Action | File                                                |
-| ------ | --------------------------------------------------- |
-| Edit   | `src/components/weather/ramadan-calendar.tsx`       |
-| Edit   | `src/pages/Weather.tsx`                             |
-| Edit   | `src/components/weather/explore-sheet.tsx`          |
-| Create | `src/components/weather/weather-fun-facts.tsx`      |
-| Edit   | `src/components/weather/rain-map-card.tsx`          |
-| Edit   | `src/components/weather/aqi-card.tsx`               |
-| Edit   | `src/components/weather/morning-weather-review.tsx` |
-| Edit   | `src/components/weather/weather-trends-card.tsx`    |
-| Edit   | `src/components/weather/settings-dialog.tsx`        |
-| Edit   | `src/pages/About.tsx`                               |
-| Edit   | `src/hooks/use-offline-cache.tsx`                   |
-| Edit   | `src/hooks/use-experimental-data.tsx`               |
-| Edit   | `src/lib/offline-cache.ts`                          |
-| Edit   | `public/llm.txt`                                    |
-| Edit   | `supabase/functions/ai-weather-insights/index.ts`   |
+Add a strategic layer to predictions where users choose a confidence multiplier before submitting.
+
+### How it works:
+- When making a prediction, users pick a confidence level: **Safe (1x)**, **Confident (1.5x)**, or **All-In (2.5x)**
+- The multiplier applies to BOTH rewards and penalties
+- Example with "All-In (2.5x)": 3 correct = +750 points, all wrong = -250 points
+- Stored as `confidence_multiplier` in the `weather_predictions` table
+- The verify function applies the multiplier during scoring
+
+### Point table with confidence:
+
+```text
+                Safe (1x)    Confident (1.5x)    All-In (2.5x)
+3 correct       +300         +450                 +750
+2 correct       +200         +300                 +500
+1 correct       +100         +150                 +250
+0 correct       -100         -150                 -250
+```
+
+### UI:
+- Three tappable cards in the prediction form (before the submit button)
+- Each shows the risk/reward clearly
+- Default is "Safe (1x)"
+- Visual flair: Safe = green/calm, Confident = orange/warm, All-In = red/fire with animation
+
+---
+
+## Files Changed
+
+| Action | File | Change |
+|--------|------|--------|
+| Migration | SQL | Fix cron schedule to `0 21 * * *`; add `confidence_multiplier` column to `weather_predictions` |
+| Edit | `supabase/functions/verify-predictions/index.ts` | Fix backfill logic, remove manual profile update (rely on trigger), apply confidence multiplier, add temperature sanity logging |
+| Deploy | `verify-predictions` | Redeploy edge function |
+| Edit | `src/components/weather/weather-prediction-form.tsx` | Add confidence level selector UI, store multiplier with prediction |
+| Edit | `src/components/weather/prediction-dialog.tsx` | Update "How Points Work" section to mention confidence multiplier |
+

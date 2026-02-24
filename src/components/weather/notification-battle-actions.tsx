@@ -1,8 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { usePredictionBattles } from "@/hooks/use-prediction-battles";
-import { useBattleAcceptDialog } from "@/contexts/battle-accept-dialog-context";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,7 +20,7 @@ export function NotificationBattleActions({
   onRequestCloseParent,
 }: NotificationBattleActionsProps) {
   const { declineBattle } = usePredictionBattles();
-  const { openBattleAcceptDialog } = useBattleAcceptDialog();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isAccepting, setIsAccepting] = useState(false);
   const [isDeclining, setIsDeclining] = useState(false);
@@ -29,9 +29,8 @@ export function NotificationBattleActions({
     setIsAccepting(true);
     
     try {
-      // First dismiss the notification permanently
+      // Delete the notification
       if (metadata?.battle_id) {
-        // Find and delete the notification for this battle
         const { data: session } = await supabase.auth.getSession();
         if (session?.session?.user?.id) {
           await supabase
@@ -43,15 +42,10 @@ export function NotificationBattleActions({
         }
       }
       
-      // Close the inbox popover FIRST
+      // Close popover and navigate to weather page with battle param
       onRequestCloseParent?.();
       onActionComplete?.();
-      
-      // Then open the global battle accept dialog (after popover is fully closed)
-      // Use longer timeout to ensure Radix popover fully unmounts before dialog opens
-      setTimeout(() => {
-        openBattleAcceptDialog(battleId);
-      }, 350);
+      navigate(`/?accept_battle=${battleId}`);
     } catch (err) {
       console.error("Error accepting battle:", err);
       toast({

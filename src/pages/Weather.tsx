@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { CloudSun, LogIn, WifiOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,8 +53,19 @@ import { RamadanCalendar } from "@/components/weather/ramadan-calendar";
 import { OnboardingFlow } from "@/components/weather/onboarding-flow";
 import { ExploreSheet, ExploreButton } from "@/components/weather/explore-sheet";
 import { FeatureIdeasCard } from "@/components/weather/feature-ideas-card";
+import { BattleAcceptCard } from "@/components/weather/battle-accept-card";
 
 export default function WeatherPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const acceptBattleId = searchParams.get("accept_battle");
+
+  const clearAcceptBattle = useCallback(() => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("accept_battle");
+      return next;
+    });
+  }, [setSearchParams]);
   const [selectedLocation, setSelectedLocation] = useState<{
     lat: number;
     lon: number;
@@ -514,6 +526,15 @@ export default function WeatherPage() {
         )}
 
         <div className="container mx-auto px-4 py-4 sm:py-6 max-w-7xl relative z-10">
+          {/* Inline battle accept card when navigated via accept_battle param */}
+          {acceptBattleId && (
+            <BattleAcceptCard
+              battleId={acceptBattleId}
+              isImperial={isImperial}
+              onComplete={clearAcceptBattle}
+            />
+          )}
+
           <Card className="mb-6 relative z-[1000] overflow-hidden rounded-2xl glass-card-strong">
             <div className="p-4 sm:p-6 border-b border-border/50">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

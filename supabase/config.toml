@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.submit-rainz-prediction]
 verify_jwt = false
+
+[functions.weekly-recap]
+verify_jwt = false

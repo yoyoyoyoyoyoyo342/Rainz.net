@@ -10,7 +10,6 @@ import { SubscriptionProvider } from "@/hooks/use-subscription";
 import { PremiumSettingsProvider } from "@/hooks/use-premium-settings";
 import { LanguageProvider } from "@/contexts/language-context";
 import { TimeOfDayProvider, useTimeOfDayContext } from "@/contexts/time-of-day-context";
-import { BattleAcceptDialogProvider } from "@/contexts/battle-accept-dialog-context";
  import { PredictionShareProvider } from "@/contexts/prediction-share-context";
 import { CookieConsentProvider } from "@/hooks/use-cookie-consent";
 import { CookieConsentBanner } from "@/components/ui/cookie-consent-banner";
@@ -160,8 +159,7 @@ function AppContent() {
         <AuthProvider>
           <SubscriptionProvider>
             <PremiumSettingsProvider>
-              <BattleAcceptDialogProvider>
-                 <PredictionShareProvider>
+               <PredictionShareProvider>
                    <CookieConsentProvider>
                   <TooltipProvider>
                     <Toaster />
@@ -221,8 +219,7 @@ function AppContent() {
                     </BrowserRouter>
                   </TooltipProvider>
                    </CookieConsentProvider>
-                 </PredictionShareProvider>
-              </BattleAcceptDialogProvider>
+              </PredictionShareProvider>
             </PremiumSettingsProvider>
           </SubscriptionProvider>
         </AuthProvider>

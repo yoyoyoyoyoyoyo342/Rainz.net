@@ -1763,6 +1763,7 @@ export type Database = {
           rank: number
           total_points: number
           total_predictions: number
+          user_id: string
         }[]
       }
       get_public_profile: {

@@ -7,17 +7,37 @@ const corsHeaders = {
 };
 
 const RAINZ_BOT_USER_ID = "00000000-0000-0000-0000-000000000001";
-// Default location: Oslo, Norway
-const DEFAULT_LAT = 59.91;
-const DEFAULT_LON = 10.75;
-const DEFAULT_LOCATION = "Oslo";
+
+const LOCATIONS = [
+  { name: "Oslo", lat: 59.91, lon: 10.75 },
+  { name: "London", lat: 51.51, lon: -0.13 },
+  { name: "New York", lat: 40.71, lon: -74.01 },
+  { name: "Tokyo", lat: 35.68, lon: 139.69 },
+  { name: "Sydney", lat: -33.87, lon: 151.21 },
+];
 
 function pickConfidence(): number {
   const roll = Math.random();
-  if (roll < 0.4) return 1;      // Safe (40%)
-  if (roll < 0.8) return 1.5;    // Confident (40%)
-  return 2.5;                     // All-In (20%)
+  if (roll < 0.4) return 1;
+  if (roll < 0.8) return 1.5;
+  return 2.5;
 }
+
+const mapWeatherCode = (code: number): string => {
+  if (code <= 1) return "sunny";
+  if (code === 2) return "partly-cloudy";
+  if (code === 3) return "cloudy";
+  if (code >= 45 && code <= 48) return "foggy";
+  if (code >= 51 && code <= 57) return "drizzle";
+  if (code >= 61 && code <= 63) return "rainy";
+  if (code >= 65 && code <= 67) return "heavy-rain";
+  if (code >= 71 && code <= 75) return "snowy";
+  if (code === 77) return "snowy";
+  if (code >= 80 && code <= 82) return "rainy";
+  if (code >= 85 && code <= 86) return "heavy-snow";
+  if (code >= 95) return "thunderstorm";
+  return "cloudy";
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -27,80 +47,66 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Get tomorrow's date
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const predictionDate = tomorrow.toISOString().split("T")[0];
 
-    // Check if bot already predicted for tomorrow
-    const { data: existing } = await supabase
-      .from("weather_predictions")
-      .select("id")
-      .eq("user_id", RAINZ_BOT_USER_ID)
-      .eq("prediction_date", predictionDate)
-      .maybeSingle();
+    const results: any[] = [];
 
-    if (existing) {
-      return new Response(JSON.stringify({ message: "Already predicted for tomorrow" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    for (const loc of LOCATIONS) {
+      // Check if bot already predicted for this location + date
+      const { data: existing } = await supabase
+        .from("weather_predictions")
+        .select("id")
+        .eq("user_id", RAINZ_BOT_USER_ID)
+        .eq("prediction_date", predictionDate)
+        .eq("location_name", loc.name)
+        .maybeSingle();
+
+      if (existing) {
+        results.push({ location: loc.name, status: "already_predicted" });
+        continue;
+      }
+
+      // Fetch forecast
+      const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&forecast_days=2`;
+      const forecastRes = await fetch(forecastUrl);
+      const forecastData = await forecastRes.json();
+
+      const dailyData = forecastData?.daily;
+      if (!dailyData || dailyData.temperature_2m_max.length < 2) {
+        results.push({ location: loc.name, status: "forecast_failed" });
+        continue;
+      }
+
+      const highC = Math.round(dailyData.temperature_2m_max[1]);
+      const lowC = Math.round(dailyData.temperature_2m_min[1]);
+      const weatherCode = dailyData.weathercode[1];
+      const condition = mapWeatherCode(weatherCode);
+      const confidence = pickConfidence();
+
+      const { error } = await supabase.from("weather_predictions").insert({
+        user_id: RAINZ_BOT_USER_ID,
+        prediction_date: predictionDate,
+        predicted_high: highC,
+        predicted_low: lowC,
+        predicted_condition: condition,
+        confidence_multiplier: confidence,
+        location_name: loc.name,
+        latitude: loc.lat,
+        longitude: loc.lon,
       });
+
+      if (error) {
+        results.push({ location: loc.name, status: "error", error: error.message });
+      } else {
+        console.log(`Rainz Bot predicted ${condition} ${lowC}-${highC}°C for ${loc.name} on ${predictionDate} with ${confidence}x confidence`);
+        results.push({ location: loc.name, status: "success", prediction: { highC, lowC, condition, confidence } });
+      }
     }
-
-    // Fetch weather forecast from Open-Meteo for tomorrow
-    const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${DEFAULT_LAT}&longitude=${DEFAULT_LON}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&forecast_days=2`;
-    const forecastRes = await fetch(forecastUrl);
-    const forecastData = await forecastRes.json();
-
-    const dailyData = forecastData?.daily;
-    if (!dailyData || dailyData.temperature_2m_max.length < 2) {
-      throw new Error("Could not fetch forecast data");
-    }
-
-    // Tomorrow's index is 1
-    const highC = Math.round(dailyData.temperature_2m_max[1]);
-    const lowC = Math.round(dailyData.temperature_2m_min[1]);
-    const weatherCode = dailyData.weathercode[1];
-
-    // Map WMO weather code to condition
-    const mapWeatherCode = (code: number): string => {
-      if (code <= 1) return "sunny";
-      if (code === 2) return "partly-cloudy";
-      if (code === 3) return "cloudy";
-      if (code >= 45 && code <= 48) return "foggy";
-      if (code >= 51 && code <= 55) return "drizzle";
-      if (code >= 56 && code <= 57) return "drizzle";
-      if (code >= 61 && code <= 63) return "rainy";
-      if (code >= 65 && code <= 67) return "heavy-rain";
-      if (code >= 71 && code <= 75) return "snowy";
-      if (code === 77) return "snowy";
-      if (code >= 80 && code <= 82) return "rainy";
-      if (code >= 85 && code <= 86) return "heavy-snow";
-      if (code >= 95) return "thunderstorm";
-      return "cloudy";
-    };
-
-    const condition = mapWeatherCode(weatherCode);
-    const confidence = pickConfidence();
-
-    // Submit prediction
-    const { error } = await supabase.from("weather_predictions").insert({
-      user_id: RAINZ_BOT_USER_ID,
-      prediction_date: predictionDate,
-      predicted_high: highC,
-      predicted_low: lowC,
-      predicted_condition: condition,
-      confidence_multiplier: confidence,
-      location_name: DEFAULT_LOCATION,
-      latitude: DEFAULT_LAT,
-      longitude: DEFAULT_LON,
-    });
-
-    if (error) throw error;
-
-    console.log(`Rainz Bot predicted ${condition} ${lowC}-${highC}°C for ${predictionDate} with ${confidence}x confidence`);
 
     return new Response(
-      JSON.stringify({ success: true, prediction: { highC, lowC, condition, confidence, date: predictionDate } }),
+      JSON.stringify({ success: true, date: predictionDate, results }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

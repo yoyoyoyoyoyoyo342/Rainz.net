@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Target, Trophy, Flame, Zap, Medal, ShoppingBag, Users } from "lucide-react";
+import { Target, Trophy, Flame, Zap, Medal, ShoppingBag, Users, History } from "lucide-react";
 import { WeatherPredictionForm } from "./weather-prediction-form";
 import { Leaderboard } from "./leaderboard";
 import { WeeklyChallenge } from "./weekly-challenge";
 import { SeasonalTournament } from "./seasonal-tournament";
 import { PointsShop } from "./points-shop";
 import { BattleLeagues } from "./battle-leagues";
+import { PointsHistory } from "./points-history";
 import { useLanguage } from "@/contexts/language-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -165,7 +166,7 @@ export const PredictionDialog = ({
         )}
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-11">
+          <TabsList className="grid w-full grid-cols-4 h-11">
             <TabsTrigger value="predict" className="gap-1 text-xs sm:text-sm">
               <Target className="w-4 h-4" />
               <span className="hidden sm:inline">Predict</span>
@@ -173,6 +174,10 @@ export const PredictionDialog = ({
             <TabsTrigger value="leaderboard" className="gap-1 text-xs sm:text-sm">
               <Trophy className="w-4 h-4" />
               <span className="hidden sm:inline">Leaders</span>
+            </TabsTrigger>
+            <TabsTrigger value="history" className="gap-1 text-xs sm:text-sm">
+              <History className="w-4 h-4" />
+              <span className="hidden sm:inline">History</span>
             </TabsTrigger>
             <TabsTrigger value="shop" className="gap-1 text-xs sm:text-sm">
               <ShoppingBag className="w-4 h-4" />
@@ -264,6 +269,10 @@ export const PredictionDialog = ({
             )}
           </TabsContent>
           
+          <TabsContent value="history" className="mt-4">
+            <PointsHistory />
+          </TabsContent>
+
           <TabsContent value="shop" className="mt-4">
             <PointsShop />
           </TabsContent>

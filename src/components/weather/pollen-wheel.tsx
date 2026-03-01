@@ -1,4 +1,3 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,23 +116,14 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
 
   if (!pollenData) {
     return (
-      <Card className="h-full">
-        <CardHeader>
-          <CardTitle className="text-lg">{t('pollen.pollenIndex')}</CardTitle>
-          <CardDescription>{t('pollen.liveData')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center text-muted-foreground py-8">
-            <div>{t('pollen.noData')}</div>
-            <div className="text-xs mt-1">{t('pollen.locationRequired')}</div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="text-center text-muted-foreground py-8">
+        <div>{t('pollen.noData')}</div>
+        <div className="text-xs mt-1">{t('pollen.locationRequired')}</div>
+      </div>
     );
   }
 
-  // October is month 9 (0-indexed)
-  const currentMonth = new Date().getMonth(); // 0-11
+  const currentMonth = new Date().getMonth();
   
   const allPollens: SeasonalPollen[] = [
     {
@@ -180,17 +170,12 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
     }
   ];
 
-  // Filter to show only seasonal pollens (current season ± 1 month)
-  // Show pollens that are in season with their real values (even if 0)
   const seasonalPollens = allPollens.filter(pollen => {
     const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
     const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
-    const isInSeason = pollen.months.includes(prevMonth) || 
-                       pollen.months.includes(currentMonth) || 
-                       pollen.months.includes(nextMonth);
-    
-    // Show all in-season pollens with their actual API values
-    return isInSeason;
+    return pollen.months.includes(prevMonth) || 
+           pollen.months.includes(currentMonth) || 
+           pollen.months.includes(nextMonth);
   });
 
   const getIntensityLabel = (value: number) => {
@@ -199,6 +184,22 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
     if (value <= 5) return t('pollen.medium');
     if (value <= 8) return t('pollen.high');
     return t('pollen.veryHigh');
+  };
+
+  const getIntensityColor = (value: number): string => {
+    if (value === 0) return "text-muted-foreground";
+    if (value <= 2) return "text-blue-500";
+    if (value <= 5) return "text-yellow-500";
+    if (value <= 8) return "text-orange-500";
+    return "text-red-500";
+  };
+
+  const getIntensityBg = (value: number): string => {
+    if (value === 0) return "bg-muted/30";
+    if (value <= 2) return "bg-blue-500/20";
+    if (value <= 5) return "bg-yellow-500/20";
+    if (value <= 8) return "bg-orange-500/20";
+    return "bg-red-500/20";
   };
 
   const getUserAllergyAlert = (pollenName: string, value: number): boolean => {
@@ -213,40 +214,34 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
     return false;
   };
 
-  const getTotalValue = () => {
-    // For visual display, ensure we have at least some value for the wheel
-    const total = seasonalPollens.reduce((sum, pollen) => sum + pollen.value, 0);
-    // If all values are 0, use small values for visual representation
-    return total > 0 ? total : seasonalPollens.length * 0.1;
+  const getOverallValue = () => {
+    if (seasonalPollens.length === 0) return 0;
+    const total = seasonalPollens.reduce((sum, p) => sum + p.value, 0);
+    return Math.round(total / seasonalPollens.length);
   };
 
-  const getOverallLevel = () => {
-    const total = getTotalValue();
-    const average = seasonalPollens.length > 0 ? total / seasonalPollens.length : 0;
-    return getIntensityLabel(Math.round(average));
-  };
-
-  const centerX = 120;
-  const centerY = 120;
-  const outerRadius = 80;
-  const innerRadius = 50;
-  const strokeWidth = 30;
-
-  // Calculate segments using seasonal pollens
-  const total = getTotalValue();
-  let currentAngle = -90; // Start at top
+  const overallValue = getOverallValue();
+  const overallLevel = getIntensityLabel(overallValue);
 
   return (
-    <Card className="h-full">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <div>
-          <CardTitle className="text-lg">{t('pollen.pollenIndex')}</CardTitle>
-          <CardDescription>{t('pollen.liveData')}</CardDescription>
+    <div className="space-y-4">
+      {/* Overall level + track allergy button */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`${getIntensityBg(overallValue)} p-3 rounded-xl`}>
+            <div className={`text-2xl font-bold ${getIntensityColor(overallValue)}`}>{overallValue}</div>
+          </div>
+          <div>
+            <div className={`font-semibold ${getIntensityColor(overallValue)}`}>{overallLevel}</div>
+            <div className="text-xs text-muted-foreground">
+              {seasonalPollens.length} {t('pollen.active')}
+            </div>
+          </div>
         </div>
         {activeUserId && (
           <Dialog open={isAddingAllergy} onOpenChange={setIsAddingAllergy}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="rounded-xl">
                 <Plus className="w-4 h-4 mr-1" />
                 {t('pollen.trackAllergy')}
               </Button>
@@ -285,201 +280,51 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
             </DialogContent>
           </Dialog>
         )}
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Pollen Wheel */}
-        <div className="flex justify-center">
-          <div className="relative">
-            <svg width="240" height="240" className="overflow-visible">
-              {/* Background circle */}
-              <circle
-                cx={centerX}
-                cy={centerY}
-                r={outerRadius - strokeWidth/2}
-                fill="none"
-                stroke="hsl(var(--muted))"
-                strokeWidth={strokeWidth}
-                className="opacity-20"
-              />
-              
-              {/* Pollen segments */}
-              {seasonalPollens.map((pollen, index) => {
-                // Use actual value, or small value for visual display if all are 0
-                const segmentValue = total > 1 ? pollen.value : 1;
-                const segmentAngle = (segmentValue / (total > 1 ? total : seasonalPollens.length)) * 360;
-                
-                const startAngle = currentAngle;
-                const endAngle = currentAngle + segmentAngle;
-                
-                const startAngleRad = (startAngle * Math.PI) / 180;
-                const endAngleRad = (endAngle * Math.PI) / 180;
-                
-                const radius = outerRadius - strokeWidth/2;
-                
-                const x1 = centerX + Math.cos(startAngleRad) * radius;
-                const y1 = centerY + Math.sin(startAngleRad) * radius;
-                const x2 = centerX + Math.cos(endAngleRad) * radius;
-                const y2 = centerY + Math.sin(endAngleRad) * radius;
-                
-                const largeArcFlag = segmentAngle > 180 ? 1 : 0;
-                
-                const pathData = [
-                  `M ${centerX} ${centerY}`,
-                  `L ${x1} ${y1}`,
-                  `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
-                  'Z'
-                ].join(' ');
-                
-                // Position for label
-                const labelAngle = (startAngle + segmentAngle / 2) * Math.PI / 180;
-                const labelRadius = outerRadius + 20;
-                const labelX = centerX + Math.cos(labelAngle) * labelRadius;
-                const labelY = centerY + Math.sin(labelAngle) * labelRadius;
-                
-                currentAngle = endAngle;
-                
-                const hasAlert = activeUserId && getUserAllergyAlert(pollen.name, pollen.value);
-                
-                return (
-                  <g key={pollen.name}>
-                    {/* Segment */}
-                    <path
-                      d={pathData}
-                      fill={pollen.color}
-                      className={hasAlert ? "opacity-90" : "opacity-80"}
-                      stroke={hasAlert ? "hsl(var(--destructive))" : "none"}
-                      strokeWidth={hasAlert ? "2" : "0"}
-                    />
-                    
-                    {/* Alert indicator */}
-                    {hasAlert && (
-                      <circle
-                        cx={labelX}
-                        cy={labelY - 25}
-                        r="6"
-                        fill="hsl(var(--destructive))"
-                      />
-                    )}
-                    
-                    {/* Label */}
-                    <text
-                      x={labelX}
-                      y={labelY - 8}
-                      textAnchor="middle"
-                      fontSize="10"
-                      fill="hsl(var(--foreground))"
-                      className="font-medium"
-                    >
-                      {pollen.name}
-                    </text>
-                    <text
-                      x={labelX}
-                      y={labelY + 4}
-                      textAnchor="middle"
-                      fontSize="12"
-                      fill="hsl(var(--foreground))"
-                      className="font-semibold"
-                    >
-                      {pollen.value}
-                    </text>
-                  </g>
-                );
-              })}
-              
-              {/* Center circle */}
-              <circle
-                cx={centerX}
-                cy={centerY}
-                r={innerRadius}
-                fill="hsl(var(--background))"
-                stroke="hsl(var(--border))"
-                strokeWidth="2"
-              />
-              
-              {/* Center text */}
-              <text
-                x={centerX}
-                y={centerY - 8}
-                textAnchor="middle"
-                fontSize="16"
-                fill="hsl(var(--foreground))"
-                fontWeight="600"
-              >
-                {getOverallLevel()}
-              </text>
-              <text
-                x={centerX}
-                y={centerY + 8}
-                textAnchor="middle"
-                fontSize="10"
-                fill="hsl(var(--muted-foreground))"
-                fontWeight="500"
-              >
-                {t('pollen.pollenIndex')}
-              </text>
-            </svg>
-          </div>
-        </div>
+      </div>
 
-        {/* Detailed Pollen List */}
-        <div className="space-y-2">
-          <div className="text-sm font-medium text-muted-foreground mb-3">
-            {t('pollen.currentSeason')} ({seasonalPollens.length} {t('pollen.active')})
-          </div>
-          {seasonalPollens.map((pollen) => {
-            const hasAlert = activeUserId && getUserAllergyAlert(pollen.name, pollen.value);
-            const level = getIntensityLabel(pollen.value);
-            
-            return (
-              <div key={pollen.name} className="flex items-center justify-between p-3 rounded-lg border glass-card">
-                <div className="flex items-center space-x-3">
-                  {hasAlert && <AlertTriangle className="w-4 h-4 text-destructive" />}
-                  <div>
-                    <div className="font-medium">{pollen.name}</div>
-                    <div className="text-xs text-muted-foreground">{pollen.season}</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-semibold" style={{ color: pollen.color }}>{level}</div>
-                  <div className="text-xs text-muted-foreground">{pollen.value}</div>
-                </div>
+      {/* Pollen grid */}
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        {seasonalPollens.map((pollen) => {
+          const hasAlert = activeUserId && getUserAllergyAlert(pollen.name, pollen.value);
+          const level = getIntensityLabel(pollen.value);
+          
+          return (
+            <div
+              key={pollen.name}
+              className={`p-2.5 rounded-xl bg-muted/30 border ${hasAlert ? 'border-destructive/50' : 'border-border/30'}`}
+            >
+              <div className="flex items-center gap-1.5 mb-1">
+                {hasAlert && <AlertTriangle className="w-3 h-3 text-destructive" />}
+                <div className="text-muted-foreground">{pollen.name}</div>
               </div>
-            );
-          })}
-        </div>
-
-        {/* User Tracked Allergies */}
-        {activeUserId && userAllergies.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="font-medium text-sm">{t('pollen.yourTracked')}</h4>
-            <div className="flex flex-wrap gap-2">
-              {userAllergies.map((allergy) => (
-                <Badge key={allergy.id} variant="secondary" className="flex items-center gap-1">
-                  {allergy.allergen}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto p-0 hover:bg-transparent"
-                    onClick={() => removeAllergy(allergy.id)}
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </Badge>
-              ))}
+              <div className={`font-semibold text-sm ${getIntensityColor(pollen.value)}`}>{level}</div>
+              <div className="text-muted-foreground">{pollen.value} grains/m³</div>
             </div>
-          </div>
-        )}
+          );
+        })}
+      </div>
 
-        {/* Information */}
-        <div className="pt-3 border-t text-xs text-muted-foreground space-y-1">
-          <div><strong>{t('pollen.scale')}</strong></div>
-          <div>{t('pollen.scaleInfo')}</div>
-          {activeUserId && (
-            <div className="text-destructive">🔴 {t('pollen.alertInfo')}</div>
-          )}
-          <div>{t('pollen.adviceInfo')}</div>
+      {/* User Tracked Allergies */}
+      {activeUserId && userAllergies.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="font-medium text-sm">{t('pollen.yourTracked')}</h4>
+          <div className="flex flex-wrap gap-2">
+            {userAllergies.map((allergy) => (
+              <Badge key={allergy.id} variant="secondary" className="flex items-center gap-1">
+                {allergy.allergen}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto p-0 hover:bg-transparent"
+                  onClick={() => removeAllergy(allergy.id)}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </Badge>
+            ))}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }

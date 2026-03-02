@@ -1237,6 +1237,7 @@ export type Database = {
           allergen: string
           created_at: string
           id: string
+          pollen_type: string | null
           severity: string | null
           user_id: string
         }
@@ -1244,6 +1245,7 @@ export type Database = {
           allergen: string
           created_at?: string
           id?: string
+          pollen_type?: string | null
           severity?: string | null
           user_id: string
         }
@@ -1251,6 +1253,7 @@ export type Database = {
           allergen?: string
           created_at?: string
           id?: string
+          pollen_type?: string | null
           severity?: string | null
           user_id?: string
         }

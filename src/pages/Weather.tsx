@@ -736,6 +736,8 @@ export default function WeatherPage() {
                     snowDepth={weatherData.mostAccurate.currentWeather.snowDepth}
                     condition={weatherData.mostAccurate.currentWeather.condition}
                     isImperial={isImperial}
+                    latitude={selectedLocation?.lat}
+                    longitude={selectedLocation?.lon}
                     hyperlocalSnow={hyperlocalData?.snow}
                   />
                 </div>

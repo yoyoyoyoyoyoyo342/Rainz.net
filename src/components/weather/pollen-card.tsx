@@ -19,6 +19,8 @@ interface PollenCardProps {
   snowDepth?: number;
   condition?: string;
   isImperial?: boolean;
+  latitude?: number;
+  longitude?: number;
   hyperlocalSnow?: {
     snowIntensity?: number;
     snowAccumulation?: number;
@@ -28,7 +30,7 @@ interface PollenCardProps {
   };
 }
 
-export function PollenCard({ pollenData, userId, temperature, windSpeed, feelsLike, snowfall, snowDepth, condition, isImperial = false, hyperlocalSnow }: PollenCardProps) {
+export function PollenCard({ pollenData, userId, temperature, windSpeed, feelsLike, snowfall, snowDepth, condition, isImperial = false, latitude, longitude, hyperlocalSnow }: PollenCardProps) {
   if (!pollenData) return null;
 
   const now = new Date();
@@ -86,7 +88,7 @@ export function PollenCard({ pollenData, userId, temperature, windSpeed, feelsLi
         </div>
       </div>
       <div className="p-4">
-        <PollenWheel pollenData={pollenData} userId={userId} />
+        <PollenWheel pollenData={pollenData} userId={userId} latitude={latitude} longitude={longitude} />
       </div>
     </div>
   );

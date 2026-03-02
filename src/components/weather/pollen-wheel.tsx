@@ -4,8 +4,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
-import { Trash2, Plus, AlertTriangle, Settings2 } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { Trash2, Plus, AlertTriangle, Settings2, Leaf } from "lucide-react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -27,9 +27,17 @@ interface UserAllergy {
   pollen_type: string | null;
 }
 
+interface ExtendedPollenEntry {
+  value: number;
+  category: string;
+  type: string;
+}
+
 interface PollenWheelProps {
   pollenData?: PollenData;
   userId?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 const POLLEN_ALLERGENS = [
@@ -40,6 +48,25 @@ const POLLEN_ALLERGENS = [
   { name: "Olive", pollenType: "olive", color: "hsl(47, 96%, 53%)", key: "olive" as keyof PollenData },
   { name: "Ragweed", pollenType: "ragweed", color: "hsl(15, 80%, 50%)", key: "ragweed" as keyof PollenData },
 ];
+
+// Extended types from Tomorrow.io (not in Open-Meteo)
+const EXTENDED_ALLERGENS = [
+  { name: "Oak", pollenType: "oak", color: "hsl(30, 60%, 40%)" },
+  { name: "Pine", pollenType: "pine", color: "hsl(150, 50%, 35%)" },
+  { name: "Cedar", pollenType: "cedar", color: "hsl(20, 70%, 45%)" },
+  { name: "Elm", pollenType: "elm", color: "hsl(90, 40%, 45%)" },
+  { name: "Maple", pollenType: "maple", color: "hsl(10, 80%, 55%)" },
+  { name: "Ash", pollenType: "ash", color: "hsl(200, 30%, 50%)" },
+  { name: "Cypress", pollenType: "cypress", color: "hsl(160, 50%, 40%)" },
+  { name: "Hazel", pollenType: "hazel", color: "hsl(35, 65%, 50%)" },
+  { name: "Poplar", pollenType: "poplar", color: "hsl(100, 50%, 50%)" },
+  { name: "Willow", pollenType: "willow", color: "hsl(80, 55%, 45%)" },
+  { name: "Plane", pollenType: "plane", color: "hsl(45, 40%, 50%)" },
+  { name: "Acacia", pollenType: "acacia", color: "hsl(50, 70%, 50%)" },
+  { name: "Chenopod", pollenType: "chenopod", color: "hsl(340, 50%, 50%)" },
+];
+
+const ALL_ALLERGENS = [...POLLEN_ALLERGENS.map(a => ({ name: a.name, pollenType: a.pollenType, color: a.color })), ...EXTENDED_ALLERGENS];
 
 const MIN_ARC_DEG = 15;
 
@@ -64,7 +91,7 @@ function describeArc(cx: number, cy: number, outerR: number, innerR: number, sta
   ].join(" ");
 }
 
-export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
+export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenWheelProps) {
   const { user } = useAuth();
   const { t } = useLanguage();
   const activeUserId = userId || user?.id;
@@ -73,10 +100,44 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
   const [newSeverity, setNewSeverity] = useState("moderate");
   const [customAllergen, setCustomAllergen] = useState("");
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
+  const [extendedPollen, setExtendedPollen] = useState<Record<string, ExtendedPollenEntry>>({});
+  const [extendedLoading, setExtendedLoading] = useState(false);
 
   useEffect(() => {
     if (activeUserId) fetchUserAllergies();
   }, [activeUserId]);
+
+  // Fetch extended pollen data if user has non-Open-Meteo allergies
+  useEffect(() => {
+    if (!latitude || !longitude || !userAllergies.length) return;
+    
+    const hasExtendedAllergy = userAllergies.some(a => {
+      const pollenType = a.pollen_type;
+      return pollenType && !POLLEN_ALLERGENS.some(p => p.pollenType === pollenType);
+    });
+
+    if (hasExtendedAllergy) {
+      fetchExtendedPollen();
+    }
+  }, [userAllergies, latitude, longitude]);
+
+  const fetchExtendedPollen = async () => {
+    if (!latitude || !longitude) return;
+    setExtendedLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('extended-pollen', {
+        body: { latitude, longitude },
+      });
+      if (error) throw error;
+      if (data?.pollen) {
+        setExtendedPollen(data.pollen);
+      }
+    } catch (err) {
+      console.error('Extended pollen fetch failed:', err);
+    } finally {
+      setExtendedLoading(false);
+    }
+  };
 
   const fetchUserAllergies = async () => {
     if (!activeUserId) return;
@@ -88,17 +149,17 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
     setUserAllergies((data as UserAllergy[]) || []);
   };
 
-  const addPredefinedAllergy = async (allergen: typeof POLLEN_ALLERGENS[0]) => {
+  const addAllergen = async (allergenName: string, pollenType: string) => {
     if (!activeUserId) return;
-    if (userAllergies.some(a => a.pollen_type === allergen.pollenType || a.allergen.toLowerCase() === allergen.name.toLowerCase())) {
+    if (userAllergies.some(a => a.pollen_type === pollenType || a.allergen.toLowerCase() === allergenName.toLowerCase())) {
       toast.error(t('pollen.alreadyTracked'));
       return;
     }
     const { error } = await supabase.from('user_allergies').insert({
       user_id: activeUserId,
-      allergen: allergen.name,
+      allergen: allergenName,
       severity: newSeverity,
-      pollen_type: allergen.pollenType,
+      pollen_type: pollenType,
     });
     if (error) { toast.error(t('pollen.addFailed')); return; }
     toast.success(t('pollen.addSuccess'));
@@ -155,6 +216,21 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
     return "text-red-500";
   };
 
+  // Get value for any tracked allergen (from Open-Meteo or Tomorrow.io)
+  const getPollenValue = (pollenType: string): number | null => {
+    // Check Open-Meteo data first
+    const openMeteoAllergen = POLLEN_ALLERGENS.find(a => a.pollenType === pollenType);
+    if (openMeteoAllergen && pollenData) {
+      return pollenData[openMeteoAllergen.key] || 0;
+    }
+    // Check Tomorrow.io extended data
+    const extAllergen = EXTENDED_ALLERGENS.find(a => a.pollenType === pollenType);
+    if (extAllergen && extendedPollen[extAllergen.name]) {
+      return extendedPollen[extAllergen.name].value;
+    }
+    return null;
+  };
+
   const isTracked = (pollenType: string) =>
     userAllergies.some(a => a.pollen_type === pollenType);
 
@@ -167,15 +243,32 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
     return false;
   };
 
-  // Build segments
-  const segments = POLLEN_ALLERGENS.map(a => ({
-    ...a,
+  // Build segments — Open-Meteo base + tracked extended types
+  const baseSegments = POLLEN_ALLERGENS.map(a => ({
+    name: a.name,
+    pollenType: a.pollenType,
+    color: a.color,
     value: pollenData[a.key] || 0,
   }));
 
+  // Add extended segments for tracked extended allergens with data
+  const extendedSegments = userAllergies
+    .filter(a => a.pollen_type && !POLLEN_ALLERGENS.some(p => p.pollenType === a.pollen_type))
+    .map(a => {
+      const extInfo = EXTENDED_ALLERGENS.find(e => e.pollenType === a.pollen_type);
+      const value = extInfo && extendedPollen[extInfo.name] ? extendedPollen[extInfo.name].value : 0;
+      return {
+        name: extInfo?.name || a.allergen,
+        pollenType: a.pollen_type!,
+        color: extInfo?.color || "hsl(0, 0%, 50%)",
+        value,
+      };
+    });
+
+  const segments = [...baseSegments, ...extendedSegments];
+
   const totalValue = segments.reduce((s, seg) => s + Math.max(seg.value, 0.5), 0);
 
-  // Compute arc angles with minimum
   const rawAngles = segments.map(seg => Math.max(MIN_ARC_DEG, ((Math.max(seg.value, 0.5)) / totalValue) * 360));
   const rawTotal = rawAngles.reduce((s, a) => s + a, 0);
   const normalizedAngles = rawAngles.map(a => (a / rawTotal) * 360);
@@ -261,7 +354,7 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
         return (
           <div className="text-center text-xs text-muted-foreground -mt-2 mb-1">
             <span className="font-semibold text-foreground">{seg.name}</span>{" "}
-            — {seg.value} grains/m³ ({getIntensityLabel(seg.value)})
+            — {seg.value} ({getIntensityLabel(seg.value)})
           </div>
         );
       })()}
@@ -309,9 +402,12 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
                 </Select>
               </div>
 
-              {/* Predefined pollen chips */}
+              {/* Open-Meteo pollen chips */}
               <div>
-                <Label className="text-sm font-medium mb-2 block">Pollen Types (API-tracked)</Label>
+                <Label className="text-sm font-medium mb-2 block">
+                  <Leaf className="w-3.5 h-3.5 inline mr-1" />
+                  Open-Meteo Pollen (Real-time)
+                </Label>
                 <div className="grid grid-cols-2 gap-2">
                   {POLLEN_ALLERGENS.map(allergen => {
                     const alreadyTracked = isTracked(allergen.pollenType);
@@ -320,7 +416,7 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
                       <button
                         key={allergen.pollenType}
                         disabled={alreadyTracked}
-                        onClick={() => addPredefinedAllergy(allergen)}
+                        onClick={() => addAllergen(allergen.name, allergen.pollenType)}
                         className={`flex items-center gap-2 p-2.5 rounded-xl border text-left text-sm transition-colors ${
                           alreadyTracked
                             ? "border-primary/30 bg-primary/10 opacity-60 cursor-not-allowed"
@@ -333,7 +429,47 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
                           <div className={`text-xs ${getIntensityColor(value)}`}>{getIntensityLabel(value)} ({value})</div>
                         </div>
                         {alreadyTracked ? (
-                          <Badge variant="secondary" className="text-[10px] px-1.5">Tracked</Badge>
+                          <Badge variant="secondary" className="text-[10px] px-1.5">✓</Badge>
+                        ) : (
+                          <Plus className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Extended pollen chips (Tomorrow.io) */}
+              <div>
+                <Label className="text-sm font-medium mb-2 block">
+                  <Leaf className="w-3.5 h-3.5 inline mr-1" />
+                  Extended Pollen Types (Tomorrow.io)
+                </Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {EXTENDED_ALLERGENS.map(allergen => {
+                    const alreadyTracked = isTracked(allergen.pollenType);
+                    const extData = extendedPollen[allergen.name];
+                    const value = extData?.value ?? null;
+                    return (
+                      <button
+                        key={allergen.pollenType}
+                        disabled={alreadyTracked}
+                        onClick={() => addAllergen(allergen.name, allergen.pollenType)}
+                        className={`flex items-center gap-2 p-2.5 rounded-xl border text-left text-sm transition-colors ${
+                          alreadyTracked
+                            ? "border-primary/30 bg-primary/10 opacity-60 cursor-not-allowed"
+                            : "border-border/50 bg-muted/30 hover:bg-muted/60 cursor-pointer"
+                        }`}
+                      >
+                        <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: allergen.color }} />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-foreground">{allergen.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {value !== null ? `${extData?.category} (${value})` : "Track to load"}
+                          </div>
+                        </div>
+                        {alreadyTracked ? (
+                          <Badge variant="secondary" className="text-[10px] px-1.5">✓</Badge>
                         ) : (
                           <Plus className="w-4 h-4 text-muted-foreground" />
                         )}
@@ -345,7 +481,7 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
 
               {/* Custom allergen */}
               <div>
-                <Label className="text-sm font-medium mb-2 block">Other Allergens</Label>
+                <Label className="text-sm font-medium mb-2 block">Other Allergens (no live data)</Label>
                 <div className="flex gap-2">
                   <Input
                     value={customAllergen}
@@ -365,8 +501,8 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
                   <Label className="text-sm font-medium mb-2 block">{t('pollen.yourTracked')}</Label>
                   <div className="space-y-2">
                     {userAllergies.map(allergy => {
-                      const pollenInfo = POLLEN_ALLERGENS.find(a => a.pollenType === allergy.pollen_type);
-                      const value = pollenInfo ? pollenData[pollenInfo.key] || 0 : null;
+                      const pollenInfo = ALL_ALLERGENS.find(a => a.pollenType === allergy.pollen_type);
+                      const value = allergy.pollen_type ? getPollenValue(allergy.pollen_type) : null;
                       return (
                         <div key={allergy.id} className="flex items-center gap-2 p-2 rounded-xl bg-muted/30 border border-border/30">
                           {pollenInfo && (

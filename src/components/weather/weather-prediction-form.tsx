@@ -193,11 +193,20 @@ export const WeatherPredictionForm = ({
       
       const { data: powerups } = await supabase
         .from("active_powerups")
-        .select("id, powerup_type, uses_remaining")
+        .select("id, powerup_type, uses_remaining, expires_at")
         .eq("user_id", user.id);
       
+      const now = new Date().toISOString();
+      
       for (const powerup of powerups || []) {
-        if (powerup.powerup_type === "double_points" && (powerup.uses_remaining || 0) > 0) {
+        // Skip expired powerups and clean them up
+        if (powerup.expires_at && powerup.expires_at < now) {
+          await supabase.from("active_powerups").delete().eq("id", powerup.id);
+          continue;
+        }
+        
+        // Both double_points and xp_boost give 2x points
+        if ((powerup.powerup_type === "double_points" || powerup.powerup_type === "xp_boost") && (powerup.uses_remaining || 0) > 0) {
           hasDoublePoints = true;
           // Consume the power-up
           if (powerup.uses_remaining === 1) {

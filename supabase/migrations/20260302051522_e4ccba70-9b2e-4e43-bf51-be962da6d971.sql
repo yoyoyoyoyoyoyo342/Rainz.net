@@ -1,0 +1,1 @@
+ALTER TABLE public.user_allergies ADD COLUMN pollen_type text;

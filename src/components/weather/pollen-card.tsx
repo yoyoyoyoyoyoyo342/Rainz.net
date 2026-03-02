@@ -77,11 +77,12 @@ export function PollenCard({ pollenData, userId, temperature, windSpeed, feelsLi
 
   return (
     <div className="overflow-hidden rounded-2xl glass-card">
-      {/* Header without gradient */}
       <div className="p-4 border-b border-border/50">
-        <div className="flex items-center gap-2">
-          <Flower2 className="w-5 h-5 text-primary" />
-          <h3 className="font-semibold text-foreground">Pollen Index</h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Flower2 className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold text-foreground">Pollen Index</h3>
+          </div>
         </div>
       </div>
       <div className="p-4">

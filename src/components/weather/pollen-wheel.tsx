@@ -1,11 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Trash2, Plus, AlertTriangle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Trash2, Plus, AlertTriangle, Settings2 } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ interface UserAllergy {
   id: string;
   allergen: string;
   severity: string;
+  pollen_type: string | null;
 }
 
 interface PollenWheelProps {
@@ -31,85 +32,100 @@ interface PollenWheelProps {
   userId?: string;
 }
 
-interface SeasonalPollen {
-  name: string;
-  value: number;
-  color: string;
-  months: number[];
-  season: string;
+const POLLEN_ALLERGENS = [
+  { name: "Alder", pollenType: "alder", color: "hsl(25, 95%, 53%)", key: "alder" as keyof PollenData },
+  { name: "Birch", pollenType: "birch", color: "hsl(142, 71%, 45%)", key: "birch" as keyof PollenData },
+  { name: "Grass", pollenType: "grass", color: "hsl(120, 60%, 50%)", key: "grass" as keyof PollenData },
+  { name: "Mugwort", pollenType: "mugwort", color: "hsl(280, 70%, 55%)", key: "mugwort" as keyof PollenData },
+  { name: "Olive", pollenType: "olive", color: "hsl(47, 96%, 53%)", key: "olive" as keyof PollenData },
+  { name: "Ragweed", pollenType: "ragweed", color: "hsl(15, 80%, 50%)", key: "ragweed" as keyof PollenData },
+];
+
+const MIN_ARC_DEG = 15;
+
+function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
+  const rad = ((angleDeg - 90) * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
 
-const SEVERITY_LEVELS = ['mild', 'moderate', 'severe'];
+function describeArc(cx: number, cy: number, outerR: number, innerR: number, startDeg: number, endDeg: number) {
+  const sweep = endDeg - startDeg;
+  const largeArc = sweep > 180 ? 1 : 0;
+  const os = polarToCartesian(cx, cy, outerR, startDeg);
+  const oe = polarToCartesian(cx, cy, outerR, endDeg);
+  const is_ = polarToCartesian(cx, cy, innerR, endDeg);
+  const ie = polarToCartesian(cx, cy, innerR, startDeg);
+  return [
+    `M ${os.x} ${os.y}`,
+    `A ${outerR} ${outerR} 0 ${largeArc} 1 ${oe.x} ${oe.y}`,
+    `L ${is_.x} ${is_.y}`,
+    `A ${innerR} ${innerR} 0 ${largeArc} 0 ${ie.x} ${ie.y}`,
+    "Z",
+  ].join(" ");
+}
 
 export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
   const { user } = useAuth();
   const { t } = useLanguage();
   const activeUserId = userId || user?.id;
   const [userAllergies, setUserAllergies] = useState<UserAllergy[]>([]);
-  const [isAddingAllergy, setIsAddingAllergy] = useState(false);
-  const [newAllergen, setNewAllergen] = useState("");
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [newSeverity, setNewSeverity] = useState("moderate");
+  const [customAllergen, setCustomAllergen] = useState("");
+  const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
 
   useEffect(() => {
-    if (activeUserId) {
-      fetchUserAllergies();
-    }
+    if (activeUserId) fetchUserAllergies();
   }, [activeUserId]);
 
   const fetchUserAllergies = async () => {
     if (!activeUserId) return;
-    
     const { data, error } = await supabase
       .from('user_allergies')
       .select('*')
       .eq('user_id', activeUserId);
-    
-    if (error) {
-      console.error('Error fetching allergies:', error);
-      return;
-    }
-    
-    setUserAllergies(data || []);
+    if (error) { console.error('Error fetching allergies:', error); return; }
+    setUserAllergies((data as UserAllergy[]) || []);
   };
 
-  const addAllergy = async () => {
-    if (!activeUserId || !newAllergen.trim()) return;
-    
-    const { error } = await supabase
-      .from('user_allergies')
-      .insert({
-        user_id: activeUserId,
-        allergen: newAllergen.trim(),
-        severity: newSeverity
-      });
-    
-    if (error) {
-      if (error.code === '23505') {
-        toast.error(t('pollen.alreadyTracked'));
-      } else {
-        toast.error(t('pollen.addFailed'));
-      }
+  const addPredefinedAllergy = async (allergen: typeof POLLEN_ALLERGENS[0]) => {
+    if (!activeUserId) return;
+    if (userAllergies.some(a => a.pollen_type === allergen.pollenType || a.allergen.toLowerCase() === allergen.name.toLowerCase())) {
+      toast.error(t('pollen.alreadyTracked'));
       return;
     }
-    
+    const { error } = await supabase.from('user_allergies').insert({
+      user_id: activeUserId,
+      allergen: allergen.name,
+      severity: newSeverity,
+      pollen_type: allergen.pollenType,
+    });
+    if (error) { toast.error(t('pollen.addFailed')); return; }
     toast.success(t('pollen.addSuccess'));
-    setNewAllergen("");
-    setNewSeverity("moderate");
-    setIsAddingAllergy(false);
+    fetchUserAllergies();
+  };
+
+  const addCustomAllergy = async () => {
+    if (!activeUserId || !customAllergen.trim()) return;
+    const { error } = await supabase.from('user_allergies').insert({
+      user_id: activeUserId,
+      allergen: customAllergen.trim(),
+      severity: newSeverity,
+      pollen_type: null,
+    });
+    if (error) {
+      if (error.code === '23505') toast.error(t('pollen.alreadyTracked'));
+      else toast.error(t('pollen.addFailed'));
+      return;
+    }
+    toast.success(t('pollen.addSuccess'));
+    setCustomAllergen("");
     fetchUserAllergies();
   };
 
   const removeAllergy = async (id: string) => {
-    const { error } = await supabase
-      .from('user_allergies')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      toast.error(t('pollen.removeFailed'));
-      return;
-    }
-    
+    const { error } = await supabase.from('user_allergies').delete().eq('id', id);
+    if (error) { toast.error(t('pollen.removeFailed')); return; }
     toast.success(t('pollen.removeSuccess'));
     fetchUserAllergies();
   };
@@ -122,61 +138,6 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
       </div>
     );
   }
-
-  const currentMonth = new Date().getMonth();
-  
-  const allPollens: SeasonalPollen[] = [
-    {
-      name: "Alder",
-      value: pollenData.alder || 0,
-      color: "hsl(25 95% 53%)",
-      months: [0, 1, 2, 3],
-      season: t('pollen.earlySpring')
-    },
-    {
-      name: "Birch",
-      value: pollenData.birch || 0,
-      color: "hsl(142 71% 45%)",
-      months: [2, 3, 4],
-      season: t('pollen.spring')
-    },
-    {
-      name: "Grass",
-      value: pollenData.grass || 0,
-      color: "hsl(120 60% 50%)",
-      months: [4, 5, 6, 7, 8],
-      season: t('pollen.lateSpring')
-    },
-    {
-      name: "Mugwort",
-      value: pollenData.mugwort || 0,
-      color: "hsl(280 70% 55%)",
-      months: [6, 7, 8],
-      season: t('pollen.lateSummer')
-    },
-    {
-      name: "Olive",
-      value: pollenData.olive || 0,
-      color: "hsl(47 96% 53%)",
-      months: [3, 4, 5],
-      season: t('pollen.springSummer')
-    },
-    {
-      name: "Ragweed",
-      value: pollenData.ragweed || 0,
-      color: "hsl(15 80% 50%)",
-      months: [7, 8, 9, 10],
-      season: t('pollen.autumn')
-    }
-  ];
-
-  const seasonalPollens = allPollens.filter(pollen => {
-    const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-    const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
-    return pollen.months.includes(prevMonth) || 
-           pollen.months.includes(currentMonth) || 
-           pollen.months.includes(nextMonth);
-  });
 
   const getIntensityLabel = (value: number) => {
     if (value === 0) return t('pollen.noRisk');
@@ -194,136 +155,248 @@ export function PollenWheel({ pollenData, userId }: PollenWheelProps) {
     return "text-red-500";
   };
 
-  const getIntensityBg = (value: number): string => {
-    if (value === 0) return "bg-muted/30";
-    if (value <= 2) return "bg-blue-500/20";
-    if (value <= 5) return "bg-yellow-500/20";
-    if (value <= 8) return "bg-orange-500/20";
-    return "bg-red-500/20";
-  };
+  const isTracked = (pollenType: string) =>
+    userAllergies.some(a => a.pollen_type === pollenType);
 
-  const getUserAllergyAlert = (pollenName: string, value: number): boolean => {
-    if (!activeUserId) return false;
-    const userAllergy = userAllergies.find(a => a.allergen.toLowerCase() === pollenName.toLowerCase());
-    if (!userAllergy || value === 0) return false;
-    
-    if (userAllergy.severity === 'mild' && value > 5) return true;
-    if (userAllergy.severity === 'moderate' && value > 2) return true;
-    if (userAllergy.severity === 'severe' && value > 0) return true;
-    
+  const getAlertForSegment = (pollenType: string, value: number): boolean => {
+    const allergy = userAllergies.find(a => a.pollen_type === pollenType);
+    if (!allergy || value === 0) return false;
+    if (allergy.severity === 'severe' && value > 0) return true;
+    if (allergy.severity === 'moderate' && value > 2) return true;
+    if (allergy.severity === 'mild' && value > 5) return true;
     return false;
   };
 
-  const getOverallValue = () => {
-    if (seasonalPollens.length === 0) return 0;
-    const total = seasonalPollens.reduce((sum, p) => sum + p.value, 0);
-    return Math.round(total / seasonalPollens.length);
-  };
+  // Build segments
+  const segments = POLLEN_ALLERGENS.map(a => ({
+    ...a,
+    value: pollenData[a.key] || 0,
+  }));
 
-  const overallValue = getOverallValue();
+  const totalValue = segments.reduce((s, seg) => s + Math.max(seg.value, 0.5), 0);
+
+  // Compute arc angles with minimum
+  const rawAngles = segments.map(seg => Math.max(MIN_ARC_DEG, ((Math.max(seg.value, 0.5)) / totalValue) * 360));
+  const rawTotal = rawAngles.reduce((s, a) => s + a, 0);
+  const normalizedAngles = rawAngles.map(a => (a / rawTotal) * 360);
+
+  const overallValue = Math.round(segments.reduce((s, seg) => s + seg.value, 0) / segments.length);
   const overallLevel = getIntensityLabel(overallValue);
+  const alertCount = segments.filter(seg => getAlertForSegment(seg.pollenType, seg.value)).length;
+
+  const cx = 100, cy = 100, outerR = 90, innerR = 55;
+
+  let currentAngle = 0;
+  const paths = segments.map((seg, i) => {
+    const start = currentAngle;
+    const end = currentAngle + normalizedAngles[i];
+    currentAngle = end;
+    const tracked = isTracked(seg.pollenType);
+    const alert = getAlertForSegment(seg.pollenType, seg.value);
+    const hovered = hoveredSegment === seg.pollenType;
+    return { seg, start, end, tracked, alert, hovered };
+  });
+
+  const trackedNonPollen = userAllergies.filter(a => !a.pollen_type);
+
+  const severityDesc: Record<string, string> = {
+    mild: "Alert when high (above 5)",
+    moderate: "Alert when moderate+ (above 2)",
+    severe: "Alert at any level (above 0)",
+  };
 
   return (
     <div className="space-y-4">
-      {/* Overall level + track allergy button */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className={`${getIntensityBg(overallValue)} p-3 rounded-xl`}>
-            <div className={`text-2xl font-bold ${getIntensityColor(overallValue)}`}>{overallValue}</div>
-          </div>
-          <div>
-            <div className={`font-semibold ${getIntensityColor(overallValue)}`}>{overallLevel}</div>
-            <div className="text-xs text-muted-foreground">
-              {seasonalPollens.length} {t('pollen.active')}
-            </div>
-          </div>
-        </div>
-        {activeUserId && (
-          <Dialog open={isAddingAllergy} onOpenChange={setIsAddingAllergy}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="rounded-xl">
-                <Plus className="w-4 h-4 mr-1" />
-                {t('pollen.trackAllergy')}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{t('pollen.addAllergy')}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="allergen">{t('pollen.allergen')}</Label>
-                  <Input
-                    id="allergen"
-                    value={newAllergen}
-                    onChange={(e) => setNewAllergen(e.target.value)}
-                    placeholder={t('pollen.allergenPlaceholder')}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="severity">{t('pollen.sensitivityLevel')}</Label>
-                  <Select value={newSeverity} onValueChange={setNewSeverity}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="mild">{t('pollen.mild')}</SelectItem>
-                      <SelectItem value="moderate">{t('pollen.moderate')}</SelectItem>
-                      <SelectItem value="severe">{t('pollen.severe')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button onClick={addAllergy} className="w-full">
-                  {t('pollen.addAllergyButton')}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
+      {/* SVG Donut Wheel */}
+      <div className="flex justify-center">
+        <svg width="200" height="200" viewBox="0 0 200 200" className="drop-shadow-sm">
+          <defs>
+            <style>{`
+              @keyframes pollenPulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.6; }
+              }
+              .pollen-pulse { animation: pollenPulse 1.5s ease-in-out infinite; }
+            `}</style>
+          </defs>
+          {paths.map(({ seg, start, end, tracked, alert, hovered }) => (
+            <g key={seg.pollenType}>
+              <path
+                d={describeArc(cx, cy, hovered ? outerR + 4 : outerR, innerR, start, end - 0.5)}
+                fill={seg.color}
+                stroke={tracked ? "hsl(var(--foreground))" : "hsl(var(--background))"}
+                strokeWidth={tracked ? 3 : 1}
+                className={alert ? "pollen-pulse" : ""}
+                style={{
+                  cursor: "pointer",
+                  filter: tracked ? `drop-shadow(0 0 4px ${seg.color})` : undefined,
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={() => setHoveredSegment(seg.pollenType)}
+                onMouseLeave={() => setHoveredSegment(null)}
+                onTouchStart={() => setHoveredSegment(seg.pollenType === hoveredSegment ? null : seg.pollenType)}
+              />
+            </g>
+          ))}
+          {/* Center text */}
+          <circle cx={cx} cy={cy} r={innerR - 4} fill="hsl(var(--background))" opacity="0.9" />
+          <text x={cx} y={cy - 8} textAnchor="middle" className="fill-foreground" fontSize="28" fontWeight="bold">
+            {overallValue}
+          </text>
+          <text x={cx} y={cy + 12} textAnchor="middle" className="fill-muted-foreground" fontSize="11">
+            {overallLevel}
+          </text>
+          {alertCount > 0 && (
+            <text x={cx} y={cy + 28} textAnchor="middle" className="fill-destructive" fontSize="10" fontWeight="600">
+              ⚠ {alertCount} alert{alertCount > 1 ? "s" : ""}
+            </text>
+          )}
+        </svg>
       </div>
 
-      {/* Pollen grid */}
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        {seasonalPollens.map((pollen) => {
-          const hasAlert = activeUserId && getUserAllergyAlert(pollen.name, pollen.value);
-          const level = getIntensityLabel(pollen.value);
-          
+      {/* Tooltip / hovered info */}
+      {hoveredSegment && (() => {
+        const seg = segments.find(s => s.pollenType === hoveredSegment);
+        if (!seg) return null;
+        return (
+          <div className="text-center text-xs text-muted-foreground -mt-2 mb-1">
+            <span className="font-semibold text-foreground">{seg.name}</span>{" "}
+            — {seg.value} grains/m³ ({getIntensityLabel(seg.value)})
+          </div>
+        );
+      })()}
+
+      {/* Legend */}
+      <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">
+        {segments.map(seg => {
+          const tracked = isTracked(seg.pollenType);
           return (
-            <div
-              key={pollen.name}
-              className={`p-2.5 rounded-xl bg-muted/30 border ${hasAlert ? 'border-destructive/50' : 'border-border/30'}`}
-            >
-              <div className="flex items-center gap-1.5 mb-1">
-                {hasAlert && <AlertTriangle className="w-3 h-3 text-destructive" />}
-                <div className="text-muted-foreground">{pollen.name}</div>
-              </div>
-              <div className={`font-semibold text-sm ${getIntensityColor(pollen.value)}`}>{level}</div>
-              <div className="text-muted-foreground">{pollen.value} grains/m³</div>
+            <div key={seg.pollenType} className={`flex items-center gap-1 ${tracked ? "font-semibold" : ""}`}>
+              <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: seg.color }} />
+              <span className="text-muted-foreground">{seg.name}</span>
+              <span className={getIntensityColor(seg.value)}>{seg.value}</span>
             </div>
           );
         })}
       </div>
 
-      {/* User Tracked Allergies */}
-      {activeUserId && userAllergies.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="font-medium text-sm">{t('pollen.yourTracked')}</h4>
-          <div className="flex flex-wrap gap-2">
-            {userAllergies.map((allergy) => (
-              <Badge key={allergy.id} variant="secondary" className="flex items-center gap-1">
-                {allergy.allergen}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-auto p-0 hover:bg-transparent"
-                  onClick={() => removeAllergy(allergy.id)}
-                >
-                  <Trash2 className="w-3 h-3" />
-                </Button>
-              </Badge>
-            ))}
-          </div>
-        </div>
+      {/* Manage Allergies Drawer */}
+      {activeUserId && (
+        <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+          <DrawerTrigger asChild>
+            <Button variant="outline" size="sm" className="w-full rounded-xl">
+              <Settings2 className="w-4 h-4 mr-1" />
+              {t('pollen.trackAllergy')}
+            </Button>
+          </DrawerTrigger>
+          <DrawerContent className="max-h-[85vh]">
+            <DrawerHeader>
+              <DrawerTitle>{t('pollen.addAllergy')}</DrawerTitle>
+            </DrawerHeader>
+            <div className="px-4 pb-6 space-y-5 overflow-y-auto">
+              {/* Severity picker */}
+              <div>
+                <Label className="text-sm font-medium">{t('pollen.sensitivityLevel')}</Label>
+                <Select value={newSeverity} onValueChange={setNewSeverity}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mild">{t('pollen.mild')} — {severityDesc.mild}</SelectItem>
+                    <SelectItem value="moderate">{t('pollen.moderate')} — {severityDesc.moderate}</SelectItem>
+                    <SelectItem value="severe">{t('pollen.severe')} — {severityDesc.severe}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Predefined pollen chips */}
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Pollen Types (API-tracked)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {POLLEN_ALLERGENS.map(allergen => {
+                    const alreadyTracked = isTracked(allergen.pollenType);
+                    const value = pollenData[allergen.key] || 0;
+                    return (
+                      <button
+                        key={allergen.pollenType}
+                        disabled={alreadyTracked}
+                        onClick={() => addPredefinedAllergy(allergen)}
+                        className={`flex items-center gap-2 p-2.5 rounded-xl border text-left text-sm transition-colors ${
+                          alreadyTracked
+                            ? "border-primary/30 bg-primary/10 opacity-60 cursor-not-allowed"
+                            : "border-border/50 bg-muted/30 hover:bg-muted/60 cursor-pointer"
+                        }`}
+                      >
+                        <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: allergen.color }} />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-foreground">{allergen.name}</div>
+                          <div className={`text-xs ${getIntensityColor(value)}`}>{getIntensityLabel(value)} ({value})</div>
+                        </div>
+                        {alreadyTracked ? (
+                          <Badge variant="secondary" className="text-[10px] px-1.5">Tracked</Badge>
+                        ) : (
+                          <Plus className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Custom allergen */}
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Other Allergens</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={customAllergen}
+                    onChange={(e) => setCustomAllergen(e.target.value)}
+                    placeholder="e.g. Dust, Mold, Pet dander..."
+                    className="flex-1"
+                  />
+                  <Button size="sm" onClick={addCustomAllergy} disabled={!customAllergen.trim()}>
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Current tracked list */}
+              {userAllergies.length > 0 && (
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">{t('pollen.yourTracked')}</Label>
+                  <div className="space-y-2">
+                    {userAllergies.map(allergy => {
+                      const pollenInfo = POLLEN_ALLERGENS.find(a => a.pollenType === allergy.pollen_type);
+                      const value = pollenInfo ? pollenData[pollenInfo.key] || 0 : null;
+                      return (
+                        <div key={allergy.id} className="flex items-center gap-2 p-2 rounded-xl bg-muted/30 border border-border/30">
+                          {pollenInfo && (
+                            <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: pollenInfo.color }} />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-foreground">{allergy.allergen}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {allergy.severity} sensitivity
+                              {value !== null && ` · ${getIntensityLabel(value)} (${value})`}
+                              {!pollenInfo && " · Custom"}
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            onClick={() => removeAllergy(allergy.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </DrawerContent>
+        </Drawer>
       )}
     </div>
   );

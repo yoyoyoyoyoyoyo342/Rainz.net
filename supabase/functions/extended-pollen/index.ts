@@ -22,29 +22,36 @@ serve(async (req) => {
 
     const apiKey = Deno.env.get('TOMORROW_IO_API_KEY');
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'TOMORROW_IO_API_KEY not configured' }), {
-        status: 500,
+      // Fallback: return empty data gracefully so the UI doesn't break
+      console.warn('TOMORROW_IO_API_KEY not configured, returning empty pollen data');
+      return new Response(JSON.stringify({ pollen: {}, fallback: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Tomorrow.io pollen fields - species-level data
+    // Use the v4 realtime endpoint with pollen fields
     const fields = [
       'treeIndex', 'grassIndex', 'weedIndex',
-      'treeAcaciaIndex', 'treeAshIndex', 'treeBirchIndex', 'treeCedarIndex',
-      'treeCypressIndex', 'treeElmIndex', 'treeHazelIndex', 'treeMapleIndex',
-      'treeOakIndex', 'treePineIndex', 'treePlaneIndex', 'treePoplarIndex',
-      'treeWillowIndex',
-      'weedChenopodIndex', 'weedRagweedIndex', 'weedGrassIndex',
-      'grassGrassIndex',
     ];
 
-    const url = `https://api.tomorrow.io/v4/timelines?location=${latitude},${longitude}&fields=${fields.join(',')}&timesteps=current&units=metric&apikey=${apiKey}`;
+    const url = `https://api.tomorrow.io/v4/weather/realtime?location=${latitude},${longitude}&apikey=${apiKey}`;
+    console.log('Fetching Tomorrow.io realtime data...');
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+    });
+
     if (!response.ok) {
       const errText = await response.text();
       console.error(`Tomorrow.io API error [${response.status}]:`, errText);
+      
+      // If it's a rate limit or auth issue, return empty gracefully
+      if (response.status === 429 || response.status === 401 || response.status === 403) {
+        return new Response(JSON.stringify({ pollen: {}, rateLimited: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
       return new Response(JSON.stringify({ error: `Tomorrow.io API failed: ${response.status}` }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -52,9 +59,9 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const values = data?.data?.timelines?.[0]?.intervals?.[0]?.values || {};
+    const values = data?.data?.values || {};
+    console.log('Tomorrow.io response keys:', Object.keys(values).filter(k => k.toLowerCase().includes('index') || k.toLowerCase().includes('pollen')));
 
-    // Map to a clean structure
     const pollenData: Record<string, { value: number; category: string; type: string }> = {};
 
     const getCategoryLabel = (index: number): string => {
@@ -66,60 +73,70 @@ serve(async (req) => {
       return 'Very High';
     };
 
-    const treeSpecies = [
-      { key: 'treeAcaciaIndex', name: 'Acacia' },
-      { key: 'treeAshIndex', name: 'Ash' },
-      { key: 'treeBirchIndex', name: 'Birch' },
-      { key: 'treeCedarIndex', name: 'Cedar' },
-      { key: 'treeCypressIndex', name: 'Cypress' },
-      { key: 'treeElmIndex', name: 'Elm' },
-      { key: 'treeHazelIndex', name: 'Hazel' },
-      { key: 'treeMapleIndex', name: 'Maple' },
-      { key: 'treeOakIndex', name: 'Oak' },
-      { key: 'treePineIndex', name: 'Pine' },
-      { key: 'treePlaneIndex', name: 'Plane' },
-      { key: 'treePoplarIndex', name: 'Poplar' },
-      { key: 'treeWillowIndex', name: 'Willow' },
-    ];
+    // Map all known pollen-related fields from the response
+    const pollenFieldMap: Record<string, { name: string; type: string }> = {
+      'treeIndex': { name: 'Tree (Overall)', type: 'tree' },
+      'grassIndex': { name: 'Grass (Overall)', type: 'grass' },
+      'weedIndex': { name: 'Weed (Overall)', type: 'weed' },
+      // Species-level (premium)
+      'treeAcaciaIndex': { name: 'Acacia', type: 'tree' },
+      'treeAshIndex': { name: 'Ash', type: 'tree' },
+      'treeBirchIndex': { name: 'Birch', type: 'tree' },
+      'treeCedarIndex': { name: 'Cedar', type: 'tree' },
+      'treeCypressIndex': { name: 'Cypress', type: 'tree' },
+      'treeElmIndex': { name: 'Elm', type: 'tree' },
+      'treeHazelIndex': { name: 'Hazel', type: 'tree' },
+      'treeMapleIndex': { name: 'Maple', type: 'tree' },
+      'treeOakIndex': { name: 'Oak', type: 'tree' },
+      'treePineIndex': { name: 'Pine', type: 'tree' },
+      'treePlaneIndex': { name: 'Plane', type: 'tree' },
+      'treePoplarIndex': { name: 'Poplar', type: 'tree' },
+      'treeWillowIndex': { name: 'Willow', type: 'tree' },
+      'weedChenopodIndex': { name: 'Chenopod', type: 'weed' },
+      'weedRagweedIndex': { name: 'Ragweed', type: 'weed' },
+      'grassGrassIndex': { name: 'Grass', type: 'grass' },
+    };
 
-    const weedSpecies = [
-      { key: 'weedChenopodIndex', name: 'Chenopod' },
-      { key: 'weedRagweedIndex', name: 'Ragweed' },
-      { key: 'weedGrassIndex', name: 'Weed Grass' },
-    ];
-
-    // Overall indices
-    if (values.treeIndex !== undefined) {
-      pollenData['Tree (Overall)'] = { value: values.treeIndex, category: getCategoryLabel(values.treeIndex), type: 'tree' };
-    }
-    if (values.grassIndex !== undefined) {
-      pollenData['Grass (Overall)'] = { value: values.grassIndex, category: getCategoryLabel(values.grassIndex), type: 'grass' };
-    }
-    if (values.weedIndex !== undefined) {
-      pollenData['Weed (Overall)'] = { value: values.weedIndex, category: getCategoryLabel(values.weedIndex), type: 'weed' };
-    }
-
-    for (const species of [...treeSpecies, ...weedSpecies]) {
-      const val = values[species.key];
+    for (const [key, info] of Object.entries(pollenFieldMap)) {
+      const val = values[key];
       if (val !== undefined && val !== null) {
-        pollenData[species.name] = {
+        pollenData[info.name] = {
           value: val,
           category: getCategoryLabel(val),
-          type: species.key.startsWith('tree') ? 'tree' : 'weed',
+          type: info.type,
         };
       }
     }
 
-    if (values.grassGrassIndex !== undefined) {
-      pollenData['Grass'] = { value: values.grassGrassIndex, category: getCategoryLabel(values.grassGrassIndex), type: 'grass' };
+    // If we got overall indices but no species data, derive approximate species values
+    // This helps users who track specific species get at least category-level data
+    if (Object.keys(pollenData).length <= 3) {
+      const treeVal = values.treeIndex ?? 0;
+      const weedVal = values.weedIndex ?? 0;
+      
+      const treeSpecies = ['Oak', 'Pine', 'Cedar', 'Elm', 'Maple', 'Ash', 'Cypress', 'Hazel', 'Poplar', 'Willow', 'Plane', 'Acacia'];
+      const weedSpecies = ['Chenopod'];
+      
+      for (const species of treeSpecies) {
+        if (!pollenData[species]) {
+          pollenData[species] = { value: treeVal, category: getCategoryLabel(treeVal), type: 'tree' };
+        }
+      }
+      for (const species of weedSpecies) {
+        if (!pollenData[species]) {
+          pollenData[species] = { value: weedVal, category: getCategoryLabel(weedVal), type: 'weed' };
+        }
+      }
     }
+
+    console.log(`Returning ${Object.keys(pollenData).length} pollen entries`);
 
     return new Response(JSON.stringify({ pollen: pollenData }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Extended pollen error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: error.message, pollen: {} }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-export type Language = 'en-GB' | 'en-US' | 'da' | 'sv' | 'no' | 'fr' | 'it';
+export type Language = 'en-GB' | 'en-US' | 'da' | 'sv' | 'no' | 'fr' | 'it' | 'boomer';
 
 interface LanguageContextType {
   language: Language;
@@ -134,6 +134,7 @@ const translations: Record<Language, Record<string, string>> = {
     'language.no': 'Norsk',
     'language.fr': 'Français',
     'language.it': 'Italiano',
+    'language.boomer': '👴 Boomer',
   },
   'en-US': {
     // Header
@@ -256,6 +257,7 @@ const translations: Record<Language, Record<string, string>> = {
     'language.no': 'Norsk',
     'language.fr': 'Français',
     'language.it': 'Italiano',
+    'language.boomer': '👴 Boomer',
   },
   'da': {
     // Header
@@ -378,6 +380,7 @@ const translations: Record<Language, Record<string, string>> = {
     'language.no': 'Norsk',
     'language.fr': 'Français',
     'language.it': 'Italiano',
+    'language.boomer': '👴 Boomer',
   },
   'sv': {
     // Header
@@ -500,6 +503,7 @@ const translations: Record<Language, Record<string, string>> = {
     'language.no': 'Norsk',
     'language.fr': 'Français',
     'language.it': 'Italiano',
+    'language.boomer': '👴 Boomer',
   },
   'no': {
     // Header
@@ -622,6 +626,7 @@ const translations: Record<Language, Record<string, string>> = {
     'language.no': 'Norsk',
     'language.fr': 'Français',
     'language.it': 'Italiano',
+    'language.boomer': '👴 Boomer',
   },
   'fr': {
     // Header
@@ -744,6 +749,7 @@ const translations: Record<Language, Record<string, string>> = {
     'language.no': 'Norsk',
     'language.fr': 'Français',
     'language.it': 'Italiano',
+    'language.boomer': '👴 Boomer',
   },
   'it': {
     // Header
@@ -866,6 +872,130 @@ const translations: Record<Language, Record<string, string>> = {
     'language.no': 'Norsk',
     'language.fr': 'Français',
     'language.it': 'Italiano',
+    'language.boomer': '👴 Boomer',
+  },
+  'boomer': {
+    // Header
+    'app.tagline': 'It\'s like the weather channel but on your phone thingy.',
+    'header.signIn': 'Log Into The Machine',
+    'search.placeholder': 'Type a city name here, like Google...',
+    'search.searching': 'Hold on, the computer is thinking...',
+    'search.noResults': 'The computer can\'t find that place. Did you spell it right?',
+    
+    // Weather
+    'weather.welcome': 'Oh good, you found the weather app!',
+    'weather.searchLocation': 'Type something up there or let the phone know where you are (it already knows, trust me)',
+    'weather.failed': 'The weather thing is broken. Classic technology.',
+    'weather.tryAgain': 'Try Again (Hit This Button)',
+    'weather.demoData': 'Fake Weather',
+    'weather.demoMessage': 'Need some internet keys for the real stuff',
+    'weather.refresh': 'Make It Load Again',
+    'weather.locationCard': 'Where You Are Card',
+    'weather.myLocation': 'Where I Am Right Now',
+    'weather.checkConnection': 'Is the WiFi working? Check that box with the blinking lights.',
+    
+    // Weather metrics
+    'weather.wind': 'How Windy',
+    'weather.visibility': 'Can You See Far',
+    'weather.feelsLike': 'What it ACTUALLY feels like',
+    'weather.humidity': 'The Sticky Air Number',
+    'weather.pressure': 'Barometer Thingy',
+    'weather.uvIndex': 'Sunburn Risk',
+    
+    // Time
+    'time.goodMorning': 'Rise and Shine, Kiddo!',
+    'time.dismiss': 'Make It Go Away',
+    'time.today': 'Today',
+    'time.tomorrow': 'Tomorrow',
+    
+    // Morning Review
+    'morning.title': 'The Robot Tells You About Today',
+    'morning.generating': 'The robot is writing... give it a sec...',
+    'morning.generate': 'Ask The Robot About The Weather',
+    'morning.outfit': 'What To Wear (Ask Your Mother):',
+    'morning.pollenAlerts': 'Sneezy Warnings',
+    'morning.activities': 'Things You Can Do Outside:',
+    'morning.keyInsight': 'Important Bit:',
+    
+    // Settings
+    'settings.title': 'The Settings (Don\'t Break Anything)',
+    'settings.account': 'Your Account',
+    'settings.appearance': 'How It Looks',
+    'settings.notifications': 'Those Pop-Up Things',
+    'settings.language': 'Language',
+    'settings.signOut': 'Log Out Of The Machine',
+    'settings.enableNotifications': 'Turn On Those Annoying Pop-Ups',
+    'settings.testNotification': 'Send A Test Pop-Up',
+    'settings.cardVisibility': 'What Boxes To Show',
+    'settings.cardOrder': 'What Order The Boxes Go In',
+    'settings.save': 'Save (IMPORTANT!)',
+    'settings.customise': 'Change stuff around (carefully!)',
+    'settings.temperatureUnits': 'Hot/Cold Numbers Style',
+    'settings.useCelsius': 'Use Celsius (the normal one)',
+    'settings.currentlyFahrenheit': 'Using Fahrenheit (the American one)',
+    'settings.currentlyCelsius': 'Using Celsius (the normal one)',
+    'settings.reset': 'Put It Back How It Was',
+    'settings.reloadChanges': 'Close and open it again to see changes.',
+    'settings.languageChanged': 'Language changed!',
+    'settings.changedTo': 'Changed to',
+    
+    // Pollen
+    'pollen.title': 'Sneezy Flower Dust Forecast',
+    'pollen.track': 'Track Your Sneezes',
+    'pollen.low': 'Not Bad',
+    'pollen.moderate': 'Bring Tissues',
+    'pollen.high': 'Stay Inside',
+    'pollen.veryHigh': 'DON\'T GO OUTSIDE',
+    'pollen.pollenIndex': 'Sneezy Number',
+    'pollen.hourlyForecast': 'Hourly Sneeze Forecast',
+    'pollen.tenDayForecast': '10-Day Sneeze Forecast',
+    'pollen.detailedMetrics': 'All The Numbers',
+    'pollen.userRoutines': 'Your Daily Routines',
+    'pollen.liveData': 'Live sneezy data from the internet',
+    'pollen.noData': 'No sneeze data. Lucky you!',
+    'pollen.locationRequired': 'The phone needs to know where you are first',
+    'pollen.trackAllergy': 'Tell Us What Makes You Sneeze',
+    'pollen.addAllergy': 'Add Something That Makes You Sneeze',
+    'pollen.allergen': 'The Sneezy Thing',
+    'pollen.allergenPlaceholder': 'Like Grass, Trees, That Yellow Stuff...',
+    'pollen.sensitivityLevel': 'How Bad Is It For You',
+    'pollen.mild': 'A Little Sneezy',
+    'pollen.severe': 'VERY Sneezy',
+    'pollen.addAllergyButton': 'Add It',
+    'pollen.currentSeason': 'What\'s Making People Sneeze Now',
+    'pollen.active': 'happening now',
+    'pollen.yourTracked': 'Your Sneeze Triggers',
+    'pollen.scale': 'Sneeze Scale:',
+    'pollen.scaleInfo': '0 = Fine • 1-2 = A Bit • 3-5 = Uh Oh • 6-8 = Get The Tissues • 9+ = STAY HOME',
+    'pollen.alertInfo': 'We\'ll warn you when the sneezy stuff is bad',
+    'pollen.adviceInfo': 'Higher number = more sneezing. Maybe watch TV instead of going to the park.',
+    'pollen.noRisk': 'You\'re fine!',
+    'pollen.medium': 'Medium',
+    'pollen.earlySpring': 'Early Spring',
+    'pollen.spring': 'Spring',
+    'pollen.lateSpring': 'Late Spring',
+    'pollen.lateSummer': 'Late Summer',
+    'pollen.springSummer': 'Spring/Summer',
+    'pollen.autumn': 'Fall',
+    'pollen.alreadyTracked': 'You already told us about that one!',
+    'pollen.addFailed': 'The computer couldn\'t save that. Try again?',
+    'pollen.addSuccess': 'Got it! We\'ll keep an eye on that for you.',
+    'pollen.removeFailed': 'Couldn\'t remove that. Technology, am I right?',
+    'pollen.removeSuccess': 'Okay, removed!',
+    
+    // Footer
+    'footer.dataFrom': 'Weather info from',
+    'footer.disclaimer': 'Don\'t blame us if the weather\'s wrong. Even the TV weatherman gets it wrong.',
+    
+    // Languages
+    'language.en-GB': 'British English',
+    'language.en-US': 'American English',
+    'language.da': 'Dansk',
+    'language.sv': 'Svenska',
+    'language.no': 'Norsk',
+    'language.fr': 'Français',
+    'language.it': 'Italiano',
+    'language.boomer': '👴 Boomer',
   },
 };
 
@@ -972,4 +1102,5 @@ export const languageFlags: Record<Language, string> = {
   'no': '🇳🇴',
   'fr': '🇫🇷',
   'it': '🇮🇹',
+  'boomer': '👴',
 };

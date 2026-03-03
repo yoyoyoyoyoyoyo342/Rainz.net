@@ -382,11 +382,11 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
               {t('pollen.trackAllergy')}
             </Button>
           </DrawerTrigger>
-          <DrawerContent className="max-h-[85vh]">
-            <DrawerHeader>
+          <DrawerContent className="max-h-[85vh] flex flex-col">
+            <DrawerHeader className="flex-shrink-0">
               <DrawerTitle>{t('pollen.addAllergy')}</DrawerTitle>
             </DrawerHeader>
-            <div className="px-4 pb-6 space-y-5 overflow-y-auto">
+            <div className="px-4 pb-6 space-y-5 overflow-y-auto flex-1 min-h-0" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
               {/* Severity picker */}
               <div>
                 <Label className="text-sm font-medium">{t('pollen.sensitivityLevel')}</Label>

@@ -107,3 +107,6 @@ verify_jwt = false
 
 [functions.weekly-recap]
 verify_jwt = false
+
+[functions.extended-pollen]
+verify_jwt = false

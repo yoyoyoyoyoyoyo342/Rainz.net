@@ -103,43 +103,11 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
   const [extendedPollen, setExtendedPollen] = useState<Record<string, ExtendedPollenEntry>>({});
   const [extendedLoading, setExtendedLoading] = useState(false);
 
-  useEffect(() => {
-    if (activeUserId) fetchUserAllergies();
-  }, [activeUserId]);
+  // Track which extended types we've already fetched for to avoid re-fetching
+  const extendedFetchedRef = useRef<string>("");
+  const extendedPollenFetchedRef = useRef(false);
 
-  // Fetch extended pollen data if user has non-Open-Meteo allergies
-  useEffect(() => {
-    if (!latitude || !longitude || !userAllergies.length) return;
-    
-    const hasExtendedAllergy = userAllergies.some(a => {
-      const pollenType = a.pollen_type;
-      return pollenType && !POLLEN_ALLERGENS.some(p => p.pollenType === pollenType);
-    });
-
-    if (hasExtendedAllergy) {
-      fetchExtendedPollen();
-    }
-  }, [userAllergies, latitude, longitude]);
-
-  const fetchExtendedPollen = async () => {
-    if (!latitude || !longitude) return;
-    setExtendedLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('extended-pollen', {
-        body: { latitude, longitude },
-      });
-      if (error) throw error;
-      if (data?.pollen) {
-        setExtendedPollen(data.pollen);
-      }
-    } catch (err) {
-      console.error('Extended pollen fetch failed:', err);
-    } finally {
-      setExtendedLoading(false);
-    }
-  };
-
-  const fetchUserAllergies = async () => {
+  const fetchUserAllergies = useCallback(async () => {
     if (!activeUserId) return;
     const { data, error } = await supabase
       .from('user_allergies')
@@ -147,7 +115,44 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
       .eq('user_id', activeUserId);
     if (error) { console.error('Error fetching allergies:', error); return; }
     setUserAllergies((data as UserAllergy[]) || []);
-  };
+  }, [activeUserId]);
+
+  useEffect(() => {
+    if (activeUserId) fetchUserAllergies();
+  }, [activeUserId, fetchUserAllergies]);
+
+  // Fetch extended pollen data only when the set of extended allergen types actually changes
+  const extendedAllergenKeys = userAllergies
+    .filter(a => a.pollen_type && !POLLEN_ALLERGENS.some(p => p.pollenType === a.pollen_type))
+    .map(a => a.pollen_type)
+    .sort()
+    .join(",");
+
+  useEffect(() => {
+    if (!latitude || !longitude || !extendedAllergenKeys) return;
+    // Only refetch if the set of extended types changed
+    if (extendedFetchedRef.current === extendedAllergenKeys && extendedPollenFetchedRef.current) return;
+    extendedFetchedRef.current = extendedAllergenKeys;
+    extendedPollenFetchedRef.current = true;
+
+    const fetchExtended = async () => {
+      setExtendedLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('extended-pollen', {
+          body: { latitude, longitude },
+        });
+        if (error) throw error;
+        if (data?.pollen) {
+          setExtendedPollen(data.pollen);
+        }
+      } catch (err) {
+        console.error('Extended pollen fetch failed:', err);
+      } finally {
+        setExtendedLoading(false);
+      }
+    };
+    fetchExtended();
+  }, [extendedAllergenKeys, latitude, longitude]);
 
   const addAllergen = async (allergenName: string, pollenType: string) => {
     if (!activeUserId) return;
@@ -163,7 +168,13 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
     });
     if (error) { toast.error(t('pollen.addFailed')); return; }
     toast.success(t('pollen.addSuccess'));
-    fetchUserAllergies();
+    // Optimistically add to state to avoid full refetch cascade
+    setUserAllergies(prev => [...prev, {
+      id: crypto.randomUUID(),
+      allergen: allergenName,
+      severity: newSeverity,
+      pollen_type: pollenType,
+    }]);
   };
 
   const addCustomAllergy = async () => {

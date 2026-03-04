@@ -191,15 +191,26 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
       return;
     }
     toast.success(t('pollen.addSuccess'));
+    const savedName = customAllergen.trim();
     setCustomAllergen("");
-    fetchUserAllergies();
+    setUserAllergies(prev => [...prev, {
+      id: crypto.randomUUID(),
+      allergen: savedName,
+      severity: newSeverity,
+      pollen_type: null,
+    }]);
   };
 
   const removeAllergy = async (id: string) => {
+    // Optimistic removal
+    setUserAllergies(prev => prev.filter(a => a.id !== id));
     const { error } = await supabase.from('user_allergies').delete().eq('id', id);
-    if (error) { toast.error(t('pollen.removeFailed')); return; }
+    if (error) {
+      toast.error(t('pollen.removeFailed'));
+      fetchUserAllergies(); // Revert on error
+      return;
+    }
     toast.success(t('pollen.removeSuccess'));
-    fetchUserAllergies();
   };
 
   if (!pollenData) {

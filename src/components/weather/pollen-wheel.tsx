@@ -103,9 +103,7 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
   const [extendedPollen, setExtendedPollen] = useState<Record<string, ExtendedPollenEntry>>({});
   const [extendedLoading, setExtendedLoading] = useState(false);
 
-  // Track which extended types we've already fetched for to avoid re-fetching
   const extendedFetchedRef = useRef<string>("");
-  const extendedPollenFetchedRef = useRef(false);
 
   const fetchUserAllergies = useCallback(async () => {
     if (!activeUserId) return;
@@ -131,27 +129,33 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
   useEffect(() => {
     if (!latitude || !longitude || !extendedAllergenKeys) return;
     // Only refetch if the set of extended types changed
-    if (extendedFetchedRef.current === extendedAllergenKeys && extendedPollenFetchedRef.current) return;
+    if (extendedFetchedRef.current === extendedAllergenKeys) return;
     extendedFetchedRef.current = extendedAllergenKeys;
-    extendedPollenFetchedRef.current = true;
 
+    let cancelled = false;
     const fetchExtended = async () => {
-      setExtendedLoading(true);
+      // Only show loading if we have no data yet (avoid flash on subsequent adds)
+      if (Object.keys(extendedPollen).length === 0) {
+        setExtendedLoading(true);
+      }
       try {
         const { data, error } = await supabase.functions.invoke('extended-pollen', {
           body: { latitude, longitude },
         });
+        if (cancelled) return;
         if (error) throw error;
         if (data?.pollen) {
-          setExtendedPollen(data.pollen);
+          setExtendedPollen(prev => ({ ...prev, ...data.pollen }));
         }
       } catch (err) {
         console.error('Extended pollen fetch failed:', err);
       } finally {
-        setExtendedLoading(false);
+        if (!cancelled) setExtendedLoading(false);
       }
     };
     fetchExtended();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [extendedAllergenKeys, latitude, longitude]);
 
   const addAllergen = async (allergenName: string, pollenType: string) => {
@@ -438,7 +442,7 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
                       <button
                         key={allergen.pollenType}
                         disabled={alreadyTracked}
-                        onClick={() => addAllergen(allergen.name, allergen.pollenType)}
+                        onClick={(e) => { e.stopPropagation(); addAllergen(allergen.name, allergen.pollenType); }}
                         className={`flex items-center gap-2 p-2.5 rounded-xl border text-left text-sm transition-colors ${
                           alreadyTracked
                             ? "border-primary/30 bg-primary/10 opacity-60 cursor-not-allowed"
@@ -476,7 +480,7 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
                       <button
                         key={allergen.pollenType}
                         disabled={alreadyTracked}
-                        onClick={() => addAllergen(allergen.name, allergen.pollenType)}
+                        onClick={(e) => { e.stopPropagation(); addAllergen(allergen.name, allergen.pollenType); }}
                         className={`flex items-center gap-2 p-2.5 rounded-xl border text-left text-sm transition-colors ${
                           alreadyTracked
                             ? "border-primary/30 bg-primary/10 opacity-60 cursor-not-allowed"

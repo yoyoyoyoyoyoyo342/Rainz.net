@@ -96,6 +96,8 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
   const { t } = useLanguage();
   const activeUserId = userId || user?.id;
   const [userAllergies, setUserAllergies] = useState<UserAllergy[]>([]);
+  // Use a separate "committed" allergies list for the wheel so drawer interactions don't flash the SVG
+  const [committedAllergies, setCommittedAllergies] = useState<UserAllergy[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [newSeverity, setNewSeverity] = useState("moderate");
   const [customAllergen, setCustomAllergen] = useState("");

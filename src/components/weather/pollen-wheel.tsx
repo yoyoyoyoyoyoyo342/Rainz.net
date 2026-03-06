@@ -96,6 +96,8 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
   const { t } = useLanguage();
   const activeUserId = userId || user?.id;
   const [userAllergies, setUserAllergies] = useState<UserAllergy[]>([]);
+  // Use a separate "committed" allergies list for the wheel so drawer interactions don't flash the SVG
+  const [committedAllergies, setCommittedAllergies] = useState<UserAllergy[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [newSeverity, setNewSeverity] = useState("moderate");
   const [customAllergen, setCustomAllergen] = useState("");
@@ -112,8 +114,18 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
       .select('*')
       .eq('user_id', activeUserId);
     if (error) { console.error('Error fetching allergies:', error); return; }
-    setUserAllergies((data as UserAllergy[]) || []);
+    const allergies = (data as UserAllergy[]) || [];
+    setUserAllergies(allergies);
+    setCommittedAllergies(allergies);
   }, [activeUserId]);
+
+  // When drawer closes, sync committed allergies so wheel updates only then
+  const handleDrawerOpenChange = useCallback((open: boolean) => {
+    setDrawerOpen(open);
+    if (!open) {
+      setCommittedAllergies(userAllergies);
+    }
+  }, [userAllergies]);
 
   useEffect(() => {
     if (activeUserId) fetchUserAllergies();
@@ -257,11 +269,17 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
     return null;
   };
 
+  // For wheel rendering, use committedAllergies to avoid flashing
+  const wheelAllergies = drawerOpen ? committedAllergies : userAllergies;
+
   const isTracked = (pollenType: string) =>
     userAllergies.some(a => a.pollen_type === pollenType);
 
+  const isTrackedForWheel = (pollenType: string) =>
+    wheelAllergies.some(a => a.pollen_type === pollenType);
+
   const getAlertForSegment = (pollenType: string, value: number): boolean => {
-    const allergy = userAllergies.find(a => a.pollen_type === pollenType);
+    const allergy = wheelAllergies.find(a => a.pollen_type === pollenType);
     if (!allergy || value === 0) return false;
     if (allergy.severity === 'severe' && value > 0) return true;
     if (allergy.severity === 'moderate' && value > 2) return true;
@@ -278,7 +296,7 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
   }));
 
   // Add extended segments for tracked extended allergens with data
-  const extendedSegments = userAllergies
+  const extendedSegments = wheelAllergies
     .filter(a => a.pollen_type && !POLLEN_ALLERGENS.some(p => p.pollenType === a.pollen_type))
     .map(a => {
       const extInfo = EXTENDED_ALLERGENS.find(e => e.pollenType === a.pollen_type);
@@ -310,7 +328,7 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
     const start = currentAngle;
     const end = currentAngle + normalizedAngles[i];
     currentAngle = end;
-    const tracked = isTracked(seg.pollenType);
+    const tracked = isTrackedForWheel(seg.pollenType);
     const alert = getAlertForSegment(seg.pollenType, seg.value);
     const hovered = hoveredSegment === seg.pollenType;
     return { seg, start, end, tracked, alert, hovered };
@@ -388,7 +406,7 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
       {/* Legend */}
       <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">
         {segments.map(seg => {
-          const tracked = isTracked(seg.pollenType);
+          const tracked = isTrackedForWheel(seg.pollenType);
           return (
             <div key={seg.pollenType} className={`flex items-center gap-1 ${tracked ? "font-semibold" : ""}`}>
               <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: seg.color }} />
@@ -401,7 +419,7 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
 
       {/* Manage Allergies Drawer */}
       {activeUserId && (
-        <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <Drawer open={drawerOpen} onOpenChange={handleDrawerOpenChange}>
           <DrawerTrigger asChild>
             <Button variant="outline" size="sm" className="w-full rounded-xl">
               <Settings2 className="w-4 h-4 mr-1" />

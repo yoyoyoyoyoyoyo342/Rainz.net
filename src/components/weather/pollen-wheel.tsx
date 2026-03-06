@@ -131,27 +131,33 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
   useEffect(() => {
     if (!latitude || !longitude || !extendedAllergenKeys) return;
     // Only refetch if the set of extended types changed
-    if (extendedFetchedRef.current === extendedAllergenKeys && extendedPollenFetchedRef.current) return;
+    if (extendedFetchedRef.current === extendedAllergenKeys) return;
     extendedFetchedRef.current = extendedAllergenKeys;
-    extendedPollenFetchedRef.current = true;
 
+    let cancelled = false;
     const fetchExtended = async () => {
-      setExtendedLoading(true);
+      // Only show loading if we have no data yet (avoid flash on subsequent adds)
+      if (Object.keys(extendedPollen).length === 0) {
+        setExtendedLoading(true);
+      }
       try {
         const { data, error } = await supabase.functions.invoke('extended-pollen', {
           body: { latitude, longitude },
         });
+        if (cancelled) return;
         if (error) throw error;
         if (data?.pollen) {
-          setExtendedPollen(data.pollen);
+          setExtendedPollen(prev => ({ ...prev, ...data.pollen }));
         }
       } catch (err) {
         console.error('Extended pollen fetch failed:', err);
       } finally {
-        setExtendedLoading(false);
+        if (!cancelled) setExtendedLoading(false);
       }
     };
     fetchExtended();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [extendedAllergenKeys, latitude, longitude]);
 
   const addAllergen = async (allergenName: string, pollenType: string) => {

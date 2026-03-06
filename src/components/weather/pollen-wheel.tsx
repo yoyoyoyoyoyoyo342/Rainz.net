@@ -269,8 +269,14 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
     return null;
   };
 
+  // For wheel rendering, use committedAllergies to avoid flashing
+  const wheelAllergies = drawerOpen ? committedAllergies : userAllergies;
+
   const isTracked = (pollenType: string) =>
     userAllergies.some(a => a.pollen_type === pollenType);
+
+  const isTrackedForWheel = (pollenType: string) =>
+    wheelAllergies.some(a => a.pollen_type === pollenType);
 
   const getAlertForSegment = (pollenType: string, value: number): boolean => {
     const allergy = userAllergies.find(a => a.pollen_type === pollenType);

@@ -328,7 +328,7 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
     const start = currentAngle;
     const end = currentAngle + normalizedAngles[i];
     currentAngle = end;
-    const tracked = isTracked(seg.pollenType);
+    const tracked = isTrackedForWheel(seg.pollenType);
     const alert = getAlertForSegment(seg.pollenType, seg.value);
     const hovered = hoveredSegment === seg.pollenType;
     return { seg, start, end, tracked, alert, hovered };

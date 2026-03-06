@@ -296,7 +296,7 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
   }));
 
   // Add extended segments for tracked extended allergens with data
-  const extendedSegments = userAllergies
+  const extendedSegments = wheelAllergies
     .filter(a => a.pollen_type && !POLLEN_ALLERGENS.some(p => p.pollenType === a.pollen_type))
     .map(a => {
       const extInfo = EXTENDED_ALLERGENS.find(e => e.pollenType === a.pollen_type);

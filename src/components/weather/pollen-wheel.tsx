@@ -114,8 +114,18 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
       .select('*')
       .eq('user_id', activeUserId);
     if (error) { console.error('Error fetching allergies:', error); return; }
-    setUserAllergies((data as UserAllergy[]) || []);
+    const allergies = (data as UserAllergy[]) || [];
+    setUserAllergies(allergies);
+    setCommittedAllergies(allergies);
   }, [activeUserId]);
+
+  // When drawer closes, sync committed allergies so wheel updates only then
+  const handleDrawerOpenChange = useCallback((open: boolean) => {
+    setDrawerOpen(open);
+    if (!open) {
+      setCommittedAllergies(userAllergies);
+    }
+  }, [userAllergies]);
 
   useEffect(() => {
     if (activeUserId) fetchUserAllergies();

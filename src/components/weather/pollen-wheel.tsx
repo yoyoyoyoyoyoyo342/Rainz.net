@@ -406,7 +406,7 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
       {/* Legend */}
       <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">
         {segments.map(seg => {
-          const tracked = isTracked(seg.pollenType);
+          const tracked = isTrackedForWheel(seg.pollenType);
           return (
             <div key={seg.pollenType} className={`flex items-center gap-1 ${tracked ? "font-semibold" : ""}`}>
               <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: seg.color }} />

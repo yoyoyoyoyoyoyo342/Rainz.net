@@ -279,7 +279,7 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
     wheelAllergies.some(a => a.pollen_type === pollenType);
 
   const getAlertForSegment = (pollenType: string, value: number): boolean => {
-    const allergy = userAllergies.find(a => a.pollen_type === pollenType);
+    const allergy = wheelAllergies.find(a => a.pollen_type === pollenType);
     if (!allergy || value === 0) return false;
     if (allergy.severity === 'severe' && value > 0) return true;
     if (allergy.severity === 'moderate' && value > 2) return true;

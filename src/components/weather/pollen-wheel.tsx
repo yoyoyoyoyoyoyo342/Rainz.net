@@ -442,7 +442,7 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
                       <button
                         key={allergen.pollenType}
                         disabled={alreadyTracked}
-                        onClick={() => addAllergen(allergen.name, allergen.pollenType)}
+                        onClick={(e) => { e.stopPropagation(); addAllergen(allergen.name, allergen.pollenType); }}
                         className={`flex items-center gap-2 p-2.5 rounded-xl border text-left text-sm transition-colors ${
                           alreadyTracked
                             ? "border-primary/30 bg-primary/10 opacity-60 cursor-not-allowed"

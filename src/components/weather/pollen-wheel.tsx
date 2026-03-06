@@ -103,9 +103,7 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
   const [extendedPollen, setExtendedPollen] = useState<Record<string, ExtendedPollenEntry>>({});
   const [extendedLoading, setExtendedLoading] = useState(false);
 
-  // Track which extended types we've already fetched for to avoid re-fetching
   const extendedFetchedRef = useRef<string>("");
-  const extendedPollenFetchedRef = useRef(false);
 
   const fetchUserAllergies = useCallback(async () => {
     if (!activeUserId) return;

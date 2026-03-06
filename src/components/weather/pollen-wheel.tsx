@@ -419,7 +419,7 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
 
       {/* Manage Allergies Drawer */}
       {activeUserId && (
-        <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <Drawer open={drawerOpen} onOpenChange={handleDrawerOpenChange}>
           <DrawerTrigger asChild>
             <Button variant="outline" size="sm" className="w-full rounded-xl">
               <Settings2 className="w-4 h-4 mr-1" />

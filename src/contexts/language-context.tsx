@@ -345,6 +345,7 @@ const translations: Record<Language, Record<string, string>> = {
     'language.it': 'Italiano',
     'language.boomer': '👴 Boomer',
   },
+  'da': {
     // Header
     'app.tagline': 'Sigter mod at være den bedste vejr-app.',
     'header.signIn': 'Log Ind',

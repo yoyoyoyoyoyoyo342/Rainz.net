@@ -147,8 +147,8 @@ export const PredictionDialog = ({
             <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20">
               <CardContent className="p-2 text-center">
                 <div className="flex items-center justify-center gap-1 text-blue-600">
-                  <Target className="w-3 h-3" />
-                  <span className="text-xs">Total</span>
+                   <Target className="w-3 h-3" />
+                   <span className="text-xs">{t('predict.total')}</span>
                 </div>
                 <p className="text-lg font-bold">{userStats.totalPredictions}</p>
               </CardContent>

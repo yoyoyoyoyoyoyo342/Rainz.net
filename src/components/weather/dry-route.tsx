@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Navigation, MapPin, Loader2, Umbrella, Clock, Route, Maximize2, Minimize2, Car, Bike, Footprints, Calendar, Navigation2, Square, Share2, CloudRain } from 'lucide-react';
+import { Navigation, MapPin, Loader2, Umbrella, Clock, Route, Maximize2, Minimize2, Car, Bike, Footprints, Calendar, Navigation2, Square, Share2, CloudRain, Camera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { useLazyMap } from '@/hooks/use-lazy-map';
 import { DryRouteNavigation } from './dry-route-navigation';
+import { DryRouteAR } from './dry-route-ar';
 import { DryWindows } from './dry-windows';
 import { UmbrellaScore } from './umbrella-score';
 import { RouteCarbonTracker } from './route-carbon-tracker';

@@ -335,7 +335,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
         {mapMode !== 'rain' && (
           <div className="absolute top-2 left-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-1.5 text-xs font-medium z-[1000] flex items-center gap-1.5 text-foreground">
             {currentConfig.icon}
-            <span>{mapMode === 'temperature' ? 'Temperature Heatmap' : 'Wind Speed Layer'}</span>
+            <span>{mapMode === 'temperature' ? t('map.tempHeatmap') : t('map.windLayer')}</span>
           </div>
         )}
 

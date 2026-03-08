@@ -231,7 +231,7 @@ export const PredictionDialog = ({
             <div className="flex items-center justify-between">
               <h3 className="font-semibold flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-primary" />
-                Leaderboard
+                {t('predict.leaderboard')}
               </h3>
               <Select value={leaderboardType} onValueChange={setLeaderboardType}>
                 <SelectTrigger className="w-[140px] h-8">

@@ -17,7 +17,7 @@ import { Footer } from "@/components/ui/footer";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { PWAInstallPopup } from "@/components/ui/pwa-install-popup";
 import { useAnalytics } from "@/hooks/use-analytics";
-import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 
 // Critical components - load immediately
 import Weather from "./pages/Weather";
@@ -62,8 +62,6 @@ function AnalyticsTracker() {
 }
 
 function useOAuthErrorToast() {
-  const { toast } = useToast();
-
   useEffect(() => {
     const url = new URL(window.location.href);
 
@@ -79,9 +77,7 @@ function useOAuthErrorToast() {
 
     if (!error) return;
 
-    toast({
-      variant: "destructive",
-      title: "Google sign-in failed",
+    sonnerToast.error("Google sign-in failed", {
       description: description ? decodeURIComponent(description) : error,
     });
 
@@ -90,7 +86,7 @@ function useOAuthErrorToast() {
     url.searchParams.delete("error_code");
     url.searchParams.delete("error_description");
     window.history.replaceState({}, document.title, url.pathname + url.search);
-  }, [toast]);
+  }, []);
 }
 
 // Prefetch saved locations for faster loading

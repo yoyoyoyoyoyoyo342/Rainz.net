@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, AlertTriangle } from 'lucide-react';
+import { useFeatureFlags } from '@/hooks/use-feature-flags';
+import { toast } from 'sonner';
 
-interface FeatureFlag {
+interface FeatureFlagDef {
   id: string;
   label: string;
   description: string;
@@ -15,7 +14,7 @@ interface FeatureFlag {
   category: 'core' | 'social' | 'games' | 'experimental';
 }
 
-const FEATURE_FLAGS: FeatureFlag[] = [
+const FEATURE_FLAGS: FeatureFlagDef[] = [
   { id: 'maintenance_mode', label: 'Maintenance Mode', description: 'Show maintenance banner to all users', key: 'maintenance_mode', defaultValue: false, category: 'core' },
   { id: 'predictions_enabled', label: 'Predictions', description: 'Allow users to submit weather predictions', key: 'predictions_enabled', defaultValue: true, category: 'core' },
   { id: 'leaderboard_enabled', label: 'Leaderboard', description: 'Show the global leaderboard', key: 'leaderboard_enabled', defaultValue: true, category: 'core' },
@@ -24,7 +23,6 @@ const FEATURE_FLAGS: FeatureFlag[] = [
   { id: 'reactions_enabled', label: 'Weather Reactions', description: 'Let users post weather reaction emojis', key: 'reactions_enabled', defaultValue: true, category: 'social' },
   { id: 'games_enabled', label: 'Weather Games', description: 'Enable mini-games (Rain Dodge, etc.)', key: 'games_enabled', defaultValue: true, category: 'games' },
   { id: 'trivia_enabled', label: 'Daily Trivia', description: 'Show the daily weather trivia question', key: 'trivia_enabled', defaultValue: true, category: 'games' },
-  { id: 'bingo_enabled', label: 'Weather Bingo', description: 'Enable the daily weather bingo card', key: 'bingo_enabled', defaultValue: true, category: 'games' },
   { id: 'ai_companion_enabled', label: 'AI Companion', description: 'Enable PAI weather chat assistant', key: 'ai_companion_enabled', defaultValue: true, category: 'experimental' },
   { id: 'spin_wheel_enabled', label: 'Daily Spin Wheel', description: 'Enable the daily free spin reward', key: 'spin_wheel_enabled', defaultValue: true, category: 'games' },
   { id: 'explore_enabled', label: 'Explore Section', description: 'Show the Explore Rainz button and sheet', key: 'explore_enabled', defaultValue: true, category: 'core' },
@@ -37,53 +35,25 @@ const CATEGORY_LABELS: Record<string, string> = {
   experimental: '🧪 Experimental',
 };
 
-const STORAGE_KEY = 'rainz_feature_flags';
-
 export function AdminFeatureFlags() {
-  const [flags, setFlags] = useState<Record<string, boolean>>({});
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const { flags, isLoading, toggleFlag } = useFeatureFlags();
 
-  useEffect(() => {
-    loadFlags();
-  }, []);
-
-  const loadFlags = () => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      const parsed = stored ? JSON.parse(stored) : {};
-      // Merge with defaults
-      const merged: Record<string, boolean> = {};
-      FEATURE_FLAGS.forEach((f) => {
-        merged[f.key] = parsed[f.key] !== undefined ? parsed[f.key] : f.defaultValue;
-      });
-      setFlags(merged);
-    } catch {
-      const defaults: Record<string, boolean> = {};
-      FEATURE_FLAGS.forEach((f) => { defaults[f.key] = f.defaultValue; });
-      setFlags(defaults);
-    } finally {
-      setLoading(false);
+  const handleToggle = async (key: string) => {
+    const flag = FEATURE_FLAGS.find(f => f.key === key);
+    const success = await toggleFlag(key);
+    if (success) {
+      const newValue = !(flags[key] ?? true);
+      toast.success(`${flag?.label || key} ${newValue ? 'enabled' : 'disabled'}`);
+    } else {
+      toast.error('Failed to update flag');
     }
   };
 
-  const toggleFlag = (key: string) => {
-    const newFlags = { ...flags, [key]: !flags[key] };
-    setFlags(newFlags);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newFlags));
-
-    const flag = FEATURE_FLAGS.find((f) => f.key === key);
-    toast({
-      title: `${flag?.label || key} ${newFlags[key] ? 'enabled' : 'disabled'}`,
-      description: newFlags[key] ? 'Feature is now active' : 'Feature is now hidden',
-    });
-  };
-
-  if (loading) {
+  if (isLoading) {
     return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
   }
 
-  const categories = [...new Set(FEATURE_FLAGS.map((f) => f.category))];
+  const categories = [...new Set(FEATURE_FLAGS.map(f => f.category))];
 
   return (
     <div className="space-y-5">
@@ -94,11 +64,11 @@ export function AdminFeatureFlags() {
         </div>
       )}
 
-      {categories.map((cat) => (
+      {categories.map(cat => (
         <div key={cat} className="space-y-2">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{CATEGORY_LABELS[cat] || cat}</h3>
           <div className="space-y-1">
-            {FEATURE_FLAGS.filter((f) => f.category === cat).map((flag) => (
+            {FEATURE_FLAGS.filter(f => f.category === cat).map(flag => (
               <div
                 key={flag.id}
                 className="flex items-center justify-between p-3 rounded-xl border border-border/30 bg-card/50 hover:border-border/50 transition-colors"
@@ -114,8 +84,8 @@ export function AdminFeatureFlags() {
                 </div>
                 <Switch
                   id={flag.id}
-                  checked={flags[flag.key]}
-                  onCheckedChange={() => toggleFlag(flag.key)}
+                  checked={flags[flag.key] ?? flag.defaultValue}
+                  onCheckedChange={() => handleToggle(flag.key)}
                 />
               </div>
             ))}
@@ -124,20 +94,8 @@ export function AdminFeatureFlags() {
       ))}
 
       <p className="text-[10px] text-muted-foreground text-center pt-2">
-        Feature flags are stored locally. Changes take effect on page reload for users.
+        Feature flags are stored in the database and apply to all users instantly.
       </p>
     </div>
   );
-}
-
-// Export helper to check flags from other components
-export function getFeatureFlag(key: string, defaultValue = true): boolean {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return defaultValue;
-    const parsed = JSON.parse(stored);
-    return parsed[key] !== undefined ? parsed[key] : defaultValue;
-  } catch {
-    return defaultValue;
-  }
 }

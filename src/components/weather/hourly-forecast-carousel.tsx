@@ -16,6 +16,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HourlyForecast as HourlyData } from "@/types/weather";
 import { formatTime } from "@/lib/time-format";
+import { useLanguage } from "@/contexts/language-context";
 
 interface HourlyForecastCarouselProps {
   hourlyData: HourlyData[];

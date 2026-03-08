@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Plus, Droplets, Sun, Cloud, Snowflake, Zap } from 'lucide-react';
+import { MapPin, Plus, Droplets, Sun, Cloud, Snowflake, Zap, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { useLazyMap } from '@/hooks/use-lazy-map';
 
 interface LiveWeatherMapProps {
   latitude: number;

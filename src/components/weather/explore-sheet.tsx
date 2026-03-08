@@ -117,11 +117,6 @@ export function ExploreSheet({
             isImperial={isImperial}
           />
 
-          {/* Weather Bingo */}
-          <WeatherBingo
-            currentWeather={currentWeather}
-            isImperial={isImperial}
-          />
 
           {/* Daily Trivia */}
           <WeatherTrivia />

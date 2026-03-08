@@ -17,7 +17,7 @@ import { Footer } from "@/components/ui/footer";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { PWAInstallPopup } from "@/components/ui/pwa-install-popup";
 import { useAnalytics } from "@/hooks/use-analytics";
-import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 
 // Critical components - load immediately
 import Weather from "./pages/Weather";

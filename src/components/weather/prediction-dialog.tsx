@@ -212,7 +212,7 @@ export const PredictionDialog = ({
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-2">
-                  🔥 Use Confidence Betting to multiply your rewards (and risks)! Up to 2.5x with All-In.
+                  {t('predict.confidenceTip')}
                 </p>
               </CardContent>
             </Card>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { MapPin, Play, Pause, SkipBack, SkipForward, Map, Thermometer, Wind, CloudRain } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';

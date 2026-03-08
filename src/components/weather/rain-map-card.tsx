@@ -378,7 +378,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
 
       {mapMode !== 'rain' && (
         <div className="p-4 border-t border-border/50 flex items-center gap-3">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Opacity</span>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">{t('map.opacity')}</span>
           <Slider value={[opacity * 100]} min={20} max={100} step={10} onValueChange={(v) => setOpacity(v[0] / 100)} className="flex-1" />
         </div>
       )}

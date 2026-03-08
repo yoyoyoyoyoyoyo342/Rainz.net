@@ -424,6 +424,16 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       }
     } catch { /* user cancelled */ }
   };
+  // Re-fetch routes when transport mode changes
+  const prevTransportRef = useRef(transportMode);
+  useEffect(() => {
+    if (prevTransportRef.current !== transportMode && routes.length > 0 && fromCoords && toCoords) {
+      prevTransportRef.current = transportMode;
+      findRoutes();
+    } else {
+      prevTransportRef.current = transportMode;
+    }
+  }, [transportMode]);
 
   const controlsContent = (
     <div className="space-y-3">

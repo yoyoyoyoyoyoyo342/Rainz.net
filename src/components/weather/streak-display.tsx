@@ -1,4 +1,5 @@
 import { Flame, Trophy, Calendar } from "lucide-react";
+import { useLanguage } from "@/contexts/language-context";
 import { useUserStreaks } from "@/hooks/use-user-streaks";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";

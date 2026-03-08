@@ -792,7 +792,9 @@ export default function WeatherPage() {
               <FeatureIdeasCard />
 
               {/* Explore More button */}
-              <ExploreButton onClick={() => setExploreOpen(true)} />
+              {isFeatureEnabled('explore_enabled') && (
+                <ExploreButton onClick={() => setExploreOpen(true)} />
+              )}
 
               {/* Explore Bottom Sheet */}
               <ExploreSheet

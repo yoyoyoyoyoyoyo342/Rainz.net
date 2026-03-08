@@ -436,7 +436,20 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       </Button>
 
       {/* Map */}
-      <div ref={mapRef} className={`w-full rounded-xl overflow-hidden border border-border/30 ${isFullscreen ? 'h-[50vh]' : 'h-56'}`} />
+      <div className="relative">
+        <div ref={mapRef} className={`w-full rounded-xl overflow-hidden border border-border/30 ${isFullscreen ? 'h-[50vh]' : 'h-56'}`} />
+        <button
+          onClick={() => setShowRadar(!showRadar)}
+          className={`absolute top-2 right-2 z-[1000] flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all ${
+            showRadar
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'bg-background/80 text-muted-foreground border-border/50 hover:border-primary/40'
+          }`}
+        >
+          <CloudRain className="w-3 h-3" />
+          Radar
+        </button>
+      </div>
 
       {/* Rain timeline bar */}
       {routes.length > 0 && routes[bestRouteIdx]?.rainTimeline?.length > 0 && (

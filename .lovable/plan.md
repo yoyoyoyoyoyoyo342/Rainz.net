@@ -1,53 +1,55 @@
-# DryRoutes — Completed Implementation
 
-## What was done
 
-### 1. Renamed "Rain-Free Route Planner" → **DryRoutes** (by Rainz)
+## New Rainz DryRoutes Feature Ideas
 
-### 2. Performance: Fixed Map Lag
-- Created `src/hooks/use-lazy-map.tsx` — IntersectionObserver-based lazy mount hook
-- All 3 map components (DryRoute, RainMapCard, LiveWeatherMap) now:
-  - Lazy-load Leaflet JS/CSS via dynamic `import()`
-  - Only initialize when scrolled into viewport
-  - Use `preferCanvas: true` for reduced DOM overhead
+Based on the current implementation (OSRM routing, Open-Meteo rain sampling, turn-by-turn nav, AR mode, departure picker, transport modes), here are fresh features that would differentiate DryRoutes:
 
-### 3. Moved DryRoute to Main Weather Page
-- Removed from `explore-sheet.tsx`
-- Added as standalone card in `Weather.tsx` (before Feature Ideas)
-- Larger default map (h-56)
+---
 
-### 4. Fullscreen Mode
-- Expand button (⛶) on card header
-- Opens fullscreen Dialog overlay with full routing UI
+### 1. Umbrella Score Badge & Route Rating
+After calculating a route, assign it a branded "Umbrella Rating" (1-5 umbrellas). Users see at a glance: 1 umbrella = bone dry, 5 = bring a raincoat. This becomes shareable -- "My commute today is a 2-umbrella route."
 
-### 5. "Go" Navigation Mode
-- Turn-by-turn via `navigator.geolocation.watchPosition()`
-- Blue GPS dot on map, auto-centers
-- Step-by-step instructions with maneuver icons
-- Rain score + ETA in status bar
-- Auto-advance to next step when within 30m
+### 2. Rain Alerts During Navigation
+While in "Go" mode, periodically re-sample rain probability along the remaining route. If conditions worsen (e.g. sudden storm approaching), push an in-app alert: "Rain incoming in 15 min -- consider sheltering at [nearby point]." Uses existing Open-Meteo sampling logic on a timer.
 
-### 6. AR Navigation
-- Camera overlay with compass-based directional arrow
-- HUD showing current instruction, rain probability, ETA
-- Reuses proven device orientation pattern from AR overlay
+### 3. Saved Routes & Favorites
+Let users save frequent routes (e.g. "Home to Work") to their Supabase profile. One tap to re-check today's rain score for a saved route without re-entering addresses. Could show a daily morning widget: "Your commute today: 12% rain."
 
-### 7. Additional Features
-- **Transport modes**: Drive / Bike / Walk (OSRM profiles)
-- **Departure time picker**: Shifts rain forecast window
-- **Rain timeline bar**: Visual per-segment rain probability
-- **Share route**: Native share or clipboard
-- **OSRM steps=true**: Full turn-by-turn instructions
+### 4. Route History & Rain Accuracy Tracking
+Store past routes with their predicted vs actual rain scores. Over time, show users "DryRoutes was 87% accurate this month." Builds trust and gamification -- ties into the existing prediction accuracy system.
 
-## Files
-| File | Action |
-|------|--------|
-| `src/hooks/use-lazy-map.tsx` | NEW — IntersectionObserver hook |
-| `src/components/weather/dry-route.tsx` | NEW — Main DryRoute component |
-| `src/components/weather/dry-route-navigation.tsx` | NEW — Turn-by-turn panel |
-| `src/components/weather/dry-route-ar.tsx` | NEW — AR navigation overlay |
-| `src/components/weather/explore-sheet.tsx` | Removed RainRoutePlanner |
-| `src/pages/Weather.tsx` | Added DryRoute card |
-| `src/components/weather/rain-map-card.tsx` | Lazy map loading |
-| `src/components/weather/live-weather-map.tsx` | Lazy map loading |
-| `src/components/weather/rain-route-planner.tsx` | DELETED |
+### 5. Multi-Stop Routes (Waypoints)
+Allow users to add intermediate stops (e.g. Home -> Coffee Shop -> Office). OSRM supports waypoints natively. Show per-segment rain scores so users know which leg is wettest.
+
+### 6. "Dry Windows" -- Best Time to Leave
+Instead of the user picking a departure time, auto-calculate the optimal departure window. Sample rain probability for the next 12 hours at origin, destination, and midpoints, then suggest: "Leave between 2pm-3pm for the driest trip (8% rain)."
+
+### 7. Voice Navigation (Web Speech API)
+Add spoken turn-by-turn directions during "Go" mode using `window.speechSynthesis`. Announce turns, rain warnings, and ETA updates. Toggle on/off in navigation controls.
+
+### 8. Live Rain Radar Overlay on Route Map
+Toggle the OWM precipitation tile layer onto the DryRoutes map (reuse existing `owm-tile-proxy` edge function). Users can visually see rain cells approaching their route in real time.
+
+### 9. Group Route Planning
+"Planning a walk with friends?" Let users share a route link. Others open it and see the same route + live rain score. Could use a simple shareable URL with encoded from/to coordinates.
+
+### 10. Carbon & Calorie Tracker
+For cycling/walking modes, show estimated calories burned. For driving, show estimated CO2. Small motivational nudge: "Walk this route and burn ~180 cal while staying dry."
+
+---
+
+### Recommended Priority Order
+
+1. **Dry Windows** (unique differentiator, high value, uses existing infra)
+2. **Saved Routes** (retention feature, needs Supabase table)
+3. **Rain Alerts During Navigation** (safety, uses existing sampling)
+4. **Voice Navigation** (simple Web Speech API addition)
+5. **Live Rain Radar Overlay** (visual wow factor, reuses owm-tile-proxy)
+6. **Umbrella Score Badge** (branding, shareable)
+7. **Multi-Stop Routes** (power user feature)
+8. **Route History & Accuracy** (long-term trust building)
+9. **Group Route Planning** (social feature)
+10. **Carbon & Calorie Tracker** (nice-to-have)
+
+Which features would you like to implement?
+

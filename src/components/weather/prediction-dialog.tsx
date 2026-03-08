@@ -196,7 +196,7 @@ export const PredictionDialog = ({
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-green-500/20 text-green-700 text-[10px]">+300</Badge>
-                    <span>All 3 correct (1x)</span>
+                    <span>{t('predict.allCorrect')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-blue-500/20 text-blue-700 text-[10px]">+200</Badge>

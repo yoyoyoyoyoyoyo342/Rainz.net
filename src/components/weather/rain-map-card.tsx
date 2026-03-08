@@ -79,10 +79,11 @@ function createWindArrowOverlay(map: L.Map) {
   canvas.style.top = '0';
   canvas.style.left = '0';
   canvas.style.pointerEvents = 'none';
-  canvas.style.zIndex = '450';
+  canvas.style.zIndex = '650';
 
   const pane = map.getPane('overlayPane');
-  if (pane) pane.appendChild(canvas);
+  if (!pane) return { remove() {} };
+  pane.appendChild(canvas);
 
   let animFrame: number | null = null;
 

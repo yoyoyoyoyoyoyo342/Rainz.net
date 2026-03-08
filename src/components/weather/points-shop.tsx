@@ -28,7 +28,7 @@ interface ShopItem {
   description: string;
   price: number;
   icon: React.ReactNode;
-  type: "streak_freeze" | "rainz_plus_trial" | "double_points" | "prediction_boost" | "profile_badge";
+  type: "streak_freeze" | "double_points" | "prediction_boost" | "profile_badge";
   maxQuantity?: number;
   duration?: string;
 }

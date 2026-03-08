@@ -69,7 +69,6 @@ export const MysteryBoxReveal = ({ isOpen, onClose, reward }: MysteryBoxRevealPr
         // Trigger confetti with reward-themed colors
         const colors = reward.type === "shop_points" ? ['#F59E0B', '#D97706', '#FBBF24'] 
           : reward.type === "streak_freeze" ? ['#3B82F6', '#2563EB', '#60A5FA']
-          : reward.type === "premium_trial" ? ['#EAB308', '#CA8A04', '#FDE047']
           : ['#A855F7', '#9333EA', '#C084FC'];
         
         confetti({

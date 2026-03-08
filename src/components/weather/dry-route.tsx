@@ -331,7 +331,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     setLoading(false);
   };
 
-  const formatDuration_placeholder_removed = null; // drawRoutes moved above
+  
 
   const formatDuration = (seconds: number) => {
     const h = Math.floor(seconds / 3600);

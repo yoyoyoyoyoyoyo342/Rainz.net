@@ -614,6 +614,23 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
             </button>
           ))}
 
+          {/* ETA banner */}
+          {routes[bestRouteIdx] && (() => {
+            const eta = new Date(Date.now() + routes[bestRouteIdx].duration * 1000);
+            const etaStr = eta.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return (
+              <div className="flex items-center justify-between bg-primary/10 border border-primary/20 rounded-xl px-3 py-2.5 text-xs">
+                <div className="flex items-center gap-2 text-primary font-semibold">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>ETA: {etaStr}</span>
+                </div>
+                <span className="text-muted-foreground">
+                  {formatDuration(routes[bestRouteIdx].duration)} · {formatDistance(routes[bestRouteIdx].distance)}
+                </span>
+              </div>
+            );
+          })()}
+
           {/* Action buttons */}
           <div className="flex gap-2">
             <Button

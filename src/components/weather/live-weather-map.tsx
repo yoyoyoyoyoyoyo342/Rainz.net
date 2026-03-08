@@ -118,35 +118,43 @@ export function LiveWeatherMap({ latitude, longitude, locationName, userId }: Li
   };
 
   return (
-    <Card className="glass-card border-border/30">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-primary" />
-          Live Weather Map
-          <span className="text-xs text-muted-foreground ml-auto">{reactions.length} pins</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <div ref={mapRef} className="w-full h-48 rounded-xl overflow-hidden border border-border/30" />
-        
-        {showPinSelect ? (
-          <div className="flex flex-wrap gap-1.5">
-            {WEATHER_PINS.map((pin) => (
-              <button
-                key={pin.emoji}
-                onClick={() => dropPin(pin.emoji, pin.label)}
-                className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all"
-              >
-                <span>{pin.emoji}</span> {pin.label}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <Button size="sm" variant="outline" onClick={() => setShowPinSelect(true)} className="w-full text-xs">
-            <Plus className="w-3.5 h-3.5 mr-1.5" /> Drop Weather Pin
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+    <div ref={containerRef}>
+      <Card className="glass-card border-border/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-primary" />
+            Live Weather Map
+            <span className="text-xs text-muted-foreground ml-auto">{reactions.length} pins</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {isVisible && leafletLoaded ? (
+            <div ref={mapRef} className="w-full h-48 rounded-xl overflow-hidden border border-border/30" />
+          ) : (
+            <div className="w-full h-48 rounded-xl bg-muted/30 flex items-center justify-center border border-border/30">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
+          )}
+          
+          {showPinSelect ? (
+            <div className="flex flex-wrap gap-1.5">
+              {WEATHER_PINS.map((pin) => (
+                <button
+                  key={pin.emoji}
+                  onClick={() => dropPin(pin.emoji, pin.label)}
+                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all"
+                >
+                  <span>{pin.emoji}</span> {pin.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <Button size="sm" variant="outline" onClick={() => setShowPinSelect(true)} className="w-full text-xs">
+              <Plus className="w-3.5 h-3.5 mr-1.5" /> Drop Weather Pin
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

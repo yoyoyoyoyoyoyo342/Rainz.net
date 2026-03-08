@@ -309,7 +309,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
                   : 'bg-muted/50 text-muted-foreground border-border/50 hover:border-primary/50'
               }`}
             >
-              {MODE_CONFIG[mode].label}
+              {t(`map.${mode === 'temperature' ? 'temp' : mode}`)}
             </button>
           ))}
         </div>

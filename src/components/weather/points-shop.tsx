@@ -44,15 +44,6 @@ const SHOP_ITEMS: ShopItem[] = [
     maxQuantity: 5,
   },
   {
-    id: "rainz_plus_3day",
-    name: "Rainz+ Trial",
-    description: "Unlock all premium features for 3 days",
-    price: 100,
-    icon: <Crown className="w-5 h-5 text-yellow-400" />,
-    type: "rainz_plus_trial",
-    duration: "3 days",
-  },
-  {
     id: "double_points",
     name: "Double Points",
     description: "Earn 2x points on your next prediction",

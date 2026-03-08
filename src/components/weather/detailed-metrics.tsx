@@ -84,7 +84,7 @@ export function DetailedMetrics({
                     <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
                       <div className="flex items-center gap-2">
                         <Sunset className="w-4 h-4 text-orange-500" />
-                        <span className="text-xs text-muted-foreground">Sunset</span>
+                        <span className="text-xs text-muted-foreground">{t('card.sunset')}</span>
                       </div>
                       <span className="font-semibold text-sm">{formatTime(currentWeather.sunset, is24Hour)}</span>
                     </div>

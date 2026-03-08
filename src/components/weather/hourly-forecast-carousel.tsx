@@ -41,6 +41,7 @@ interface HourDetailDialogProps {
 }
 
 function HourDetailDialog({ hour, isOpen, onClose, isImperial, is24Hour }: HourDetailDialogProps) {
+  const { t } = useLanguage();
   if (!hour) return null;
 
   const temp = isImperial ? hour.temperature : Math.round((hour.temperature - 32) * 5 / 9);

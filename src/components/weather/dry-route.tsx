@@ -80,8 +80,13 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   }, [isVisible, leafletLoaded]);
 
   // Init map when leaflet ready and container available
-  useEffect(() => {
-    if (!leafletLoaded || !mapRef.current || mapInstance.current) return;
+  const initMap = useCallback(() => {
+    if (!leafletLoaded || !mapRef.current) return;
+    // Destroy previous instance if exists
+    if (mapInstance.current) {
+      try { mapInstance.current.remove(); } catch {}
+      mapInstance.current = null;
+    }
     const L = LRef.current;
     const map = L.map(mapRef.current, {
       zoomControl: false,
@@ -91,9 +96,41 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
     mapInstance.current = map;
+    radarLayerRef.current = null;
 
-    return () => { map.remove(); mapInstance.current = null; };
-  }, [leafletLoaded, latitude, longitude]);
+    // Re-draw routes if we have them
+    if (routes.length > 0) {
+      setTimeout(() => drawRoutes(routes, bestRouteIdx), 100);
+    }
+    // Re-apply radar if enabled
+    if (showRadar) {
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'ohwtbkudpkfbakynikyj';
+      radarLayerRef.current = L.tileLayer(
+        `https://${projectId}.supabase.co/functions/v1/owm-tile-proxy?layer=precipitation_new&z={z}&x={x}&y={y}`,
+        { opacity: 0.5, maxZoom: 18 }
+      ).addTo(map);
+    }
+  }, [leafletLoaded, latitude, longitude, routes, bestRouteIdx, showRadar, drawRoutes]);
+
+  // Initialize map when leaflet loads
+  useEffect(() => {
+    initMap();
+    return () => {
+      if (mapInstance.current) {
+        try { mapInstance.current.remove(); } catch {}
+        mapInstance.current = null;
+      }
+    };
+  }, [leafletLoaded]);
+
+  // Re-init map when fullscreen toggles (DOM container changes)
+  useEffect(() => {
+    // Small delay to let the Dialog DOM mount/unmount
+    const timer = setTimeout(() => {
+      initMap();
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [isFullscreen]);
 
   // Resize map on fullscreen toggle
   useEffect(() => {

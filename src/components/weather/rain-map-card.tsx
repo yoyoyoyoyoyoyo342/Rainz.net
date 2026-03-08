@@ -257,7 +257,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
 
       // Add wind direction arrows on wind mode
       if (mapMode === 'wind') {
-        windArrowRef.current = createWindArrowOverlay(mapRef.current, latitude, longitude);
+        windArrowRef.current = createWindArrowOverlay(mapRef.current);
       }
     }
   }, [currentFrameIndex, radarFrames, opacity, mapMode, latitude, longitude]);

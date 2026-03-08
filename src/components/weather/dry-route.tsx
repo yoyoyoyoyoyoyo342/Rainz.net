@@ -151,7 +151,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
         { opacity: 0.5, maxZoom: 18 }
       ).addTo(map);
     }
-  }, [leafletLoaded, latitude, longitude, routes, bestRouteIdx, showRadar, drawRoutes]);
+  }, [leafletLoaded, latitude, longitude, routes, bestRouteIdx, showRadar, drawRoutes, isFullscreen]);
 
   // Initialize map when leaflet loads
   useEffect(() => {

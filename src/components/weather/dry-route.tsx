@@ -634,40 +634,82 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     </Card>
   );
 
+  // Fullscreen portal content
+  const fullscreenContent = (
+    <div
+      className="fixed inset-0 z-50 bg-background animate-in fade-in duration-200"
+      style={{ overflow: 'hidden' }}
+    >
+      {/* Fixed header */}
+      <div
+        className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 border-b border-border/50 bg-background"
+        style={{ height: '52px' }}
+      >
+        <div className="flex items-center gap-2">
+          <Navigation className="w-4 h-4 text-primary" />
+          <span className="font-semibold text-sm">Rainz DryRoutes</span>
+        </div>
+        <button
+          onClick={() => { setIsFullscreen(false); if (navigating) stopNavigation(); }}
+          className="p-1.5 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+        >
+          <Minimize2 className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Map — fixed position below header */}
+      <div
+        className="absolute left-0 right-0"
+        style={{ top: '52px', height: '40vh' }}
+      >
+        <div ref={mapRef} className="w-full h-full" />
+        <button
+          onClick={() => setShowRadar(!showRadar)}
+          className={`absolute top-2 right-2 z-[1000] flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all ${
+            showRadar
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'bg-background/80 text-muted-foreground border-border/50 hover:border-primary/40'
+          }`}
+        >
+          <CloudRain className="w-3 h-3" />
+          Radar
+        </button>
+      </div>
+
+      {/* Scrollable content area below map */}
+      <div
+        className="absolute left-0 right-0 bottom-0 overflow-y-scroll"
+        style={{
+          top: 'calc(52px + 40vh)',
+          WebkitOverflowScrolling: 'touch',
+          touchAction: 'pan-y',
+          overscrollBehavior: 'contain',
+        }}
+      >
+        <div className="p-4 pb-12 space-y-3">
+          {controlsContent}
+
+          {/* Action buttons in fullscreen */}
+          {routes.length > 0 && (
+            <div className="flex gap-2">
+              <Button size="sm" className="flex-1 text-xs" onClick={startNavigation}>
+                <Navigation2 className="w-3.5 h-3.5 mr-1.5" /> Go
+              </Button>
+              <Button size="sm" variant="outline" className="text-xs" onClick={shareRoute}>
+                <Share2 className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          )}
+
+          {resultsContent}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div ref={containerRef} className="mb-4">
-      {isFullscreen ? createPortal(
-        <div className="fixed inset-0 z-50 bg-background flex flex-col animate-in fade-in duration-200">
-          {/* Header — fixed */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 shrink-0">
-            <div className="flex items-center gap-2">
-              <Navigation className="w-4 h-4 text-primary" />
-              <span className="font-semibold text-sm">Rainz DryRoutes</span>
-            </div>
-            <button
-              onClick={() => { setIsFullscreen(false); if (navigating) stopNavigation(); }}
-              className="p-1.5 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground"
-            >
-              <Minimize2 className="w-4 h-4" />
-            </button>
-          </div>
-          {/* Map — fixed height, non-scrollable, Leaflet owns touch here */}
-          <div className="shrink-0">
-            {mapContent}
-          </div>
-          {/* Controls + Results — independently scrollable, no Leaflet interference */}
-          <div
-            className="flex-1 overflow-y-auto overscroll-contain p-4 pb-8"
-            style={{ WebkitOverflowScrolling: 'touch' }}
-          >
-            <div className="space-y-3">
-              {controlsContent}
-              {resultsContent}
-            </div>
-          </div>
-        </div>,
-        document.body
-      ) : cardContent}
+      {isFullscreen ? createPortal(fullscreenContent, document.body) : cardContent}
     </div>
   );
 }

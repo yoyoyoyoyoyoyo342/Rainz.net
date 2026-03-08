@@ -674,8 +674,7 @@ export const PointsShop = () => {
             const { price: currentPrice, isOnSale, originalPrice } = getItemPrice(item.id, item.price);
             const canAfford = shopPoints >= currentPrice;
             const atMax = item.type === "streak_freeze" && inventory.streak_freeze >= 5;
-            const hasActive = item.type === "rainz_plus_trial" && (isSubscribed || !!activeTrial);
-            const isDisabled = !canAfford || atMax || hasActive;
+            const isDisabled = !canAfford || atMax;
 
             return (
               <Card key={item.id} className={`transition-all ${isOnSale ? "border-green-500/50 bg-green-500/5" : ""} ${isDisabled ? "opacity-60" : "hover:border-primary/50"}`}>

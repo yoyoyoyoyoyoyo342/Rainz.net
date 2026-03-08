@@ -126,7 +126,7 @@ export function TenDayForecast({ dailyForecast, weatherSources, hourlyForecast, 
                   <div className={`rounded-xl ${isCompact ? 'p-2' : 'p-3'} bg-muted/20 border border-border/30`}>
                     <div className={`flex items-center gap-2 ${isCompact ? 'mb-2' : 'mb-3'}`}>
                       <Clock className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} text-primary`} />
-                      <span className={`${textSize} font-medium`}>Hourly Breakdown</span>
+                      <span className={`${textSize} font-medium`}>{t('card.hourlyBreakdown')}</span>
                     </div>
                     <div className={`grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 ${isCompact ? 'gap-1' : 'gap-2'}`}>
                       {getHourlyForDay(index).map((hour, hourIndex) => (

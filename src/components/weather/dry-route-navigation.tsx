@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Navigation2, Square, Umbrella, Clock, Camera, ArrowUp, ArrowLeft, ArrowRight, CornerUpLeft, CornerUpRight } from 'lucide-react';
+import { Navigation2, Square, Umbrella, Clock, ArrowUp, ArrowLeft, ArrowRight, CornerUpLeft, CornerUpRight, Volume2, VolumeX, AlertTriangle } from 'lucide-react';
 import type { RouteResult, RouteStep } from './dry-route';
+import { toast } from 'sonner';
 
 interface DryRouteNavigationProps {
   route: RouteResult;
@@ -25,9 +26,12 @@ export function DryRouteNavigation({ route, isImperial, mapInstance, L, onStop }
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [distanceToNext, setDistanceToNext] = useState<number | null>(null);
-  const [showAR, setShowAR] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [rainAlert, setRainAlert] = useState<string | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const userMarkerRef = useRef<any>(null);
+  const lastSpokenStepRef = useRef(-1);
+  const rainCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const formatDist = (meters: number) => {
     if (isImperial) {
@@ -43,6 +47,71 @@ export function DryRouteNavigation({ route, isImperial, mapInstance, L, onStop }
     const m = Math.round((seconds % 3600) / 60);
     return h > 0 ? `${h}h ${m}m` : `${m} min`;
   };
+
+  // Voice navigation
+  const speak = useCallback((text: string) => {
+    if (!voiceEnabled || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
+  }, [voiceEnabled]);
+
+  // Announce step changes
+  useEffect(() => {
+    if (currentStepIdx === lastSpokenStepRef.current) return;
+    lastSpokenStepRef.current = currentStepIdx;
+    const step = route.steps[currentStepIdx];
+    if (step) {
+      const dist = formatDist(step.distance);
+      speak(`In ${dist}, ${step.instruction}`);
+    }
+  }, [currentStepIdx, route.steps, speak]);
+
+  // Rain alerts - check every 2 minutes
+  useEffect(() => {
+    const checkRainAhead = async () => {
+      if (!userPosition) return;
+      try {
+        const [lat, lon] = userPosition;
+        const res = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=precipitation_probability&forecast_hours=2&timezone=auto`
+        );
+        const data = await res.json();
+        const probs = data?.hourly?.precipitation_probability || [];
+        const maxProb = Math.max(...probs, 0);
+
+        if (maxProb > 70) {
+          const msg = `⚠️ Heavy rain ahead (${maxProb}%) — consider sheltering`;
+          setRainAlert(msg);
+          speak(`Warning: heavy rain expected ahead, ${maxProb} percent probability`);
+          toast.warning(msg);
+        } else if (maxProb > 40) {
+          const msg = `🌧 Rain possible ahead (${maxProb}%)`;
+          setRainAlert(msg);
+        } else {
+          setRainAlert(null);
+        }
+      } catch {
+        // silent fail
+      }
+    };
+
+    checkRainAhead();
+    rainCheckIntervalRef.current = setInterval(checkRainAhead, 120000); // 2 min
+
+    return () => {
+      if (rainCheckIntervalRef.current) clearInterval(rainCheckIntervalRef.current);
+    };
+  }, [userPosition, speak]);
+
+  // Cleanup voice on unmount
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis?.cancel();
+    };
+  }, []);
 
   // Start watching position
   useEffect(() => {
@@ -91,7 +160,6 @@ export function DryRouteNavigation({ route, isImperial, mapInstance, L, onStop }
     const stepStart = step.geometry[0] || route.geometry[0];
     if (!stepStart) return;
 
-    // Haversine distance
     const R = 6371000;
     const dLat = ((stepStart[0] - userPosition[0]) * Math.PI) / 180;
     const dLon = ((stepStart[1] - userPosition[1]) * Math.PI) / 180;
@@ -102,7 +170,6 @@ export function DryRouteNavigation({ route, isImperial, mapInstance, L, onStop }
     const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     setDistanceToNext(dist);
 
-    // Auto advance to next step when close
     if (dist < 30 && currentStepIdx < route.steps.length - 1) {
       setCurrentStepIdx(prev => prev + 1);
     }
@@ -114,6 +181,14 @@ export function DryRouteNavigation({ route, isImperial, mapInstance, L, onStop }
 
   return (
     <div className="space-y-2">
+      {/* Rain alert banner */}
+      {rainAlert && (
+        <div className="flex items-center gap-2 bg-destructive/10 border border-destructive/30 rounded-xl px-3 py-2 text-xs text-destructive animate-pulse">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span className="font-medium">{rainAlert}</span>
+        </div>
+      )}
+
       {/* Main instruction card */}
       <div className="bg-primary text-primary-foreground rounded-xl p-4">
         <div className="flex items-center gap-3">
@@ -160,6 +235,21 @@ export function DryRouteNavigation({ route, isImperial, mapInstance, L, onStop }
 
       {/* Controls */}
       <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant={voiceEnabled ? 'default' : 'outline'}
+          className="text-xs"
+          onClick={() => {
+            setVoiceEnabled(!voiceEnabled);
+            if (!voiceEnabled) {
+              speak('Voice navigation enabled');
+            } else {
+              window.speechSynthesis?.cancel();
+            }
+          }}
+        >
+          {voiceEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+        </Button>
         <Button size="sm" variant="destructive" className="flex-1 text-xs" onClick={onStop}>
           <Square className="w-3.5 h-3.5 mr-1.5" />
           End Navigation

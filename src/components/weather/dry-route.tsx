@@ -1,12 +1,15 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Navigation, MapPin, Loader2, Umbrella, Clock, Route, Maximize2, Minimize2, Car, Bike, Footprints, Calendar, Navigation2, Square, Share2 } from 'lucide-react';
+import { Navigation, MapPin, Loader2, Umbrella, Clock, Route, Maximize2, Minimize2, Car, Bike, Footprints, Calendar, Navigation2, Square, Share2, CloudRain } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useLazyMap } from '@/hooks/use-lazy-map';
 import { DryRouteNavigation } from './dry-route-navigation';
+import { DryWindows } from './dry-windows';
+import { UmbrellaScore } from './umbrella-score';
+import { RouteCarbonTracker } from './route-carbon-tracker';
 
 interface DryRouteProps {
   latitude: number;
@@ -60,6 +63,8 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   const [departureTime, setDepartureTime] = useState<string>('');
   const [navigating, setNavigating] = useState(false);
   const [leafletLoaded, setLeafletLoaded] = useState(false);
+  const [showRadar, setShowRadar] = useState(false);
+  const radarLayerRef = useRef<any>(null);
   const LRef = useRef<any>(null);
 
   // Lazy load leaflet
@@ -96,6 +101,23 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       setTimeout(() => mapInstance.current.invalidateSize(), 100);
     }
   }, [isFullscreen]);
+
+  // Rain radar overlay toggle
+  useEffect(() => {
+    const L = LRef.current;
+    if (!mapInstance.current || !L) return;
+
+    if (showRadar && !radarLayerRef.current) {
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'ohwtbkudpkfbakynikyj';
+      radarLayerRef.current = L.tileLayer(
+        `https://${projectId}.supabase.co/functions/v1/owm-tile-proxy?layer=precipitation_new&z={z}&x={x}&y={y}`,
+        { opacity: 0.5, maxZoom: 18 }
+      ).addTo(mapInstance.current);
+    } else if (!showRadar && radarLayerRef.current) {
+      mapInstance.current.removeLayer(radarLayerRef.current);
+      radarLayerRef.current = null;
+    }
+  }, [showRadar]);
 
   const geocode = async (query: string) => {
     if (query.length < 3) return;
@@ -413,8 +435,31 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
         {loading ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Analyzing rain...</> : <><Route className="w-3.5 h-3.5 mr-1.5" /> Find Driest Route</>}
       </Button>
 
+      {/* Dry Windows - best time to leave */}
+      {fromCoords && toCoords && routes.length > 0 && (
+        <DryWindows
+          fromCoords={fromCoords}
+          toCoords={toCoords}
+          routeGeometry={routes[bestRouteIdx]?.geometry || []}
+          isImperial={isImperial}
+        />
+      )}
+
       {/* Map */}
-      <div ref={mapRef} className={`w-full rounded-xl overflow-hidden border border-border/30 ${isFullscreen ? 'h-[50vh]' : 'h-56'}`} />
+      <div className="relative">
+        <div ref={mapRef} className={`w-full rounded-xl overflow-hidden border border-border/30 ${isFullscreen ? 'h-[50vh]' : 'h-56'}`} />
+        <button
+          onClick={() => setShowRadar(!showRadar)}
+          className={`absolute top-2 right-2 z-[1000] flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all ${
+            showRadar
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'bg-background/80 text-muted-foreground border-border/50 hover:border-primary/40'
+          }`}
+        >
+          <CloudRain className="w-3 h-3" />
+          Radar
+        </button>
+      </div>
 
       {/* Rain timeline bar */}
       {routes.length > 0 && routes[bestRouteIdx]?.rainTimeline?.length > 0 && (
@@ -488,6 +533,17 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
               <Share2 className="w-3.5 h-3.5" />
             </Button>
           </div>
+
+          {/* Umbrella Score Badge */}
+          <UmbrellaScore rainScore={routes[bestRouteIdx].rainScore} />
+
+          {/* Carbon & Calorie Tracker */}
+          <RouteCarbonTracker
+            distanceMeters={routes[bestRouteIdx].distance}
+            durationSeconds={routes[bestRouteIdx].duration}
+            transportMode={transportMode}
+            isImperial={isImperial}
+          />
         </div>
       )}
 

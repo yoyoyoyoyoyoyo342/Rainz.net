@@ -618,9 +618,9 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   return (
     <div ref={containerRef} className="mb-4">
       {isFullscreen ? (
-        <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
-          <DialogContent className="max-w-full h-[100dvh] p-0 m-0 border-0 sm:rounded-none">
-            <div className="flex flex-col h-full">
+        <Dialog open={isFullscreen} onOpenChange={(open) => { setIsFullscreen(open); if (!open && navigating) stopNavigation(); }}>
+          <DialogContent className="max-w-full w-full h-[100dvh] p-0 m-0 border-0 sm:rounded-none [&>button]:hidden" onPointerDownOutside={(e) => e.preventDefault()}>
+            <div className="flex flex-col h-full overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 shrink-0">
                 <div className="flex items-center gap-2">
                   <Navigation className="w-4 h-4 text-primary" />
@@ -633,7 +633,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
                   <Minimize2 className="w-4 h-4" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto overscroll-contain p-4 touch-pan-y">
                 {routeContent}
               </div>
             </div>

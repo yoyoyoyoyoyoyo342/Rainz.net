@@ -15,6 +15,7 @@ export function DetailedMetrics({
   is24Hour = true,
   premiumSettings
 }: DetailedMetricsProps) {
+  const { t } = useLanguage();
   const showUV = premiumSettings?.showUV !== false;
   const showSunTimes = premiumSettings?.showSunTimes !== false;
   const showMoonPhase = premiumSettings?.showMoonPhase !== false;

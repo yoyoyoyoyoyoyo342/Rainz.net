@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Target, Trophy, Flame, Zap, Medal, ShoppingBag, Users, History } from "lucide-react";
+import { Target, Trophy, Flame, Zap, Medal, ShoppingBag, History } from "lucide-react";
 import { WeatherPredictionForm } from "./weather-prediction-form";
 import { Leaderboard } from "./leaderboard";
 import { WeeklyChallenge } from "./weekly-challenge";

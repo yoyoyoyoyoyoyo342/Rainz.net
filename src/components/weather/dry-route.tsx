@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Navigation, MapPin, Loader2, Umbrella, Clock, Route, Maximize2, Minimize2, Car, Bike, Footprints, Calendar, Navigation2, Square, Share2, CloudRain } from 'lucide-react';
+import { Navigation, MapPin, Loader2, Umbrella, Clock, Route, Maximize2, Minimize2, Car, Bike, Footprints, Calendar, Navigation2, Square, Share2, CloudRain, Camera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { useLazyMap } from '@/hooks/use-lazy-map';
 import { DryRouteNavigation } from './dry-route-navigation';
+import { DryRouteAR } from './dry-route-ar';
 import { DryWindows } from './dry-windows';
 import { UmbrellaScore } from './umbrella-score';
 import { RouteCarbonTracker } from './route-carbon-tracker';
@@ -64,6 +65,8 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   const [navigating, setNavigating] = useState(false);
   const [leafletLoaded, setLeafletLoaded] = useState(false);
   const [showRadar, setShowRadar] = useState(false);
+  const [showAR, setShowAR] = useState(false);
+  const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
   const radarLayerRef = useRef<any>(null);
   const LRef = useRef<any>(null);
 
@@ -175,6 +178,16 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     return () => clearTimeout(timer);
   }, [isFullscreen]);
 
+  // Track user position for AR
+  useEffect(() => {
+    if (!showAR && !navigating) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => setUserPosition([pos.coords.latitude, pos.coords.longitude]),
+      () => {},
+      { enableHighAccuracy: true }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [showAR, navigating]);
 
   // Rain radar overlay toggle
   useEffect(() => {
@@ -570,6 +583,9 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
               <Navigation2 className="w-3.5 h-3.5 mr-1.5" />
               Go
             </Button>
+            <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowAR(true)}>
+              <Camera className="w-3.5 h-3.5" />
+            </Button>
             <Button size="sm" variant="outline" className="text-xs" onClick={shareRoute}>
               <Share2 className="w-3.5 h-3.5" />
             </Button>
@@ -596,6 +612,19 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           mapInstance={mapInstance.current}
           L={LRef.current}
           onStop={stopNavigation}
+        />
+      )}
+
+      {/* AR Overlay */}
+      {routes[bestRouteIdx] && (
+        <DryRouteAR
+          open={showAR}
+          onOpenChange={setShowAR}
+          route={routes[bestRouteIdx]}
+          userPosition={userPosition}
+          currentStepIdx={0}
+          distanceToNext={null}
+          isImperial={isImperial}
         />
       )}
     </div>

@@ -20,28 +20,24 @@ interface MysteryBoxRevealProps {
 const rewardIcons = {
   shop_points: Coins,
   streak_freeze: Snowflake,
-  premium_trial: Crown,
   double_points: Zap,
 };
 
 const rewardColors = {
   shop_points: "text-amber-400",
   streak_freeze: "text-blue-400",
-  premium_trial: "text-yellow-400",
   double_points: "text-purple-400",
 };
 
 const rewardBgColors = {
   shop_points: "from-amber-500/30 to-amber-600/10",
   streak_freeze: "from-blue-500/30 to-blue-600/10",
-  premium_trial: "from-yellow-500/30 to-yellow-600/10",
   double_points: "from-purple-500/30 to-purple-600/10",
 };
 
 const rewardGlowColors = {
   shop_points: "shadow-amber-500/50",
   streak_freeze: "shadow-blue-500/50",
-  premium_trial: "shadow-yellow-500/50",
   double_points: "shadow-purple-500/50",
 };
 

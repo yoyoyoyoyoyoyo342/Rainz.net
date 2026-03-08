@@ -42,11 +42,11 @@ export function DetailedMetrics({
                 {currentWeather.uvIndex}
               </div>
               <div className="text-sm text-muted-foreground mb-3">
-                {currentWeather.uvIndex <= 2 ? 'Low - No protection needed' : 
-                 currentWeather.uvIndex <= 5 ? 'Moderate - Some protection needed' : 
-                 currentWeather.uvIndex <= 7 ? 'High - Wear sunscreen' : 
-                 currentWeather.uvIndex <= 10 ? 'Very High - Extra protection needed' : 
-                 'Extreme - Avoid sun exposure'}
+                {currentWeather.uvIndex <= 2 ? t('uv.low') : 
+                 currentWeather.uvIndex <= 5 ? t('uv.moderate') : 
+                 currentWeather.uvIndex <= 7 ? t('uv.high') : 
+                 currentWeather.uvIndex <= 10 ? t('uv.veryHigh') : 
+                 t('uv.extreme')}
               </div>
               <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
                 <div 

@@ -537,8 +537,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
               <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 shrink-0">
                 <div className="flex items-center gap-2">
                   <Navigation className="w-4 h-4 text-primary" />
-                  <span className="font-semibold text-sm">DryRoutes</span>
-                  <span className="text-[10px] text-muted-foreground">by Rainz</span>
+                  <span className="font-semibold text-sm">Rainz DryRoutes</span>
                 </div>
                 <button
                   onClick={() => { setIsFullscreen(false); if (navigating) stopNavigation(); }}

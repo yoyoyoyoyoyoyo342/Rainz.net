@@ -347,9 +347,7 @@ export const PointsShop = () => {
     // Base: SP 25%, Freeze 20%, Double 15%, Bonus PP 15%, Badge XP 10%, Premium 15%
     // If subscribed: SP 30%, Freeze 22%, Double 18%, Bonus PP 18%, Badge XP 12%
     
-    const thresholds = isSubscribed 
-      ? { sp: 0.30, freeze: 0.52, double: 0.70, bonusPP: 0.88, badgeXP: 1.0 }
-      : { sp: 0.25, freeze: 0.45, double: 0.60, bonusPP: 0.75, badgeXP: 0.85, premium: 1.0 };
+    const thresholds = { sp: 0.30, freeze: 0.52, double: 0.70, bonusPP: 0.88, badgeXP: 1.0 };
     
     if (roll < thresholds.sp) {
       // Shop Points (15-75)

@@ -204,7 +204,7 @@ export const PredictionDialog = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-amber-500/20 text-amber-700 text-[10px]">+100</Badge>
-                    <span>1 correct (1x)</span>
+                    <span>{t('predict.oneCorrect')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-red-500/20 text-red-700 text-[10px]">-100</Badge>

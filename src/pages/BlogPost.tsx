@@ -125,8 +125,8 @@ export default function BlogPost() {
             </p>
           )}
 
-          <div className="prose prose-invert max-w-none">
-            {renderContent}
+          <div className="prose prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-a:text-primary prose-li:text-muted-foreground prose-table:text-muted-foreground prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2">
+            <ReactMarkdown>{post.content}</ReactMarkdown>
           </div>
         </article>
       </main>

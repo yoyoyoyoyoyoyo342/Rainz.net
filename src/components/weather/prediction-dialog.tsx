@@ -7,7 +7,7 @@ import { Leaderboard } from "./leaderboard";
 import { WeeklyChallenge } from "./weekly-challenge";
 import { SeasonalTournament } from "./seasonal-tournament";
 import { PointsShop } from "./points-shop";
-import { BattleLeagues } from "./battle-leagues";
+
 import { PointsHistory } from "./points-history";
 import { useLanguage } from "@/contexts/language-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

@@ -191,16 +191,32 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
-  // Show blue user marker on map
+  // Show blue user marker on map with smooth gliding
   useEffect(() => {
     if (!userPosition || !mapInstance.current || !LRef.current) return;
     const L = LRef.current;
 
     if (userMarkerRef.current) {
-      userMarkerRef.current.setLatLng(userPosition);
+      // Animate marker to new position
+      const start = userMarkerRef.current.getLatLng();
+      const end = L.latLng(userPosition);
+      const duration = 800;
+      const startTime = performance.now();
+
+      const animate = (now: number) => {
+        const elapsed = now - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        // Ease-out cubic
+        const ease = 1 - Math.pow(1 - t, 3);
+        const lat = start.lat + (end.lat - start.lat) * ease;
+        const lng = start.lng + (end.lng - start.lng) * ease;
+        userMarkerRef.current?.setLatLng([lat, lng]);
+        if (t < 1) requestAnimationFrame(animate);
+      };
+      requestAnimationFrame(animate);
     } else {
       const icon = L.divIcon({
-        html: `<div style="width:14px;height:14px;border-radius:50%;background:hsl(217,91%,60%);border:3px solid white;box-shadow:0 0 8px rgba(59,130,246,0.5)"></div>`,
+        html: `<div style="width:14px;height:14px;border-radius:50%;background:hsl(217,91%,60%);border:3px solid white;box-shadow:0 0 8px rgba(59,130,246,0.5);transition:box-shadow 0.3s"></div>`,
         className: '',
         iconSize: [14, 14],
         iconAnchor: [7, 7],

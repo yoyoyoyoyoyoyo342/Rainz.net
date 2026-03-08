@@ -36,12 +36,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    const message = `${excerpt || "Check out our latest article!"}\n\nRead the full article at https://rainz.net/articles/${slug}`;
+    const notificationMessage = excerpt || `Check out our latest article: ${title}`;
 
     const notifications = users.map((user) => ({
       user_id: user.user_id,
-      title: `New Article: ${title}`,
-      message,
+      title: "Read the new article!",
+      message: notificationMessage,
       type: "blog_post",
       metadata: { slug },
     }));

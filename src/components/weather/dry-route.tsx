@@ -79,9 +79,54 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     });
   }, [isVisible, leafletLoaded]);
 
+  const drawRoutes = useCallback((routeResults: RouteResult[], highlightIdx: number) => {
+    const L = LRef.current;
+    if (!mapInstance.current || !L) return;
+
+    routeLayers.current.forEach(l => mapInstance.current!.removeLayer(l));
+    routeLayers.current = [];
+
+    const bounds = L.latLngBounds([]);
+
+    routeResults.forEach((route, i) => {
+      const isHighlight = i === highlightIdx;
+      const color = route.rainScore < 30 ? 'hsl(142, 71%, 45%)' : route.rainScore < 60 ? 'hsl(48, 96%, 53%)' : 'hsl(0, 84%, 60%)';
+
+      const line = L.polyline(route.geometry, {
+        color: isHighlight ? color : 'hsl(215, 20%, 65%)',
+        weight: isHighlight ? 5 : 3,
+        opacity: isHighlight ? 0.9 : 0.4,
+        dashArray: isHighlight ? undefined : '8 8',
+      }).addTo(mapInstance.current!);
+
+      routeLayers.current.push(line);
+      route.geometry.forEach((p: [number, number]) => bounds.extend(p));
+    });
+
+    if (fromCoords) {
+      const startMarker = L.marker(fromCoords, {
+        icon: L.divIcon({ html: '🟢', className: '', iconSize: [20, 20], iconAnchor: [10, 10] }),
+      }).addTo(mapInstance.current!);
+      routeLayers.current.push(startMarker);
+    }
+    if (toCoords) {
+      const endMarker = L.marker(toCoords, {
+        icon: L.divIcon({ html: '🔴', className: '', iconSize: [20, 20], iconAnchor: [10, 10] }),
+      }).addTo(mapInstance.current!);
+      routeLayers.current.push(endMarker);
+    }
+
+    mapInstance.current.fitBounds(bounds, { padding: [30, 30] });
+  }, [fromCoords, toCoords]);
+
   // Init map when leaflet ready and container available
-  useEffect(() => {
-    if (!leafletLoaded || !mapRef.current || mapInstance.current) return;
+  const initMap = useCallback(() => {
+    if (!leafletLoaded || !mapRef.current) return;
+    // Destroy previous instance if exists
+    if (mapInstance.current) {
+      try { mapInstance.current.remove(); } catch {}
+      mapInstance.current = null;
+    }
     const L = LRef.current;
     const map = L.map(mapRef.current, {
       zoomControl: false,
@@ -91,16 +136,42 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
     mapInstance.current = map;
+    radarLayerRef.current = null;
 
-    return () => { map.remove(); mapInstance.current = null; };
-  }, [leafletLoaded, latitude, longitude]);
-
-  // Resize map on fullscreen toggle
-  useEffect(() => {
-    if (mapInstance.current) {
-      setTimeout(() => mapInstance.current.invalidateSize(), 100);
+    // Re-draw routes if we have them
+    if (routes.length > 0) {
+      setTimeout(() => drawRoutes(routes, bestRouteIdx), 100);
     }
+    // Re-apply radar if enabled
+    if (showRadar) {
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'ohwtbkudpkfbakynikyj';
+      radarLayerRef.current = L.tileLayer(
+        `https://${projectId}.supabase.co/functions/v1/owm-tile-proxy?layer=precipitation_new&z={z}&x={x}&y={y}`,
+        { opacity: 0.5, maxZoom: 18 }
+      ).addTo(map);
+    }
+  }, [leafletLoaded, latitude, longitude, routes, bestRouteIdx, showRadar, drawRoutes]);
+
+  // Initialize map when leaflet loads
+  useEffect(() => {
+    initMap();
+    return () => {
+      if (mapInstance.current) {
+        try { mapInstance.current.remove(); } catch {}
+        mapInstance.current = null;
+      }
+    };
+  }, [leafletLoaded]);
+
+  // Re-init map when fullscreen toggles (DOM container changes)
+  useEffect(() => {
+    // Small delay to let the Dialog DOM mount/unmount
+    const timer = setTimeout(() => {
+      initMap();
+    }, 150);
+    return () => clearTimeout(timer);
   }, [isFullscreen]);
+
 
   // Rain radar overlay toggle
   useEffect(() => {
@@ -260,45 +331,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     setLoading(false);
   };
 
-  const drawRoutes = useCallback((routeResults: RouteResult[], highlightIdx: number) => {
-    const L = LRef.current;
-    if (!mapInstance.current || !L) return;
-
-    routeLayers.current.forEach(l => mapInstance.current!.removeLayer(l));
-    routeLayers.current = [];
-
-    const bounds = L.latLngBounds([]);
-
-    routeResults.forEach((route, i) => {
-      const isHighlight = i === highlightIdx;
-      const color = route.rainScore < 30 ? 'hsl(142, 71%, 45%)' : route.rainScore < 60 ? 'hsl(48, 96%, 53%)' : 'hsl(0, 84%, 60%)';
-
-      const line = L.polyline(route.geometry, {
-        color: isHighlight ? color : 'hsl(215, 20%, 65%)',
-        weight: isHighlight ? 5 : 3,
-        opacity: isHighlight ? 0.9 : 0.4,
-        dashArray: isHighlight ? undefined : '8 8',
-      }).addTo(mapInstance.current!);
-
-      routeLayers.current.push(line);
-      route.geometry.forEach((p: [number, number]) => bounds.extend(p));
-    });
-
-    if (fromCoords) {
-      const startMarker = L.marker(fromCoords, {
-        icon: L.divIcon({ html: '🟢', className: '', iconSize: [20, 20], iconAnchor: [10, 10] }),
-      }).addTo(mapInstance.current!);
-      routeLayers.current.push(startMarker);
-    }
-    if (toCoords) {
-      const endMarker = L.marker(toCoords, {
-        icon: L.divIcon({ html: '🔴', className: '', iconSize: [20, 20], iconAnchor: [10, 10] }),
-      }).addTo(mapInstance.current!);
-      routeLayers.current.push(endMarker);
-    }
-
-    mapInstance.current.fitBounds(bounds, { padding: [30, 30] });
-  }, [fromCoords, toCoords]);
+  
 
   const formatDuration = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
@@ -587,9 +620,9 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   return (
     <div ref={containerRef} className="mb-4">
       {isFullscreen ? (
-        <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
-          <DialogContent className="max-w-full h-[100dvh] p-0 m-0 border-0 sm:rounded-none">
-            <div className="flex flex-col h-full">
+        <Dialog open={isFullscreen} onOpenChange={(open) => { setIsFullscreen(open); if (!open && navigating) stopNavigation(); }}>
+          <DialogContent className="max-w-full w-full h-[100dvh] p-0 m-0 border-0 sm:rounded-none [&>button]:hidden" onPointerDownOutside={(e) => e.preventDefault()}>
+            <div className="flex flex-col h-full overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 shrink-0">
                 <div className="flex items-center gap-2">
                   <Navigation className="w-4 h-4 text-primary" />
@@ -602,7 +635,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
                   <Minimize2 className="w-4 h-4" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto overscroll-contain p-4 touch-pan-y">
                 {routeContent}
               </div>
             </div>

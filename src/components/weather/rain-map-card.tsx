@@ -74,7 +74,7 @@ const MODE_CONFIG: Record<MapMode, {
 
 // Wind arrow overlay — plain functions, no class inheritance
 function createWindArrowOverlay(map: any) {
-  const L = (window as any).L || { DomUtil: { setPosition: (el: any, pt: any) => { el.style.transform = `translate(${pt.x}px,${pt.y}px)`; } } };
+  const canvas = document.createElement('canvas');
   canvas.style.position = 'absolute';
   canvas.style.top = '0';
   canvas.style.left = '0';

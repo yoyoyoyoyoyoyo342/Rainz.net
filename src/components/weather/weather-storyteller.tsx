@@ -17,10 +17,10 @@ export function WeatherStoryteller({ currentWeather, locationName, isImperial }:
   const [loading, setLoading] = useState(false);
   const [genre, setGenre] = useState<string>('🧙 Fantasy');
 
-  const temp = currentWeather?.temperature;
-  const condition = currentWeather?.condition || 'clear';
-  const wind = currentWeather?.windSpeed;
-  const humidity = currentWeather?.humidity;
+  const temp = currentWeather?.temperature ?? 32;
+  const condition = currentWeather?.condition ?? 'clear';
+  const wind = currentWeather?.windSpeed ?? 0;
+  const humidity = currentWeather?.humidity ?? 0;
 
   const generateStory = async () => {
     setLoading(true);

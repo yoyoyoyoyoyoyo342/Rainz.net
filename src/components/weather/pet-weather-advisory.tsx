@@ -15,11 +15,11 @@ interface Advisory {
 }
 
 export function PetWeatherAdvisory({ currentWeather, isImperial }: PetWeatherAdvisoryProps) {
-  const temp = currentWeather?.temperature || 70;
-  const condition = (currentWeather?.condition || '').toLowerCase();
-  const wind = currentWeather?.windSpeed || 0;
-  const uv = currentWeather?.uvIndex || 0;
-  const humidity = currentWeather?.humidity || 50;
+  const temp = currentWeather?.temperature ?? 32;
+  const condition = (currentWeather?.condition ?? '').toLowerCase();
+  const wind = currentWeather?.windSpeed ?? 0;
+  const uv = currentWeather?.uvIndex ?? 0;
+  const humidity = currentWeather?.humidity ?? 50;
 
   const getAdvisories = (): Advisory[] => {
     const advisories: Advisory[] = [];

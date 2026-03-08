@@ -26,7 +26,7 @@ export function WeatherDejaVu({ latitude, longitude, locationName, currentWeathe
   const findMatches = async () => {
     setLoading(true);
     try {
-      const currentTemp = currentWeather?.temperature || 70;
+      const currentTemp = currentWeather?.temperature ?? 32;
       const tempC = isImperial ? Math.round((currentTemp - 32) * 5 / 9) : currentTemp;
       
       // Fetch historical data from Open-Meteo archive for past years on same day

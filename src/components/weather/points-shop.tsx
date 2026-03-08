@@ -440,10 +440,6 @@ export const PointsShop = () => {
       return;
     }
 
-    if (item.type === "rainz_plus_trial" && (isSubscribed || activeTrial)) {
-      toast.error("You already have active Rainz+!");
-      return;
-    }
 
     setPurchasing(item.id);
 

@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { MapPin, Play, Pause, SkipBack, SkipForward, Map, Thermometer, Wind, CloudRain } from 'lucide-react';
+import { MapPin, Play, Pause, SkipBack, SkipForward, Map, Thermometer, Wind, CloudRain, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { Slider } from '@/components/ui/slider';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { useLazyMap } from '@/hooks/use-lazy-map';
 
 interface RainMapCardProps {
   latitude: number;

@@ -132,12 +132,6 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     return () => clearTimeout(timer);
   }, [isFullscreen]);
 
-  // Resize map on fullscreen toggle
-  useEffect(() => {
-    if (mapInstance.current) {
-      setTimeout(() => mapInstance.current.invalidateSize(), 100);
-    }
-  }, [isFullscreen]);
 
   // Rain radar overlay toggle
   useEffect(() => {

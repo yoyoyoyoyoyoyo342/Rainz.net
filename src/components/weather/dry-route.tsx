@@ -206,15 +206,20 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     }
   }, [showRadar]);
 
-  const geocode = async (query: string) => {
+  const geocodeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const geocode = useCallback((query: string) => {
     if (query.length < 3) return;
-    try {
-      const { data } = await supabase.functions.invoke('geocode-address', { body: { query } });
-      setSearchResults(data?.results || []);
-    } catch {
-      setSearchResults([]);
-    }
-  };
+    if (geocodeTimerRef.current) clearTimeout(geocodeTimerRef.current);
+    geocodeTimerRef.current = setTimeout(async () => {
+      try {
+        const { data } = await supabase.functions.invoke('geocode-address', { body: { query } });
+        setSearchResults(data?.results || []);
+      } catch {
+        setSearchResults([]);
+      }
+    }, 400); // 400ms debounce
+  }, []);
 
   const selectLocation = (result: any, type: 'from' | 'to') => {
     const coords: [number, number] = [parseFloat(result.lat), parseFloat(result.lon)];

@@ -238,7 +238,8 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
 
   // Update overlay layer
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !LRef.current) return;
+    const L = LRef.current;
 
     if (radarLayerRef.current) {
       mapRef.current.removeLayer(radarLayerRef.current);

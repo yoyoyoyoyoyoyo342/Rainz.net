@@ -604,6 +604,19 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           onStop={stopNavigation}
         />
       )}
+
+      {/* AR Overlay */}
+      {routes[bestRouteIdx] && (
+        <DryRouteAR
+          open={showAR}
+          onOpenChange={setShowAR}
+          route={routes[bestRouteIdx]}
+          userPosition={userPosition}
+          currentStepIdx={0}
+          distanceToNext={null}
+          isImperial={isImperial}
+        />
+      )}
     </div>
   );
 

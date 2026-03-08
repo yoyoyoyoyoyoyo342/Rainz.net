@@ -88,11 +88,6 @@ export function ExploreSheet({
             userId={userId}
           />
 
-          {/* Pet Weather Advisory */}
-          <PetWeatherAdvisory
-            currentWeather={currentWeather}
-            isImperial={isImperial}
-          />
 
           {/* Weather Déjà Vu */}
           <WeatherDejaVu

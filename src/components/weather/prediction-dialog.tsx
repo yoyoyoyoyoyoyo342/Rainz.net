@@ -258,9 +258,6 @@ export const PredictionDialog = ({
             {(leaderboardType === "monthly" || leaderboardType === "seasonal") && (
               <SeasonalTournament />
             )}
-            {leaderboardType === "leagues" && (
-              <BattleLeagues />
-            )}
           </TabsContent>
           
           <TabsContent value="history" className="mt-4">

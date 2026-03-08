@@ -688,19 +688,6 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       >
         <div className="p-4 pb-12 space-y-3">
           {controlsContent}
-
-          {/* Action buttons in fullscreen */}
-          {routes.length > 0 && (
-            <div className="flex gap-2">
-              <Button size="sm" className="flex-1 text-xs" onClick={startNavigation}>
-                <Navigation2 className="w-3.5 h-3.5 mr-1.5" /> Go
-              </Button>
-              <Button size="sm" variant="outline" className="text-xs" onClick={shareRoute}>
-                <Share2 className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          )}
-
           {resultsContent}
         </div>
       </div>

@@ -635,7 +635,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
                   <Minimize2 className="w-4 h-4" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto overscroll-contain p-4 touch-pan-y">
+              <div className="flex-1 p-4">
                 {routeContent}
               </div>
             </div>

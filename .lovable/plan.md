@@ -1,27 +1,53 @@
+# DryRoutes — Completed Implementation
 
+## What was done
 
-## Fix DryRoutes Fullscreen Scrolling
+### 1. Renamed "Rain-Free Route Planner" → **DryRoutes** (by Rainz)
 
-### Root Causes
+### 2. Performance: Fixed Map Lag
+- Created `src/hooks/use-lazy-map.tsx` — IntersectionObserver-based lazy mount hook
+- All 3 map components (DryRoute, RainMapCard, LiveWeatherMap) now:
+  - Lazy-load Leaflet JS/CSS via dynamic `import()`
+  - Only initialize when scrolled into viewport
+  - Use `preferCanvas: true` for reduced DOM overhead
 
-After reading the actual code, there are **three** scroll-blocking mechanisms:
+### 3. Moved DryRoute to Main Weather Page
+- Removed from `explore-sheet.tsx`
+- Added as standalone card in `Weather.tsx` (before Feature Ideas)
+- Larger default map (h-56)
 
-1. **`flex-1` on the content wrapper (line 637)**: Forces the content to stretch to exactly fill the viewport instead of overflowing. No overflow = nothing to scroll.
-2. **`min-h-full` on the inner container (line 624)**: Combined with flex, this constrains the layout to viewport height.
-3. **Leaflet map captures all touch/scroll events**: The map at `h-[50vh]` has `scrollWheelZoom` enabled by default, so scrolling over the map zooms the map instead of scrolling the page.
+### 4. Fullscreen Mode
+- Expand button (⛶) on card header
+- Opens fullscreen Dialog overlay with full routing UI
 
-### Changes — `src/components/weather/dry-route.tsx`
+### 5. "Go" Navigation Mode
+- Turn-by-turn via `navigator.geolocation.watchPosition()`
+- Blue GPS dot on map, auto-centers
+- Step-by-step instructions with maneuver icons
+- Rain score + ETA in status bar
+- Auto-advance to next step when within 30m
 
-**A. Fix the fullscreen portal container (lines 622-643):**
-- Outer div: add inline style `{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }` for iOS momentum scrolling
-- Inner div: remove `flex flex-col min-h-full` — just use a simple block div
-- Content wrapper: remove `flex-1`, keep just `p-4 pb-8`
-- Add `useEffect` to set `document.body.style.overflow = 'hidden'` when fullscreen opens (prevents double-scrollbar), restore on close
+### 6. AR Navigation
+- Camera overlay with compass-based directional arrow
+- HUD showing current instruction, rain probability, ETA
+- Reuses proven device orientation pattern from AR overlay
 
-**B. Disable map scroll-zoom in fullscreen (line 131):**
-- After map init, when `isFullscreen` is true, call `map.scrollWheelZoom.disable()` so mouse wheel / touch scroll passes through to the page container
-- Keep map draggable so users can still pan the map by dragging
+### 7. Additional Features
+- **Transport modes**: Drive / Bike / Walk (OSRM profiles)
+- **Departure time picker**: Shifts rain forecast window
+- **Rain timeline bar**: Visual per-segment rain probability
+- **Share route**: Native share or clipboard
+- **OSRM steps=true**: Full turn-by-turn instructions
 
-**C. Re-init map when toggling fullscreen:**
-- Add `isFullscreen` to the `initMap` dependency array and the `useEffect` that calls it, so the map reinitializes with the correct scroll behavior when entering/exiting fullscreen
-
+## Files
+| File | Action |
+|------|--------|
+| `src/hooks/use-lazy-map.tsx` | NEW — IntersectionObserver hook |
+| `src/components/weather/dry-route.tsx` | NEW — Main DryRoute component |
+| `src/components/weather/dry-route-navigation.tsx` | NEW — Turn-by-turn panel |
+| `src/components/weather/dry-route-ar.tsx` | NEW — AR navigation overlay |
+| `src/components/weather/explore-sheet.tsx` | Removed RainRoutePlanner |
+| `src/pages/Weather.tsx` | Added DryRoute card |
+| `src/components/weather/rain-map-card.tsx` | Lazy map loading |
+| `src/components/weather/live-weather-map.tsx` | Lazy map loading |
+| `src/components/weather/rain-route-planner.tsx` | DELETED |

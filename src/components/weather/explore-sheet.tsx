@@ -12,6 +12,13 @@ import { WeatherMoodJournal } from './weather-mood-journal';
 import { OutfitRecommender } from './outfit-recommender';
 import { WeatherTrivia } from './weather-trivia';
 import { WeatherCompare } from './weather-compare';
+import { WeatherStoryteller } from './weather-storyteller';
+import { PhotoChallenge } from './photo-challenge';
+import { WeatherDebateArena } from './weather-debate-arena';
+import { LiveWeatherMap } from './live-weather-map';
+import { PetWeatherAdvisory } from './pet-weather-advisory';
+import { WeatherDejaVu } from './weather-deja-vu';
+import { RainRoutePlanner } from './rain-route-planner';
 
 interface ExploreSheetProps {
   open: boolean;
@@ -49,6 +56,61 @@ export function ExploreSheet({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          {/* Rain Route Planner - NEW flagship feature */}
+          <RainRoutePlanner
+            latitude={latitude}
+            longitude={longitude}
+            locationName={locationName}
+            isImperial={isImperial}
+          />
+
+          {/* Weather Storyteller */}
+          <WeatherStoryteller
+            currentWeather={currentWeather}
+            locationName={locationName}
+            isImperial={isImperial}
+          />
+
+          {/* Photo of the Day */}
+          <PhotoChallenge
+            latitude={latitude}
+            longitude={longitude}
+            locationName={locationName}
+            userId={userId}
+          />
+
+          {/* Weather Debate Arena */}
+          <WeatherDebateArena
+            latitude={latitude}
+            longitude={longitude}
+            locationName={locationName}
+            userId={userId}
+            currentWeather={currentWeather}
+          />
+
+          {/* Live Weather Map */}
+          <LiveWeatherMap
+            latitude={latitude}
+            longitude={longitude}
+            locationName={locationName}
+            userId={userId}
+          />
+
+          {/* Pet Weather Advisory */}
+          <PetWeatherAdvisory
+            currentWeather={currentWeather}
+            isImperial={isImperial}
+          />
+
+          {/* Weather Déjà Vu */}
+          <WeatherDejaVu
+            latitude={latitude}
+            longitude={longitude}
+            locationName={locationName}
+            currentWeather={currentWeather}
+            isImperial={isImperial}
+          />
+
           {/* Outfit Recommender */}
           <OutfitRecommender
             currentWeather={currentWeather}
@@ -141,7 +203,7 @@ export function ExploreButton({ onClick }: ExploreButtonProps) {
         </div>
         <div className="text-left">
           <p className="text-sm font-semibold text-foreground">Explore Rainz ✨</p>
-          <p className="text-xs text-muted-foreground">Bingo · Trivia · Outfits · Mood · Compare · More</p>
+          <p className="text-xs text-muted-foreground">Routes · Stories · Photos · Debates · Pets · More</p>
         </div>
       </div>
       <span className="text-muted-foreground group-hover:text-primary transition-colors text-lg">→</span>

@@ -164,10 +164,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     };
   }, [leafletLoaded, isFullscreen]);
 
-  // Lock body scroll when fullscreen is open
-  useEffect(() => {
-    if (isFullscreen) {
-      document.body.style.overflow = 'hidden';
+  // No body scroll lock needed — fullscreen uses split layout
       return () => { document.body.style.overflow = ''; };
     }
   }, [isFullscreen]);

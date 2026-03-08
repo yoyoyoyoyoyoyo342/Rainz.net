@@ -406,19 +406,8 @@ export const PointsShop = () => {
         .from("profiles")
         .update({ total_points: (profile?.total_points || 0) + 50 })
         .eq("user_id", user!.id);
-    } else if (!isSubscribed) {
-      // Premium Trial (1 day) - only for non-subscribers
-      reward = { type: "premium_trial", label: "1 Day Rainz+!", description: "Premium features unlocked" };
-      
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 1);
-      await supabase.from("premium_trials").insert({
-        user_id: user!.id,
-        expires_at: expiresAt.toISOString(),
-        source: "mystery_box",
-      });
     } else {
-      // Fallback for edge case (shouldn't happen)
+      // Fallback bonus SP
       const amount = 30;
       reward = { type: "shop_points", amount, label: `${amount} Shop Points!`, description: "Added to your balance" };
       

@@ -509,8 +509,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <Navigation className="w-4 h-4 text-primary" />
-          DryRoutes
-          <span className="text-[10px] text-muted-foreground font-normal ml-1">by Rainz</span>
+          Rainz DryRoutes
           <button
             onClick={() => setIsFullscreen(true)}
             className="ml-auto p-1 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"

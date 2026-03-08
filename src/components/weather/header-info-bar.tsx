@@ -330,7 +330,24 @@ export function HeaderInfoBar({ user }: HeaderInfoBarProps) {
                         {isUnread && <Circle className="h-2 w-2 mt-1.5 fill-primary text-primary shrink-0" />}
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-primary mb-1">Admin Announcement</p>
-                          <p className="text-sm text-foreground break-words">{message.message}</p>
+                          <p className="text-sm text-foreground break-words whitespace-pre-wrap">
+                            {message.message.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+                              part.match(/^https?:\/\//) ? (
+                                <a
+                                  key={i}
+                                  href={part}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary underline hover:text-primary/80"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {part}
+                                </a>
+                              ) : (
+                                <span key={i}>{part}</span>
+                              )
+                            )}
+                          </p>
                           <p className="text-xs text-muted-foreground mt-1">
                             {new Date(message.created_at).toLocaleDateString()}
                           </p>

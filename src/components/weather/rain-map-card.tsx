@@ -93,7 +93,7 @@ function createWindArrowOverlay(map: any) {
     canvas.height = size.y;
 
     const topLeft = map.containerPointToLayerPoint([0, 0]);
-    L.DomUtil.setPosition(canvas, topLeft);
+    canvas.style.transform = `translate(${topLeft.x}px, ${topLeft.y}px)`;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;

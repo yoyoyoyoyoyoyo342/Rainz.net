@@ -89,6 +89,7 @@ export default function WeatherPage() {
   const currentHoliday = getCurrentHoliday();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [exploreOpen, setExploreOpen] = useState(false);
+  const { isEnabled: isFeatureEnabled } = useFeatureFlags();
 
   // Show onboarding for new users
   useEffect(() => {

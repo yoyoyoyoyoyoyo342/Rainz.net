@@ -768,6 +768,14 @@ export default function WeatherPage() {
                 </div>
               ) : null}
 
+              {/* DryRoutes */}
+              <DryRoute
+                latitude={selectedLocation.lat}
+                longitude={selectedLocation.lon}
+                locationName={actualStationName}
+                isImperial={isImperial}
+              />
+
               {/* Feature Ideas Card */}
               <FeatureIdeasCard />
 

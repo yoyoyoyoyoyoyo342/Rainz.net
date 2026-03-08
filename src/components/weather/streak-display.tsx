@@ -43,10 +43,10 @@ export const StreakDisplay = () => {
                 {currentStreak}
               </span>
               <span className="text-sm text-muted-foreground">
-                {currentStreak === 1 ? "day" : "days"}
+                {currentStreak === 1 ? t('streak.day') : t('streak.days')}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">Current streak</p>
+            <p className="text-xs text-muted-foreground">{t('streak.current')}</p>
           </div>
         </div>
 

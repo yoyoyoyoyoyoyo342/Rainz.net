@@ -138,8 +138,8 @@ export const PredictionDialog = ({
             <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-500/20">
               <CardContent className="p-2 text-center">
                 <div className="flex items-center justify-center gap-1 text-orange-600">
-                  <Flame className="w-3 h-3" />
-                  <span className="text-xs">Streak</span>
+                   <Flame className="w-3 h-3" />
+                   <span className="text-xs">{t('predict.streak')}</span>
                 </div>
                 <p className="text-lg font-bold">{userStats.streak}</p>
               </CardContent>

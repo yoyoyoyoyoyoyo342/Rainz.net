@@ -629,23 +629,24 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   return (
     <div ref={containerRef} className="mb-4">
       {isFullscreen ? createPortal(
-        <div className="fixed inset-0 z-50 bg-background overflow-y-auto animate-in fade-in duration-200">
-          <div className="flex flex-col min-h-full">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 shrink-0">
-              <div className="flex items-center gap-2">
-                <Navigation className="w-4 h-4 text-primary" />
-                <span className="font-semibold text-sm">Rainz DryRoutes</span>
-              </div>
-              <button
-                onClick={() => { setIsFullscreen(false); if (navigating) stopNavigation(); }}
-                className="p-1.5 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground"
-              >
-                <Minimize2 className="w-4 h-4" />
-              </button>
+        <div 
+          className="fixed inset-0 z-50 bg-background overflow-y-auto animate-in fade-in duration-200"
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+        >
+          <div className="sticky top-0 z-10 bg-background flex items-center justify-between px-4 py-3 border-b border-border/50">
+            <div className="flex items-center gap-2">
+              <Navigation className="w-4 h-4 text-primary" />
+              <span className="font-semibold text-sm">Rainz DryRoutes</span>
             </div>
-            <div className="flex-1 p-4">
-              {routeContent}
-            </div>
+            <button
+              onClick={() => { setIsFullscreen(false); if (navigating) stopNavigation(); }}
+              className="p-1.5 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+            >
+              <Minimize2 className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="p-4 pb-8">
+            {routeContent}
           </div>
         </div>,
         document.body

@@ -162,7 +162,15 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
         mapInstance.current = null;
       }
     };
-  }, [leafletLoaded]);
+  }, [leafletLoaded, isFullscreen]);
+
+  // Lock body scroll when fullscreen is open
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [isFullscreen]);
 
   // Re-init map when fullscreen toggles (DOM container changes)
   useEffect(() => {

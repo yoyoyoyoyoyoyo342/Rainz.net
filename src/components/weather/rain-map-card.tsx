@@ -326,7 +326,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
         {mapMode === 'rain' && currentFrame && (
           <div className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-1.5 text-sm font-medium z-[1000]">
             <span className={isPast ? 'text-muted-foreground' : 'text-primary'}>
-              {isPast ? 'Past' : 'Forecast'}
+              {isPast ? t('map.past') : t('map.forecast')}
             </span>
             <span className="ml-2">{formatTime(currentFrame.time)}</span>
           </div>

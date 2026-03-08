@@ -330,9 +330,9 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
       </div>
 
       <div className="relative h-[300px] md:h-[400px] w-full">
-        {loading && (
+        {(!isVisible || !leafletLoaded || loading) && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         )}
         <div ref={mapContainerRef} className="h-full w-full" />

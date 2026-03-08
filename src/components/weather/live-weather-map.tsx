@@ -24,11 +24,23 @@ const WEATHER_PINS = [
 ];
 
 export function LiveWeatherMap({ latitude, longitude, locationName, userId }: LiveWeatherMapProps) {
+  const { containerRef, isVisible } = useLazyMap('200px');
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<L.Map | null>(null);
+  const mapInstance = useRef<any>(null);
   const [selectedPin, setSelectedPin] = useState<string | null>(null);
   const [showPinSelect, setShowPinSelect] = useState(false);
+  const [leafletLoaded, setLeafletLoaded] = useState(false);
+  const LRef = useRef<any>(null);
   const queryClient = useQueryClient();
+
+  // Lazy load leaflet
+  useEffect(() => {
+    if (!isVisible || leafletLoaded) return;
+    Promise.all([import('leaflet'), import('leaflet/dist/leaflet.css')]).then(([leaflet]) => {
+      LRef.current = leaflet.default;
+      setLeafletLoaded(true);
+    });
+  }, [isVisible, leafletLoaded]);
 
   const { data: reactions = [] } = useQuery({
     queryKey: ['weather-reactions-map', latitude, longitude],
@@ -44,11 +56,13 @@ export function LiveWeatherMap({ latitude, longitude, locationName, userId }: Li
   });
 
   useEffect(() => {
-    if (!mapRef.current || mapInstance.current) return;
+    if (!leafletLoaded || !mapRef.current || mapInstance.current) return;
+    const L = LRef.current;
 
     const map = L.map(mapRef.current, {
       zoomControl: false,
       attributionControl: false,
+      preferCanvas: true,
     }).setView([latitude, longitude], 11);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -61,7 +75,7 @@ export function LiveWeatherMap({ latitude, longitude, locationName, userId }: Li
       map.remove();
       mapInstance.current = null;
     };
-  }, [latitude, longitude]);
+  }, [leafletLoaded, latitude, longitude]);
 
   useEffect(() => {
     if (!mapInstance.current) return;

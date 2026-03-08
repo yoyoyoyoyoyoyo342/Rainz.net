@@ -69,7 +69,7 @@ export const StreakDisplay = () => {
               {totalVisits}
             </span>
             <span className="text-secondary-foreground/70 ml-1">
-              {totalVisits === 1 ? "visit" : "visits"}
+              {totalVisits === 1 ? t('streak.visit') : t('streak.visits')}
             </span>
           </div>
         </div>

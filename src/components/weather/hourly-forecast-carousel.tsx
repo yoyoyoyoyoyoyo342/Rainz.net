@@ -120,7 +120,7 @@ function HourDetailDialog({ hour, isOpen, onClose, isImperial, is24Hour }: HourD
                 <Wind className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Wind</p>
+                <p className="text-xs text-muted-foreground">{t('hourly.wind')}</p>
                 <p className="font-semibold">{windSpeed} {isImperial ? "mph" : "km/h"}</p>
               </div>
             </div>

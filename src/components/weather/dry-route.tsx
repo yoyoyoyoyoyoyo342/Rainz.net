@@ -619,28 +619,27 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
   return (
     <div ref={containerRef} className="mb-4">
-      {isFullscreen ? (
-        <Dialog open={isFullscreen} onOpenChange={(open) => { setIsFullscreen(open); if (!open && navigating) stopNavigation(); }}>
-          <DialogContent className="fixed inset-0 left-0 top-0 translate-x-0 translate-y-0 max-w-full w-full h-[100dvh] max-h-[100dvh] p-0 m-0 border-0 rounded-none [&>button]:hidden overflow-y-auto" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
-            <div className="flex flex-col min-h-full">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 shrink-0">
-                <div className="flex items-center gap-2">
-                  <Navigation className="w-4 h-4 text-primary" />
-                  <span className="font-semibold text-sm">Rainz DryRoutes</span>
-                </div>
-                <button
-                  onClick={() => { setIsFullscreen(false); if (navigating) stopNavigation(); }}
-                  className="p-1.5 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground"
-                >
-                  <Minimize2 className="w-4 h-4" />
-                </button>
+      {isFullscreen ? createPortal(
+        <div className="fixed inset-0 z-50 bg-background overflow-y-auto animate-in fade-in duration-200">
+          <div className="flex flex-col min-h-full">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 shrink-0">
+              <div className="flex items-center gap-2">
+                <Navigation className="w-4 h-4 text-primary" />
+                <span className="font-semibold text-sm">Rainz DryRoutes</span>
               </div>
-              <div className="flex-1 p-4">
-                {routeContent}
-              </div>
+              <button
+                onClick={() => { setIsFullscreen(false); if (navigating) stopNavigation(); }}
+                className="p-1.5 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+              >
+                <Minimize2 className="w-4 h-4" />
+              </button>
             </div>
-          </DialogContent>
-        </Dialog>
+            <div className="flex-1 p-4">
+              {routeContent}
+            </div>
+          </div>
+        </div>,
+        document.body
       ) : null}
       {cardContent}
     </div>

@@ -102,6 +102,23 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     }
   }, [isFullscreen]);
 
+  // Rain radar overlay toggle
+  useEffect(() => {
+    const L = LRef.current;
+    if (!mapInstance.current || !L) return;
+
+    if (showRadar && !radarLayerRef.current) {
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'ohwtbkudpkfbakynikyj';
+      radarLayerRef.current = L.tileLayer(
+        `https://${projectId}.supabase.co/functions/v1/owm-tile-proxy?layer=precipitation_new&z={z}&x={x}&y={y}`,
+        { opacity: 0.5, maxZoom: 18 }
+      ).addTo(mapInstance.current);
+    } else if (!showRadar && radarLayerRef.current) {
+      mapInstance.current.removeLayer(radarLayerRef.current);
+      radarLayerRef.current = null;
+    }
+  }, [showRadar]);
+
   const geocode = async (query: string) => {
     if (query.length < 3) return;
     try {

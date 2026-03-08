@@ -216,19 +216,8 @@ export const Leaderboard = () => {
                     </button>
                   )}
                   {isCurrentUser && <Badge variant="outline" className="text-xs">You</Badge>}
-                  {entry.is_subscriber && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <span className="flex items-center gap-0.5 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-1.5 py-0.5 rounded-full">
-                            <Crown className="w-3 h-3" />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Rainz+ Subscriber</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                  {false && (
+                    <span className="hidden" />
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">

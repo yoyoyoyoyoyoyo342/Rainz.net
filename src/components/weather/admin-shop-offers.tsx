@@ -15,7 +15,7 @@ import { format } from "date-fns";
 
 const SHOP_ITEMS = [
   { id: "streak_freeze", name: "Streak Freeze", defaultPrice: 25 },
-  { id: "rainz_plus_3day", name: "Rainz+ Trial", defaultPrice: 100 },
+  { id: "double_points", name: "Double Points", defaultPrice: 50 },
   { id: "double_points", name: "Double Points", defaultPrice: 50 },
   { id: "prediction_boost", name: "Prediction Shield", defaultPrice: 60 },
   { id: "profile_badge_weather_master", name: "Weather Master Badge", defaultPrice: 150 },

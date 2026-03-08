@@ -67,62 +67,29 @@ export default function TermsOfService() {
 
         <Card>
           <CardHeader>
-            <CardTitle>3. Rainz+ Subscription</CardTitle>
+            <CardTitle>3. Free Access</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
-            <h4 className="font-semibold">3.1 Subscription Features</h4>
+            <h4 className="font-semibold">3.1 Features</h4>
             <p>
-              Rainz+ is a premium subscription that provides enhanced features including:
+              Rainz is a completely free weather application. All features are available to all users at no cost, including:
             </p>
             <ul className="list-disc list-inside space-y-1 ml-4">
-              <li>Ad-free experience throughout the application</li>
               <li>AI-powered weather insights and enhanced data processing</li>
               <li>Push notifications with personalized weather updates</li>
-              <li>Access to weather games, predictions, and leaderboards</li>
+              <li>Weather games, predictions, and leaderboards</li>
               <li>AI Weather Companion chat assistant</li>
               <li>Prediction battles with other users</li>
               <li>Advanced customization options</li>
               <li>Extended 14-day forecasts</li>
               <li>Unlimited saved locations</li>
             </ul>
-
-            <h4 className="font-semibold">3.2 Billing and Cancellation</h4>
-            <p>
-              Rainz+ subscriptions are billed on a recurring basis. You may cancel your subscription at any time through the Stripe customer portal. Upon cancellation, you will retain access to premium features until the end of your current billing period.
-            </p>
-
-            <h4 className="font-semibold">3.3 Refunds</h4>
-            <p>
-              Refund requests are handled on a case-by-case basis. Contact us through the feedback form for refund inquiries.
-            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>4. Advertising</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <h4 className="font-semibold">4.1 Display of Advertisements</h4>
-            <p>
-              Free users of Rainz Weather may see advertisements within the application. These ads help support the continued development and maintenance of our free service.
-            </p>
-
-            <h4 className="font-semibold">4.2 Third-Party Advertisers</h4>
-            <p>
-              Advertisements may be served by third-party advertising networks. We are not responsible for the content, accuracy, or practices of third-party advertisers. Clicking on advertisements may take you to external websites not operated by us.
-            </p>
-
-            <h4 className="font-semibold">4.3 Ad-Free Experience</h4>
-            <p>
-              Rainz+ subscribers enjoy a completely ad-free experience within the application.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>5. User-Generated Content</CardTitle>
+            <CardTitle>4. User-Generated Content</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <h4 className="font-semibold">5.1 User Predictions and Reports</h4>
@@ -217,7 +184,7 @@ export default function TermsOfService() {
               <li>Modify or discontinue the Service at any time without notice</li>
               <li>Change these Terms of Service at our discretion</li>
               <li>Terminate or suspend your account for violations of these terms</li>
-              <li>Modify Rainz+ subscription pricing with 30 days notice</li>
+              <li>Modify service features and pricing with 30 days notice</li>
             </ul>
           </CardContent>
         </Card>

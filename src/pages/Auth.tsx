@@ -369,8 +369,8 @@ export default function Auth() {
                 <Shield className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-semibold mb-1">Premium Features</h3>
-                <p className="text-sm text-white/70">Unlock advanced tools and personalized alerts</p>
+                <h3 className="font-semibold mb-1">Advanced Features</h3>
+                <p className="text-sm text-white/70">Access powerful tools and personalized alerts</p>
               </div>
             </div>
           </div>

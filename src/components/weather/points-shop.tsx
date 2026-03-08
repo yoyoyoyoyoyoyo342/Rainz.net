@@ -17,7 +17,7 @@ import { DailySpinWheel } from "./daily-spin-wheel";
 import { TipJar } from "./tip-jar";
 
 interface MysteryBoxReward {
-  type: "shop_points" | "streak_freeze" | "premium_trial" | "double_points";
+  type: "shop_points" | "streak_freeze" | "double_points";
   amount?: number;
   label: string;
   description: string;
@@ -28,7 +28,7 @@ interface ShopItem {
   description: string;
   price: number;
   icon: React.ReactNode;
-  type: "streak_freeze" | "rainz_plus_trial" | "double_points" | "prediction_boost" | "profile_badge";
+  type: "streak_freeze" | "double_points" | "prediction_boost" | "profile_badge";
   maxQuantity?: number;
   duration?: string;
 }
@@ -42,15 +42,6 @@ const SHOP_ITEMS: ShopItem[] = [
     icon: <Snowflake className="w-5 h-5 text-blue-400" />,
     type: "streak_freeze",
     maxQuantity: 5,
-  },
-  {
-    id: "rainz_plus_3day",
-    name: "Rainz+ Trial",
-    description: "Unlock all premium features for 3 days",
-    price: 100,
-    icon: <Crown className="w-5 h-5 text-yellow-400" />,
-    type: "rainz_plus_trial",
-    duration: "3 days",
   },
   {
     id: "double_points",
@@ -81,7 +72,7 @@ const SHOP_ITEMS: ShopItem[] = [
   {
     id: "gift_box",
     name: "Mystery Box",
-    description: "Random reward: Could be SP, streak freezes, or premium time!",
+    description: "Random reward: Could be SP, streak freezes, or bonus points!",
     price: 40,
     icon: <Gift className="w-5 h-5 text-pink-400" />,
     type: "prediction_boost",
@@ -356,9 +347,7 @@ export const PointsShop = () => {
     // Base: SP 25%, Freeze 20%, Double 15%, Bonus PP 15%, Badge XP 10%, Premium 15%
     // If subscribed: SP 30%, Freeze 22%, Double 18%, Bonus PP 18%, Badge XP 12%
     
-    const thresholds = isSubscribed 
-      ? { sp: 0.30, freeze: 0.52, double: 0.70, bonusPP: 0.88, badgeXP: 1.0 }
-      : { sp: 0.25, freeze: 0.45, double: 0.60, bonusPP: 0.75, badgeXP: 0.85, premium: 1.0 };
+    const thresholds = { sp: 0.30, freeze: 0.52, double: 0.70, bonusPP: 0.88, badgeXP: 1.0 };
     
     if (roll < thresholds.sp) {
       // Shop Points (15-75)
@@ -417,19 +406,8 @@ export const PointsShop = () => {
         .from("profiles")
         .update({ total_points: (profile?.total_points || 0) + 50 })
         .eq("user_id", user!.id);
-    } else if (!isSubscribed) {
-      // Premium Trial (1 day) - only for non-subscribers
-      reward = { type: "premium_trial", label: "1 Day Rainz+!", description: "Premium features unlocked" };
-      
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 1);
-      await supabase.from("premium_trials").insert({
-        user_id: user!.id,
-        expires_at: expiresAt.toISOString(),
-        source: "mystery_box",
-      });
     } else {
-      // Fallback for edge case (shouldn't happen)
+      // Fallback bonus SP
       const amount = 30;
       reward = { type: "shop_points", amount, label: `${amount} Shop Points!`, description: "Added to your balance" };
       
@@ -462,10 +440,6 @@ export const PointsShop = () => {
       return;
     }
 
-    if (item.type === "rainz_plus_trial" && (isSubscribed || activeTrial)) {
-      toast.error("You already have active Rainz+!");
-      return;
-    }
 
     setPurchasing(item.id);
 
@@ -509,16 +483,6 @@ export const PointsShop = () => {
           quantity: inventory.streak_freeze + 1,
         }, { onConflict: "user_id,item_type" });
         toast.success("Streak Freeze added to your inventory!");
-      } else if (item.type === "rainz_plus_trial") {
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 3);
-        await supabase.from("premium_trials").insert({
-          user_id: user.id,
-          expires_at: expiresAt.toISOString(),
-          source: "shop",
-        });
-        toast.success("Rainz+ Trial activated!");
-        await checkSubscription();
       } else if (item.type === "double_points") {
         // Activate double points for 1 use (next prediction)
         await supabase.from("active_powerups").insert({
@@ -710,8 +674,7 @@ export const PointsShop = () => {
             const { price: currentPrice, isOnSale, originalPrice } = getItemPrice(item.id, item.price);
             const canAfford = shopPoints >= currentPrice;
             const atMax = item.type === "streak_freeze" && inventory.streak_freeze >= 5;
-            const hasActive = item.type === "rainz_plus_trial" && (isSubscribed || !!activeTrial);
-            const isDisabled = !canAfford || atMax || hasActive;
+            const isDisabled = !canAfford || atMax;
 
             return (
               <Card key={item.id} className={`transition-all ${isOnSale ? "border-green-500/50 bg-green-500/5" : ""} ${isDisabled ? "opacity-60" : "hover:border-primary/50"}`}>
@@ -760,8 +723,6 @@ export const PointsShop = () => {
                           <Loader2 className="w-3 h-3 animate-spin" />
                         ) : atMax ? (
                           "Max (Shop)"
-                        ) : hasActive ? (
-                          "Active"
                         ) : !canAfford ? (
                           "Need SP"
                         ) : (

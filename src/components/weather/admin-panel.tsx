@@ -6,18 +6,21 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   CheckCircle2, XCircle, Clock, BarChart3, MessageSquare, Database,
-  Gift, FileText, MapPin, Key, Tag, Lightbulb, ClipboardList,
+  FileText, MapPin, Key, Tag, Lightbulb, ClipboardList,
+  Users, ToggleLeft, Shield,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { AnalyticsDashboard } from './analytics-dashboard';
 import { BroadcastMessage } from './broadcast-message';
 import { ApiDataComparison } from './api-data-comparison';
-import { AdminPremiumGrants } from './admin-premium-grants';
 import { AdminBlogPosts } from './admin-blog-posts';
 import { AdminLocationStats } from './admin-location-stats';
 import { AdminApiToken } from './admin-api-token';
 import { AdminShopOffers } from './admin-shop-offers';
 import { AdminFeatureIdeas } from './admin-feature-ideas';
+import { AdminUserManagement } from './admin-user-management';
+import { AdminFeatureFlags } from './admin-feature-flags';
+import { AdminContentModeration } from './admin-content-moderation';
 
 interface WeatherReport {
   id: string;
@@ -112,10 +115,12 @@ export function AdminPanel() {
   };
 
   const TAB_ITEMS = [
+    { value: 'users', label: 'Users', icon: <Users className="w-3.5 h-3.5" /> },
+    { value: 'moderation', label: 'Moderation', icon: <Shield className="w-3.5 h-3.5" /> },
+    { value: 'flags', label: 'Flags', icon: <ToggleLeft className="w-3.5 h-3.5" /> },
     { value: 'ideas', label: 'Ideas', icon: <Lightbulb className="w-3.5 h-3.5" /> },
     { value: 'reports', label: 'Reports', icon: <ClipboardList className="w-3.5 h-3.5" /> },
     { value: 'location-stats', label: 'Locations', icon: <MapPin className="w-3.5 h-3.5" /> },
-    { value: 'premium', label: 'Premium', icon: <Gift className="w-3.5 h-3.5" /> },
     { value: 'blog', label: 'Blog', icon: <FileText className="w-3.5 h-3.5" /> },
     { value: 'broadcast', label: 'Broadcast', icon: <MessageSquare className="w-3.5 h-3.5" /> },
     { value: 'analytics', label: 'Analytics', icon: <BarChart3 className="w-3.5 h-3.5" /> },
@@ -132,7 +137,7 @@ export function AdminPanel() {
         <p className="text-xs text-muted-foreground mt-0.5">Rainz control panel</p>
       </div>
 
-      <Tabs defaultValue="ideas" className="space-y-4">
+      <Tabs defaultValue="users" className="space-y-4">
         {/* Tabs bar */}
         <div className="glass-card rounded-2xl border border-border/30 p-1.5">
           <TabsList className="flex flex-wrap gap-1 h-auto bg-transparent p-0">
@@ -149,9 +154,30 @@ export function AdminPanel() {
           </TabsList>
         </div>
 
+        {/* User Management */}
+        <TabsContent value="users">
+          <AdminSection title="User Management 👤" description="Search users, edit profiles, adjust points, and send password resets.">
+            <AdminUserManagement />
+          </AdminSection>
+        </TabsContent>
+
+        {/* Content Moderation */}
+        <TabsContent value="moderation">
+          <AdminSection title="Content Moderation 🛡️" description="Review and delete weather reactions and predictions.">
+            <AdminContentModeration />
+          </AdminSection>
+        </TabsContent>
+
+        {/* Feature Flags */}
+        <TabsContent value="flags">
+          <AdminSection title="Feature Flags 🚦" description="Toggle features on and off across the app.">
+            <AdminFeatureFlags />
+          </AdminSection>
+        </TabsContent>
+
         {/* Feature Ideas */}
         <TabsContent value="ideas">
-          <AdminSection title="Feature Ideas 💡" description="Manage user-submitted feature requests. Pin, change status, or delete ideas.">
+          <AdminSection title="Feature Ideas 💡" description="Manage user-submitted feature requests.">
             <AdminFeatureIdeas />
           </AdminSection>
         </TabsContent>
@@ -200,10 +226,6 @@ export function AdminPanel() {
 
         <TabsContent value="location-stats">
           <AdminSection title="Location Stats"><AdminLocationStats /></AdminSection>
-        </TabsContent>
-
-        <TabsContent value="premium">
-          <AdminSection title="Premium Grants"><AdminPremiumGrants /></AdminSection>
         </TabsContent>
 
         <TabsContent value="blog">

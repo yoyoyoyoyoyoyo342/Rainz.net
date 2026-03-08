@@ -533,6 +533,17 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
               <Share2 className="w-3.5 h-3.5" />
             </Button>
           </div>
+
+          {/* Umbrella Score Badge */}
+          <UmbrellaScore rainScore={routes[bestRouteIdx].rainScore} />
+
+          {/* Carbon & Calorie Tracker */}
+          <RouteCarbonTracker
+            distanceMeters={routes[bestRouteIdx].distance}
+            durationSeconds={routes[bestRouteIdx].duration}
+            transportMode={transportMode}
+            isImperial={isImperial}
+          />
         </div>
       )}
 

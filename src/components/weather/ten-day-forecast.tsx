@@ -16,6 +16,7 @@ interface TenDayForecastProps {
 }
 
 export function TenDayForecast({ dailyForecast, weatherSources, hourlyForecast, isImperial = true, is24Hour = true, premiumSettings }: TenDayForecastProps) {
+  const { t } = useLanguage();
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [showAllDays, setShowAllDays] = useState(false);
   const isCompact = premiumSettings?.compactMode;

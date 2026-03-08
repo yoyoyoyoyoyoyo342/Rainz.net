@@ -237,9 +237,9 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
     }
 
     // Remove wind arrows if switching away from wind mode
-    if (windArrowLayerRef.current) {
-      mapRef.current.removeLayer(windArrowLayerRef.current);
-      windArrowLayerRef.current = null;
+    if (windArrowRef.current) {
+      windArrowRef.current.remove();
+      windArrowRef.current = null;
     }
 
     if (mapMode === 'rain') {
@@ -264,9 +264,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
 
       // Add wind direction arrows on wind mode
       if (mapMode === 'wind') {
-        const arrowLayer = new WindArrowOverlay(latitude, longitude);
-        arrowLayer.addTo(mapRef.current);
-        windArrowLayerRef.current = arrowLayer;
+        windArrowRef.current = createWindArrowOverlay(mapRef.current, latitude, longitude);
       }
     }
   }, [currentFrameIndex, radarFrames, opacity, mapMode, latitude, longitude]);

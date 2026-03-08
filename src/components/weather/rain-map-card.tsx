@@ -155,27 +155,41 @@ function createWindArrowOverlay(map: L.Map) {
 
 const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, locationName }) => {
   const { t } = useLanguage();
+  const { containerRef, isVisible } = useLazyMap('300px');
   const [radarFrames, setRadarFrames] = useState<RadarFrame[]>([]);
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [opacity, setOpacity] = useState(0.7);
   const [loading, setLoading] = useState(true);
   const [mapMode, setMapMode] = useState<MapMode>('rain');
+  const [leafletLoaded, setLeafletLoaded] = useState(false);
+  const LRef = useRef<any>(null);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<L.Map | null>(null);
-  const radarLayerRef = useRef<L.TileLayer | null>(null);
+  const mapRef = useRef<any>(null);
+  const radarLayerRef = useRef<any>(null);
   const windArrowRef = useRef<{ remove: () => void } | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Lazy load leaflet
+  useEffect(() => {
+    if (!isVisible || leafletLoaded) return;
+    Promise.all([import('leaflet'), import('leaflet/dist/leaflet.css')]).then(([leaflet]) => {
+      LRef.current = leaflet.default;
+      setLeafletLoaded(true);
+    });
+  }, [isVisible, leafletLoaded]);
+
   // Initialize map
   useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current) return;
+    if (!leafletLoaded || !mapContainerRef.current || mapRef.current) return;
+    const L = LRef.current;
 
     mapRef.current = L.map(mapContainerRef.current, {
       center: [latitude, longitude],
       zoom: 7,
       zoomControl: false,
+      preferCanvas: true,
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -191,7 +205,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [leafletLoaded]);
 
   useEffect(() => {
     if (mapRef.current) {

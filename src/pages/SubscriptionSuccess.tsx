@@ -34,7 +34,7 @@ export default function SubscriptionSuccess() {
                 "AI Enhanced Forecasts",
                 "Morning AI Review",
                 "Advanced Settings",
-                "All Premium Features"
+                "All Features Included"
               ].map((feature, index) => (
                 <div key={index} className="flex items-center gap-2 p-2 bg-green-500/10 rounded-lg">
                   <Sparkles className="w-4 h-4 text-green-500" />

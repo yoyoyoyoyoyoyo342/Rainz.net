@@ -156,8 +156,8 @@ export const PredictionDialog = ({
             <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
               <CardContent className="p-2 text-center">
                 <div className="flex items-center justify-center gap-1 text-green-600">
-                  <Zap className="w-3 h-3" />
-                  <span className="text-xs">Accuracy</span>
+                   <Zap className="w-3 h-3" />
+                   <span className="text-xs">{t('predict.accuracy')}</span>
                 </div>
                 <p className="text-lg font-bold">{userStats.accuracy}%</p>
               </CardContent>

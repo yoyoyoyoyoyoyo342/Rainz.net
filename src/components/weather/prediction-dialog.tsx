@@ -169,19 +169,19 @@ export const PredictionDialog = ({
           <TabsList className="grid w-full grid-cols-4 h-11">
             <TabsTrigger value="predict" className="gap-1 text-xs sm:text-sm">
               <Target className="w-4 h-4" />
-              <span className="hidden sm:inline">Predict</span>
+              <span className="hidden sm:inline">{t('predict.tab.predict')}</span>
             </TabsTrigger>
             <TabsTrigger value="leaderboard" className="gap-1 text-xs sm:text-sm">
               <Trophy className="w-4 h-4" />
-              <span className="hidden sm:inline">Leaders</span>
+              <span className="hidden sm:inline">{t('predict.tab.leaders')}</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="gap-1 text-xs sm:text-sm">
               <History className="w-4 h-4" />
-              <span className="hidden sm:inline">History</span>
+              <span className="hidden sm:inline">{t('predict.tab.history')}</span>
             </TabsTrigger>
             <TabsTrigger value="shop" className="gap-1 text-xs sm:text-sm">
               <ShoppingBag className="w-4 h-4" />
-              <span className="hidden sm:inline">Shop</span>
+              <span className="hidden sm:inline">{t('predict.tab.shop')}</span>
             </TabsTrigger>
           </TabsList>
           

@@ -165,9 +165,6 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   }, [leafletLoaded, isFullscreen]);
 
   // No body scroll lock needed — fullscreen uses split layout
-      return () => { document.body.style.overflow = ''; };
-    }
-  }, [isFullscreen]);
 
   // Re-init map when fullscreen toggles (DOM container changes)
   useEffect(() => {

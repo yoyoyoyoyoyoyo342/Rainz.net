@@ -637,11 +637,9 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   return (
     <div ref={containerRef} className="mb-4">
       {isFullscreen ? createPortal(
-        <div 
-          className="fixed inset-0 z-50 bg-background overflow-y-auto animate-in fade-in duration-200"
-          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
-        >
-          <div className="sticky top-0 z-10 bg-background flex items-center justify-between px-4 py-3 border-b border-border/50">
+        <div className="fixed inset-0 z-50 bg-background flex flex-col animate-in fade-in duration-200">
+          {/* Header — fixed */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 shrink-0">
             <div className="flex items-center gap-2">
               <Navigation className="w-4 h-4 text-primary" />
               <span className="font-semibold text-sm">Rainz DryRoutes</span>
@@ -653,13 +651,23 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
               <Minimize2 className="w-4 h-4" />
             </button>
           </div>
-          <div className="p-4 pb-8">
-            {routeContent}
+          {/* Map — fixed height, non-scrollable, Leaflet owns touch here */}
+          <div className="shrink-0">
+            {mapContent}
+          </div>
+          {/* Controls + Results — independently scrollable, no Leaflet interference */}
+          <div
+            className="flex-1 overflow-y-auto overscroll-contain p-4 pb-8"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <div className="space-y-3">
+              {controlsContent}
+              {resultsContent}
+            </div>
           </div>
         </div>,
         document.body
-      ) : null}
-      {cardContent}
+      ) : cardContent}
     </div>
   );
 }

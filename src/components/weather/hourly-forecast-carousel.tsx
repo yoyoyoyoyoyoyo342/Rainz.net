@@ -197,9 +197,9 @@ export function HourlyForecastCarousel({
         <div className={`${cardPadding} border-b border-border/50`}>
           <h2 className={`${isCompact ? "text-sm" : "text-lg"} font-semibold ${fg} flex items-center gap-2`}>
             <Clock className={`${isCompact ? "w-4 h-4" : "w-5 h-5"} ${iconFg}`} />
-            24-Hour Forecast
+            {t('card.hourly')}
           </h2>
-          <p className={`text-xs ${muted} mt-1`}>Tap any hour for details</p>
+          <p className={`text-xs ${muted} mt-1`}>{t('card.hourlyTap')}</p>
         </div>
       )}
 

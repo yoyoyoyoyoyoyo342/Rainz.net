@@ -483,16 +483,6 @@ export const PointsShop = () => {
           quantity: inventory.streak_freeze + 1,
         }, { onConflict: "user_id,item_type" });
         toast.success("Streak Freeze added to your inventory!");
-      } else if (item.type === "rainz_plus_trial") {
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 3);
-        await supabase.from("premium_trials").insert({
-          user_id: user.id,
-          expires_at: expiresAt.toISOString(),
-          source: "shop",
-        });
-        toast.success("Rainz+ Trial activated!");
-        await checkSubscription();
       } else if (item.type === "double_points") {
         // Activate double points for 1 use (next prediction)
         await supabase.from("active_powerups").insert({

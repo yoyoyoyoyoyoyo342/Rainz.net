@@ -160,12 +160,12 @@ export function TenDayForecast({ dailyForecast, weatherSources, hourlyForecast, 
               {showAllDays ? (
                 <>
                   <ChevronUp className="w-4 h-4" />
-                  Show Less
+                  {t('card.showLess')}
                 </>
               ) : (
                 <>
                   <ChevronDown className="w-4 h-4" />
-                  Show All 10 Days
+                  {t('card.showAll')}
                 </>
               )}
             </button>

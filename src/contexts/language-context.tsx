@@ -227,6 +227,60 @@ const translations: Record<Language, Record<string, string>> = {
     'language.fr': 'Français',
     'language.it': 'Italiano',
     'language.boomer': '👴 Boomer',
+    
+    // Bingo
+    'bingo.title': 'Weather Bingo',
+    'bingo.lines': 'lines',
+    'bingo.fullCard': 'BINGO! Full card complete!',
+    'bingo.linesComplete': 'line(s) complete',
+    'bingo.hint': 'Squares auto-complete from live weather. Tap to manually mark others!',
+    
+    // Mood Journal
+    'mood.title': 'Weather Mood Journal',
+    'mood.howFeeling': 'How does the weather make you feel today?',
+    'mood.logged': 'Mood logged for today!',
+    'mood.change': 'Change mood',
+    'mood.insightPrefix': 'You\'re usually',
+    'mood.insightAt': 'at',
+    
+    // Outfit
+    'outfit.title': 'Outfit of the Day',
+    'outfit.heavyCoat': 'Heavy Coat',
+    'outfit.coldOut': 'It\'s freezing out there!',
+    'outfit.layers': 'Layer Up',
+    'outfit.layerUp': 'Multiple layers recommended',
+    'outfit.lightJacket': 'Light Jacket',
+    'outfit.coolish': 'A bit cool outside',
+    'outfit.lightClothes': 'Light Clothes',
+    'outfit.hotOut': 'It\'s hot out!',
+    'outfit.umbrella': 'Umbrella',
+    'outfit.rainChance': 'rain chance',
+    'outfit.waterproof': 'Waterproof Layer',
+    'outfit.stayDry': 'Stay dry today',
+    'outfit.sunglasses': 'Sunglasses',
+    'outfit.sunscreen': 'Sunscreen',
+    'outfit.protectSkin': 'Protect your skin!',
+    'outfit.windbreaker': 'Windbreaker',
+    'outfit.windy': 'It\'s windy out',
+    'outfit.boots': 'Warm Boots',
+    'outfit.snowExpected': 'Snow expected!',
+    'outfit.anythingGoes': 'Anything Goes!',
+    'outfit.niceDay': 'Nice weather today',
+    
+    // Trivia
+    'trivia.title': 'Daily Weather Trivia',
+    'trivia.correct': 'Correct!',
+    'trivia.wrong': 'Not quite!',
+    
+    // Compare
+    'compare.title': 'Compare Cities',
+    'compare.city1': 'City 1...',
+    'compare.city2': 'City 2...',
+    'compare.button': 'Compare Weather',
+    'compare.notFound': 'Could not find one or both cities',
+    'compare.sameTemp': 'Almost the same temperature!',
+    'compare.is': 'is',
+    'compare.warmer': 'warmer',
   },
   'en-US': {
     // Header
@@ -1449,6 +1503,60 @@ const translations: Record<Language, Record<string, string>> = {
     'language.fr': 'Français',
     'language.it': 'Italiano',
     'language.boomer': '👴 Boomer',
+    
+    // Bingo
+    'bingo.title': 'Weather Bingo (Like Church Bingo!)',
+    'bingo.lines': 'lines',
+    'bingo.fullCard': 'BINGO! I WON! (Nobody cares, Grandpa)',
+    'bingo.linesComplete': 'line(s) done',
+    'bingo.hint': 'The squares fill in by themselves! Like magic! You can also poke them.',
+    
+    // Mood Journal
+    'mood.title': 'How\'s The Weather Making You Feel?',
+    'mood.howFeeling': 'Pick a little face that matches your mood:',
+    'mood.logged': 'Got it! Mood saved for today.',
+    'mood.change': 'Actually, change that',
+    'mood.insightPrefix': 'You\'re usually',
+    'mood.insightAt': 'when it\'s',
+    
+    // Outfit
+    'outfit.title': 'What Should I Wear Today?',
+    'outfit.heavyCoat': 'The Big Winter Coat',
+    'outfit.coldOut': 'Bundle up! It\'s colder than a well-digger\'s boots!',
+    'outfit.layers': 'Put On More Layers',
+    'outfit.layerUp': 'Like an onion! Layers!',
+    'outfit.lightJacket': 'A Nice Cardigan',
+    'outfit.coolish': 'It\'s a bit nippy',
+    'outfit.lightClothes': 'Something Light',
+    'outfit.hotOut': 'Hotter than Hades out there!',
+    'outfit.umbrella': 'Don\'t Forget Your Umbrella!',
+    'outfit.rainChance': 'chance of rain',
+    'outfit.waterproof': 'Your Rain Slicker',
+    'outfit.stayDry': 'Don\'t get your good clothes wet!',
+    'outfit.sunglasses': 'Those Fancy Sunglasses',
+    'outfit.sunscreen': 'SUNSCREEN!',
+    'outfit.protectSkin': 'You\'ll look like a lobster!',
+    'outfit.windbreaker': 'That Windbreaker From \'92',
+    'outfit.windy': 'Hold onto your hat!',
+    'outfit.boots': 'The Snow Boots',
+    'outfit.snowExpected': 'Don\'t slip and break a hip!',
+    'outfit.anythingGoes': 'Wear Whatever You Want!',
+    'outfit.niceDay': 'Perfect weather! Go sit on the porch.',
+    
+    // Trivia
+    'trivia.title': 'Daily Brain Teaser (Weather Edition)',
+    'trivia.correct': 'You got it! Still sharp as a tack!',
+    'trivia.wrong': 'Wrong! But you knew that... right?',
+    
+    // Compare
+    'compare.title': 'Is It Nicer Over There?',
+    'compare.city1': 'Type a city...',
+    'compare.city2': 'Type another city...',
+    'compare.button': 'Who Has Better Weather?',
+    'compare.notFound': 'Can\'t find those places. Did you spell it right?',
+    'compare.sameTemp': 'Same temperature! How about that!',
+    'compare.is': 'is',
+    'compare.warmer': 'warmer',
   },
 };
 

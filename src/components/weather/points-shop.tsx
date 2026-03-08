@@ -72,7 +72,7 @@ const SHOP_ITEMS: ShopItem[] = [
   {
     id: "gift_box",
     name: "Mystery Box",
-    description: "Random reward: Could be SP, streak freezes, or premium time!",
+    description: "Random reward: Could be SP, streak freezes, or bonus points!",
     price: 40,
     icon: <Gift className="w-5 h-5 text-pink-400" />,
     type: "prediction_boost",

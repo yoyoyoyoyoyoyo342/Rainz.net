@@ -2,6 +2,7 @@ import { Sun, Sunrise, Sunset, Moon } from "lucide-react";
 import { CurrentWeather } from "@/types/weather";
 import { formatTime } from "@/lib/time-format";
 import { PremiumSettings } from "@/hooks/use-premium-settings";
+import { useLanguage } from "@/contexts/language-context";
 
 interface DetailedMetricsProps {
   currentWeather: CurrentWeather;

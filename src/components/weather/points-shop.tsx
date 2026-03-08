@@ -723,8 +723,6 @@ export const PointsShop = () => {
                           <Loader2 className="w-3 h-3 animate-spin" />
                         ) : atMax ? (
                           "Max (Shop)"
-                        ) : hasActive ? (
-                          "Active"
                         ) : !canAfford ? (
                           "Need SP"
                         ) : (

@@ -265,14 +265,10 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
   const handleDrawerOpenChange = useCallback((open: boolean) => {
     setDrawerOpen(open);
     if (!open) {
-      setCommittedAllergies(prev => {
-        // Only update if actually different
-        return prev;
-      });
-      // Defer the committed update to after drawer close animation
-      requestAnimationFrame(() => {
+      // Sync committed allergies after drawer closes
+      setTimeout(() => {
         setCommittedAllergies(userAllergies);
-      });
+      }, 350);
     }
   }, [userAllergies]);
 

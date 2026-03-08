@@ -7,7 +7,7 @@ import { WeatherTrendsCard } from './weather-trends-card';
 import { StreakChallenge } from './streak-challenge';
 import { WeatherPersonalityQuiz } from './weather-personality-quiz';
 import { WeatherFunFacts } from './weather-fun-facts';
-import { WeatherBingo } from './weather-bingo';
+
 import { WeatherMoodJournal } from './weather-mood-journal';
 import { OutfitRecommender } from './outfit-recommender';
 import { WeatherTrivia } from './weather-trivia';

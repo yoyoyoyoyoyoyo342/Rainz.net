@@ -78,8 +78,9 @@ export function LiveWeatherMap({ latitude, longitude, locationName, userId }: Li
   }, [leafletLoaded, latitude, longitude]);
 
   useEffect(() => {
-    if (!mapInstance.current) return;
-    mapInstance.current.eachLayer((layer) => {
+    if (!mapInstance.current || !LRef.current) return;
+    const L = LRef.current;
+    mapInstance.current.eachLayer((layer: any) => {
       if (layer instanceof L.Marker) layer.remove();
     });
 

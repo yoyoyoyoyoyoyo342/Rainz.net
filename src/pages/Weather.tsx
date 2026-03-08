@@ -55,6 +55,7 @@ import { ExploreSheet, ExploreButton } from "@/components/weather/explore-sheet"
 import { FeatureIdeasCard } from "@/components/weather/feature-ideas-card";
 import { BattleAcceptCard } from "@/components/weather/battle-accept-card";
 import { DryRoute } from "@/components/weather/dry-route";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 
 export default function WeatherPage() {
   const [searchParams, setSearchParams] = useSearchParams();

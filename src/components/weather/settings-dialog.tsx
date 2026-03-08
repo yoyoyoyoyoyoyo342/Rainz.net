@@ -341,7 +341,7 @@ export function SettingsDialog({
             {/* Language Section */}
             <SettingsSection title={t('settings.language')} icon={Languages}>
               <div className="grid grid-cols-2 gap-2">
-                {(['en-GB', 'en-US', 'da', 'sv', 'no', 'fr', 'it'] as Language[]).map((lang) => (
+                {(['en-GB', 'en-US', 'da', 'sv', 'no', 'fr', 'it', 'boomer'] as Language[]).map((lang) => (
                   <button
                     key={lang}
                     onClick={() => {

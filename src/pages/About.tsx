@@ -88,7 +88,7 @@ export default function About() {
     <>
       <SEOHead 
         title="About Rainz Weather - AI-Powered Weather Forecasts"
-        description="Learn about Rainz Weather, the free AI-powered weather app with hyper-local forecasts, pollen tracking, gamified predictions, and premium features."
+        description="Learn about Rainz Weather, the free AI-powered weather app with hyper-local forecasts, pollen tracking, gamified predictions, and advanced features."
         keywords="About Rainz, Rainz Weather features, AI weather app, weather predictions, pollen tracker"
       />
       <div className="min-h-screen bg-background">

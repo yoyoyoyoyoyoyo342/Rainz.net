@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Plus, Droplets, Sun, Cloud, Snowflake, Zap } from 'lucide-react';
+import { MapPin, Plus, Droplets, Sun, Cloud, Snowflake, Zap, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { useLazyMap } from '@/hooks/use-lazy-map';
 
 interface LiveWeatherMapProps {
   latitude: number;
@@ -25,11 +24,23 @@ const WEATHER_PINS = [
 ];
 
 export function LiveWeatherMap({ latitude, longitude, locationName, userId }: LiveWeatherMapProps) {
+  const { containerRef, isVisible } = useLazyMap('200px');
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<L.Map | null>(null);
+  const mapInstance = useRef<any>(null);
   const [selectedPin, setSelectedPin] = useState<string | null>(null);
   const [showPinSelect, setShowPinSelect] = useState(false);
+  const [leafletLoaded, setLeafletLoaded] = useState(false);
+  const LRef = useRef<any>(null);
   const queryClient = useQueryClient();
+
+  // Lazy load leaflet
+  useEffect(() => {
+    if (!isVisible || leafletLoaded) return;
+    Promise.all([import('leaflet'), import('leaflet/dist/leaflet.css')]).then(([leaflet]) => {
+      LRef.current = leaflet.default;
+      setLeafletLoaded(true);
+    });
+  }, [isVisible, leafletLoaded]);
 
   const { data: reactions = [] } = useQuery({
     queryKey: ['weather-reactions-map', latitude, longitude],
@@ -45,11 +56,13 @@ export function LiveWeatherMap({ latitude, longitude, locationName, userId }: Li
   });
 
   useEffect(() => {
-    if (!mapRef.current || mapInstance.current) return;
+    if (!leafletLoaded || !mapRef.current || mapInstance.current) return;
+    const L = LRef.current;
 
     const map = L.map(mapRef.current, {
       zoomControl: false,
       attributionControl: false,
+      preferCanvas: true,
     }).setView([latitude, longitude], 11);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -62,11 +75,12 @@ export function LiveWeatherMap({ latitude, longitude, locationName, userId }: Li
       map.remove();
       mapInstance.current = null;
     };
-  }, [latitude, longitude]);
+  }, [leafletLoaded, latitude, longitude]);
 
   useEffect(() => {
-    if (!mapInstance.current) return;
-    mapInstance.current.eachLayer((layer) => {
+    if (!mapInstance.current || !LRef.current) return;
+    const L = LRef.current;
+    mapInstance.current.eachLayer((layer: any) => {
       if (layer instanceof L.Marker) layer.remove();
     });
 
@@ -104,35 +118,43 @@ export function LiveWeatherMap({ latitude, longitude, locationName, userId }: Li
   };
 
   return (
-    <Card className="glass-card border-border/30">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-primary" />
-          Live Weather Map
-          <span className="text-xs text-muted-foreground ml-auto">{reactions.length} pins</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <div ref={mapRef} className="w-full h-48 rounded-xl overflow-hidden border border-border/30" />
-        
-        {showPinSelect ? (
-          <div className="flex flex-wrap gap-1.5">
-            {WEATHER_PINS.map((pin) => (
-              <button
-                key={pin.emoji}
-                onClick={() => dropPin(pin.emoji, pin.label)}
-                className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all"
-              >
-                <span>{pin.emoji}</span> {pin.label}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <Button size="sm" variant="outline" onClick={() => setShowPinSelect(true)} className="w-full text-xs">
-            <Plus className="w-3.5 h-3.5 mr-1.5" /> Drop Weather Pin
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+    <div ref={containerRef}>
+      <Card className="glass-card border-border/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-primary" />
+            Live Weather Map
+            <span className="text-xs text-muted-foreground ml-auto">{reactions.length} pins</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {isVisible && leafletLoaded ? (
+            <div ref={mapRef} className="w-full h-48 rounded-xl overflow-hidden border border-border/30" />
+          ) : (
+            <div className="w-full h-48 rounded-xl bg-muted/30 flex items-center justify-center border border-border/30">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
+          )}
+          
+          {showPinSelect ? (
+            <div className="flex flex-wrap gap-1.5">
+              {WEATHER_PINS.map((pin) => (
+                <button
+                  key={pin.emoji}
+                  onClick={() => dropPin(pin.emoji, pin.label)}
+                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all"
+                >
+                  <span>{pin.emoji}</span> {pin.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <Button size="sm" variant="outline" onClick={() => setShowPinSelect(true)} className="w-full text-xs">
+              <Plus className="w-3.5 h-3.5 mr-1.5" /> Drop Weather Pin
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

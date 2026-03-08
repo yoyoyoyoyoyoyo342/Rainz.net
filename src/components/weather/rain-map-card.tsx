@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { MapPin, Play, Pause, SkipBack, SkipForward, Map, Thermometer, Wind, CloudRain } from 'lucide-react';
+import { MapPin, Play, Pause, SkipBack, SkipForward, Map, Thermometer, Wind, CloudRain, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { Slider } from '@/components/ui/slider';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { useLazyMap } from '@/hooks/use-lazy-map';
 
 interface RainMapCardProps {
   latitude: number;
@@ -74,7 +73,7 @@ const MODE_CONFIG: Record<MapMode, {
 };
 
 // Wind arrow overlay — plain functions, no class inheritance
-function createWindArrowOverlay(map: L.Map) {
+function createWindArrowOverlay(map: any) {
   const canvas = document.createElement('canvas');
   canvas.style.position = 'absolute';
   canvas.style.top = '0';
@@ -94,7 +93,7 @@ function createWindArrowOverlay(map: L.Map) {
     canvas.height = size.y;
 
     const topLeft = map.containerPointToLayerPoint([0, 0]);
-    L.DomUtil.setPosition(canvas, topLeft);
+    canvas.style.transform = `translate(${topLeft.x}px, ${topLeft.y}px)`;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -156,27 +155,41 @@ function createWindArrowOverlay(map: L.Map) {
 
 const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, locationName }) => {
   const { t } = useLanguage();
+  const { containerRef, isVisible } = useLazyMap('300px');
   const [radarFrames, setRadarFrames] = useState<RadarFrame[]>([]);
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [opacity, setOpacity] = useState(0.7);
   const [loading, setLoading] = useState(true);
   const [mapMode, setMapMode] = useState<MapMode>('rain');
+  const [leafletLoaded, setLeafletLoaded] = useState(false);
+  const LRef = useRef<any>(null);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<L.Map | null>(null);
-  const radarLayerRef = useRef<L.TileLayer | null>(null);
+  const mapRef = useRef<any>(null);
+  const radarLayerRef = useRef<any>(null);
   const windArrowRef = useRef<{ remove: () => void } | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Lazy load leaflet
+  useEffect(() => {
+    if (!isVisible || leafletLoaded) return;
+    Promise.all([import('leaflet'), import('leaflet/dist/leaflet.css')]).then(([leaflet]) => {
+      LRef.current = leaflet.default;
+      setLeafletLoaded(true);
+    });
+  }, [isVisible, leafletLoaded]);
+
   // Initialize map
   useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current) return;
+    if (!leafletLoaded || !mapContainerRef.current || mapRef.current) return;
+    const L = LRef.current;
 
     mapRef.current = L.map(mapContainerRef.current, {
       center: [latitude, longitude],
       zoom: 7,
       zoomControl: false,
+      preferCanvas: true,
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -192,7 +205,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [leafletLoaded]);
 
   useEffect(() => {
     if (mapRef.current) {
@@ -225,7 +238,8 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
 
   // Update overlay layer
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !LRef.current) return;
+    const L = LRef.current;
 
     if (radarLayerRef.current) {
       mapRef.current.removeLayer(radarLayerRef.current);
@@ -288,7 +302,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
   const currentConfig = MODE_CONFIG[mapMode];
 
   return (
-    <div className="overflow-hidden rounded-2xl glass-card">
+    <div ref={containerRef} className="overflow-hidden rounded-2xl glass-card">
       <div className="p-4 border-b border-border/50">
         <div className="flex items-center gap-2">
           <Map className="w-5 h-5 text-primary" />
@@ -316,9 +330,9 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
       </div>
 
       <div className="relative h-[300px] md:h-[400px] w-full">
-        {loading && (
+        {(!isVisible || !leafletLoaded || loading) && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         )}
         <div ref={mapContainerRef} className="h-full w-full" />

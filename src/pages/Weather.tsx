@@ -54,6 +54,7 @@ import { OnboardingFlow } from "@/components/weather/onboarding-flow";
 import { ExploreSheet, ExploreButton } from "@/components/weather/explore-sheet";
 import { FeatureIdeasCard } from "@/components/weather/feature-ideas-card";
 import { BattleAcceptCard } from "@/components/weather/battle-accept-card";
+import { DryRoute } from "@/components/weather/dry-route";
 
 export default function WeatherPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -765,6 +766,14 @@ export default function WeatherPage() {
                   <AQICard data={hyperlocalData.aqi} />
                 </div>
               ) : null}
+
+              {/* DryRoutes */}
+              <DryRoute
+                latitude={selectedLocation.lat}
+                longitude={selectedLocation.lon}
+                locationName={actualStationName}
+                isImperial={isImperial}
+              />
 
               {/* Feature Ideas Card */}
               <FeatureIdeasCard />

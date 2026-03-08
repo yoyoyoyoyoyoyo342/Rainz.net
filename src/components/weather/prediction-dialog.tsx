@@ -242,12 +242,6 @@ export const PredictionDialog = ({
                   <SelectItem value="weekly">{t('predict.weekly')}</SelectItem>
                   <SelectItem value="monthly">{t('predict.monthly')}</SelectItem>
                   <SelectItem value="seasonal">{t('predict.seasonal')}</SelectItem>
-                  <SelectItem value="leagues">
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3 h-3" />
-                      {t('predict.myLeagues')}
-                    </span>
-                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>

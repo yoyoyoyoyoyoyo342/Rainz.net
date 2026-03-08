@@ -7,6 +7,11 @@ import { WeatherTrendsCard } from './weather-trends-card';
 import { StreakChallenge } from './streak-challenge';
 import { WeatherPersonalityQuiz } from './weather-personality-quiz';
 import { WeatherFunFacts } from './weather-fun-facts';
+import { WeatherBingo } from './weather-bingo';
+import { WeatherMoodJournal } from './weather-mood-journal';
+import { OutfitRecommender } from './outfit-recommender';
+import { WeatherTrivia } from './weather-trivia';
+import { WeatherCompare } from './weather-compare';
 
 interface ExploreSheetProps {
   open: boolean;
@@ -44,6 +49,27 @@ export function ExploreSheet({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          {/* Outfit Recommender */}
+          <OutfitRecommender
+            currentWeather={currentWeather}
+            isImperial={isImperial}
+          />
+
+          {/* Weather Bingo */}
+          <WeatherBingo
+            currentWeather={currentWeather}
+            isImperial={isImperial}
+          />
+
+          {/* Daily Trivia */}
+          <WeatherTrivia />
+
+          {/* Mood Journal */}
+          <WeatherMoodJournal
+            currentWeather={currentWeather}
+            isImperial={isImperial}
+          />
+
           {/* Weather Fun Facts / Stats */}
           <WeatherFunFacts
             currentWeather={currentWeather}
@@ -55,6 +81,9 @@ export function ExploreSheet({
 
           {/* Weather Personality Quiz */}
           <WeatherPersonalityQuiz inSheet />
+
+          {/* City Comparison */}
+          <WeatherCompare isImperial={isImperial} />
 
           {/* Weather Trends */}
           {userId && (
@@ -112,7 +141,7 @@ export function ExploreButton({ onClick }: ExploreButtonProps) {
         </div>
         <div className="text-left">
           <p className="text-sm font-semibold text-foreground">Explore Rainz ✨</p>
-          <p className="text-xs text-muted-foreground">Stats · Time Machine · Reactions · Trends · Challenges</p>
+          <p className="text-xs text-muted-foreground">Bingo · Trivia · Outfits · Mood · Compare · More</p>
         </div>
       </div>
       <span className="text-muted-foreground group-hover:text-primary transition-colors text-lg">→</span>

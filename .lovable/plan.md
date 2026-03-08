@@ -1,53 +1,53 @@
-# DryRoutes — Completed Implementation
 
-## What was done
 
-### 1. Renamed "Rain-Free Route Planner" → **DryRoutes** (by Rainz)
+## Fix DryRoutes Fullscreen Scrolling — Root Cause Analysis
 
-### 2. Performance: Fixed Map Lag
-- Created `src/hooks/use-lazy-map.tsx` — IntersectionObserver-based lazy mount hook
-- All 3 map components (DryRoute, RainMapCard, LiveWeatherMap) now:
-  - Lazy-load Leaflet JS/CSS via dynamic `import()`
-  - Only initialize when scrolled into viewport
-  - Use `preferCanvas: true` for reduced DOM overhead
+### The Real Problems (after reading the actual current code)
 
-### 3. Moved DryRoute to Main Weather Page
-- Removed from `explore-sheet.tsx`
-- Added as standalone card in `Weather.tsx` (before Feature Ideas)
-- Larger default map (h-56)
+**Problem 1: `routeContent` is rendered TWICE when fullscreen is open.**
+- Line 631-653: The portal renders `routeContent`
+- Line 654: `cardContent` also renders, which contains `routeContent` (line 620)
+- This means `mapRef` is fought over by two DOM nodes. The ref attaches to the last one, leaving the portal's map broken.
 
-### 4. Fullscreen Mode
-- Expand button (⛶) on card header
-- Opens fullscreen Dialog overlay with full routing UI
+**Problem 2: Leaflet's `dragging` handler captures all touch events.**
+- Even with `scrollWheelZoom: false`, Leaflet's `dragging` module intercepts `touchstart`/`touchmove` on the map div (50vh tall — half the screen).
+- The browser sees the touch as "owned" by Leaflet and never scrolls the parent container.
+- This is the primary reason scrolling doesn't work on mobile/touch devices.
 
-### 5. "Go" Navigation Mode
-- Turn-by-turn via `navigator.geolocation.watchPosition()`
-- Blue GPS dot on map, auto-centers
-- Step-by-step instructions with maneuver icons
-- Rain score + ETA in status bar
-- Auto-advance to next step when within 30m
+### Solution
 
-### 6. AR Navigation
-- Camera overlay with compass-based directional arrow
-- HUD showing current instruction, rain probability, ETA
-- Reuses proven device orientation pattern from AR overlay
+**A. Don't render cardContent when fullscreen is active** (`dry-route.tsx` line 629-655):
+```
+return (
+  <div ref={containerRef}>
+    {isFullscreen ? createPortal(...) : cardContent}
+  </div>
+)
+```
+This ensures `mapRef` only exists once in the DOM and the map initializes in the correct container.
 
-### 7. Additional Features
-- **Transport modes**: Drive / Bike / Walk (OSRM profiles)
-- **Departure time picker**: Shifts rain forecast window
-- **Rain timeline bar**: Visual per-segment rain probability
-- **Share route**: Native share or clipboard
-- **OSRM steps=true**: Full turn-by-turn instructions
+**B. Split the fullscreen layout into fixed map + scrollable content below:**
+Instead of one big scrollable container with the map inside it, use:
+- Top: map in a fixed-height non-scrollable section
+- Bottom: everything else in a separately scrollable div
 
-## Files
-| File | Action |
-|------|--------|
-| `src/hooks/use-lazy-map.tsx` | NEW — IntersectionObserver hook |
-| `src/components/weather/dry-route.tsx` | NEW — Main DryRoute component |
-| `src/components/weather/dry-route-navigation.tsx` | NEW — Turn-by-turn panel |
-| `src/components/weather/dry-route-ar.tsx` | NEW — AR navigation overlay |
-| `src/components/weather/explore-sheet.tsx` | Removed RainRoutePlanner |
-| `src/pages/Weather.tsx` | Added DryRoute card |
-| `src/components/weather/rain-map-card.tsx` | Lazy map loading |
-| `src/components/weather/live-weather-map.tsx` | Lazy map loading |
-| `src/components/weather/rain-route-planner.tsx` | DELETED |
+This completely sidesteps the Leaflet touch-capture problem because the scrollable area doesn't contain the map.
+
+```
+Portal structure:
+┌─────────────────────────┐
+│ Header (sticky)         │
+├─────────────────────────┤
+│ Map (h-[45vh], no scroll│  ← Leaflet owns touch here, that's fine
+├─────────────────────────┤
+│ Route details           │
+│ (overflow-y-auto,       │  ← This scrolls freely, no Leaflet interference
+│  h-[calc(55vh-header)]) │
+└─────────────────────────┘
+```
+
+**C. Remove body overflow lock** — it's no longer needed since we use a split layout instead of a single scrollable overlay.
+
+### Files Changed
+- `src/components/weather/dry-route.tsx` — restructure fullscreen portal and conditional rendering
+

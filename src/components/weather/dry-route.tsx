@@ -79,6 +79,46 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     });
   }, [isVisible, leafletLoaded]);
 
+  const drawRoutes = useCallback((routeResults: RouteResult[], highlightIdx: number) => {
+    const L = LRef.current;
+    if (!mapInstance.current || !L) return;
+
+    routeLayers.current.forEach(l => mapInstance.current!.removeLayer(l));
+    routeLayers.current = [];
+
+    const bounds = L.latLngBounds([]);
+
+    routeResults.forEach((route, i) => {
+      const isHighlight = i === highlightIdx;
+      const color = route.rainScore < 30 ? 'hsl(142, 71%, 45%)' : route.rainScore < 60 ? 'hsl(48, 96%, 53%)' : 'hsl(0, 84%, 60%)';
+
+      const line = L.polyline(route.geometry, {
+        color: isHighlight ? color : 'hsl(215, 20%, 65%)',
+        weight: isHighlight ? 5 : 3,
+        opacity: isHighlight ? 0.9 : 0.4,
+        dashArray: isHighlight ? undefined : '8 8',
+      }).addTo(mapInstance.current!);
+
+      routeLayers.current.push(line);
+      route.geometry.forEach((p: [number, number]) => bounds.extend(p));
+    });
+
+    if (fromCoords) {
+      const startMarker = L.marker(fromCoords, {
+        icon: L.divIcon({ html: '🟢', className: '', iconSize: [20, 20], iconAnchor: [10, 10] }),
+      }).addTo(mapInstance.current!);
+      routeLayers.current.push(startMarker);
+    }
+    if (toCoords) {
+      const endMarker = L.marker(toCoords, {
+        icon: L.divIcon({ html: '🔴', className: '', iconSize: [20, 20], iconAnchor: [10, 10] }),
+      }).addTo(mapInstance.current!);
+      routeLayers.current.push(endMarker);
+    }
+
+    mapInstance.current.fitBounds(bounds, { padding: [30, 30] });
+  }, [fromCoords, toCoords]);
+
   // Init map when leaflet ready and container available
   const initMap = useCallback(() => {
     if (!leafletLoaded || !mapRef.current) return;

@@ -164,6 +164,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       if (mapInstance.current) {
         try { mapInstance.current.remove(); } catch {}
         mapInstance.current = null;
+        userMarkerRef.current = null;
       }
     };
   }, [leafletLoaded, isFullscreen]);

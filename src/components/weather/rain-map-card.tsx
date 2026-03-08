@@ -292,7 +292,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
       <div className="p-4 border-b border-border/50">
         <div className="flex items-center gap-2">
           <Map className="w-5 h-5 text-primary" />
-          <h3 className="font-semibold text-foreground">Weather Map</h3>
+          <h3 className="font-semibold text-foreground">{t('map.title')}</h3>
         </div>
         <div className="flex items-center gap-1 text-muted-foreground text-sm mt-1">
           <MapPin className="h-3 w-3" />

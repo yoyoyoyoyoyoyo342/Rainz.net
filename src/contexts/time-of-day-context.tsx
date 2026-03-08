@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode, type JSX } from 'react';
 
 type TimeOfDay = 'day' | 'night' | 'sunrise' | 'sunset';
 
@@ -10,7 +10,7 @@ interface TimeOfDayContextType {
 
 const TimeOfDayContext = createContext<TimeOfDayContextType | undefined>(undefined);
 
-export function TimeOfDayProvider({ children }: { children: ReactNode }): React.JSX.Element {
+export function TimeOfDayProvider({ children }: { children: ReactNode }): JSX.Element {
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('day');
   const isNightTime = timeOfDay === 'night';
 

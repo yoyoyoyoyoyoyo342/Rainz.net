@@ -80,7 +80,7 @@ export function TenDayForecast({ dailyForecast, weatherSources, hourlyForecast, 
         <div className={`${cardPadding} border-b border-border/50`}>
           <h2 className={`${isCompact ? 'text-sm' : 'text-lg'} font-semibold text-foreground flex items-center gap-2`}>
             <CalendarDays className={`${isCompact ? 'w-4 h-4' : 'w-5 h-5'} text-primary`} />
-            10-Day Forecast
+            {t('card.tenDay')}
           </h2>
         </div>
 

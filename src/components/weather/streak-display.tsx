@@ -57,7 +57,7 @@ export const StreakDisplay = () => {
             <span className="font-semibold text-accent-foreground">
               {longestStreak}
             </span>
-            <span className="text-accent-foreground/70 ml-1">best</span>
+            <span className="text-accent-foreground/70 ml-1">{t('streak.best')}</span>
           </div>
         </div>
 

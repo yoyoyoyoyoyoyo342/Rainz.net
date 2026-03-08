@@ -573,6 +573,9 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
               <Navigation2 className="w-3.5 h-3.5 mr-1.5" />
               Go
             </Button>
+            <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowAR(true)}>
+              <Camera className="w-3.5 h-3.5" />
+            </Button>
             <Button size="sm" variant="outline" className="text-xs" onClick={shareRoute}>
               <Share2 className="w-3.5 h-3.5" />
             </Button>

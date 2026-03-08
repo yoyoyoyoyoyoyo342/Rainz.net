@@ -238,14 +238,14 @@ export const PredictionDialog = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all-time">All Time</SelectItem>
-                  <SelectItem value="weekly">This Week</SelectItem>
-                  <SelectItem value="monthly">This Month</SelectItem>
-                  <SelectItem value="seasonal">This Season</SelectItem>
+                  <SelectItem value="all-time">{t('predict.allTime')}</SelectItem>
+                  <SelectItem value="weekly">{t('predict.weekly')}</SelectItem>
+                  <SelectItem value="monthly">{t('predict.monthly')}</SelectItem>
+                  <SelectItem value="seasonal">{t('predict.seasonal')}</SelectItem>
                   <SelectItem value="leagues">
                     <span className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
-                      My Leagues
+                      {t('predict.myLeagues')}
                     </span>
                   </SelectItem>
                 </SelectContent>

@@ -150,7 +150,7 @@ export function HourlyForecastCarousel({
   colorScheme = "default",
 }: HourlyForecastCarouselProps) {
   const [selectedHour, setSelectedHour] = useState<HourlyData | null>(null);
-
+  const { t } = useLanguage();
   const fg = colorScheme === "inverse" ? "text-white" : "text-foreground";
   const muted = colorScheme === "inverse" ? "text-white/70" : "text-muted-foreground";
   const surface = colorScheme === "inverse" ? "bg-white/10 hover:bg-white/15" : "bg-muted/30 hover:bg-muted/50";

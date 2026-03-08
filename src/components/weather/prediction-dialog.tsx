@@ -191,7 +191,7 @@ export const PredictionDialog = ({
               <CardContent className="p-3">
                 <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
                   <Trophy className="w-4 h-4 text-primary" />
-                  How Points Work
+                  {t('predict.howPoints')}
                 </h4>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="flex items-center gap-2">

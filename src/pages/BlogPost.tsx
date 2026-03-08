@@ -58,31 +58,7 @@ export default function BlogPost() {
     }
   };
 
-  // Render content without ads
-  const renderContent = useMemo(() => {
-    if (!post?.content) return [];
-    
-    const lines = post.content.split('\n');
-    const result: React.ReactNode[] = [];
-    
-    lines.forEach((line, index) => {
-      // Headers
-      if (line.startsWith('### ')) {
-        result.push(<h3 key={index} className="text-xl font-semibold mt-6 mb-3 text-foreground">{line.slice(4)}</h3>);
-      } else if (line.startsWith('## ')) {
-        result.push(<h2 key={index} className="text-2xl font-bold mt-8 mb-4 text-foreground">{line.slice(3)}</h2>);
-      } else if (line.startsWith('# ')) {
-        result.push(<h1 key={index} className="text-3xl font-bold mt-8 mb-4 text-foreground">{line.slice(2)}</h1>);
-      } else if (line.trim() === '') {
-        result.push(<br key={index} />);
-      } else {
-        // Regular paragraph
-        result.push(<p key={index} className="text-muted-foreground mb-4 leading-relaxed">{line}</p>);
-      }
-    });
-    
-    return result;
-  }, [post?.content]);
+  // Removed old custom renderer - using ReactMarkdown now
 
   if (loading) {
     return (

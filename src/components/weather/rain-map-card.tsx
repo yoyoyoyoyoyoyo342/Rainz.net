@@ -72,89 +72,48 @@ const MODE_CONFIG: Record<MapMode, {
   },
 };
 
-// Wind arrow overlay using a canvas pane
-class WindArrowOverlay extends L.Layer {
-  private _canvas: HTMLCanvasElement | null = null;
-  private _lat: number;
-  private _lng: number;
-  private _animFrame: number | null = null;
-  private _arrows: { x: number; y: number; angle: number; speed: number; offset: number }[] = [];
+// Wind arrow overlay — plain functions, no class inheritance
+function createWindArrowOverlay(map: L.Map, lat: number, lng: number) {
+  const canvas = document.createElement('canvas');
+  canvas.style.position = 'absolute';
+  canvas.style.top = '0';
+  canvas.style.left = '0';
+  canvas.style.pointerEvents = 'none';
+  canvas.style.zIndex = '450';
 
-  constructor(lat: number, lng: number) {
-    super();
-    this._lat = lat;
-    this._lng = lng;
-  }
+  const pane = map.getPane('overlayPane');
+  if (pane) pane.appendChild(canvas);
 
-  onAdd(map: L.Map) {
-    this._canvas = L.DomUtil.create('canvas', 'wind-arrow-canvas') as HTMLCanvasElement;
-    this._canvas.style.position = 'absolute';
-    this._canvas.style.top = '0';
-    this._canvas.style.left = '0';
-    this._canvas.style.pointerEvents = 'none';
-    this._canvas.style.zIndex = '450';
-    
-    const pane = map.getPane('overlayPane');
-    if (pane) pane.appendChild(this._canvas);
+  let animFrame: number | null = null;
 
-    this._generateArrows();
-    map.on('move zoom resize', this._redraw, this);
-    this._redraw();
-    return this;
-  }
-
-  onRemove(map: L.Map) {
-    if (this._animFrame) cancelAnimationFrame(this._animFrame);
-    if (this._canvas && this._canvas.parentNode) {
-      this._canvas.parentNode.removeChild(this._canvas);
-    }
-    map.off('move zoom resize', this._redraw, this);
-    this._canvas = null;
-    return this;
-  }
-
-  _generateArrows() {
-    // Create a grid of wind arrows around the center
-    this._arrows = [];
-    const gridSize = 6;
-    const spread = 2.5; // degrees
-    for (let i = -gridSize; i <= gridSize; i++) {
-      for (let j = -gridSize; j <= gridSize; j++) {
-        // Vary angle based on position for realistic flow
-        const baseLat = this._lat + (i * spread) / gridSize;
-        const baseLng = this._lng + (j * spread) / gridSize;
-        const angle = (Math.sin(baseLat * 3) * 30 + Math.cos(baseLng * 2) * 40 + 200) % 360;
-        const speed = 3 + Math.abs(Math.sin(baseLat * 2 + baseLng)) * 8;
-        this._arrows.push({
-          x: baseLng,
-          y: baseLat,
-          angle,
-          speed,
-          offset: Math.random() * Math.PI * 2,
-        });
-      }
+  // Generate arrow grid
+  const arrows: { x: number; y: number; angle: number; speed: number; offset: number }[] = [];
+  const gridSize = 6;
+  const spread = 2.5;
+  for (let i = -gridSize; i <= gridSize; i++) {
+    for (let j = -gridSize; j <= gridSize; j++) {
+      const baseLat = lat + (i * spread) / gridSize;
+      const baseLng = lng + (j * spread) / gridSize;
+      const angle = (Math.sin(baseLat * 3) * 30 + Math.cos(baseLng * 2) * 40 + 200) % 360;
+      const speed = 3 + Math.abs(Math.sin(baseLat * 2 + baseLng)) * 8;
+      arrows.push({ x: baseLng, y: baseLat, angle, speed, offset: Math.random() * Math.PI * 2 });
     }
   }
 
-  _redraw() {
-    const map = this._map;
-    if (!map || !this._canvas) return;
-
+  function redraw() {
     const size = map.getSize();
-    this._canvas.width = size.x;
-    this._canvas.height = size.y;
+    canvas.width = size.x;
+    canvas.height = size.y;
 
     const topLeft = map.containerPointToLayerPoint([0, 0]);
-    L.DomUtil.setPosition(this._canvas, topLeft);
+    L.DomUtil.setPosition(canvas, topLeft);
 
-    const ctx = this._canvas.getContext('2d');
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
     ctx.clearRect(0, 0, size.x, size.y);
 
     const now = Date.now() / 1000;
-
-    this._arrows.forEach(arrow => {
+    arrows.forEach(arrow => {
       const pt = map.latLngToContainerPoint([arrow.y, arrow.x]);
       if (pt.x < -30 || pt.x > size.x + 30 || pt.y < -30 || pt.y > size.y + 30) return;
 
@@ -170,13 +129,11 @@ class WindArrowOverlay extends L.Layer {
       ctx.lineWidth = 1.8;
       ctx.lineCap = 'round';
 
-      // Arrow shaft
       ctx.beginPath();
       ctx.moveTo(0, len / 2);
       ctx.lineTo(0, -len / 2);
       ctx.stroke();
 
-      // Arrowhead
       ctx.beginPath();
       ctx.moveTo(0, -len / 2);
       ctx.lineTo(-4, -len / 2 + 6);
@@ -187,10 +144,19 @@ class WindArrowOverlay extends L.Layer {
       ctx.restore();
     });
 
-    // Animate
-    if (this._animFrame) cancelAnimationFrame(this._animFrame);
-    this._animFrame = requestAnimationFrame(() => this._redraw());
+    animFrame = requestAnimationFrame(redraw);
   }
+
+  map.on('move zoom resize', redraw);
+  redraw();
+
+  return {
+    remove() {
+      if (animFrame) cancelAnimationFrame(animFrame);
+      map.off('move zoom resize', redraw);
+      if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
+    },
+  };
 }
 
 const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, locationName }) => {
@@ -204,7 +170,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const radarLayerRef = useRef<L.TileLayer | null>(null);
-  const windArrowLayerRef = useRef<WindArrowOverlay | null>(null);
+  const windArrowRef = useRef<{ remove: () => void } | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize map
@@ -271,9 +237,9 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
     }
 
     // Remove wind arrows if switching away from wind mode
-    if (windArrowLayerRef.current) {
-      mapRef.current.removeLayer(windArrowLayerRef.current);
-      windArrowLayerRef.current = null;
+    if (windArrowRef.current) {
+      windArrowRef.current.remove();
+      windArrowRef.current = null;
     }
 
     if (mapMode === 'rain') {
@@ -298,9 +264,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
 
       // Add wind direction arrows on wind mode
       if (mapMode === 'wind') {
-        const arrowLayer = new WindArrowOverlay(latitude, longitude);
-        arrowLayer.addTo(mapRef.current);
-        windArrowLayerRef.current = arrowLayer;
+        windArrowRef.current = createWindArrowOverlay(mapRef.current, latitude, longitude);
       }
     }
   }, [currentFrameIndex, radarFrames, opacity, mapMode, latitude, longitude]);

@@ -75,7 +75,7 @@ function HourDetailDialog({ hour, isOpen, onClose, isImperial, is24Hour }: HourD
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <Clock className="w-5 h-5 text-primary" />
-            {formatTime(hour.time, is24Hour)} Forecast
+            {formatTime(hour.time, is24Hour)} {t('hourly.forecast')}
           </DialogTitle>
         </DialogHeader>
 

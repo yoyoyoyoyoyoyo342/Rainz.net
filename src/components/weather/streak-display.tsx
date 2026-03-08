@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const StreakDisplay = () => {
+  const { t } = useLanguage();
   const { streakData, loading } = useUserStreaks();
 
   if (loading) {

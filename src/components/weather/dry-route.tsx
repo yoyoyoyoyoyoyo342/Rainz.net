@@ -68,6 +68,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   const [showAR, setShowAR] = useState(false);
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
   const radarLayerRef = useRef<any>(null);
+  const userMarkerRef = useRef<any>(null);
   const LRef = useRef<any>(null);
 
   // Lazy load leaflet
@@ -163,6 +164,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       if (mapInstance.current) {
         try { mapInstance.current.remove(); } catch {}
         mapInstance.current = null;
+        userMarkerRef.current = null;
       }
     };
   }, [leafletLoaded, isFullscreen]);
@@ -178,16 +180,34 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     return () => clearTimeout(timer);
   }, [isFullscreen]);
 
-  // Track user position for AR
+  // Always track user position for blue dot on map
   useEffect(() => {
-    if (!showAR && !navigating) return;
+    if (!navigator.geolocation) return;
     const watchId = navigator.geolocation.watchPosition(
       (pos) => setUserPosition([pos.coords.latitude, pos.coords.longitude]),
       () => {},
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
     );
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [showAR, navigating]);
+  }, []);
+
+  // Show blue user marker on map
+  useEffect(() => {
+    if (!userPosition || !mapInstance.current || !LRef.current) return;
+    const L = LRef.current;
+
+    if (userMarkerRef.current) {
+      userMarkerRef.current.setLatLng(userPosition);
+    } else {
+      const icon = L.divIcon({
+        html: `<div style="width:14px;height:14px;border-radius:50%;background:hsl(217,91%,60%);border:3px solid white;box-shadow:0 0 8px rgba(59,130,246,0.5)"></div>`,
+        className: '',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+      });
+      userMarkerRef.current = L.marker(userPosition, { icon, zIndexOffset: 1000 }).addTo(mapInstance.current);
+    }
+  }, [userPosition]);
 
   // Rain radar overlay toggle
   useEffect(() => {

@@ -435,6 +435,16 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
         {loading ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Analyzing rain...</> : <><Route className="w-3.5 h-3.5 mr-1.5" /> Find Driest Route</>}
       </Button>
 
+      {/* Dry Windows - best time to leave */}
+      {fromCoords && toCoords && routes.length > 0 && (
+        <DryWindows
+          fromCoords={fromCoords}
+          toCoords={toCoords}
+          routeGeometry={routes[bestRouteIdx]?.geometry || []}
+          isImperial={isImperial}
+        />
+      )}
+
       {/* Map */}
       <div className="relative">
         <div ref={mapRef} className={`w-full rounded-xl overflow-hidden border border-border/30 ${isFullscreen ? 'h-[50vh]' : 'h-56'}`} />

@@ -55,6 +55,7 @@ import { ExploreSheet, ExploreButton } from "@/components/weather/explore-sheet"
 import { FeatureIdeasCard } from "@/components/weather/feature-ideas-card";
 import { BattleAcceptCard } from "@/components/weather/battle-accept-card";
 import { DryRoute } from "@/components/weather/dry-route";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 
 export default function WeatherPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -88,6 +89,7 @@ export default function WeatherPage() {
   const currentHoliday = getCurrentHoliday();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [exploreOpen, setExploreOpen] = useState(false);
+  const { isEnabled: isFeatureEnabled } = useFeatureFlags();
 
   // Show onboarding for new users
   useEffect(() => {
@@ -536,6 +538,17 @@ export default function WeatherPage() {
             />
           )}
 
+          {/* Maintenance Mode Banner */}
+          {isFeatureEnabled('maintenance_mode', false) && (
+            <div className="mb-4 flex items-center gap-3 p-4 rounded-2xl bg-destructive/10 border border-destructive/30">
+              <span className="text-2xl">🔧</span>
+              <div>
+                <h3 className="font-semibold text-destructive">Maintenance Mode</h3>
+                <p className="text-sm text-destructive/80">We're currently performing maintenance. Some features may be temporarily unavailable.</p>
+              </div>
+            </div>
+          )}
+
           <Card className="mb-6 relative z-[1000] overflow-hidden rounded-2xl glass-card-strong">
             <div className="p-4 sm:p-6 border-b border-border/50">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -779,7 +792,9 @@ export default function WeatherPage() {
               <FeatureIdeasCard />
 
               {/* Explore More button */}
-              <ExploreButton onClick={() => setExploreOpen(true)} />
+              {isFeatureEnabled('explore_enabled') && (
+                <ExploreButton onClick={() => setExploreOpen(true)} />
+              )}
 
               {/* Explore Bottom Sheet */}
               <ExploreSheet

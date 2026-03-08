@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Target, Trophy, Flame, Zap, Medal, ShoppingBag, Users, History } from "lucide-react";
+import { Target, Trophy, Flame, Zap, Medal, ShoppingBag, History } from "lucide-react";
 import { WeatherPredictionForm } from "./weather-prediction-form";
 import { Leaderboard } from "./leaderboard";
 import { WeeklyChallenge } from "./weekly-challenge";
 import { SeasonalTournament } from "./seasonal-tournament";
 import { PointsShop } from "./points-shop";
-import { BattleLeagues } from "./battle-leagues";
+
 import { PointsHistory } from "./points-history";
 import { useLanguage } from "@/contexts/language-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -242,12 +242,6 @@ export const PredictionDialog = ({
                   <SelectItem value="weekly">{t('predict.weekly')}</SelectItem>
                   <SelectItem value="monthly">{t('predict.monthly')}</SelectItem>
                   <SelectItem value="seasonal">{t('predict.seasonal')}</SelectItem>
-                  <SelectItem value="leagues">
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3 h-3" />
-                      {t('predict.myLeagues')}
-                    </span>
-                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -263,9 +257,6 @@ export const PredictionDialog = ({
             )}
             {(leaderboardType === "monthly" || leaderboardType === "seasonal") && (
               <SeasonalTournament />
-            )}
-            {leaderboardType === "leagues" && (
-              <BattleLeagues />
             )}
           </TabsContent>
           

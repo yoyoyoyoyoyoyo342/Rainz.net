@@ -16,7 +16,7 @@ import { WeatherStoryteller } from './weather-storyteller';
 import { PhotoChallenge } from './photo-challenge';
 import { WeatherDebateArena } from './weather-debate-arena';
 import { LiveWeatherMap } from './live-weather-map';
-import { PetWeatherAdvisory } from './pet-weather-advisory';
+
 import { WeatherDejaVu } from './weather-deja-vu';
 
 
@@ -88,11 +88,6 @@ export function ExploreSheet({
             userId={userId}
           />
 
-          {/* Pet Weather Advisory */}
-          <PetWeatherAdvisory
-            currentWeather={currentWeather}
-            isImperial={isImperial}
-          />
 
           {/* Weather Déjà Vu */}
           <WeatherDejaVu

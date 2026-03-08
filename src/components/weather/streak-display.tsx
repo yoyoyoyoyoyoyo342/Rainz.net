@@ -1,9 +1,11 @@
 import { Flame, Trophy, Calendar } from "lucide-react";
+import { useLanguage } from "@/contexts/language-context";
 import { useUserStreaks } from "@/hooks/use-user-streaks";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const StreakDisplay = () => {
+  const { t } = useLanguage();
   const { streakData, loading } = useUserStreaks();
 
   if (loading) {
@@ -41,10 +43,10 @@ export const StreakDisplay = () => {
                 {currentStreak}
               </span>
               <span className="text-sm text-muted-foreground">
-                {currentStreak === 1 ? "day" : "days"}
+                {currentStreak === 1 ? t('streak.day') : t('streak.days')}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">Current streak</p>
+            <p className="text-xs text-muted-foreground">{t('streak.current')}</p>
           </div>
         </div>
 
@@ -55,7 +57,7 @@ export const StreakDisplay = () => {
             <span className="font-semibold text-accent-foreground">
               {longestStreak}
             </span>
-            <span className="text-accent-foreground/70 ml-1">best</span>
+            <span className="text-accent-foreground/70 ml-1">{t('streak.best')}</span>
           </div>
         </div>
 
@@ -67,7 +69,7 @@ export const StreakDisplay = () => {
               {totalVisits}
             </span>
             <span className="text-secondary-foreground/70 ml-1">
-              {totalVisits === 1 ? "visit" : "visits"}
+              {totalVisits === 1 ? t('streak.visit') : t('streak.visits')}
             </span>
           </div>
         </div>

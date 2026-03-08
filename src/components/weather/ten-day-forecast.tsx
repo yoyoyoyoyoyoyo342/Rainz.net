@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLanguage } from "@/contexts/language-context";
 import { CalendarDays, Sun, Cloud, CloudSun, CloudRain, CloudDrizzle, Snowflake, CloudLightning, CloudFog, ChevronDown, ChevronUp, Clock } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DailyForecast, WeatherSource, HourlyForecast } from "@/types/weather";
@@ -15,6 +16,7 @@ interface TenDayForecastProps {
 }
 
 export function TenDayForecast({ dailyForecast, weatherSources, hourlyForecast, isImperial = true, is24Hour = true, premiumSettings }: TenDayForecastProps) {
+  const { t } = useLanguage();
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [showAllDays, setShowAllDays] = useState(false);
   const isCompact = premiumSettings?.compactMode;
@@ -78,7 +80,7 @@ export function TenDayForecast({ dailyForecast, weatherSources, hourlyForecast, 
         <div className={`${cardPadding} border-b border-border/50`}>
           <h2 className={`${isCompact ? 'text-sm' : 'text-lg'} font-semibold text-foreground flex items-center gap-2`}>
             <CalendarDays className={`${isCompact ? 'w-4 h-4' : 'w-5 h-5'} text-primary`} />
-            10-Day Forecast
+            {t('card.tenDay')}
           </h2>
         </div>
 
@@ -124,7 +126,7 @@ export function TenDayForecast({ dailyForecast, weatherSources, hourlyForecast, 
                   <div className={`rounded-xl ${isCompact ? 'p-2' : 'p-3'} bg-muted/20 border border-border/30`}>
                     <div className={`flex items-center gap-2 ${isCompact ? 'mb-2' : 'mb-3'}`}>
                       <Clock className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} text-primary`} />
-                      <span className={`${textSize} font-medium`}>Hourly Breakdown</span>
+                      <span className={`${textSize} font-medium`}>{t('card.hourlyBreakdown')}</span>
                     </div>
                     <div className={`grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 ${isCompact ? 'gap-1' : 'gap-2'}`}>
                       {getHourlyForDay(index).map((hour, hourIndex) => (
@@ -158,12 +160,12 @@ export function TenDayForecast({ dailyForecast, weatherSources, hourlyForecast, 
               {showAllDays ? (
                 <>
                   <ChevronUp className="w-4 h-4" />
-                  Show Less
+                  {t('card.showLess')}
                 </>
               ) : (
                 <>
                   <ChevronDown className="w-4 h-4" />
-                  Show All 10 Days
+                  {t('card.showAll')}
                 </>
               )}
             </button>

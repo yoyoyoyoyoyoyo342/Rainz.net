@@ -2,6 +2,7 @@ import { Sun, Sunrise, Sunset, Moon } from "lucide-react";
 import { CurrentWeather } from "@/types/weather";
 import { formatTime } from "@/lib/time-format";
 import { PremiumSettings } from "@/hooks/use-premium-settings";
+import { useLanguage } from "@/contexts/language-context";
 
 interface DetailedMetricsProps {
   currentWeather: CurrentWeather;
@@ -14,11 +15,11 @@ export function DetailedMetrics({
   is24Hour = true,
   premiumSettings
 }: DetailedMetricsProps) {
+  const { t } = useLanguage();
   const showUV = premiumSettings?.showUV !== false;
   const showSunTimes = premiumSettings?.showSunTimes !== false;
   const showMoonPhase = premiumSettings?.showMoonPhase !== false;
 
-  // If all sections are hidden, don't render the component
   if (!showUV && !showSunTimes && !showMoonPhase) {
     return null;
   }
@@ -32,7 +33,7 @@ export function DetailedMetrics({
             <div className="p-4 border-b border-border/50">
               <div className="flex items-center gap-2">
                 <Sun className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-foreground">UV Index</h3>
+                <h3 className="font-semibold text-foreground">{t('card.uvIndex')}</h3>
               </div>
             </div>
             <div className="p-4">
@@ -40,11 +41,11 @@ export function DetailedMetrics({
                 {currentWeather.uvIndex}
               </div>
               <div className="text-sm text-muted-foreground mb-3">
-                {currentWeather.uvIndex <= 2 ? 'Low - No protection needed' : 
-                 currentWeather.uvIndex <= 5 ? 'Moderate - Some protection needed' : 
-                 currentWeather.uvIndex <= 7 ? 'High - Wear sunscreen' : 
-                 currentWeather.uvIndex <= 10 ? 'Very High - Extra protection needed' : 
-                 'Extreme - Avoid sun exposure'}
+                {currentWeather.uvIndex <= 2 ? t('uv.low') : 
+                 currentWeather.uvIndex <= 5 ? t('uv.moderate') : 
+                 currentWeather.uvIndex <= 7 ? t('uv.high') : 
+                 currentWeather.uvIndex <= 10 ? t('uv.veryHigh') : 
+                 t('uv.extreme')}
               </div>
               <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
                 <div 
@@ -64,7 +65,7 @@ export function DetailedMetrics({
             <div className="p-4 border-b border-border/50">
               <div className="flex items-center gap-2">
                 <Sunrise className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-foreground">Sun & Moon</h3>
+                <h3 className="font-semibold text-foreground">{t('card.sunMoon')}</h3>
               </div>
             </div>
             <div className="p-4">
@@ -75,19 +76,19 @@ export function DetailedMetrics({
                     <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
                       <div className="flex items-center gap-2">
                         <Sunrise className="w-4 h-4 text-amber-500" />
-                        <span className="text-xs text-muted-foreground">Sunrise</span>
+                        <span className="text-xs text-muted-foreground">{t('card.sunrise')}</span>
                       </div>
                       <span className="font-semibold text-sm">{formatTime(currentWeather.sunrise, is24Hour)}</span>
                     </div>
                     <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
                       <div className="flex items-center gap-2">
                         <Sunset className="w-4 h-4 text-orange-500" />
-                        <span className="text-xs text-muted-foreground">Sunset</span>
+                        <span className="text-xs text-muted-foreground">{t('card.sunset')}</span>
                       </div>
                       <span className="font-semibold text-sm">{formatTime(currentWeather.sunset, is24Hour)}</span>
                     </div>
                     <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-muted/30">
-                      <span className="text-muted-foreground">Daylight</span>
+                      <span className="text-muted-foreground">{t('card.daylight')}</span>
                       <span className="font-medium">{currentWeather.daylight ?? '—'}</span>
                     </div>
                   </div>

@@ -63,6 +63,8 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   const [departureTime, setDepartureTime] = useState<string>('');
   const [navigating, setNavigating] = useState(false);
   const [leafletLoaded, setLeafletLoaded] = useState(false);
+  const [showRadar, setShowRadar] = useState(false);
+  const radarLayerRef = useRef<any>(null);
   const LRef = useRef<any>(null);
 
   // Lazy load leaflet

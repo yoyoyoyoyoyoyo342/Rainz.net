@@ -178,6 +178,16 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     return () => clearTimeout(timer);
   }, [isFullscreen]);
 
+  // Track user position for AR
+  useEffect(() => {
+    if (!showAR && !navigating) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => setUserPosition([pos.coords.latitude, pos.coords.longitude]),
+      () => {},
+      { enableHighAccuracy: true }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [showAR, navigating]);
 
   // Rain radar overlay toggle
   useEffect(() => {

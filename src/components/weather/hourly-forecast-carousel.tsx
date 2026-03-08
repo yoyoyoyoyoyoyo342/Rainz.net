@@ -98,7 +98,7 @@ function HourDetailDialog({ hour, isOpen, onClose, isImperial, is24Hour }: HourD
                 <Thermometer className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Feels Like</p>
+                <p className="text-xs text-muted-foreground">{t('hourly.feelsLike')}</p>
                 <p className="font-semibold">
                   {feelsLike}°{isImperial ? "F" : "C"}
                 </p>

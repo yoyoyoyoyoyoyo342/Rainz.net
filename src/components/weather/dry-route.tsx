@@ -432,7 +432,13 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
         {TRANSPORT_MODES.map(({ mode, icon, label }) => (
           <button
             key={mode}
-            onClick={() => setTransportMode(mode)}
+            onClick={() => {
+              setTransportMode(mode);
+              // Re-fetch routes if we already have results
+              if (routes.length > 0 && fromCoords && toCoords) {
+                setTimeout(() => findRoutes(), 50);
+              }
+            }}
             className={`flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-lg border transition-all ${
               transportMode === mode
                 ? 'bg-primary text-primary-foreground border-primary'

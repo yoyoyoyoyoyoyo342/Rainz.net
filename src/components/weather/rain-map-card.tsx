@@ -73,7 +73,7 @@ const MODE_CONFIG: Record<MapMode, {
 };
 
 // Wind arrow overlay — plain functions, no class inheritance
-function createWindArrowOverlay(map: L.Map, lat: number, lng: number) {
+function createWindArrowOverlay(map: L.Map) {
   const canvas = document.createElement('canvas');
   canvas.style.position = 'absolute';
   canvas.style.top = '0';
@@ -85,20 +85,6 @@ function createWindArrowOverlay(map: L.Map, lat: number, lng: number) {
   if (pane) pane.appendChild(canvas);
 
   let animFrame: number | null = null;
-
-  // Generate arrow grid
-  const arrows: { x: number; y: number; angle: number; speed: number; offset: number }[] = [];
-  const gridSize = 6;
-  const spread = 2.5;
-  for (let i = -gridSize; i <= gridSize; i++) {
-    for (let j = -gridSize; j <= gridSize; j++) {
-      const baseLat = lat + (i * spread) / gridSize;
-      const baseLng = lng + (j * spread) / gridSize;
-      const angle = (Math.sin(baseLat * 3) * 30 + Math.cos(baseLng * 2) * 40 + 200) % 360;
-      const speed = 3 + Math.abs(Math.sin(baseLat * 2 + baseLng)) * 8;
-      arrows.push({ x: baseLng, y: baseLat, angle, speed, offset: Math.random() * Math.PI * 2 });
-    }
-  }
 
   function redraw() {
     const size = map.getSize();
@@ -112,37 +98,44 @@ function createWindArrowOverlay(map: L.Map, lat: number, lng: number) {
     if (!ctx) return;
     ctx.clearRect(0, 0, size.x, size.y);
 
+    // Draw arrows in a grid across the entire visible viewport
+    const spacing = 50; // pixels between arrows
     const now = Date.now() / 1000;
-    arrows.forEach(arrow => {
-      const pt = map.latLngToContainerPoint([arrow.y, arrow.x]);
-      if (pt.x < -30 || pt.x > size.x + 30 || pt.y < -30 || pt.y > size.y + 30) return;
 
-      const pulse = 0.5 + Math.sin(now * 0.8 + arrow.offset) * 0.3;
-      const len = 12 + arrow.speed * 1.2;
-      const rad = (arrow.angle * Math.PI) / 180;
+    for (let px = spacing / 2; px < size.x; px += spacing) {
+      for (let py = spacing / 2; py < size.y; py += spacing) {
+        const latlng = map.containerPointToLatLng([px, py]);
+        const angle = (Math.sin(latlng.lat * 3) * 30 + Math.cos(latlng.lng * 2) * 40 + 200) % 360;
+        const speed = 3 + Math.abs(Math.sin(latlng.lat * 2 + latlng.lng)) * 8;
+        const offset = (latlng.lat * 100 + latlng.lng * 100) % (Math.PI * 2);
 
-      ctx.save();
-      ctx.translate(pt.x, pt.y);
-      ctx.rotate(rad);
-      ctx.globalAlpha = 0.7 * pulse;
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.8;
-      ctx.lineCap = 'round';
+        const pulse = 0.6 + Math.sin(now * 0.8 + offset) * 0.2;
+        const len = 14 + speed * 1.5;
+        const rad = (angle * Math.PI) / 180;
 
-      ctx.beginPath();
-      ctx.moveTo(0, len / 2);
-      ctx.lineTo(0, -len / 2);
-      ctx.stroke();
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(rad);
+        ctx.globalAlpha = 0.85 * pulse;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.2;
+        ctx.lineCap = 'round';
 
-      ctx.beginPath();
-      ctx.moveTo(0, -len / 2);
-      ctx.lineTo(-4, -len / 2 + 6);
-      ctx.moveTo(0, -len / 2);
-      ctx.lineTo(4, -len / 2 + 6);
-      ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, len / 2);
+        ctx.lineTo(0, -len / 2);
+        ctx.stroke();
 
-      ctx.restore();
-    });
+        ctx.beginPath();
+        ctx.moveTo(0, -len / 2);
+        ctx.lineTo(-5, -len / 2 + 7);
+        ctx.moveTo(0, -len / 2);
+        ctx.lineTo(5, -len / 2 + 7);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+    }
 
     animFrame = requestAnimationFrame(redraw);
   }

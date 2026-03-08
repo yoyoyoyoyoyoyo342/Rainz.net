@@ -116,10 +116,10 @@ export const PredictionDialog = ({
         <DialogHeader>
           <DialogTitle className="text-xl flex items-center gap-2">
             <Target className="w-5 h-5 text-primary" />
-            Weather Predictions
+            {t('predict.title')}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-sm">
-            Test your forecasting skills and climb the leaderboard
+            {t('predict.subtitle')}
           </DialogDescription>
         </DialogHeader>
 

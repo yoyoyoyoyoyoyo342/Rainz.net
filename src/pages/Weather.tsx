@@ -52,7 +52,6 @@ import { ChristmasCalendar } from "@/components/weather/christmas-calendar";
 import { RamadanCalendar } from "@/components/weather/ramadan-calendar";
 import { OnboardingFlow } from "@/components/weather/onboarding-flow";
 import { ExploreSheet, ExploreButton } from "@/components/weather/explore-sheet";
-import { ExploreSheet, ExploreButton } from "@/components/weather/explore-sheet";
 import { FeatureIdeasCard } from "@/components/weather/feature-ideas-card";
 import { BattleAcceptCard } from "@/components/weather/battle-accept-card";
 import { DryRoute } from "@/components/weather/dry-route";

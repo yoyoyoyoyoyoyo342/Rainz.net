@@ -129,8 +129,8 @@ export const PredictionDialog = ({
             <Card className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-yellow-500/20">
               <CardContent className="p-2 text-center">
                 <div className="flex items-center justify-center gap-1 text-yellow-600">
-                  <Medal className="w-3 h-3" />
-                  <span className="text-xs">Rank</span>
+                   <Medal className="w-3 h-3" />
+                   <span className="text-xs">{t('predict.rank')}</span>
                 </div>
                 <p className="text-lg font-bold">#{userStats.rank}</p>
               </CardContent>

@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import rainzLogo from '@/assets/rainz-logo-new.png';
 import { SEOHead } from '@/components/seo/seo-head';
+import ReactMarkdown from 'react-markdown';
 
 interface BlogPost {
   id: string;
@@ -57,31 +58,7 @@ export default function BlogPost() {
     }
   };
 
-  // Render content without ads
-  const renderContent = useMemo(() => {
-    if (!post?.content) return [];
-    
-    const lines = post.content.split('\n');
-    const result: React.ReactNode[] = [];
-    
-    lines.forEach((line, index) => {
-      // Headers
-      if (line.startsWith('### ')) {
-        result.push(<h3 key={index} className="text-xl font-semibold mt-6 mb-3 text-foreground">{line.slice(4)}</h3>);
-      } else if (line.startsWith('## ')) {
-        result.push(<h2 key={index} className="text-2xl font-bold mt-8 mb-4 text-foreground">{line.slice(3)}</h2>);
-      } else if (line.startsWith('# ')) {
-        result.push(<h1 key={index} className="text-3xl font-bold mt-8 mb-4 text-foreground">{line.slice(2)}</h1>);
-      } else if (line.trim() === '') {
-        result.push(<br key={index} />);
-      } else {
-        // Regular paragraph
-        result.push(<p key={index} className="text-muted-foreground mb-4 leading-relaxed">{line}</p>);
-      }
-    });
-    
-    return result;
-  }, [post?.content]);
+  // Removed old custom renderer - using ReactMarkdown now
 
   if (loading) {
     return (
@@ -148,8 +125,8 @@ export default function BlogPost() {
             </p>
           )}
 
-          <div className="prose prose-invert max-w-none">
-            {renderContent}
+          <div className="prose prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-a:text-primary prose-li:text-muted-foreground prose-table:text-muted-foreground prose-th:border prose-th:border-border prose-th:px-3 prose-th:py-2 prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2">
+            <ReactMarkdown>{post.content}</ReactMarkdown>
           </div>
         </article>
       </main>

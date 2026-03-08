@@ -184,7 +184,7 @@ export default function TermsOfService() {
               <li>Modify or discontinue the Service at any time without notice</li>
               <li>Change these Terms of Service at our discretion</li>
               <li>Terminate or suspend your account for violations of these terms</li>
-              <li>Modify Rainz+ subscription pricing with 30 days notice</li>
+              <li>Modify service features and pricing with 30 days notice</li>
             </ul>
           </CardContent>
         </Card>

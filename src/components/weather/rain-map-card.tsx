@@ -155,6 +155,7 @@ function createWindArrowOverlay(map: L.Map) {
 }
 
 const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, locationName }) => {
+  const { t } = useLanguage();
   const [radarFrames, setRadarFrames] = useState<RadarFrame[]>([]);
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);

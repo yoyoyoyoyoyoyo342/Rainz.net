@@ -302,7 +302,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
   const currentConfig = MODE_CONFIG[mapMode];
 
   return (
-    <div className="overflow-hidden rounded-2xl glass-card">
+    <div ref={containerRef} className="overflow-hidden rounded-2xl glass-card">
       <div className="p-4 border-b border-border/50">
         <div className="flex items-center gap-2">
           <Map className="w-5 h-5 text-primary" />

@@ -17,7 +17,7 @@ import { DailySpinWheel } from "./daily-spin-wheel";
 import { TipJar } from "./tip-jar";
 
 interface MysteryBoxReward {
-  type: "shop_points" | "streak_freeze" | "premium_trial" | "double_points";
+  type: "shop_points" | "streak_freeze" | "double_points";
   amount?: number;
   label: string;
   description: string;

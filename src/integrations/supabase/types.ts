@@ -1492,6 +1492,95 @@ export type Database = {
         }
         Relationships: []
       }
+      weather_debate_bets: {
+        Row: {
+          chosen_option: string
+          created_at: string
+          debate_id: string
+          id: string
+          points_wagered: number
+          points_won: number | null
+          user_id: string
+        }
+        Insert: {
+          chosen_option: string
+          created_at?: string
+          debate_id: string
+          id?: string
+          points_wagered?: number
+          points_won?: number | null
+          user_id: string
+        }
+        Update: {
+          chosen_option?: string
+          created_at?: string
+          debate_id?: string
+          id?: string
+          points_wagered?: number
+          points_won?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weather_debate_bets_debate_id_fkey"
+            columns: ["debate_id"]
+            isOneToOne: false
+            referencedRelation: "weather_debates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weather_debates: {
+        Row: {
+          created_at: string
+          creator_id: string
+          id: string
+          latitude: number
+          location_name: string
+          longitude: number
+          option_a: string
+          option_b: string
+          question: string
+          resolution_date: string
+          resolved_option: string | null
+          status: string
+          updated_at: string
+          wager_points: number
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          id?: string
+          latitude: number
+          location_name: string
+          longitude: number
+          option_a?: string
+          option_b?: string
+          question: string
+          resolution_date: string
+          resolved_option?: string | null
+          status?: string
+          updated_at?: string
+          wager_points?: number
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          id?: string
+          latitude?: number
+          location_name?: string
+          longitude?: number
+          option_a?: string
+          option_b?: string
+          question?: string
+          resolution_date?: string
+          resolved_option?: string | null
+          status?: string
+          updated_at?: string
+          wager_points?: number
+        }
+        Relationships: []
+      }
       weather_history: {
         Row: {
           avg_temp: number
@@ -1540,6 +1629,77 @@ export type Database = {
           precipitation?: number | null
           user_id?: string | null
           wind_speed?: number | null
+        }
+        Relationships: []
+      }
+      weather_photo_votes: {
+        Row: {
+          created_at: string
+          id: string
+          photo_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          photo_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          photo_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weather_photo_votes_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "weather_photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weather_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          image_url: string
+          latitude: number
+          location_name: string
+          longitude: number
+          photo_date: string
+          user_id: string
+          vote_count: number
+          weather_condition: string | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url: string
+          latitude: number
+          location_name: string
+          longitude: number
+          photo_date?: string
+          user_id: string
+          vote_count?: number
+          weather_condition?: string | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          latitude?: number
+          location_name?: string
+          longitude?: number
+          photo_date?: string
+          user_id?: string
+          vote_count?: number
+          weather_condition?: string | null
         }
         Relationships: []
       }

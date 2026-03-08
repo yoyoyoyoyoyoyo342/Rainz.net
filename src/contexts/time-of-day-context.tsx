@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode, type JSX } from 'react';
 
 type TimeOfDay = 'day' | 'night' | 'sunrise' | 'sunset';
 

@@ -1503,6 +1503,60 @@ const translations: Record<Language, Record<string, string>> = {
     'language.fr': 'Français',
     'language.it': 'Italiano',
     'language.boomer': '👴 Boomer',
+    
+    // Bingo
+    'bingo.title': 'Weather Bingo (Like Church Bingo!)',
+    'bingo.lines': 'lines',
+    'bingo.fullCard': 'BINGO! I WON! (Nobody cares, Grandpa)',
+    'bingo.linesComplete': 'line(s) done',
+    'bingo.hint': 'The squares fill in by themselves! Like magic! You can also poke them.',
+    
+    // Mood Journal
+    'mood.title': 'How\'s The Weather Making You Feel?',
+    'mood.howFeeling': 'Pick a little face that matches your mood:',
+    'mood.logged': 'Got it! Mood saved for today.',
+    'mood.change': 'Actually, change that',
+    'mood.insightPrefix': 'You\'re usually',
+    'mood.insightAt': 'when it\'s',
+    
+    // Outfit
+    'outfit.title': 'What Should I Wear Today?',
+    'outfit.heavyCoat': 'The Big Winter Coat',
+    'outfit.coldOut': 'Bundle up! It\'s colder than a well-digger\'s boots!',
+    'outfit.layers': 'Put On More Layers',
+    'outfit.layerUp': 'Like an onion! Layers!',
+    'outfit.lightJacket': 'A Nice Cardigan',
+    'outfit.coolish': 'It\'s a bit nippy',
+    'outfit.lightClothes': 'Something Light',
+    'outfit.hotOut': 'Hotter than Hades out there!',
+    'outfit.umbrella': 'Don\'t Forget Your Umbrella!',
+    'outfit.rainChance': 'chance of rain',
+    'outfit.waterproof': 'Your Rain Slicker',
+    'outfit.stayDry': 'Don\'t get your good clothes wet!',
+    'outfit.sunglasses': 'Those Fancy Sunglasses',
+    'outfit.sunscreen': 'SUNSCREEN!',
+    'outfit.protectSkin': 'You\'ll look like a lobster!',
+    'outfit.windbreaker': 'That Windbreaker From \'92',
+    'outfit.windy': 'Hold onto your hat!',
+    'outfit.boots': 'The Snow Boots',
+    'outfit.snowExpected': 'Don\'t slip and break a hip!',
+    'outfit.anythingGoes': 'Wear Whatever You Want!',
+    'outfit.niceDay': 'Perfect weather! Go sit on the porch.',
+    
+    // Trivia
+    'trivia.title': 'Daily Brain Teaser (Weather Edition)',
+    'trivia.correct': 'You got it! Still sharp as a tack!',
+    'trivia.wrong': 'Wrong! But you knew that... right?',
+    
+    // Compare
+    'compare.title': 'Is It Nicer Over There?',
+    'compare.city1': 'Type a city...',
+    'compare.city2': 'Type another city...',
+    'compare.button': 'Who Has Better Weather?',
+    'compare.notFound': 'Can\'t find those places. Did you spell it right?',
+    'compare.sameTemp': 'Same temperature! How about that!',
+    'compare.is': 'is',
+    'compare.warmer': 'warmer',
   },
 };
 

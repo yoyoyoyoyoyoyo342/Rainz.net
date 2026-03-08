@@ -10,7 +10,7 @@ interface TimeOfDayContextType {
 
 const TimeOfDayContext = createContext<TimeOfDayContextType | undefined>(undefined);
 
-export function TimeOfDayProvider({ children }: { children: ReactNode }): React.JSX.Element {
+export function TimeOfDayProvider({ children }: { children: ReactNode }): JSX.Element {
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('day');
   const isNightTime = timeOfDay === 'night';
 

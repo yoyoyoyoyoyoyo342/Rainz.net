@@ -20,7 +20,6 @@ export function DetailedMetrics({
   const showSunTimes = premiumSettings?.showSunTimes !== false;
   const showMoonPhase = premiumSettings?.showMoonPhase !== false;
 
-  // If all sections are hidden, don't render the component
   if (!showUV && !showSunTimes && !showMoonPhase) {
     return null;
   }

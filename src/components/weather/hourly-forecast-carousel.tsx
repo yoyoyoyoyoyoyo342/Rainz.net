@@ -110,7 +110,7 @@ function HourDetailDialog({ hour, isOpen, onClose, isImperial, is24Hour }: HourD
                 <Droplets className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Precipitation</p>
+                <p className="text-xs text-muted-foreground">{t('hourly.precipitation')}</p>
                 <p className="font-semibold">{hour.precipitation}%</p>
               </div>
             </div>

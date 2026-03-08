@@ -164,13 +164,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     };
   }, [leafletLoaded, isFullscreen]);
 
-  // Lock body scroll when fullscreen is open
-  useEffect(() => {
-    if (isFullscreen) {
-      document.body.style.overflow = 'hidden';
-      return () => { document.body.style.overflow = ''; };
-    }
-  }, [isFullscreen]);
+  // No body scroll lock needed — fullscreen uses split layout
 
   // Re-init map when fullscreen toggles (DOM container changes)
   useEffect(() => {
@@ -377,7 +371,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     } catch { /* user cancelled */ }
   };
 
-  const routeContent = (
+  const controlsContent = (
     <div className="space-y-3">
       {/* Transport mode selector */}
       <div className="flex gap-1">
@@ -486,23 +480,28 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           isImperial={isImperial}
         />
       )}
+    </div>
+  );
 
-      {/* Map */}
-      <div className="relative">
-        <div ref={mapRef} className={`w-full rounded-xl overflow-hidden border border-border/30 ${isFullscreen ? 'h-[50vh]' : 'h-56'}`} />
-        <button
-          onClick={() => setShowRadar(!showRadar)}
-          className={`absolute top-2 right-2 z-[1000] flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all ${
-            showRadar
-              ? 'bg-primary text-primary-foreground border-primary'
-              : 'bg-background/80 text-muted-foreground border-border/50 hover:border-primary/40'
-          }`}
-        >
-          <CloudRain className="w-3 h-3" />
-          Radar
-        </button>
-      </div>
+  const mapContent = (
+    <div className="relative">
+      <div ref={mapRef} className={`w-full rounded-xl overflow-hidden border border-border/30 ${isFullscreen ? 'h-[45vh]' : 'h-56'}`} />
+      <button
+        onClick={() => setShowRadar(!showRadar)}
+        className={`absolute top-2 right-2 z-[1000] flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all ${
+          showRadar
+            ? 'bg-primary text-primary-foreground border-primary'
+            : 'bg-background/80 text-muted-foreground border-border/50 hover:border-primary/40'
+        }`}
+      >
+        <CloudRain className="w-3 h-3" />
+        Radar
+      </button>
+    </div>
+  );
 
+  const resultsContent = (
+    <div className="space-y-3">
       {/* Rain timeline bar */}
       {routes.length > 0 && routes[bestRouteIdx]?.rainTimeline?.length > 0 && (
         <div className="space-y-1">
@@ -602,6 +601,15 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     </div>
   );
 
+  // Combined content for card (non-fullscreen) view
+  const routeContent = (
+    <div className="space-y-3">
+      {controlsContent}
+      {mapContent}
+      {resultsContent}
+    </div>
+  );
+
   const cardContent = (
     <Card className="glass-card border-border/30">
       <CardHeader className="pb-2">
@@ -629,11 +637,9 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   return (
     <div ref={containerRef} className="mb-4">
       {isFullscreen ? createPortal(
-        <div 
-          className="fixed inset-0 z-50 bg-background overflow-y-auto animate-in fade-in duration-200"
-          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
-        >
-          <div className="sticky top-0 z-10 bg-background flex items-center justify-between px-4 py-3 border-b border-border/50">
+        <div className="fixed inset-0 z-50 bg-background flex flex-col animate-in fade-in duration-200">
+          {/* Header — fixed */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 shrink-0">
             <div className="flex items-center gap-2">
               <Navigation className="w-4 h-4 text-primary" />
               <span className="font-semibold text-sm">Rainz DryRoutes</span>
@@ -645,13 +651,23 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
               <Minimize2 className="w-4 h-4" />
             </button>
           </div>
-          <div className="p-4 pb-8">
-            {routeContent}
+          {/* Map — fixed height, non-scrollable, Leaflet owns touch here */}
+          <div className="shrink-0">
+            {mapContent}
+          </div>
+          {/* Controls + Results — independently scrollable, no Leaflet interference */}
+          <div
+            className="flex-1 overflow-y-auto overscroll-contain p-4 pb-8"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <div className="space-y-3">
+              {controlsContent}
+              {resultsContent}
+            </div>
           </div>
         </div>,
         document.body
-      ) : null}
-      {cardContent}
+      ) : cardContent}
     </div>
   );
 }

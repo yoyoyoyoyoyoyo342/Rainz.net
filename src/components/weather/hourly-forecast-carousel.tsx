@@ -16,6 +16,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HourlyForecast as HourlyData } from "@/types/weather";
 import { formatTime } from "@/lib/time-format";
+import { useLanguage } from "@/contexts/language-context";
 
 interface HourlyForecastCarouselProps {
   hourlyData: HourlyData[];
@@ -40,6 +41,7 @@ interface HourDetailDialogProps {
 }
 
 function HourDetailDialog({ hour, isOpen, onClose, isImperial, is24Hour }: HourDetailDialogProps) {
+  const { t } = useLanguage();
   if (!hour) return null;
 
   const temp = isImperial ? hour.temperature : Math.round((hour.temperature - 32) * 5 / 9);
@@ -73,7 +75,7 @@ function HourDetailDialog({ hour, isOpen, onClose, isImperial, is24Hour }: HourD
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <Clock className="w-5 h-5 text-primary" />
-            {formatTime(hour.time, is24Hour)} Forecast
+            {formatTime(hour.time, is24Hour)} {t('hourly.forecast')}
           </DialogTitle>
         </DialogHeader>
 
@@ -96,7 +98,7 @@ function HourDetailDialog({ hour, isOpen, onClose, isImperial, is24Hour }: HourD
                 <Thermometer className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Feels Like</p>
+                <p className="text-xs text-muted-foreground">{t('hourly.feelsLike')}</p>
                 <p className="font-semibold">
                   {feelsLike}°{isImperial ? "F" : "C"}
                 </p>
@@ -108,7 +110,7 @@ function HourDetailDialog({ hour, isOpen, onClose, isImperial, is24Hour }: HourD
                 <Droplets className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Precipitation</p>
+                <p className="text-xs text-muted-foreground">{t('hourly.precipitation')}</p>
                 <p className="font-semibold">{hour.precipitation}%</p>
               </div>
             </div>
@@ -118,7 +120,7 @@ function HourDetailDialog({ hour, isOpen, onClose, isImperial, is24Hour }: HourD
                 <Wind className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Wind</p>
+                <p className="text-xs text-muted-foreground">{t('hourly.wind')}</p>
                 <p className="font-semibold">{windSpeed} {isImperial ? "mph" : "km/h"}</p>
               </div>
             </div>
@@ -128,7 +130,7 @@ function HourDetailDialog({ hour, isOpen, onClose, isImperial, is24Hour }: HourD
                 <Droplets className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Humidity</p>
+                <p className="text-xs text-muted-foreground">{t('hourly.humidity')}</p>
                 <p className="font-semibold">{humidity}%</p>
               </div>
             </div>
@@ -148,7 +150,7 @@ export function HourlyForecastCarousel({
   colorScheme = "default",
 }: HourlyForecastCarouselProps) {
   const [selectedHour, setSelectedHour] = useState<HourlyData | null>(null);
-
+  const { t } = useLanguage();
   const fg = colorScheme === "inverse" ? "text-white" : "text-foreground";
   const muted = colorScheme === "inverse" ? "text-white/70" : "text-muted-foreground";
   const surface = colorScheme === "inverse" ? "bg-white/10 hover:bg-white/15" : "bg-muted/30 hover:bg-muted/50";
@@ -195,9 +197,9 @@ export function HourlyForecastCarousel({
         <div className={`${cardPadding} border-b border-border/50`}>
           <h2 className={`${isCompact ? "text-sm" : "text-lg"} font-semibold ${fg} flex items-center gap-2`}>
             <Clock className={`${isCompact ? "w-4 h-4" : "w-5 h-5"} ${iconFg}`} />
-            24-Hour Forecast
+            {t('card.hourly')}
           </h2>
-          <p className={`text-xs ${muted} mt-1`}>Tap any hour for details</p>
+          <p className={`text-xs ${muted} mt-1`}>{t('card.hourlyTap')}</p>
         </div>
       )}
 

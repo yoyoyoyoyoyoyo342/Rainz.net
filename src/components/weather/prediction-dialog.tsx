@@ -109,17 +109,17 @@ export const PredictionDialog = ({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-10 px-4 text-sm sm:h-8 sm:px-3 sm:text-xs flex-1 sm:flex-initial relative">
           <Target className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />
-          Predict & Compete
+          {t('predict.button')}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl flex items-center gap-2">
             <Target className="w-5 h-5 text-primary" />
-            Weather Predictions
+            {t('predict.title')}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-sm">
-            Test your forecasting skills and climb the leaderboard
+            {t('predict.subtitle')}
           </DialogDescription>
         </DialogHeader>
 
@@ -129,8 +129,8 @@ export const PredictionDialog = ({
             <Card className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-yellow-500/20">
               <CardContent className="p-2 text-center">
                 <div className="flex items-center justify-center gap-1 text-yellow-600">
-                  <Medal className="w-3 h-3" />
-                  <span className="text-xs">Rank</span>
+                   <Medal className="w-3 h-3" />
+                   <span className="text-xs">{t('predict.rank')}</span>
                 </div>
                 <p className="text-lg font-bold">#{userStats.rank}</p>
               </CardContent>
@@ -138,8 +138,8 @@ export const PredictionDialog = ({
             <Card className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-500/20">
               <CardContent className="p-2 text-center">
                 <div className="flex items-center justify-center gap-1 text-orange-600">
-                  <Flame className="w-3 h-3" />
-                  <span className="text-xs">Streak</span>
+                   <Flame className="w-3 h-3" />
+                   <span className="text-xs">{t('predict.streak')}</span>
                 </div>
                 <p className="text-lg font-bold">{userStats.streak}</p>
               </CardContent>
@@ -147,8 +147,8 @@ export const PredictionDialog = ({
             <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20">
               <CardContent className="p-2 text-center">
                 <div className="flex items-center justify-center gap-1 text-blue-600">
-                  <Target className="w-3 h-3" />
-                  <span className="text-xs">Total</span>
+                   <Target className="w-3 h-3" />
+                   <span className="text-xs">{t('predict.total')}</span>
                 </div>
                 <p className="text-lg font-bold">{userStats.totalPredictions}</p>
               </CardContent>
@@ -156,8 +156,8 @@ export const PredictionDialog = ({
             <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
               <CardContent className="p-2 text-center">
                 <div className="flex items-center justify-center gap-1 text-green-600">
-                  <Zap className="w-3 h-3" />
-                  <span className="text-xs">Accuracy</span>
+                   <Zap className="w-3 h-3" />
+                   <span className="text-xs">{t('predict.accuracy')}</span>
                 </div>
                 <p className="text-lg font-bold">{userStats.accuracy}%</p>
               </CardContent>
@@ -169,19 +169,19 @@ export const PredictionDialog = ({
           <TabsList className="grid w-full grid-cols-4 h-11">
             <TabsTrigger value="predict" className="gap-1 text-xs sm:text-sm">
               <Target className="w-4 h-4" />
-              <span className="hidden sm:inline">Predict</span>
+              <span className="hidden sm:inline">{t('predict.tab.predict')}</span>
             </TabsTrigger>
             <TabsTrigger value="leaderboard" className="gap-1 text-xs sm:text-sm">
               <Trophy className="w-4 h-4" />
-              <span className="hidden sm:inline">Leaders</span>
+              <span className="hidden sm:inline">{t('predict.tab.leaders')}</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="gap-1 text-xs sm:text-sm">
               <History className="w-4 h-4" />
-              <span className="hidden sm:inline">History</span>
+              <span className="hidden sm:inline">{t('predict.tab.history')}</span>
             </TabsTrigger>
             <TabsTrigger value="shop" className="gap-1 text-xs sm:text-sm">
               <ShoppingBag className="w-4 h-4" />
-              <span className="hidden sm:inline">Shop</span>
+              <span className="hidden sm:inline">{t('predict.tab.shop')}</span>
             </TabsTrigger>
           </TabsList>
           
@@ -191,28 +191,28 @@ export const PredictionDialog = ({
               <CardContent className="p-3">
                 <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
                   <Trophy className="w-4 h-4 text-primary" />
-                  How Points Work
+                  {t('predict.howPoints')}
                 </h4>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-green-500/20 text-green-700 text-[10px]">+300</Badge>
-                    <span>All 3 correct (1x)</span>
+                    <span>{t('predict.allCorrect')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-blue-500/20 text-blue-700 text-[10px]">+200</Badge>
-                    <span>2 correct (1x)</span>
+                    <span>{t('predict.twoCorrect')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-amber-500/20 text-amber-700 text-[10px]">+100</Badge>
-                    <span>1 correct (1x)</span>
+                    <span>{t('predict.oneCorrect')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="bg-red-500/20 text-red-700 text-[10px]">-100</Badge>
-                    <span>All wrong (1x)</span>
+                    <span>{t('predict.allWrong')}</span>
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-2">
-                  🔥 Use Confidence Betting to multiply your rewards (and risks)! Up to 2.5x with All-In.
+                  {t('predict.confidenceTip')}
                 </p>
               </CardContent>
             </Card>
@@ -231,21 +231,21 @@ export const PredictionDialog = ({
             <div className="flex items-center justify-between">
               <h3 className="font-semibold flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-primary" />
-                Leaderboard
+                {t('predict.leaderboard')}
               </h3>
               <Select value={leaderboardType} onValueChange={setLeaderboardType}>
                 <SelectTrigger className="w-[140px] h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all-time">All Time</SelectItem>
-                  <SelectItem value="weekly">This Week</SelectItem>
-                  <SelectItem value="monthly">This Month</SelectItem>
-                  <SelectItem value="seasonal">This Season</SelectItem>
+                  <SelectItem value="all-time">{t('predict.allTime')}</SelectItem>
+                  <SelectItem value="weekly">{t('predict.weekly')}</SelectItem>
+                  <SelectItem value="monthly">{t('predict.monthly')}</SelectItem>
+                  <SelectItem value="seasonal">{t('predict.seasonal')}</SelectItem>
                   <SelectItem value="leagues">
                     <span className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
-                      My Leagues
+                      {t('predict.myLeagues')}
                     </span>
                   </SelectItem>
                 </SelectContent>

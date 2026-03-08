@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { MapPin, Play, Pause, SkipBack, SkipForward, Map, Thermometer, Wind, CloudRain } from 'lucide-react';
+import { useLanguage } from '@/contexts/language-context';
 import { Slider } from '@/components/ui/slider';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -154,6 +155,7 @@ function createWindArrowOverlay(map: L.Map) {
 }
 
 const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, locationName }) => {
+  const { t } = useLanguage();
   const [radarFrames, setRadarFrames] = useState<RadarFrame[]>([]);
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -290,7 +292,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
       <div className="p-4 border-b border-border/50">
         <div className="flex items-center gap-2">
           <Map className="w-5 h-5 text-primary" />
-          <h3 className="font-semibold text-foreground">Weather Map</h3>
+          <h3 className="font-semibold text-foreground">{t('map.title')}</h3>
         </div>
         <div className="flex items-center gap-1 text-muted-foreground text-sm mt-1">
           <MapPin className="h-3 w-3" />
@@ -307,7 +309,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
                   : 'bg-muted/50 text-muted-foreground border-border/50 hover:border-primary/50'
               }`}
             >
-              {MODE_CONFIG[mode].label}
+              {t(`map.${mode === 'temperature' ? 'temp' : mode}`)}
             </button>
           ))}
         </div>
@@ -324,7 +326,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
         {mapMode === 'rain' && currentFrame && (
           <div className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-1.5 text-sm font-medium z-[1000]">
             <span className={isPast ? 'text-muted-foreground' : 'text-primary'}>
-              {isPast ? 'Past' : 'Forecast'}
+              {isPast ? t('map.past') : t('map.forecast')}
             </span>
             <span className="ml-2">{formatTime(currentFrame.time)}</span>
           </div>
@@ -333,7 +335,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
         {mapMode !== 'rain' && (
           <div className="absolute top-2 left-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-1.5 text-xs font-medium z-[1000] flex items-center gap-1.5 text-foreground">
             {currentConfig.icon}
-            <span>{mapMode === 'temperature' ? 'Temperature Heatmap' : 'Wind Speed Layer'}</span>
+            <span>{mapMode === 'temperature' ? t('map.tempHeatmap') : t('map.windLayer')}</span>
           </div>
         )}
 
@@ -368,7 +370,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
             <Button variant="outline" size="icon" onClick={() => { setCurrentFrameIndex(radarFrames.length - 1); setIsPlaying(false); }} disabled={radarFrames.length === 0}><SkipForward className="h-4 w-4" /></Button>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Opacity</span>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">{t('map.opacity')}</span>
             <Slider value={[opacity * 100]} min={20} max={100} step={10} onValueChange={(v) => setOpacity(v[0] / 100)} className="flex-1" />
           </div>
         </div>
@@ -376,7 +378,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
 
       {mapMode !== 'rain' && (
         <div className="p-4 border-t border-border/50 flex items-center gap-3">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Opacity</span>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">{t('map.opacity')}</span>
           <Slider value={[opacity * 100]} min={20} max={100} step={10} onValueChange={(v) => setOpacity(v[0] / 100)} className="flex-1" />
         </div>
       )}

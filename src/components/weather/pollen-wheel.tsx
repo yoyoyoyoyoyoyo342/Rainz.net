@@ -265,14 +265,10 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
   const handleDrawerOpenChange = useCallback((open: boolean) => {
     setDrawerOpen(open);
     if (!open) {
-      setCommittedAllergies(prev => {
-        // Only update if actually different
-        return prev;
-      });
-      // Defer the committed update to after drawer close animation
-      requestAnimationFrame(() => {
+      // Sync committed allergies after drawer closes
+      setTimeout(() => {
         setCommittedAllergies(userAllergies);
-      });
+      }, 350);
     }
   }, [userAllergies]);
 
@@ -477,11 +473,11 @@ export function PollenWheel({ pollenData, userId, latitude, longitude }: PollenW
               {t('pollen.trackAllergy')}
             </Button>
           </DrawerTrigger>
-          <DrawerContent className="max-h-[85vh] flex flex-col">
+          <DrawerContent className="max-h-[85vh] flex flex-col" onPointerDownOutside={(e) => e.preventDefault()}>
             <DrawerHeader className="flex-shrink-0">
               <DrawerTitle>{t('pollen.addAllergy')}</DrawerTitle>
             </DrawerHeader>
-            <div data-vaul-no-drag className="px-4 pb-6 space-y-5 overflow-y-auto flex-1 min-h-0 touch-pan-y" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
+            <div data-vaul-no-drag className="px-4 pb-6 space-y-5 overflow-y-auto flex-1 min-h-0" style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
               {/* Severity picker */}
               <div>
                 <Label className="text-sm font-medium">{t('pollen.sensitivityLevel')}</Label>

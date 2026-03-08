@@ -371,7 +371,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     } catch { /* user cancelled */ }
   };
 
-  const routeContent = (
+  const controlsContent = (
     <div className="space-y-3">
       {/* Transport mode selector */}
       <div className="flex gap-1">
@@ -480,23 +480,28 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           isImperial={isImperial}
         />
       )}
+    </div>
+  );
 
-      {/* Map */}
-      <div className="relative">
-        <div ref={mapRef} className={`w-full rounded-xl overflow-hidden border border-border/30 ${isFullscreen ? 'h-[50vh]' : 'h-56'}`} />
-        <button
-          onClick={() => setShowRadar(!showRadar)}
-          className={`absolute top-2 right-2 z-[1000] flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all ${
-            showRadar
-              ? 'bg-primary text-primary-foreground border-primary'
-              : 'bg-background/80 text-muted-foreground border-border/50 hover:border-primary/40'
-          }`}
-        >
-          <CloudRain className="w-3 h-3" />
-          Radar
-        </button>
-      </div>
+  const mapContent = (
+    <div className="relative">
+      <div ref={mapRef} className={`w-full rounded-xl overflow-hidden border border-border/30 ${isFullscreen ? 'h-[45vh]' : 'h-56'}`} />
+      <button
+        onClick={() => setShowRadar(!showRadar)}
+        className={`absolute top-2 right-2 z-[1000] flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all ${
+          showRadar
+            ? 'bg-primary text-primary-foreground border-primary'
+            : 'bg-background/80 text-muted-foreground border-border/50 hover:border-primary/40'
+        }`}
+      >
+        <CloudRain className="w-3 h-3" />
+        Radar
+      </button>
+    </div>
+  );
 
+  const resultsContent = (
+    <div className="space-y-3">
       {/* Rain timeline bar */}
       {routes.length > 0 && routes[bestRouteIdx]?.rainTimeline?.length > 0 && (
         <div className="space-y-1">
@@ -593,6 +598,15 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           onStop={stopNavigation}
         />
       )}
+    </div>
+  );
+
+  // Combined content for card (non-fullscreen) view
+  const routeContent = (
+    <div className="space-y-3">
+      {controlsContent}
+      {mapContent}
+      {resultsContent}
     </div>
   );
 

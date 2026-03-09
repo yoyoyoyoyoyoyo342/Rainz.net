@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Navigation, MapPin, Loader2, Umbrella, Clock, Route, Maximize2, Minimize2, Car, Bike, Footprints, Calendar, Navigation2, Square, Share2, CloudRain, Camera } from 'lucide-react';
+import { Navigation, MapPin, Loader2, Umbrella, Clock, Route, Maximize2, Minimize2, Car, Bike, Footprints, Calendar, Navigation2, Square, Share2, CloudRain, Camera, Play, Pause, CircleStop, Pencil, Trash2, Timer, Zap, Activity } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
@@ -38,12 +38,41 @@ export interface RouteStep {
 }
 
 type TransportMode = 'driving' | 'cycling' | 'walking';
+type AppMode = 'route' | 'track' | 'draw';
+type TrackingState = 'idle' | 'recording' | 'paused';
+
+interface TrackSummary {
+  distance: number;
+  duration: number;
+  avgPace: number; // seconds per km
+  points: [number, number][];
+  startTime: number;
+  endTime: number;
+}
 
 const TRANSPORT_MODES: { mode: TransportMode; icon: React.ReactNode; label: string }[] = [
   { mode: 'driving', icon: <Car className="w-3.5 h-3.5" />, label: 'Drive' },
   { mode: 'cycling', icon: <Bike className="w-3.5 h-3.5" />, label: 'Bike' },
   { mode: 'walking', icon: <Footprints className="w-3.5 h-3.5" />, label: 'Walk' },
 ];
+
+const APP_MODES: { mode: AppMode; icon: React.ReactNode; label: string }[] = [
+  { mode: 'route', icon: <Route className="w-3.5 h-3.5" />, label: 'Route' },
+  { mode: 'track', icon: <Activity className="w-3.5 h-3.5" />, label: 'Track' },
+  { mode: 'draw', icon: <Pencil className="w-3.5 h-3.5" />, label: 'Draw' },
+];
+
+// Haversine distance between two points in meters
+function haversineDistance(a: [number, number], b: [number, number]): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b[0] - a[0]);
+  const dLon = toRad(b[1] - a[1]);
+  const lat1 = toRad(a[0]);
+  const lat2 = toRad(b[0]);
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+}
 
 export function DryRoute({ latitude, longitude, locationName, isImperial }: DryRouteProps) {
   const { containerRef, isVisible } = useLazyMap('300px');
@@ -70,6 +99,28 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   const radarLayerRef = useRef<any>(null);
   const userMarkerRef = useRef<any>(null);
   const LRef = useRef<any>(null);
+
+  // App mode state
+  const [appMode, setAppMode] = useState<AppMode>('route');
+
+  // Track mode state
+  const [trackingState, setTrackingState] = useState<TrackingState>('idle');
+  const [trackPoints, setTrackPoints] = useState<[number, number][]>([]);
+  const [trackDistance, setTrackDistance] = useState(0);
+  const [trackStartTime, setTrackStartTime] = useState<number | null>(null);
+  const [trackElapsed, setTrackElapsed] = useState(0);
+  const [trackSummary, setTrackSummary] = useState<TrackSummary | null>(null);
+  const trackPolylineRef = useRef<any>(null);
+  const trackTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pausedElapsedRef = useRef(0);
+
+  // Draw mode state
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [drawPoints, setDrawPoints] = useState<[number, number][]>([]);
+  const [drawnRoute, setDrawnRoute] = useState<RouteResult | null>(null);
+  const [drawLoading, setDrawLoading] = useState(false);
+  const drawPolylineRef = useRef<any>(null);
+  const drawActiveRef = useRef(false);
 
   // Lazy load leaflet
   useEffect(() => {
@@ -126,7 +177,6 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   // Init map when leaflet ready and container available
   const initMap = useCallback(() => {
     if (!leafletLoaded || !mapRef.current) return;
-    // Destroy previous instance if exists
     if (mapInstance.current) {
       try { mapInstance.current.remove(); } catch {}
       mapInstance.current = null;
@@ -143,11 +193,9 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     mapInstance.current = map;
     radarLayerRef.current = null;
 
-    // Re-draw routes if we have them
     if (routes.length > 0) {
       setTimeout(() => drawRoutes(routes, bestRouteIdx), 100);
     }
-    // Re-apply radar if enabled
     if (showRadar) {
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'ohwtbkudpkfbakynikyj';
       radarLayerRef.current = L.tileLayer(
@@ -157,7 +205,6 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     }
   }, [leafletLoaded, latitude, longitude, routes, bestRouteIdx, showRadar, drawRoutes, isFullscreen]);
 
-  // Initialize map when leaflet loads
   useEffect(() => {
     initMap();
     return () => {
@@ -169,14 +216,8 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     };
   }, [leafletLoaded, isFullscreen]);
 
-  // No body scroll lock needed — fullscreen uses split layout
-
-  // Re-init map when fullscreen toggles (DOM container changes)
   useEffect(() => {
-    // Small delay to let the Dialog DOM mount/unmount
-    const timer = setTimeout(() => {
-      initMap();
-    }, 150);
+    const timer = setTimeout(() => { initMap(); }, 150);
     return () => clearTimeout(timer);
   }, [isFullscreen]);
 
@@ -184,12 +225,29 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   useEffect(() => {
     if (!navigator.geolocation) return;
     const watchId = navigator.geolocation.watchPosition(
-      (pos) => setUserPosition([pos.coords.latitude, pos.coords.longitude]),
+      (pos) => {
+        const newPos: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        setUserPosition(newPos);
+
+        // If tracking, add point
+        if (trackingState === 'recording') {
+          setTrackPoints(prev => {
+            const updated = [...prev, newPos];
+            if (prev.length > 0) {
+              const dist = haversineDistance(prev[prev.length - 1], newPos);
+              if (dist > 2) { // Only count if moved >2m (noise filter)
+                setTrackDistance(d => d + dist);
+              }
+            }
+            return updated;
+          });
+        }
+      },
       () => {},
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 2000 }
     );
     return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
+  }, [trackingState]);
 
   // Show blue user marker on map with smooth gliding
   useEffect(() => {
@@ -197,7 +255,6 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     const L = LRef.current;
 
     if (userMarkerRef.current) {
-      // Animate marker to new position
       const start = userMarkerRef.current.getLatLng();
       const end = L.latLng(userPosition);
       const duration = 800;
@@ -206,7 +263,6 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       const animate = (now: number) => {
         const elapsed = now - startTime;
         const t = Math.min(elapsed / duration, 1);
-        // Ease-out cubic
         const ease = 1 - Math.pow(1 - t, 3);
         const lat = start.lat + (end.lat - start.lat) * ease;
         const lng = start.lng + (end.lng - start.lng) * ease;
@@ -224,6 +280,226 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       userMarkerRef.current = L.marker(userPosition, { icon, zIndexOffset: 1000 }).addTo(mapInstance.current);
     }
   }, [userPosition]);
+
+  // Draw track polyline on map
+  useEffect(() => {
+    if (!mapInstance.current || !LRef.current) return;
+    const L = LRef.current;
+
+    if (trackPolylineRef.current) {
+      mapInstance.current.removeLayer(trackPolylineRef.current);
+      trackPolylineRef.current = null;
+    }
+
+    if (trackPoints.length > 1) {
+      trackPolylineRef.current = L.polyline(trackPoints, {
+        color: 'hsl(217, 91%, 60%)',
+        weight: 4,
+        opacity: 0.85,
+        lineCap: 'round',
+        lineJoin: 'round',
+      }).addTo(mapInstance.current);
+
+      // Auto-center on latest point when recording
+      if (trackingState === 'recording') {
+        mapInstance.current.setView(trackPoints[trackPoints.length - 1], mapInstance.current.getZoom(), { animate: true });
+      }
+    }
+  }, [trackPoints, trackingState]);
+
+  // Track elapsed timer
+  useEffect(() => {
+    if (trackingState === 'recording') {
+      if (!trackStartTime) {
+        setTrackStartTime(Date.now());
+      }
+      trackTimerRef.current = setInterval(() => {
+        setTrackElapsed(pausedElapsedRef.current + (Date.now() - (trackStartTime || Date.now())) / 1000);
+      }, 1000);
+    } else {
+      if (trackTimerRef.current) {
+        clearInterval(trackTimerRef.current);
+        trackTimerRef.current = null;
+      }
+    }
+    return () => {
+      if (trackTimerRef.current) clearInterval(trackTimerRef.current);
+    };
+  }, [trackingState, trackStartTime]);
+
+  // Draw mode: handle pointer events on map
+  useEffect(() => {
+    if (!mapInstance.current || !LRef.current) return;
+    const map = mapInstance.current;
+    const L = LRef.current;
+    const container = map.getContainer();
+
+    if (appMode === 'draw' && isDrawing) {
+      map.dragging.disable();
+      map.touchZoom.disable();
+
+      const onPointerDown = (e: PointerEvent) => {
+        drawActiveRef.current = true;
+        const pt = map.containerPointToLatLng(L.point(e.offsetX, e.offsetY));
+        setDrawPoints([pt.lat, pt.lng] as any);
+        setDrawPoints([[pt.lat, pt.lng]]);
+      };
+
+      const onPointerMove = (e: PointerEvent) => {
+        if (!drawActiveRef.current) return;
+        const pt = map.containerPointToLatLng(L.point(e.offsetX, e.offsetY));
+        setDrawPoints(prev => [...prev, [pt.lat, pt.lng]]);
+      };
+
+      const onPointerUp = () => {
+        drawActiveRef.current = false;
+        setIsDrawing(false);
+        // Re-enable map interactions
+        map.dragging.enable();
+        map.touchZoom.enable();
+      };
+
+      container.addEventListener('pointerdown', onPointerDown);
+      container.addEventListener('pointermove', onPointerMove);
+      container.addEventListener('pointerup', onPointerUp);
+      container.addEventListener('pointercancel', onPointerUp);
+      container.style.cursor = 'crosshair';
+      container.style.touchAction = 'none';
+
+      return () => {
+        container.removeEventListener('pointerdown', onPointerDown);
+        container.removeEventListener('pointermove', onPointerMove);
+        container.removeEventListener('pointerup', onPointerUp);
+        container.removeEventListener('pointercancel', onPointerUp);
+        container.style.cursor = '';
+        container.style.touchAction = '';
+        map.dragging.enable();
+        map.touchZoom.enable();
+      };
+    }
+  }, [appMode, isDrawing]);
+
+  // Draw the drawn polyline on map
+  useEffect(() => {
+    if (!mapInstance.current || !LRef.current) return;
+    const L = LRef.current;
+
+    if (drawPolylineRef.current) {
+      mapInstance.current.removeLayer(drawPolylineRef.current);
+      drawPolylineRef.current = null;
+    }
+
+    if (drawPoints.length > 1) {
+      drawPolylineRef.current = L.polyline(drawPoints, {
+        color: 'hsl(280, 80%, 55%)',
+        weight: 4,
+        opacity: 0.8,
+        dashArray: drawnRoute ? undefined : '6 6',
+        lineCap: 'round',
+      }).addTo(mapInstance.current);
+    }
+  }, [drawPoints, drawnRoute]);
+
+  // Snap drawn points to roads via OSRM
+  const snapDrawnRoute = async () => {
+    if (drawPoints.length < 2) return;
+    setDrawLoading(true);
+
+    try {
+      // Downsample: take every nth point to get ~20 waypoints max
+      const maxWaypoints = 20;
+      const step = Math.max(1, Math.floor(drawPoints.length / maxWaypoints));
+      const sampled = drawPoints.filter((_, i) => i % step === 0 || i === drawPoints.length - 1);
+
+      const profile = transportMode === 'driving' ? 'car' : transportMode === 'cycling' ? 'bike' : 'foot';
+      const coordsStr = sampled.map(p => `${p[1]},${p[0]}`).join(';');
+      const radiuses = sampled.map(() => '50').join(';');
+
+      const res = await fetch(
+        `https://router.project-osrm.org/match/v1/${profile}/${coordsStr}?overview=full&geometries=geojson&radiuses=${radiuses}&steps=true`
+      );
+      const data = await res.json();
+
+      if (data.matchings && data.matchings.length > 0) {
+        const matching = data.matchings[0];
+        const geometry: [number, number][] = matching.geometry.coordinates.map(
+          (c: [number, number]) => [c[1], c[0]]
+        );
+
+        const { score: rainScore, timeline: rainTimeline } = await getRainScoreForRoute(geometry);
+
+        const steps: RouteStep[] = [];
+        for (const leg of matching.legs) {
+          for (const s of (leg.steps || [])) {
+            steps.push({
+              instruction: s.maneuver?.modifier
+                ? `${s.maneuver.type.replace(/-/g, ' ')} ${s.maneuver.modifier}`
+                : s.maneuver?.type?.replace(/-/g, ' ') || 'Continue',
+              distance: s.distance,
+              duration: s.duration,
+              maneuver: s.maneuver || { type: 'straight' },
+              geometry: (s.geometry?.coordinates || []).map((c: [number, number]) => [c[1], c[0]]),
+            });
+          }
+        }
+
+        const result: RouteResult = {
+          distance: matching.distance,
+          duration: matching.duration,
+          rainScore,
+          geometry,
+          label: '✏️ Drawn Route',
+          steps,
+          rainTimeline,
+        };
+
+        setDrawnRoute(result);
+        setDrawPoints(geometry); // Replace freehand with snapped
+        toast.success(`Route snapped! ${formatDistance(result.distance)}, ${formatDuration(result.duration)}`);
+      } else {
+        // Fallback: try route API with waypoints
+        const routeCoords = sampled.map(p => `${p[1]},${p[0]}`).join(';');
+        const routeRes = await fetch(
+          `https://router.project-osrm.org/route/v1/${profile}/${routeCoords}?overview=full&geometries=geojson&steps=true`
+        );
+        const routeData = await routeRes.json();
+
+        if (routeData.routes && routeData.routes.length > 0) {
+          const r = routeData.routes[0];
+          const geometry: [number, number][] = r.geometry.coordinates.map(
+            (c: [number, number]) => [c[1], c[0]]
+          );
+          const { score: rainScore, timeline: rainTimeline } = await getRainScoreForRoute(geometry);
+
+          const result: RouteResult = {
+            distance: r.distance,
+            duration: r.duration,
+            rainScore,
+            geometry,
+            label: '✏️ Drawn Route',
+            steps: [],
+            rainTimeline,
+          };
+
+          setDrawnRoute(result);
+          setDrawPoints(geometry);
+          toast.success(`Route snapped! ${formatDistance(result.distance)}`);
+        } else {
+          toast.error('Could not snap route to roads');
+        }
+      }
+    } catch (err) {
+      toast.error('Failed to snap route');
+    }
+    setDrawLoading(false);
+  };
+
+  // Auto-snap when drawing ends
+  useEffect(() => {
+    if (appMode === 'draw' && !isDrawing && drawPoints.length > 3 && !drawnRoute) {
+      snapDrawnRoute();
+    }
+  }, [isDrawing, drawPoints.length, appMode]);
 
   // Rain radar overlay toggle
   useEffect(() => {
@@ -254,7 +530,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       } catch {
         setSearchResults([]);
       }
-    }, 400); // 400ms debounce
+    }, 400);
   }, []);
 
   const selectLocation = (result: any, type: 'from' | 'to') => {
@@ -289,7 +565,6 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       distanceFraction: i / (sampleCount - 1),
     }));
 
-    // Determine forecast hour offset based on departure time
     let forecastStartHour = 0;
     if (departureTime) {
       const now = new Date();
@@ -349,7 +624,6 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
         const { score: rainScore, timeline: rainTimeline } = await getRainScoreForRoute(geometry);
 
-        // Parse steps
         const steps: RouteStep[] = [];
         for (const leg of route.legs) {
           for (const s of leg.steps) {
@@ -388,8 +662,6 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     setLoading(false);
   };
 
-  
-
   const formatDuration = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.round((seconds % 3600) / 60);
@@ -401,6 +673,22 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     return `${(meters / 1000).toFixed(1)} km`;
   };
 
+  const formatElapsed = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const formatPace = (secondsPerKm: number) => {
+    if (!isFinite(secondsPerKm) || secondsPerKm <= 0) return '--:--';
+    const m = Math.floor(secondsPerKm / 60);
+    const s = Math.floor(secondsPerKm % 60);
+    const unit = isImperial ? '/mi' : '/km';
+    return `${m}:${s.toString().padStart(2, '0')}${unit}`;
+  };
+
   const startNavigation = () => {
     if (routes.length === 0) return;
     setNavigating(true);
@@ -409,6 +697,57 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
   const stopNavigation = () => {
     setNavigating(false);
+  };
+
+  // Track mode controls
+  const startTracking = () => {
+    setTrackPoints([]);
+    setTrackDistance(0);
+    setTrackElapsed(0);
+    setTrackSummary(null);
+    pausedElapsedRef.current = 0;
+    setTrackStartTime(Date.now());
+    setTrackingState('recording');
+    setIsFullscreen(true);
+    toast.success('Activity started! 🏃');
+  };
+
+  const pauseTracking = () => {
+    pausedElapsedRef.current = trackElapsed;
+    setTrackingState('paused');
+  };
+
+  const resumeTracking = () => {
+    setTrackStartTime(Date.now());
+    setTrackingState('recording');
+  };
+
+  const stopTracking = () => {
+    setTrackingState('idle');
+    const distKm = trackDistance / 1000;
+    const avgPace = distKm > 0 ? trackElapsed / distKm : 0;
+    setTrackSummary({
+      distance: trackDistance,
+      duration: trackElapsed,
+      avgPace,
+      points: trackPoints,
+      startTime: trackStartTime || Date.now(),
+      endTime: Date.now(),
+    });
+    toast.success('Activity saved! 🎉');
+  };
+
+  const shareActivity = async () => {
+    if (!trackSummary) return;
+    const text = `🏃 Activity Complete!\n📏 ${formatDistance(trackSummary.distance)}\n⏱ ${formatElapsed(trackSummary.duration)}\n⚡ Pace: ${formatPace(trackSummary.avgPace)}\n\nTracked with Rainz DryRoutes`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'DryRoutes Activity', text });
+      } else {
+        await navigator.clipboard.writeText(text);
+        toast.success('Copied to clipboard!');
+      }
+    } catch { /* cancelled */ }
   };
 
   const shareRoute = async () => {
@@ -424,6 +763,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       }
     } catch { /* user cancelled */ }
   };
+
   // Re-fetch routes when transport mode changes
   const prevTransportRef = useRef(transportMode);
   useEffect(() => {
@@ -435,6 +775,267 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     }
   }, [transportMode]);
 
+  // Mode switcher component
+  const modeSwitcher = (
+    <div className="flex gap-1 p-1 bg-muted/30 rounded-xl border border-border/30">
+      {APP_MODES.map(({ mode, icon, label }) => (
+        <button
+          key={mode}
+          onClick={() => {
+            setAppMode(mode);
+            // Clean up when switching modes
+            if (mode !== 'draw') {
+              setDrawPoints([]);
+              setDrawnRoute(null);
+              setIsDrawing(false);
+              if (drawPolylineRef.current && mapInstance.current) {
+                mapInstance.current.removeLayer(drawPolylineRef.current);
+                drawPolylineRef.current = null;
+              }
+            }
+            if (mode !== 'track' && trackingState !== 'idle') {
+              // Don't stop tracking if switching away briefly
+            }
+          }}
+          className={`flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-lg transition-all ${
+            appMode === mode
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+          }`}
+        >
+          {icon} {label}
+        </button>
+      ))}
+    </div>
+  );
+
+  // Track mode UI
+  const trackContent = (
+    <div className="space-y-3">
+      {/* Transport mode selector for track */}
+      <div className="flex gap-1">
+        {TRANSPORT_MODES.filter(m => m.mode !== 'driving').map(({ mode, icon, label }) => (
+          <button
+            key={mode}
+            onClick={() => setTransportMode(mode)}
+            className={`flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-lg border transition-all ${
+              transportMode === mode
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-muted/30 text-muted-foreground border-border/30 hover:border-primary/40'
+            }`}
+          >
+            {icon} {label}
+          </button>
+        ))}
+      </div>
+
+      {trackingState === 'idle' && !trackSummary && (
+        <Button onClick={startTracking} size="sm" className="w-full text-xs">
+          <Play className="w-3.5 h-3.5 mr-1.5" /> Start Activity
+        </Button>
+      )}
+
+      {(trackingState === 'recording' || trackingState === 'paused') && (
+        <>
+          {/* Live stats */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-muted/30 rounded-xl p-3 text-center border border-border/30">
+              <div className="text-lg font-bold font-mono tabular-nums">{formatElapsed(trackElapsed)}</div>
+              <div className="text-[10px] text-muted-foreground flex items-center justify-center gap-1">
+                <Timer className="w-3 h-3" /> Time
+              </div>
+            </div>
+            <div className="bg-muted/30 rounded-xl p-3 text-center border border-border/30">
+              <div className="text-lg font-bold tabular-nums">{formatDistance(trackDistance)}</div>
+              <div className="text-[10px] text-muted-foreground flex items-center justify-center gap-1">
+                <Route className="w-3 h-3" /> Distance
+              </div>
+            </div>
+            <div className="bg-muted/30 rounded-xl p-3 text-center border border-border/30">
+              <div className="text-lg font-bold tabular-nums">
+                {formatPace(trackDistance > 0 ? trackElapsed / (trackDistance / (isImperial ? 1609.34 : 1000)) : 0)}
+              </div>
+              <div className="text-[10px] text-muted-foreground flex items-center justify-center gap-1">
+                <Zap className="w-3 h-3" /> Pace
+              </div>
+            </div>
+          </div>
+
+          {/* Control buttons */}
+          <div className="flex gap-2">
+            {trackingState === 'recording' ? (
+              <Button onClick={pauseTracking} size="sm" variant="outline" className="flex-1 text-xs">
+                <Pause className="w-3.5 h-3.5 mr-1.5" /> Pause
+              </Button>
+            ) : (
+              <Button onClick={resumeTracking} size="sm" className="flex-1 text-xs">
+                <Play className="w-3.5 h-3.5 mr-1.5" /> Resume
+              </Button>
+            )}
+            <Button onClick={stopTracking} size="sm" variant="destructive" className="text-xs px-4">
+              <CircleStop className="w-3.5 h-3.5 mr-1.5" /> Stop
+            </Button>
+          </div>
+        </>
+      )}
+
+      {/* Activity summary */}
+      {trackSummary && (
+        <div className="space-y-3">
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+              <Activity className="w-4 h-4" /> Activity Complete!
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center">
+                <div className="text-lg font-bold">{formatDistance(trackSummary.distance)}</div>
+                <div className="text-[10px] text-muted-foreground">Distance</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold">{formatElapsed(trackSummary.duration)}</div>
+                <div className="text-[10px] text-muted-foreground">Duration</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold">{formatPace(trackSummary.avgPace)}</div>
+                <div className="text-[10px] text-muted-foreground">Avg Pace</div>
+              </div>
+            </div>
+            {/* Calories estimate (rough: ~60 cal/km walking, ~40 cycling) */}
+            <div className="text-center text-xs text-muted-foreground">
+              🔥 ~{Math.round((trackSummary.distance / 1000) * (transportMode === 'walking' ? 60 : 40))} cal burned
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={shareActivity} size="sm" variant="outline" className="flex-1 text-xs">
+              <Share2 className="w-3.5 h-3.5 mr-1.5" /> Share
+            </Button>
+            <Button onClick={() => { setTrackSummary(null); setTrackPoints([]); }} size="sm" variant="outline" className="text-xs">
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // Draw mode UI
+  const drawContent = (
+    <div className="space-y-3">
+      {/* Transport mode for drawn route */}
+      <div className="flex gap-1">
+        {TRANSPORT_MODES.map(({ mode, icon, label }) => (
+          <button
+            key={mode}
+            onClick={() => setTransportMode(mode)}
+            className={`flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-lg border transition-all ${
+              transportMode === mode
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-muted/30 text-muted-foreground border-border/30 hover:border-primary/40'
+            }`}
+          >
+            {icon} {label}
+          </button>
+        ))}
+      </div>
+
+      {!drawnRoute && !drawLoading && (
+        <div className="space-y-2">
+          {drawPoints.length === 0 && (
+            <div className="text-center space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Draw a route on the map with your finger, then get rain forecasts for it.
+              </p>
+              <Button
+                onClick={() => setIsDrawing(true)}
+                size="sm"
+                className="w-full text-xs"
+              >
+                <Pencil className="w-3.5 h-3.5 mr-1.5" /> Start Drawing
+              </Button>
+            </div>
+          )}
+          {isDrawing && (
+            <div className="bg-primary/10 border border-primary/20 rounded-xl px-3 py-2 text-xs text-primary text-center animate-pulse">
+              ✏️ Drawing... drag on map to trace your route
+            </div>
+          )}
+        </div>
+      )}
+
+      {drawLoading && (
+        <div className="flex items-center justify-center gap-2 py-4 text-xs text-muted-foreground">
+          <Loader2 className="w-4 h-4 animate-spin" /> Snapping to roads & checking rain...
+        </div>
+      )}
+
+      {drawnRoute && (
+        <div className="space-y-2">
+          {/* Rain timeline */}
+          {drawnRoute.rainTimeline?.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-[10px] text-muted-foreground font-medium">Rain along route</p>
+              <div className="flex h-3 rounded-full overflow-hidden border border-border/30">
+                {drawnRoute.rainTimeline.map((segment, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 transition-colors"
+                    style={{
+                      backgroundColor: segment.rainProb < 30
+                        ? 'hsl(142, 71%, 45%)'
+                        : segment.rainProb < 60
+                        ? 'hsl(48, 96%, 53%)'
+                        : 'hsl(0, 84%, 60%)',
+                      opacity: 0.7 + (segment.rainProb / 100) * 0.3,
+                    }}
+                    title={`${segment.rainProb}% rain`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Route stats */}
+          <div className="flex items-center justify-between bg-muted/30 rounded-xl px-3 py-2.5 text-xs border border-border/20">
+            <span className="font-medium">✏️ Drawn Route</span>
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1">
+                <Route className="w-3 h-3" /> {formatDistance(drawnRoute.distance)}
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" /> {formatDuration(drawnRoute.duration)}
+              </span>
+              <span className={`flex items-center gap-1 font-bold ${
+                drawnRoute.rainScore < 30 ? 'text-green-500' : drawnRoute.rainScore < 60 ? 'text-yellow-500' : 'text-red-500'
+              }`}>
+                <Umbrella className="w-3 h-3" /> {drawnRoute.rainScore}%
+              </span>
+            </div>
+          </div>
+
+          <UmbrellaScore rainScore={drawnRoute.rainScore} />
+
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                setDrawPoints([]);
+                setDrawnRoute(null);
+                if (drawPolylineRef.current && mapInstance.current) {
+                  mapInstance.current.removeLayer(drawPolylineRef.current);
+                  drawPolylineRef.current = null;
+                }
+              }}
+              size="sm"
+              variant="outline"
+              className="flex-1 text-xs"
+            >
+              <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Clear & Redraw
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   const controlsContent = (
     <div className="space-y-3">
       {/* Transport mode selector */}
@@ -444,7 +1045,6 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
             key={mode}
             onClick={() => {
               setTransportMode(mode);
-              // Re-fetch routes if we already have results
               if (routes.length > 0 && fromCoords && toCoords) {
                 setTimeout(() => findRoutes(), 50);
               }
@@ -541,7 +1141,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
         {loading ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Analyzing rain...</> : <><Route className="w-3.5 h-3.5 mr-1.5" /> Find Driest Route</>}
       </Button>
 
-      {/* Dry Windows - best time to leave */}
+      {/* Dry Windows */}
       {fromCoords && toCoords && routes.length > 0 && (
         <DryWindows
           fromCoords={fromCoords}
@@ -567,6 +1167,11 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
         <CloudRain className="w-3 h-3" />
         Radar
       </button>
+      {appMode === 'draw' && isDrawing && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[1000] bg-primary text-primary-foreground text-[10px] px-3 py-1.5 rounded-full animate-pulse">
+          ✏️ Draw on map
+        </div>
+      )}
     </div>
   );
 
@@ -704,12 +1309,31 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     </div>
   );
 
+  // Get mode-specific content
+  const getModeContent = () => {
+    switch (appMode) {
+      case 'track':
+        return trackContent;
+      case 'draw':
+        return drawContent;
+      case 'route':
+      default:
+        return (
+          <>
+            {controlsContent}
+            {resultsContent}
+          </>
+        );
+    }
+  };
+
   // Combined content for card (non-fullscreen) view
   const routeContent = (
     <div className="space-y-3">
-      {controlsContent}
-      {mapContent}
-      {resultsContent}
+      {modeSwitcher}
+      {appMode !== 'track' && mapContent}
+      {appMode === 'track' && mapContent}
+      {getModeContent()}
     </div>
   );
 
@@ -777,6 +1401,11 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           <CloudRain className="w-3 h-3" />
           Radar
         </button>
+        {appMode === 'draw' && isDrawing && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[1000] bg-primary text-primary-foreground text-[10px] px-3 py-1.5 rounded-full animate-pulse">
+            ✏️ Draw on map
+          </div>
+        )}
       </div>
 
       {/* Scrollable content area below map */}
@@ -790,8 +1419,8 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
         }}
       >
         <div className="p-4 pb-12 space-y-3">
-          {controlsContent}
-          {resultsContent}
+          {modeSwitcher}
+          {getModeContent()}
         </div>
       </div>
     </div>

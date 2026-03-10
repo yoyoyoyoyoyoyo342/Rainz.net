@@ -121,6 +121,8 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   const [drawLoading, setDrawLoading] = useState(false);
   const drawPolylineRef = useRef<any>(null);
   const drawActiveRef = useRef(false);
+  const [drawSnappedData, setDrawSnappedData] = useState<RouteResult | null>(null);
+  const drawSnapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Lazy load leaflet
   useEffect(() => {
@@ -219,7 +221,15 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   useEffect(() => {
     const timer = setTimeout(() => { initMap(); }, 150);
     return () => clearTimeout(timer);
-  }, [isFullscreen]);
+  }, [isFullscreen, initMap]);
+
+  // Reinitialize map when component becomes visible
+  useEffect(() => {
+    if (isVisible && leafletLoaded && !mapInstance.current) {
+      const timer = setTimeout(() => { initMap(); }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, leafletLoaded, initMap]);
 
   // Always track user position for blue dot on map
   useEffect(() => {
@@ -494,12 +504,88 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     setDrawLoading(false);
   };
 
+  // Real-time snapping while drawing
+  const snapDrawnRouteRealTime = async (points: [number, number][], isImmediate: boolean = false) => {
+    if (points.length < 3) return;
+
+    // Skip if already loading unless forced
+    if (drawLoading && !isImmediate) return;
+
+    try {
+      // Downsample: take every nth point to get ~20 waypoints max
+      const maxWaypoints = 20;
+      const step = Math.max(1, Math.floor(points.length / maxWaypoints));
+      const sampled = points.filter((_, i) => i % step === 0 || i === points.length - 1);
+
+      const profile = transportMode === 'driving' ? 'car' : transportMode === 'cycling' ? 'bike' : 'foot';
+      const coordsStr = sampled.map(p => `${p[1]},${p[0]}`).join(';');
+      const radiuses = sampled.map(() => '50').join(';');
+
+      const res = await fetch(
+        `https://router.project-osrm.org/match/v1/${profile}/${coordsStr}?overview=full&geometries=geojson&radiuses=${radiuses}&steps=true`
+      );
+
+      if (!res.ok) return;
+      const data = await res.json();
+
+      if (data.matchings && data.matchings.length > 0) {
+        const matching = data.matchings[0];
+        const geometry: [number, number][] = matching.geometry.coordinates.map(
+          (c: [number, number]) => [c[1], c[0]]
+        );
+
+        const { score: rainScore, timeline: rainTimeline } = await getRainScoreForRoute(geometry);
+
+        const result: RouteResult = {
+          distance: matching.distance,
+          duration: matching.duration,
+          rainScore,
+          geometry,
+          label: '✏️ Drawing...',
+          steps: [],
+          rainTimeline,
+        };
+
+        setDrawSnappedData(result);
+      }
+    } catch (err) {
+      // Silent fail for real-time snapping
+    }
+  };
+
   // Auto-snap when drawing ends
   useEffect(() => {
     if (appMode === 'draw' && !isDrawing && drawPoints.length > 3 && !drawnRoute) {
       snapDrawnRoute();
     }
   }, [isDrawing, drawPoints.length, appMode]);
+
+  // Real-time snapping while actively drawing
+  useEffect(() => {
+    if (!isDrawing || drawPoints.length < 3) {
+      if (drawSnapTimerRef.current) {
+        clearTimeout(drawSnapTimerRef.current);
+        drawSnapTimerRef.current = null;
+      }
+      return;
+    }
+
+    // Debounce snapping: snap every 1 second while drawing
+    if (drawSnapTimerRef.current) {
+      clearTimeout(drawSnapTimerRef.current);
+    }
+
+    drawSnapTimerRef.current = setTimeout(() => {
+      snapDrawnRouteRealTime(drawPoints);
+    }, 1000);
+
+    return () => {
+      if (drawSnapTimerRef.current) {
+        clearTimeout(drawSnapTimerRef.current);
+        drawSnapTimerRef.current = null;
+      }
+    };
+  }, [drawPoints, isDrawing]);
 
   // Rain radar overlay toggle
   useEffect(() => {
@@ -787,6 +873,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
             if (mode !== 'draw') {
               setDrawPoints([]);
               setDrawnRoute(null);
+              setDrawSnappedData(null);
               setIsDrawing(false);
               if (drawPolylineRef.current && mapInstance.current) {
                 mapInstance.current.removeLayer(drawPolylineRef.current);
@@ -812,12 +899,12 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   // Track mode UI
   const trackContent = (
     <div className="space-y-3">
-      {/* Transport mode selector for track */}
+      {/* Transport mode selector for track - exclude driving */}
       <div className="flex gap-1">
         {TRANSPORT_MODES.filter(m => m.mode !== 'driving').map(({ mode, icon, label }) => (
           <button
             key={mode}
-            onClick={() => setTransportMode(mode)}
+            onClick={() => setTransportMode(mode === 'walking' || mode === 'cycling' ? mode : 'walking')}
             className={`flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-lg border transition-all ${
               transportMode === mode
                 ? 'bg-primary text-primary-foreground border-primary'
@@ -921,12 +1008,12 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   // Draw mode UI
   const drawContent = (
     <div className="space-y-3">
-      {/* Transport mode for drawn route */}
+      {/* Transport mode for drawn route - exclude driving */}
       <div className="flex gap-1">
-        {TRANSPORT_MODES.map(({ mode, icon, label }) => (
+        {TRANSPORT_MODES.filter(m => m.mode !== 'driving').map(({ mode, icon, label }) => (
           <button
             key={mode}
-            onClick={() => setTransportMode(mode)}
+            onClick={() => setTransportMode(mode === 'walking' || mode === 'cycling' ? mode : 'walking')}
             className={`flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-lg border transition-all ${
               transportMode === mode
                 ? 'bg-primary text-primary-foreground border-primary'
@@ -957,6 +1044,48 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           {isDrawing && (
             <div className="bg-primary/10 border border-primary/20 rounded-xl px-3 py-2 text-xs text-primary text-center animate-pulse">
               ✏️ Drawing... drag on map to trace your route
+            </div>
+          )}
+
+          {/* Real-time snapping preview while drawing */}
+          {isDrawing && drawSnappedData && (
+            <div className="space-y-2 animate-in">
+              {/* Rain timeline */}
+              {drawSnappedData.rainTimeline?.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-[10px] text-muted-foreground font-medium">☁️ Rain probability</p>
+                  <div className="flex h-3 rounded-full overflow-hidden border border-border/30">
+                    {drawSnappedData.rainTimeline.map((segment, i) => (
+                      <div
+                        key={i}
+                        className="flex-1 transition-colors"
+                        style={{
+                          backgroundColor: segment.rainProb < 30
+                            ? 'hsl(142, 71%, 45%)'
+                            : segment.rainProb < 60
+                            ? 'hsl(48, 96%, 53%)'
+                            : 'hsl(0, 84%, 60%)',
+                          opacity: 0.7 + (segment.rainProb / 100) * 0.3,
+                        }}
+                        title={`${segment.rainProb}% rain`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Distance and duration info */}
+              <div className="flex items-center justify-between bg-muted/30 rounded-lg px-2.5 py-2 text-xs border border-border/20">
+                <span className="font-medium text-muted-foreground">Route Preview</span>
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1">
+                    <Route className="w-3 h-3" /> {formatDistance(drawSnappedData.distance)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" /> {formatDuration(drawSnappedData.duration)}
+                  </span>
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -1463,6 +1463,9 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       {appMode !== 'track' && mapContent}
       {appMode === 'track' && mapContent}
       {getModeContent()}
+      <div className="pt-2 border-t border-border/20 text-center text-[10px] text-muted-foreground">
+        V1.2.82 • Updates: 847
+      </div>
     </div>
   );
 

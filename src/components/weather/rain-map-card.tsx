@@ -258,7 +258,7 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
       if (!currentFrame) return;
       radarLayerRef.current = L.tileLayer(
         `https://tilecache.rainviewer.com${currentFrame.path}/256/{z}/{x}/{y}/2/1_1.png`,
-        { opacity, zIndex: 1000 }
+        { opacity, minZoom: 0, maxZoom: 18, zIndex: 500 }
       );
       radarLayerRef.current.addTo(mapRef.current);
     } else {
@@ -266,7 +266,9 @@ const RainMapCard: React.FC<RainMapCardProps> = ({ latitude, longitude, location
       if (config.owmLayer) {
         radarLayerRef.current = L.tileLayer(owmTileUrl(config.owmLayer), {
           opacity,
-          zIndex: 1000,
+          minZoom: 0,
+          maxZoom: 18,
+          zIndex: 500,
           attribution: '&copy; <a href="https://openweathermap.org">OpenWeatherMap</a>',
         });
         radarLayerRef.current.addTo(mapRef.current);

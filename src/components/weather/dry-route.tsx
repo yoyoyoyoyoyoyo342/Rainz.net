@@ -198,14 +198,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     if (routes.length > 0) {
       setTimeout(() => drawRoutes(routes, bestRouteIdx), 100);
     }
-    if (showRadar) {
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'ohwtbkudpkfbakynikyj';
-      radarLayerRef.current = L.tileLayer(
-        `https://${projectId}.supabase.co/functions/v1/owm-tile-proxy?layer=precipitation_new&z={z}&x={x}&y={y}`,
-        { opacity: 0.5, maxZoom: 18 }
-      ).addTo(map);
-    }
-  }, [leafletLoaded, latitude, longitude, routes, bestRouteIdx, showRadar, drawRoutes, isFullscreen]);
+  }, [leafletLoaded, latitude, longitude, routes, bestRouteIdx, drawRoutes, isFullscreen]);
 
   useEffect(() => {
     initMap();

@@ -8,13 +8,23 @@ const corsHeaders = {
 
 const RAINZ_BOT_USER_ID = "00000000-0000-0000-0000-000000000001";
 
-const LOCATIONS = [
+const ALL_LOCATIONS = [
   { name: "Oslo", lat: 59.91, lon: 10.75 },
   { name: "London", lat: 51.51, lon: -0.13 },
   { name: "New York", lat: 40.71, lon: -74.01 },
   { name: "Tokyo", lat: 35.68, lon: 139.69 },
   { name: "Sydney", lat: -33.87, lon: 151.21 },
 ];
+
+function pickDailyLocation(dateStr: string) {
+  // Use date string as seed for deterministic daily pick
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+    hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
+    hash |= 0;
+  }
+  return ALL_LOCATIONS[Math.abs(hash) % ALL_LOCATIONS.length];
+}
 
 function pickConfidence(): number {
   const roll = Math.random();
@@ -52,57 +62,59 @@ serve(async (req) => {
     const predictionDate = tomorrow.toISOString().split("T")[0];
 
     const results: any[] = [];
+    const loc = pickDailyLocation(predictionDate);
 
-    for (const loc of LOCATIONS) {
-      // Check if bot already predicted for this location + date
-      const { data: existing } = await supabase
-        .from("weather_predictions")
-        .select("id")
-        .eq("user_id", RAINZ_BOT_USER_ID)
-        .eq("prediction_date", predictionDate)
-        .eq("location_name", loc.name)
-        .maybeSingle();
+    // Check if bot already predicted for this date
+    const { data: existing } = await supabase
+      .from("weather_predictions")
+      .select("id")
+      .eq("user_id", RAINZ_BOT_USER_ID)
+      .eq("prediction_date", predictionDate)
+      .maybeSingle();
 
-      if (existing) {
-        results.push({ location: loc.name, status: "already_predicted" });
-        continue;
-      }
+    if (existing) {
+      return new Response(
+        JSON.stringify({ success: true, date: predictionDate, results: [{ location: loc.name, status: "already_predicted" }] }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-      // Fetch forecast
-      const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&forecast_days=2`;
-      const forecastRes = await fetch(forecastUrl);
-      const forecastData = await forecastRes.json();
+    // Fetch forecast
+    const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&forecast_days=2`;
+    const forecastRes = await fetch(forecastUrl);
+    const forecastData = await forecastRes.json();
 
-      const dailyData = forecastData?.daily;
-      if (!dailyData || dailyData.temperature_2m_max.length < 2) {
-        results.push({ location: loc.name, status: "forecast_failed" });
-        continue;
-      }
+    const dailyData = forecastData?.daily;
+    if (!dailyData || dailyData.temperature_2m_max.length < 2) {
+      return new Response(
+        JSON.stringify({ success: false, date: predictionDate, results: [{ location: loc.name, status: "forecast_failed" }] }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
 
-      const highC = Math.round(dailyData.temperature_2m_max[1]);
-      const lowC = Math.round(dailyData.temperature_2m_min[1]);
-      const weatherCode = dailyData.weathercode[1];
-      const condition = mapWeatherCode(weatherCode);
-      const confidence = pickConfidence();
+    const highC = Math.round(dailyData.temperature_2m_max[1]);
+    const lowC = Math.round(dailyData.temperature_2m_min[1]);
+    const weatherCode = dailyData.weathercode[1];
+    const condition = mapWeatherCode(weatherCode);
+    const confidence = pickConfidence();
 
-      const { error } = await supabase.from("weather_predictions").insert({
-        user_id: RAINZ_BOT_USER_ID,
-        prediction_date: predictionDate,
-        predicted_high: highC,
-        predicted_low: lowC,
-        predicted_condition: condition,
-        confidence_multiplier: confidence,
-        location_name: loc.name,
-        latitude: loc.lat,
-        longitude: loc.lon,
-      });
+    const { error } = await supabase.from("weather_predictions").insert({
+      user_id: RAINZ_BOT_USER_ID,
+      prediction_date: predictionDate,
+      predicted_high: highC,
+      predicted_low: lowC,
+      predicted_condition: condition,
+      confidence_multiplier: confidence,
+      location_name: loc.name,
+      latitude: loc.lat,
+      longitude: loc.lon,
+    });
 
-      if (error) {
-        results.push({ location: loc.name, status: "error", error: error.message });
-      } else {
-        console.log(`Rainz Bot predicted ${condition} ${lowC}-${highC}°C for ${loc.name} on ${predictionDate} with ${confidence}x confidence`);
-        results.push({ location: loc.name, status: "success", prediction: { highC, lowC, condition, confidence } });
-      }
+    if (error) {
+      results.push({ location: loc.name, status: "error", error: error.message });
+    } else {
+      console.log(`Rainz Bot predicted ${condition} ${lowC}-${highC}°C for ${loc.name} on ${predictionDate} with ${confidence}x confidence`);
+      results.push({ location: loc.name, status: "success", prediction: { highC, lowC, condition, confidence } });
     }
 
     return new Response(

@@ -34,26 +34,25 @@ export function CookieConsentBanner() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-50 p-4 animate-in slide-in-from-bottom">
+      <div className="fixed bottom-0 left-0 right-0 z-[100] p-4 animate-in slide-in-from-bottom">
         <Card className="max-w-4xl mx-auto p-6 bg-background/95 backdrop-blur-sm border-2">
           <div className="flex items-start gap-4">
             <Cookie className="w-8 h-8 text-primary flex-shrink-0 mt-1" />
             <div className="flex-1 space-y-3">
-              <h3 className="font-semibold text-lg">We Value Your Privacy</h3>
+              <h3 className="font-semibold text-lg">May I please have some cookies? 🍪</h3>
               <p className="text-sm text-muted-foreground">
-                We use cookies and similar technologies to enhance your experience, provide analytics, 
-                and improve our services. By using this app, you acknowledge that weather predictions 
-                are estimates and we are not liable for inaccurate forecasts or user-submitted reports.
+                We promise they're delicious! We use cookies to make your weather experience extra crispy. 
+                By the way, our weather predictions are best guesses — don't blame us if you get caught in the rain! ☔
               </p>
               <div className="flex flex-wrap gap-2 pt-2">
                 <Button onClick={acceptAll} size="sm">
-                  Accept All
+                  🍪 Take all of them!
                 </Button>
                 <Button onClick={() => setShowCustomize(true)} variant="outline" size="sm">
-                  Customize
+                  🤔 Let me pick
                 </Button>
                 <Button onClick={declineAll} variant="ghost" size="sm">
-                  Decline All
+                  😢 No cookies for you
                 </Button>
               </div>
             </div>

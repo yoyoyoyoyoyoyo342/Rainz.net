@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Trophy, Medal, Award, TrendingUp, Crown, Target, Flame, Info, Bot } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp, Crown, Target, Flame, Info, Bot, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DisplayNameDialog } from "./display-name-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface LeaderboardEntry {
   rank: number;
@@ -21,18 +22,20 @@ interface LeaderboardEntry {
   is_subscriber?: boolean;
 }
 
+type LeaderboardTab = "monthly" | "alltime";
+
 export const Leaderboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [activeTab, setActiveTab] = useState<LeaderboardTab>("monthly");
+  const [allTimeLeaderboard, setAllTimeLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [monthlyLeaderboard, setMonthlyLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [hasDisplayName, setHasDisplayName] = useState(false);
   const [currentUserRank, setCurrentUserRank] = useState<LeaderboardEntry | null>(null);
-  const [previousLeaderboard, setPreviousLeaderboard] = useState<LeaderboardEntry[] | null>(null);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const cacheKey = useMemo(() => "rainz_leaderboard_cache_v1", []);
+  const leaderboard = activeTab === "monthly" ? monthlyLeaderboard : allTimeLeaderboard;
 
   useEffect(() => {
     checkDisplayName();
@@ -40,36 +43,19 @@ export const Leaderboard = () => {
 
   useEffect(() => {
     if (hasDisplayName) {
-      fetchLeaderboard();
+      fetchAllTimeLeaderboard();
+      fetchMonthlyLeaderboard();
     }
   }, [hasDisplayName]);
 
-  // Load cached leaderboard instantly so we can fade into the fresh values.
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(cacheKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as LeaderboardEntry[];
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        setLeaderboard(parsed);
-        setLoading(false);
-        setPreviousLeaderboard(parsed);
-      }
-    } catch {
-      // ignore cache
-    }
-  }, [cacheKey]);
-
   const checkDisplayName = async () => {
     if (!user) return;
-    
     try {
       const { data } = await supabase
         .from("profiles")
         .select("display_name")
         .eq("user_id", user.id)
         .single();
-
       if (data?.display_name) {
         setHasDisplayName(true);
       } else {
@@ -80,10 +66,30 @@ export const Leaderboard = () => {
     }
   };
 
-  const fetchLeaderboard = async () => {
+  const fetchMonthlyLeaderboard = async () => {
     try {
-      const old = leaderboard;
-      // Get leaderboard data with user_ids
+      const { data, error } = await supabase.rpc("get_monthly_leaderboard");
+      if (error) throw error;
+
+      const entries: LeaderboardEntry[] = (data || []).map((entry: any, index: number) => ({
+        rank: entry.rank || index + 1,
+        user_id: entry.user_id,
+        display_name: entry.display_name || "Anonymous",
+        total_points: Number(entry.total_points) || 0,
+        current_streak: entry.current_streak || 0,
+        longest_streak: entry.longest_streak || 0,
+        total_predictions: Number(entry.total_predictions) || 0,
+        correct_predictions: Number(entry.correct_predictions) || 0,
+      }));
+
+      setMonthlyLeaderboard(entries.slice(0, 5));
+    } catch (error) {
+      console.error("Error fetching monthly leaderboard:", error);
+    }
+  };
+
+  const fetchAllTimeLeaderboard = async () => {
+    try {
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("user_id, display_name, total_points")
@@ -93,7 +99,6 @@ export const Leaderboard = () => {
 
       if (profilesError) throw profilesError;
 
-      // Get streak data for each user and check subscription status
       const leaderboardWithStreaks = await Promise.all(
         (profilesData || []).map(async (profile, index) => {
           const { data: streakData } = await supabase
@@ -114,23 +119,6 @@ export const Leaderboard = () => {
             .eq("is_verified", true)
             .eq("is_correct", true);
 
-          // Check subscription status via edge function
-          let isSubscriber = false;
-          try {
-            const { data: session } = await supabase.auth.getSession();
-            if (session?.session) {
-              const { data: subData } = await supabase.functions.invoke('check-subscription', {
-                headers: {
-                  Authorization: `Bearer ${session.session.access_token}`,
-                },
-                body: { check_user_id: profile.user_id }
-              });
-              isSubscriber = subData?.subscribed || false;
-            }
-          } catch {
-            // Silently fail subscription check
-          }
-
           return {
             rank: index + 1,
             user_id: profile.user_id,
@@ -140,12 +128,10 @@ export const Leaderboard = () => {
             longest_streak: streakData?.longest_streak || 0,
             total_predictions: totalPredictions || 0,
             correct_predictions: correctPredictions || 0,
-            is_subscriber: isSubscriber,
           };
         })
       );
 
-      // Find current user's rank if not in top 5
       if (user) {
         const userEntry = leaderboardWithStreaks.find(e => e.user_id === user.id);
         if (userEntry && userEntry.rank > 5) {
@@ -155,147 +141,13 @@ export const Leaderboard = () => {
         }
       }
 
-      const next = leaderboardWithStreaks.slice(0, 5);
-
-      // Cache for next open
-      try {
-        localStorage.setItem(cacheKey, JSON.stringify(next));
-      } catch {
-        // ignore
-      }
-
-      // Fade transition: old -> new
-      if (old && old.length > 0) {
-        setPreviousLeaderboard(old);
-        setIsTransitioning(true);
-        // next tick so CSS transition applies
-        requestAnimationFrame(() => setLeaderboard(next));
-        setTimeout(() => {
-          setIsTransitioning(false);
-          setPreviousLeaderboard(null);
-        }, 350);
-      } else {
-        setLeaderboard(next);
-      }
+      setAllTimeLeaderboard(leaderboardWithStreaks.slice(0, 5));
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
     } finally {
       setLoading(false);
     }
   };
-
-  const renderList = (entries: LeaderboardEntry[], overlayClassName: string) => (
-    <div className={overlayClassName}>
-      <div className="space-y-2">
-        {entries.map((entry, index) => {
-          const accuracy = entry.total_predictions > 0
-            ? Math.round((entry.correct_predictions / entry.total_predictions) * 100)
-            : 0;
-          const isCurrentUser = user?.id === entry.user_id;
-
-          return (
-            <div
-              key={`${entry.rank}-${entry.user_id}-${overlayClassName}`}
-              className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${getRankStyle(index)} ${isCurrentUser ? "ring-2 ring-primary" : ""}`}
-            >
-              <div className="flex items-center justify-center w-8">{getRankIcon(index)}</div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  {entry.user_id === "00000000-0000-0000-0000-000000000001" ? (
-                    <span className="font-bold text-primary truncate flex items-center gap-1">
-                      <Bot className="w-4 h-4" />
-                      {entry.display_name}
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => navigate(`/profile/${entry.user_id}`)}
-                      className="font-bold text-foreground truncate hover:text-primary hover:underline transition-colors text-left"
-                    >
-                      {entry.display_name}
-                    </button>
-                  )}
-                  {isCurrentUser && <Badge variant="outline" className="text-xs">You</Badge>}
-                  {false && (
-                    <span className="hidden" />
-                  )}
-                </div>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="flex items-center gap-1">
-                          <Target className="w-3 h-3" />
-                          {accuracy}%
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          Prediction accuracy ({entry.correct_predictions}/{entry.total_predictions} correct)
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="flex items-center gap-1">
-                          <Flame className="w-3 h-3 text-orange-500" />
-                          {entry.current_streak}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Current streak (Best: {entry.longest_streak})</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <span className="text-muted-foreground/60">{entry.total_predictions} predictions</span>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <p className="text-2xl font-bold text-primary">{entry.total_points.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">pts</p>
-              </div>
-            </div>
-          );
-        })}
-
-        {currentUserRank && (
-          <>
-            <div className="text-center text-muted-foreground py-1">• • •</div>
-            <div className="flex items-center gap-4 p-4 rounded-lg border bg-primary/5 border-primary/30 ring-2 ring-primary">
-              <div className="flex items-center justify-center w-8">
-                <span className="text-sm font-bold text-primary">#{currentUserRank.rank}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold">{currentUserRank.display_name}</span>
-                  <Badge variant="outline" className="text-xs">You</Badge>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                  <span className="flex items-center gap-1">
-                    <Target className="w-3 h-3" />
-                    {currentUserRank.total_predictions > 0
-                      ? Math.round((currentUserRank.correct_predictions / currentUserRank.total_predictions) * 100)
-                      : 0}%
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Flame className="w-3 h-3 text-orange-500" />
-                    {currentUserRank.current_streak}
-                  </span>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-primary">{currentUserRank.total_points.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">pts</p>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
 
   const handleNameSet = (name: string | null) => {
     setShowNameDialog(false);
@@ -306,31 +158,22 @@ export const Leaderboard = () => {
 
   const getRankIcon = (index: number) => {
     switch (index) {
-      case 0:
-        return <Trophy className="h-5 w-5 text-yellow-500" />;
-      case 1:
-        return <Medal className="h-5 w-5 text-gray-400" />;
-      case 2:
-        return <Award className="h-5 w-5 text-amber-600" />;
-      default:
-        return <span className="text-sm font-bold text-muted-foreground w-5 text-center">#{index + 1}</span>;
+      case 0: return <Trophy className="h-5 w-5 text-yellow-500" />;
+      case 1: return <Medal className="h-5 w-5 text-gray-400" />;
+      case 2: return <Award className="h-5 w-5 text-amber-600" />;
+      default: return <span className="text-sm font-bold text-muted-foreground w-5 text-center">#{index + 1}</span>;
     }
   };
 
   const getRankStyle = (index: number) => {
     switch (index) {
-      case 0:
-        return "bg-gradient-to-r from-yellow-500/20 to-yellow-500/5 border-yellow-500/50";
-      case 1:
-        return "bg-gradient-to-r from-gray-400/20 to-gray-400/5 border-gray-400/50";
-      case 2:
-        return "bg-gradient-to-r from-amber-600/20 to-amber-600/5 border-amber-600/50";
-      default:
-        return "bg-background/60 border-border/30 hover:bg-background/80";
+      case 0: return "bg-gradient-to-r from-yellow-500/20 to-yellow-500/5 border-yellow-500/50";
+      case 1: return "bg-gradient-to-r from-gray-400/20 to-gray-400/5 border-gray-400/50";
+      case 2: return "bg-gradient-to-r from-amber-600/20 to-amber-600/5 border-amber-600/50";
+      default: return "bg-background/60 border-border/30 hover:bg-background/80";
     }
   };
 
-  // If first time and no display name, show dialog and don't render leaderboard
   if (showNameDialog && !hasDisplayName) {
     return <DisplayNameDialog open={showNameDialog} onClose={handleNameSet} allowSkip={false} />;
   }
@@ -348,9 +191,11 @@ export const Leaderboard = () => {
     );
   }
 
+  const monthName = new Date().toLocaleString('default', { month: 'long' });
+
   return (
     <Card className="p-6 bg-background/40 backdrop-blur-md border-border/50">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-6 w-6 text-primary" />
           <h3 className="text-xl font-bold">Top Weather Predictors</h3>
@@ -363,23 +208,125 @@ export const Leaderboard = () => {
         </button>
       </div>
 
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as LeaderboardTab)} className="mb-4">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="monthly" className="flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5" />
+            {monthName}
+          </TabsTrigger>
+          <TabsTrigger value="alltime" className="flex items-center gap-1.5">
+            <Crown className="w-3.5 h-3.5" />
+            All Time
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {leaderboard.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           <Trophy className="h-12 w-12 mx-auto mb-2 opacity-50" />
-          <p>No predictions yet. Be the first!</p>
+          <p>{activeTab === "monthly" ? `No predictions this month yet. Be the first!` : "No predictions yet. Be the first!"}</p>
         </div>
       ) : (
-        <div className="relative">
-          {/* Previous leaderboard fades out */}
-          {previousLeaderboard && isTransitioning && (
-            <div className="absolute inset-0 transition-opacity duration-300 opacity-0 pointer-events-none">
-              {renderList(previousLeaderboard, "")}
-            </div>
+        <div className="space-y-2">
+          {leaderboard.map((entry, index) => {
+            const accuracy = entry.total_predictions > 0
+              ? Math.round((entry.correct_predictions / entry.total_predictions) * 100)
+              : 0;
+            const isCurrentUser = user?.id === entry.user_id;
+
+            return (
+              <div
+                key={`${activeTab}-${entry.rank}-${entry.user_id}`}
+                className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${getRankStyle(index)} ${isCurrentUser ? "ring-2 ring-primary" : ""}`}
+              >
+                <div className="flex items-center justify-center w-8">{getRankIcon(index)}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {entry.user_id === "00000000-0000-0000-0000-000000000001" ? (
+                      <span className="font-bold text-primary truncate flex items-center gap-1">
+                        <Bot className="w-4 h-4" />
+                        {entry.display_name}
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => navigate(`/profile/${entry.user_id}`)}
+                        className="font-bold text-foreground truncate hover:text-primary hover:underline transition-colors text-left"
+                      >
+                        {entry.display_name}
+                      </button>
+                    )}
+                    {isCurrentUser && <Badge variant="outline" className="text-xs">You</Badge>}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1">
+                            <Target className="w-3 h-3" />
+                            {accuracy}%
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Prediction accuracy ({entry.correct_predictions}/{entry.total_predictions} correct)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="flex items-center gap-1">
+                            <Flame className="w-3 h-3 text-orange-500" />
+                            {entry.current_streak}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Current streak (Best: {entry.longest_streak})</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <span className="text-muted-foreground/60">{entry.total_predictions} predictions</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-primary">{entry.total_points.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">pts</p>
+                </div>
+              </div>
+            );
+          })}
+
+          {activeTab === "alltime" && currentUserRank && (
+            <>
+              <div className="text-center text-muted-foreground py-1">• • •</div>
+              <div className="flex items-center gap-4 p-4 rounded-lg border bg-primary/5 border-primary/30 ring-2 ring-primary">
+                <div className="flex items-center justify-center w-8">
+                  <span className="text-sm font-bold text-primary">#{currentUserRank.rank}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold">{currentUserRank.display_name}</span>
+                    <Badge variant="outline" className="text-xs">You</Badge>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                    <span className="flex items-center gap-1">
+                      <Target className="w-3 h-3" />
+                      {currentUserRank.total_predictions > 0
+                        ? Math.round((currentUserRank.correct_predictions / currentUserRank.total_predictions) * 100)
+                        : 0}%
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Flame className="w-3 h-3 text-orange-500" />
+                      {currentUserRank.current_streak}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-primary">{currentUserRank.total_points.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">pts</p>
+                </div>
+              </div>
+            </>
           )}
-          {/* Current leaderboard fades in */}
-          <div className={`transition-opacity duration-300 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
-            {renderList(leaderboard, "")}
-          </div>
         </div>
       )}
 
@@ -416,11 +363,13 @@ export const Leaderboard = () => {
           </div>
         </div>
         <p className="text-xs text-muted-foreground mt-3">
-          Predictions are scored at 10 PM CET daily. High temp, low temp, and condition are each evaluated (within 3° tolerance for temps).
+          {activeTab === "monthly" 
+            ? `Monthly leaderboard resets on the 1st of each month. Predictions are scored at 10 PM CET daily.`
+            : `Predictions are scored at 10 PM CET daily. High temp, low temp, and condition are each evaluated (within 3° tolerance for temps).`
+          }
         </p>
       </div>
 
-      {/* Dialog for changing name - only shows when button is clicked */}
       {showNameDialog && hasDisplayName && (
         <DisplayNameDialog 
           open={showNameDialog} 

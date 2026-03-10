@@ -226,36 +226,7 @@ export const PredictionDialog = ({
           
           <TabsContent value="leaderboard" className="mt-4 space-y-4">
             {/* Leaderboard Type Selector */}
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-primary" />
-                {t('predict.leaderboard')}
-              </h3>
-              <Select value={leaderboardType} onValueChange={setLeaderboardType}>
-                <SelectTrigger className="w-[140px] h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all-time">{t('predict.allTime')}</SelectItem>
-                  <SelectItem value="weekly">{t('predict.weekly')}</SelectItem>
-                  <SelectItem value="monthly">{t('predict.monthly')}</SelectItem>
-                  <SelectItem value="seasonal">{t('predict.seasonal')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {leaderboardType === "all-time" && <Leaderboard />}
-            {leaderboardType === "weekly" && (
-              <WeeklyChallenge
-                location={location}
-                latitude={latitude}
-                longitude={longitude}
-                onMakePrediction={() => setActiveTab("predict")}
-              />
-            )}
-            {(leaderboardType === "monthly" || leaderboardType === "seasonal") && (
-              <SeasonalTournament />
-            )}
+            <Leaderboard />
           </TabsContent>
           
           <TabsContent value="history" className="mt-4">

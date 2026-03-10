@@ -34,7 +34,7 @@ export const PredictionDialog = ({
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("predict");
-  const [leaderboardType, setLeaderboardType] = useState("all-time");
+  const [leaderboardType, setLeaderboardType] = useState("monthly");
   const [userStats, setUserStats] = useState<{
     rank: number;
     streak: number;

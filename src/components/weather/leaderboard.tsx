@@ -110,7 +110,8 @@ export const Leaderboard = () => {
           const { count: totalPredictions } = await supabase
             .from("weather_predictions")
             .select("*", { count: "exact", head: true })
-            .eq("user_id", profile.user_id);
+            .eq("user_id", profile.user_id)
+            .eq("is_verified", true);
 
           const { count: correctPredictions } = await supabase
             .from("weather_predictions")

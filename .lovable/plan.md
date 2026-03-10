@@ -39,11 +39,29 @@
 - **Share route**: Native share or clipboard
 - **OSRM steps=true**: Full turn-by-turn instructions
 
+### 8. Fixed Rainz/Temp/Wind Layers on Weather Map
+- Fixed layer visibility issue preventing Rainz, Temperature, and Wind layers from displaying
+- Ensured all weather data layers render correctly on LiveWeatherMap
+
+### 9. Fixed Map Loading on Track Mode in DryRoutes
+- Fixed map component initialization in Track mode
+- Resolved lazy-loading conflict with Track mode navigation
+
+### 10. Added Update Counter & Improved DryRoutes
+- Added update counter to footer showing route recalculation status
+- Improved DryRoutes UI/UX with better visual feedback
+- Enhanced route planning experience with update indicators
+
+### 11. Fixed Rain Cloud Layer Display in DryRoutes
+- Added missing zoom constraints (`minZoom: 0`) to rain/precipitation layer
+- Added proper z-index stacking (`zIndex: 500`) to ensure layer visibility
+- Rain cloud overlay now displays correctly when Radar button is toggled in Track/Route modes
+
 ## Files
 | File | Action |
 |------|--------|
 | `src/hooks/use-lazy-map.tsx` | NEW — IntersectionObserver hook |
-| `src/components/weather/dry-route.tsx` | NEW — Main DryRoute component |
+| `src/components/weather/dry-route.tsx` | NEW — Main DryRoute component; Updated for rain layer display fix |
 | `src/components/weather/dry-route-navigation.tsx` | NEW — Turn-by-turn panel |
 | `src/components/weather/dry-route-ar.tsx` | NEW — AR navigation overlay |
 | `src/components/weather/explore-sheet.tsx` | Removed RainRoutePlanner |

@@ -218,6 +218,16 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     };
   }, [leafletLoaded, isFullscreen]);
 
+  // Reinitialize map when mode changes while not in fullscreen
+  useEffect(() => {
+    if (!isFullscreen && leafletLoaded && mapInstance.current) {
+      const timer = setTimeout(() => {
+        mapInstance.current?.invalidateSize();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [appMode, isFullscreen, leafletLoaded]);
+
   useEffect(() => {
     const timer = setTimeout(() => { initMap(); }, 150);
     return () => clearTimeout(timer);
@@ -1460,12 +1470,8 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   const routeContent = (
     <div className="space-y-3">
       {modeSwitcher}
-      {appMode !== 'track' && mapContent}
-      {appMode === 'track' && mapContent}
+      {mapContent}
       {getModeContent()}
-      <div className="pt-2 border-t border-border/20 text-center text-[10px] text-muted-foreground">
-        V1.2.82 • Updates: 847
-      </div>
     </div>
   );
 

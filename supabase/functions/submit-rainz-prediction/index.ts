@@ -62,8 +62,9 @@ serve(async (req) => {
     const predictionDate = tomorrow.toISOString().split("T")[0];
 
     const results: any[] = [];
-
-    for (const loc of LOCATIONS) {
+    const loc = pickDailyLocation(predictionDate);
+    
+    {
       // Check if bot already predicted for this location + date
       const { data: existing } = await supabase
         .from("weather_predictions")

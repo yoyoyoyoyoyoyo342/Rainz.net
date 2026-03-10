@@ -4,8 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Target, Trophy, Flame, Zap, Medal, ShoppingBag, History } from "lucide-react";
 import { WeatherPredictionForm } from "./weather-prediction-form";
 import { Leaderboard } from "./leaderboard";
-import { WeeklyChallenge } from "./weekly-challenge";
-import { SeasonalTournament } from "./seasonal-tournament";
 import { PointsShop } from "./points-shop";
 
 import { PointsHistory } from "./points-history";

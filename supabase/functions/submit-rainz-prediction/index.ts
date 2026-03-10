@@ -63,57 +63,58 @@ serve(async (req) => {
 
     const results: any[] = [];
     const loc = pickDailyLocation(predictionDate);
-    
-    {
-      // Check if bot already predicted for this location + date
-      const { data: existing } = await supabase
-        .from("weather_predictions")
-        .select("id")
-        .eq("user_id", RAINZ_BOT_USER_ID)
-        .eq("prediction_date", predictionDate)
-        .eq("location_name", loc.name)
-        .maybeSingle();
 
-      if (existing) {
-        results.push({ location: loc.name, status: "already_predicted" });
-        continue;
-      }
+    // Check if bot already predicted for this date
+    const { data: existing } = await supabase
+      .from("weather_predictions")
+      .select("id")
+      .eq("user_id", RAINZ_BOT_USER_ID)
+      .eq("prediction_date", predictionDate)
+      .maybeSingle();
 
-      // Fetch forecast
-      const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&forecast_days=2`;
-      const forecastRes = await fetch(forecastUrl);
-      const forecastData = await forecastRes.json();
+    if (existing) {
+      return new Response(
+        JSON.stringify({ success: true, date: predictionDate, results: [{ location: loc.name, status: "already_predicted" }] }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-      const dailyData = forecastData?.daily;
-      if (!dailyData || dailyData.temperature_2m_max.length < 2) {
-        results.push({ location: loc.name, status: "forecast_failed" });
-        continue;
-      }
+    // Fetch forecast
+    const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&forecast_days=2`;
+    const forecastRes = await fetch(forecastUrl);
+    const forecastData = await forecastRes.json();
 
-      const highC = Math.round(dailyData.temperature_2m_max[1]);
-      const lowC = Math.round(dailyData.temperature_2m_min[1]);
-      const weatherCode = dailyData.weathercode[1];
-      const condition = mapWeatherCode(weatherCode);
-      const confidence = pickConfidence();
+    const dailyData = forecastData?.daily;
+    if (!dailyData || dailyData.temperature_2m_max.length < 2) {
+      return new Response(
+        JSON.stringify({ success: false, date: predictionDate, results: [{ location: loc.name, status: "forecast_failed" }] }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
 
-      const { error } = await supabase.from("weather_predictions").insert({
-        user_id: RAINZ_BOT_USER_ID,
-        prediction_date: predictionDate,
-        predicted_high: highC,
-        predicted_low: lowC,
-        predicted_condition: condition,
-        confidence_multiplier: confidence,
-        location_name: loc.name,
-        latitude: loc.lat,
-        longitude: loc.lon,
-      });
+    const highC = Math.round(dailyData.temperature_2m_max[1]);
+    const lowC = Math.round(dailyData.temperature_2m_min[1]);
+    const weatherCode = dailyData.weathercode[1];
+    const condition = mapWeatherCode(weatherCode);
+    const confidence = pickConfidence();
 
-      if (error) {
-        results.push({ location: loc.name, status: "error", error: error.message });
-      } else {
-        console.log(`Rainz Bot predicted ${condition} ${lowC}-${highC}°C for ${loc.name} on ${predictionDate} with ${confidence}x confidence`);
-        results.push({ location: loc.name, status: "success", prediction: { highC, lowC, condition, confidence } });
-      }
+    const { error } = await supabase.from("weather_predictions").insert({
+      user_id: RAINZ_BOT_USER_ID,
+      prediction_date: predictionDate,
+      predicted_high: highC,
+      predicted_low: lowC,
+      predicted_condition: condition,
+      confidence_multiplier: confidence,
+      location_name: loc.name,
+      latitude: loc.lat,
+      longitude: loc.lon,
+    });
+
+    if (error) {
+      results.push({ location: loc.name, status: "error", error: error.message });
+    } else {
+      console.log(`Rainz Bot predicted ${condition} ${lowC}-${highC}°C for ${loc.name} on ${predictionDate} with ${confidence}x confidence`);
+      results.push({ location: loc.name, status: "success", prediction: { highC, lowC, condition, confidence } });
     }
 
     return new Response(

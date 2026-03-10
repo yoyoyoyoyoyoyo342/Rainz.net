@@ -8,13 +8,23 @@ const corsHeaders = {
 
 const RAINZ_BOT_USER_ID = "00000000-0000-0000-0000-000000000001";
 
-const LOCATIONS = [
+const ALL_LOCATIONS = [
   { name: "Oslo", lat: 59.91, lon: 10.75 },
   { name: "London", lat: 51.51, lon: -0.13 },
   { name: "New York", lat: 40.71, lon: -74.01 },
   { name: "Tokyo", lat: 35.68, lon: 139.69 },
   { name: "Sydney", lat: -33.87, lon: 151.21 },
 ];
+
+function pickDailyLocation(dateStr: string) {
+  // Use date string as seed for deterministic daily pick
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+    hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
+    hash |= 0;
+  }
+  return ALL_LOCATIONS[Math.abs(hash) % ALL_LOCATIONS.length];
+}
 
 function pickConfidence(): number {
   const roll = Math.random();

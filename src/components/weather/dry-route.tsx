@@ -828,7 +828,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     setLoading(true);
 
     try {
-      const profile = transportMode === 'driving' ? 'car' : transportMode === 'cycling' ? 'bike' : 'foot';
+      const profile = getOsrmProfile(transportMode);
       const res = await fetch(
         `https://router.project-osrm.org/route/v1/${profile}/${fromCoords[1]},${fromCoords[0]};${toCoords[1]},${toCoords[0]}?overview=full&geometries=geojson&alternatives=3&steps=true`
       );

@@ -932,6 +932,11 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     setTrackElapsed(0);
     setTrackSummary(null);
     pausedElapsedRef.current = 0;
+    splitTimesRef.current = [];
+    lastSplitKmRef.current = 0;
+    setAutoPaused(false);
+    lastMovementPosRef.current = null;
+    lastMovementTimeRef.current = Date.now();
     setTrackStartTime(Date.now());
     setTrackingState('recording');
     setIsFullscreen(true);

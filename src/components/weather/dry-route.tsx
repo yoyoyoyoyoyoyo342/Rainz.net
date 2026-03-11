@@ -591,55 +591,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   // road snapping has been removed - this function is no longer used
   // kept here in case historic logic is referenced elsewhere
   const snapSegmentToRoads = async (prevPoint: DrawPoint, newPoint: DrawPoint) => {
-<<<<<<< Updated upstream
-    try {
-      const profile = getOsrmProfile(transportMode);
-      const coordsStr = `${prevPoint.lng},${prevPoint.lat};${newPoint.lng},${newPoint.lat}`;
-
-      const res = await fetch(
-        `https://router.project-osrm.org/match/v1/${profile}/${coordsStr}?overview=full&geometries=geojson&radiuses=50;50&steps=true`
-      );
-
-      if (!res.ok) return;
-      const data = await res.json();
-
-      if (data.matchings && data.matchings.length > 0) {
-        const matching = data.matchings[0];
-        const segmentGeometry: [number, number][] = matching.geometry.coordinates.map(
-          (c: [number, number]) => [c[1], c[0]]
-        );
-
-        // Accumulate geometry
-        const currentGeometry = drawnRoute ? [...drawnRoute.geometry] : [];
-        const newGeometry = [...currentGeometry, ...segmentGeometry];
-
-        // Calculate complete route details
-        const { score: rainScore, timeline: rainTimeline } = await getRainScoreForRoute(newGeometry);
-        const totalDistance = getDistanceFromGeometry(newGeometry);
-
-        const result: RouteResult = {
-          distance: totalDistance,
-          duration: matching.duration * (drawnRoute ? drawnRoute.duration / matching.duration : 1),
-          rainScore,
-          geometry: newGeometry,
-          label: '✏️ Drawing...',
-          steps: [],
-          rainTimeline,
-        };
-
-        setDrawnRoute(result);
-        setDrawDistance(totalDistance);
-      } else {
-        // Fallback: use direct connection without snapping
-        const directDist = haversineDistance([prevPoint.lat, prevPoint.lng], [newPoint.lat, newPoint.lng]);
-        setDrawDistance(prev => prev + directDist);
-      }
-    } catch (err) {
-      // Silent fail for segment snapping
-    }
-=======
     // no-op
->>>>>>> Stashed changes
   };
 
   // Finalize route: snap all points together and create final route

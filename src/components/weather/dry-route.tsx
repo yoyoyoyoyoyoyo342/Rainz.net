@@ -1072,7 +1072,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
               setDrawRoutePoints([]);
               setDrawnRoute(null);
               setDrawSnappedData(null);
-              setIsDrawing(false);
+              setIsPlacingPoints(false);
               if (drawPolylineRef.current && mapInstance.current) {
                 mapInstance.current.removeLayer(drawPolylineRef.current);
                 drawPolylineRef.current = null;

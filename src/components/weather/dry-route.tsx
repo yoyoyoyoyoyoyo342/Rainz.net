@@ -526,6 +526,27 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           }
           return [...prev, newPoint];
         });
+      };
+
+      map.on('click', onClick);
+      container.style.cursor = 'crosshair';
+
+      return () => {
+        map.off('click', onClick);
+        container.style.cursor = '';
+      };
+    }
+  }, [appMode, drawRoutePoints, currentPointType]);
+
+  // Render route points and lines whenever geometry changes
+  useEffect(() => {
+    if (!mapInstance.current || !LRef.current) return;
+    const L = LRef.current;
+    const map = mapInstance.current;
+
+    // Clear old markers and lines
+    drawMarkersRef.current.forEach(m => map.removeLayer(m));
+    drawMarkersRef.current = [];
     drawLinesRef.current.forEach(l => map.removeLayer(l));
     drawLinesRef.current = [];
 

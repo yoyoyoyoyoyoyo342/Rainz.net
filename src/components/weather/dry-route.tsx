@@ -39,9 +39,20 @@ export interface RouteStep {
   geometry: [number, number][];
 }
 
-type TransportMode = 'driving' | 'cycling' | 'walking';
+type TransportMode = 'driving' | 'cycling' | 'walking' | 'running';
 type AppMode = 'route' | 'track' | 'create-route';
 type TrackingState = 'idle' | 'recording' | 'paused';
+
+interface SplitTime {
+  km: number;
+  elapsed: number; // seconds at this km mark
+  pace: number; // seconds per km for this split
+}
+
+interface ElevationPoint {
+  distance: number; // km
+  elevation: number; // meters
+}
 
 interface TrackSummary {
   distance: number;
@@ -50,6 +61,10 @@ interface TrackSummary {
   points: [number, number][];
   startTime: number;
   endTime: number;
+  splits: SplitTime[];
+  elevationData: ElevationPoint[];
+  elevationGain: number;
+  elevationLoss: number;
 }
 
 interface SavedRoute {

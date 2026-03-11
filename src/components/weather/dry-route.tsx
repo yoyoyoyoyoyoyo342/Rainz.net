@@ -1980,7 +1980,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     switch (appMode) {
       case 'track':
         return trackContent;
-      case 'draw':
+      case 'create-route':
         return drawContent;
       case 'route':
       default:

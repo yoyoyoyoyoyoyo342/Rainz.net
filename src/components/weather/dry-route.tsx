@@ -189,11 +189,17 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   const trackPolylineRef = useRef<any>(null);
   const trackTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pausedElapsedRef = useRef(0);
+  const splitTimesRef = useRef<SplitTime[]>([]);
+  const lastSplitKmRef = useRef(0);
+  const [autoPaused, setAutoPaused] = useState(false);
+  const lastMovementTimeRef = useRef<number>(Date.now());
+  const lastMovementPosRef = useRef<[number, number] | null>(null);
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
   const [selectedSavedRoute, setSelectedSavedRoute] = useState<SavedRoute | null>(null);
   const [showSaveActivityModal, setShowSaveActivityModal] = useState(false);
   const [saveActivityNameInput, setSaveActivityNameInput] = useState('');
   const [activityIsPublic, setActivityIsPublic] = useState(false);
+  const shareContainerRef = useRef<HTMLDivElement>(null);
 
   // Create Route mode state
   interface DrawPoint {

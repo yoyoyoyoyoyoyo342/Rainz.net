@@ -1083,13 +1083,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
             if (mode !== 'create-route') {
               setDrawRoutePoints([]);
               setDrawnRoute(null);
-<<<<<<< Updated upstream
-              setDrawSnappedData(null);
               setIsPlacingPoints(false);
-=======
-              // snapping state no longer used
-              setIsDrawing(false);
->>>>>>> Stashed changes
               if (drawPolylineRef.current && mapInstance.current) {
                 mapInstance.current.removeLayer(drawPolylineRef.current);
                 drawPolylineRef.current = null;

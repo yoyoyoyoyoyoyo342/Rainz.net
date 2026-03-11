@@ -68,8 +68,13 @@ export const Leaderboard = () => {
 
   const fetchMonthlyLeaderboard = async () => {
     try {
+      // First get the ranked list with points from the RPC (for performance)
       const { data, error } = await supabase.rpc("get_monthly_leaderboard");
       if (error) throw error;
+
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
 
       const entries: LeaderboardEntry[] = (data || []).map((entry: any, index: number) => ({
         rank: entry.rank || index + 1,
@@ -78,9 +83,28 @@ export const Leaderboard = () => {
         total_points: Number(entry.total_points) || 0,
         current_streak: entry.current_streak || 0,
         longest_streak: entry.longest_streak || 0,
-        total_predictions: Number(entry.total_predictions) || 0,
-        correct_predictions: Number(entry.correct_predictions) || 0,
+        total_predictions: 0, // fill in below
+        correct_predictions: 0,
       }));
+
+      // Recompute total/correct predictions the same way as all-time leaderboard so accuracy is consistent
+      for (const ent of entries) {
+        const { count: tot } = await supabase
+          .from("weather_predictions")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", ent.user_id)
+          .eq("is_verified", true)
+          .gte("updated_at", startOfMonth.toISOString());
+        const { count: cor } = await supabase
+          .from("weather_predictions")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", ent.user_id)
+          .eq("is_verified", true)
+          .eq("is_correct", true)
+          .gte("updated_at", startOfMonth.toISOString());
+        ent.total_predictions = tot || 0;
+        ent.correct_predictions = cor || 0;
+      }
 
       setMonthlyLeaderboard(entries.slice(0, 5));
     } catch (error) {

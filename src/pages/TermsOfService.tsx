@@ -22,7 +22,7 @@ export default function TermsOfService() {
           <FileText className="w-8 h-8 text-primary" />
           <div>
             <h1 className="text-3xl font-bold">Terms of Service</h1>
-            <p className="text-sm text-muted-foreground">Last updated: December 2025</p>
+            <p className="text-sm text-muted-foreground">Last updated: March 2026</p>
           </div>
         </div>
 
@@ -118,6 +118,20 @@ export default function TermsOfService() {
               <li>In violation of any laws or regulations</li>
               <li>Contains malware or harmful code</li>
             </ul>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>5. DryRoutes Liability Disclaimer</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm">
+            <p>
+              Some features of Rainz Weather allow users to create and share routes via the&nbsp;DryRoutes&nbsp;planner. All routes are generated entirely by other users and may traverse private property, unmaintained trails, or hazardous terrain.
+            </p>
+            <p>
+              Rainz.net provides no assurances regarding the safety, accuracy, or suitability of DryRoutes paths. By using or following any route obtained through DryRoutes, you agree that you do so at your own risk. We accept no liability for any injuries, accidents, damages, or other harm arising from your use of or reliance on user‑generated routes.
+            </p>
           </CardContent>
         </Card>
 

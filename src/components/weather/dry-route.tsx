@@ -214,7 +214,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   const [currentPointType, setCurrentPointType] = useState<'start' | 'waypoint' | 'end'>('start');
   const [drawnRoute, setDrawnRoute] = useState<RouteResult | null>(null);
   const [drawLoading, setDrawLoading] = useState(false);
-  const [drawSnappedData, setDrawSnappedData] = useState<RouteResult | null>(null);
+  // snapping has been removed; distances are calculated straight-line
   const drawPolylineRef = useRef<any>(null);
   const drawMarkersRef = useRef<any[]>([]);
   const drawLinesRef = useRef<any[]>([]);
@@ -517,33 +517,15 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           return;
         }
 
-        setDrawRoutePoints(prev => [...prev, newPoint]);
-
-        // Snap the new segment to roads if not the first point
-        if (drawRoutePoints.length > 0 && currentPointType !== 'start') {
-          snapSegmentToRoads(drawRoutePoints[drawRoutePoints.length - 1], newPoint);
-        }
-      };
-
-      map.on('click', onClick);
-      container.style.cursor = 'crosshair';
-
-      return () => {
-        map.off('click', onClick);
-        container.style.cursor = '';
-      };
-    }
-  }, [appMode, drawRoutePoints, currentPointType]);
-
-  // Render points and lines on map
-  useEffect(() => {
-    if (!mapInstance.current || !LRef.current) return;
-    const L = LRef.current;
-    const map = mapInstance.current;
-
-    // Clear old markers and lines
-    drawMarkersRef.current.forEach(m => map.removeLayer(m));
-    drawMarkersRef.current = [];
+        // add new point and update straight-line distance immediately
+        setDrawRoutePoints(prev => {
+          if (prev.length > 0) {
+            const last = prev[prev.length - 1];
+            const dist = haversineDistance([last.lat, last.lng], [newPoint.lat, newPoint.lng]);
+            setDrawDistance(d => d + dist);
+          }
+          return [...prev, newPoint];
+        });
     drawLinesRef.current.forEach(l => map.removeLayer(l));
     drawLinesRef.current = [];
 
@@ -606,8 +588,10 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     return total;
   };
 
-  // Snap a single segment (from previous point to new point) to roads
+  // road snapping has been removed - this function is no longer used
+  // kept here in case historic logic is referenced elsewhere
   const snapSegmentToRoads = async (prevPoint: DrawPoint, newPoint: DrawPoint) => {
+<<<<<<< Updated upstream
     try {
       const profile = getOsrmProfile(transportMode);
       const coordsStr = `${prevPoint.lng},${prevPoint.lat};${newPoint.lng},${newPoint.lat}`;
@@ -653,6 +637,9 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     } catch (err) {
       // Silent fail for segment snapping
     }
+=======
+    // no-op
+>>>>>>> Stashed changes
   };
 
   // Finalize route: snap all points together and create final route
@@ -1144,8 +1131,13 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
             if (mode !== 'create-route') {
               setDrawRoutePoints([]);
               setDrawnRoute(null);
+<<<<<<< Updated upstream
               setDrawSnappedData(null);
               setIsPlacingPoints(false);
+=======
+              // snapping state no longer used
+              setIsDrawing(false);
+>>>>>>> Stashed changes
               if (drawPolylineRef.current && mapInstance.current) {
                 mapInstance.current.removeLayer(drawPolylineRef.current);
                 drawPolylineRef.current = null;
@@ -1388,7 +1380,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
       {/* Save Activity Modal */}
       {showSaveActivityModal && trackSummary && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-end animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[2000] bg-black/50 flex items-end animate-in fade-in duration-200">
           <div className="w-full bg-background border-t border-border/50 rounded-t-2xl p-4 space-y-3 animate-in slide-in-from-bottom duration-300">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-sm">Save Your Activity</h3>
@@ -1481,7 +1473,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     <div className="space-y-3">
       {/* Confirmation Dialog */}
       {showDrawConfirmation && drawConfirmationData && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-end animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[2000] bg-black/50 flex items-end animate-in fade-in duration-200">
           <div className="w-full bg-background border-t border-border/50 rounded-t-2xl p-4 space-y-3 animate-in slide-in-from-bottom duration-300">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-sm">Confirm Your Route</h3>
@@ -1575,7 +1567,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
       {/* Save Route Modal */}
       {showSaveRouteModal && drawnRoute && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-end animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[2000] bg-black/50 flex items-end animate-in fade-in duration-200">
           <div className="w-full bg-background border-t border-border/50 rounded-t-2xl p-4 space-y-3 animate-in slide-in-from-bottom duration-300">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-sm">Save Your Route</h3>
@@ -2181,7 +2173,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   // Fullscreen portal content
   const fullscreenContent = (
     <div
-      className="fixed inset-0 z-50 bg-background animate-in fade-in duration-200"
+      className="fixed inset-0 z-[2000] bg-background animate-in fade-in duration-200"
       style={{ overflow: 'hidden' }}
     >
       {/* Fixed header */}

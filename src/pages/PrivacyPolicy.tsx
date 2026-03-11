@@ -22,7 +22,7 @@ export default function PrivacyPolicy() {
           <Shield className="w-8 h-8 text-primary" />
           <div>
             <h1 className="text-3xl font-bold">Privacy Policy</h1>
-            <p className="text-sm text-muted-foreground">Last updated: December 2025</p>
+            <p className="text-sm text-muted-foreground">Last updated: March 2026</p>
           </div>
         </div>
 
@@ -149,6 +149,18 @@ export default function PrivacyPolicy() {
             <h4 className="font-semibold mt-4">5.3 Legal Requirements</h4>
             <p>
               We may disclose your information if required by law, court order, or government request, or to protect our rights, property, or safety.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* DryRoutes liability paragraph added to privacy policy for completeness */}
+        <Card>
+          <CardHeader>
+            <CardTitle>DryRoutes Liability Disclaimer</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm">
+            <p>
+              Routes generated through the DryRoutes feature are created by users and are not vetted by Rainz.net. Users are responsible for their own safety when following any route; we are not liable for injuries, accidents, or other harm resulting from use of user‑generated routes, and we collect no special personal data for this purpose.
             </p>
           </CardContent>
         </Card>

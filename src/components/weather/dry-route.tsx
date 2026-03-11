@@ -953,107 +953,72 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     toast.success('Activity saved! 🎉');
   };
 
-  // Fetch saved routes from database
-  const fetchSavedRoutes = useCallback(async () => {
-    if (!user) return;
+  // Load/save routes using localStorage (no DB table exists)
+  const loadSavedRoutes = useCallback(() => {
     try {
-      const { data, error } = await supabase
-        .from('saved_routes')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      const stored = localStorage.getItem('dryroutes_saved_routes');
+      if (stored) setSavedRoutes(JSON.parse(stored));
+    } catch { /* ignore */ }
+  }, []);
 
-      if (error) throw error;
-      setSavedRoutes(data as SavedRoute[]);
-    } catch (err) {
-      console.error('Failed to fetch saved routes:', err);
-    }
-  }, [user]);
+  const fetchSavedRoutes = loadSavedRoutes;
 
-  // Save route to database
+  // Save route to localStorage
   const saveRoute = async (routeData: RouteResult, routeName: string, startLoc: string, endLoc: string, isPublic: boolean) => {
-    if (!user) {
-      toast.error('You must be logged in to save routes');
-      return;
-    }
-
-    try {
-      const { error } = await supabase.from('saved_routes').insert({
-        user_id: user.id,
-        name: routeName,
-        description: null,
-        route_type: appMode === 'create-route' ? 'created' : 'found',
-        transport_mode: transportMode,
-        start_location: startLoc,
-        end_location: endLoc,
-        start_coords: routeData.geometry[0] ? { lat: routeData.geometry[0][0], lng: routeData.geometry[0][1] } : null,
-        end_coords: routeData.geometry[routeData.geometry.length - 1] ? { lat: routeData.geometry[routeData.geometry.length - 1][0], lng: routeData.geometry[routeData.geometry.length - 1][1] } : null,
-        geometry: { coordinates: routeData.geometry },
-        distance: routeData.distance,
-        duration: routeData.duration,
-        rain_score: routeData.rainScore,
-        rain_timeline: routeData.rainTimeline,
-        steps: routeData.steps,
-        is_public: isPublic,
-      });
-
-      if (error) throw error;
-      toast.success('Route saved! 🎉');
-      await fetchSavedRoutes();
-      setShowSaveRouteModal(false);
-      setSaveRouteNameInput('');
-      setRouteIsPublic(false);
-    } catch (err) {
-      toast.error('Failed to save route');
-      console.error('Save route error:', err);
-    }
+    const newRoute: SavedRoute = {
+      id: crypto.randomUUID(),
+      user_id: user?.id || 'local',
+      name: routeName,
+      description: null,
+      route_type: appMode === 'create-route' ? 'created' : 'found',
+      transport_mode: transportMode,
+      start_location: startLoc,
+      end_location: endLoc,
+      start_coords: routeData.geometry[0] ? { lat: routeData.geometry[0][0], lng: routeData.geometry[0][1] } : null,
+      end_coords: routeData.geometry[routeData.geometry.length - 1] ? { lat: routeData.geometry[routeData.geometry.length - 1][0], lng: routeData.geometry[routeData.geometry.length - 1][1] } : null,
+      geometry: { coordinates: routeData.geometry },
+      distance: routeData.distance,
+      duration: routeData.duration,
+      rain_score: routeData.rainScore,
+      rain_timeline: routeData.rainTimeline,
+      steps: routeData.steps,
+      is_public: isPublic,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    const updated = [newRoute, ...savedRoutes];
+    setSavedRoutes(updated);
+    localStorage.setItem('dryroutes_saved_routes', JSON.stringify(updated));
+    toast.success('Route saved! 🎉');
+    setShowSaveRouteModal(false);
+    setSaveRouteNameInput('');
+    setRouteIsPublic(false);
   };
 
-  // Save activity to database
+  // Save activity to localStorage
   const saveActivity = async (activityName: string, isPublic: boolean) => {
-    if (!user || !trackSummary) {
-      toast.error('You must be logged in to save activities');
-      return;
-    }
-
+    if (!trackSummary) return;
+    const caloriesEstimate = (trackSummary.distance / 1000) * getCaloriesPerKm(transportMode);
+    const activity = {
+      id: crypto.randomUUID(),
+      name: activityName,
+      transport_mode: transportMode,
+      distance: trackSummary.distance,
+      duration: trackSummary.duration,
+      avg_pace: trackSummary.avgPace,
+      calories_estimate: caloriesEstimate,
+      splits: trackSummary.splits,
+      created_at: new Date().toISOString(),
+    };
     try {
-      // Calculate calories and CO2 estimates
-      const caloriesPerKm = transportMode === 'walking' ? 65 : transportMode === 'cycling' ? 30 : 0;
-      const caloriesEstimate = (trackSummary.distance / 1000) * caloriesPerKm;
-
-      const co2PerKm = transportMode === 'driving' ? 120 : 0;
-      const co2Estimate = (trackSummary.distance / 1000) * co2PerKm;
-
-      const { error } = await supabase.from('saved_activities').insert({
-        user_id: user.id,
-        name: activityName,
-        description: null,
-        activity_type: 'track',
-        transport_mode: transportMode,
-        started_at: new Date(trackSummary.startTime).toISOString(),
-        completed_at: new Date(trackSummary.endTime).toISOString(),
-        distance: trackSummary.distance,
-        duration: trackSummary.duration,
-        avg_pace: trackSummary.avgPace,
-        gps_points: trackSummary.points.map((p, idx) => ({
-          lat: p[0],
-          lng: p[1],
-          timestamp: trackSummary.startTime + (idx * (trackSummary.duration * 1000 / trackSummary.points.length)),
-        })),
-        calories_estimate: caloriesEstimate > 0 ? caloriesEstimate : null,
-        co2_estimate: co2Estimate > 0 ? co2Estimate : null,
-        is_public: isPublic,
-      });
-
-      if (error) throw error;
-      toast.success('Activity saved! 🎉');
-      setShowSaveActivityModal(false);
-      setSaveActivityNameInput('');
-      setActivityIsPublic(false);
-    } catch (err) {
-      toast.error('Failed to save activity');
-      console.error('Save activity error:', err);
-    }
+      const stored = JSON.parse(localStorage.getItem('dryroutes_activities') || '[]');
+      stored.unshift(activity);
+      localStorage.setItem('dryroutes_activities', JSON.stringify(stored.slice(0, 50)));
+    } catch { /* ignore */ }
+    toast.success('Activity saved! 🎉');
+    setShowSaveActivityModal(false);
+    setSaveActivityNameInput('');
+    setActivityIsPublic(false);
   };
 
   const shareActivity = async () => {

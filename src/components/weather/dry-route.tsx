@@ -112,8 +112,24 @@ interface SavedActivity {
 const TRANSPORT_MODES: { mode: TransportMode; icon: React.ReactNode; label: string }[] = [
   { mode: 'driving', icon: <Car className="w-3.5 h-3.5" />, label: 'Drive' },
   { mode: 'cycling', icon: <Bike className="w-3.5 h-3.5" />, label: 'Bike' },
+  { mode: 'running', icon: <Zap className="w-3.5 h-3.5" />, label: 'Run' },
   { mode: 'walking', icon: <Footprints className="w-3.5 h-3.5" />, label: 'Walk' },
 ];
+
+const getOsrmProfile = (mode: TransportMode) => {
+  if (mode === 'driving') return 'car';
+  if (mode === 'cycling') return 'bike';
+  return 'foot'; // walking & running both use foot
+};
+
+const getCaloriesPerKm = (mode: TransportMode) => {
+  switch (mode) {
+    case 'running': return 80;
+    case 'walking': return 65;
+    case 'cycling': return 30;
+    default: return 0;
+  }
+};
 
 const APP_MODES: { mode: AppMode; icon: React.ReactNode; label: string }[] = [
   { mode: 'route', icon: <Route className="w-3.5 h-3.5" />, label: 'Route' },

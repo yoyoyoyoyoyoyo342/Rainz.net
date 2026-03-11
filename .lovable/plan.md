@@ -116,7 +116,10 @@
 - **Distance counter**: Waypoint distance now calculated on every click using straight‑line haversine math; removed road snapping. Display updates immediately instead of sticking at 0.00 km.
 - **Road snapping removed**: OSRM snapping logic stripped from draw mode; routes may pass freely through forests or off‑road without adjustment.
 - **Leaderboard corrections**:
-  - Monthly fetch rewritten to recompute prediction counts exactly as all‑time version, guaranteeing accuracy percentages match across tabs.
-  - Added trigger that bumps `updated_at` when predictions are verified/points awarded so monthly leaderboard gets new points instantly.
+  - Monthly RPC updated to filter by `prediction_date` rather than `updated_at` and otherwise mirror the all‑time query. Accuracy now matches the all‑time tab exactly (e.g. Seje_ged’s percentage will be identical).
+  - Front‑end fetchMonthlyLeaderboard simplified to trust the RPC output; previous workaround queries were removed.
+  - Added trigger that bumps `updated_at` when predictions are verified/points awarded so the monthly leaderboard reflects new points immediately.
+- **Radar overlay fixes**: `showRadar` effect now re‑runs when the map instance is created and `initMap` explicitly adds the layer if the toggle is on. This prevents cases where radar was toggled before map load and never appeared.
+- **Map stacking tweaks**: Map containers now have `z-0`; all DryRoutes bottom sheets/modals use `z-[2000]` ensuring UI always sits above the map. Cleans up lingering overlay problems.
 - **Legal updates**: Added explicit DryRoutes liability disclaimers to Terms of Service and Privacy Policy; updated "last updated" dates.
 - **Misc**: plan file updated to document the above changes.

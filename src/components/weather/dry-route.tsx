@@ -296,6 +296,15 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     mapInstance.current = map;
     radarLayerRef.current = null;
 
+    // if radar toggle was already on when map re-initializes, add layer now
+    if (showRadar) {
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'ohwtbkudpkfbakynikyj';
+      radarLayerRef.current = L.tileLayer(
+        `https://${projectId}.supabase.co/functions/v1/owm-tile-proxy?layer=precipitation_new&z={z}&x={x}&y={y}`,
+        { opacity: 0.5, minZoom: 0, maxZoom: 18, zIndex: 500 }
+      ).addTo(map);
+    }
+
     if (routes.length > 0) {
       setTimeout(() => drawRoutes(routes, bestRouteIdx), 100);
     }
@@ -702,7 +711,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       mapInstance.current.removeLayer(radarLayerRef.current);
       radarLayerRef.current = null;
     }
-  }, [showRadar]);
+  }, [showRadar, mapInstance.current, LRef.current]);
 
   const geocodeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -1932,7 +1941,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
   const mapContent = (
     <div className="relative">
-      <div ref={mapRef} className={`w-full rounded-xl overflow-hidden border border-border/30 ${isFullscreen ? 'h-[45vh]' : 'h-56'}`} />
+      <div ref={mapRef} className={`w-full rounded-xl overflow-hidden border border-border/30 ${isFullscreen ? 'h-[45vh]' : 'h-56'} z-0`} />
       <button
         onClick={() => setShowRadar(!showRadar)}
         className={`absolute top-2 right-2 z-[1000] flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all ${
@@ -2165,7 +2174,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
         className="absolute left-0 right-0"
         style={{ top: '52px', height: '40vh' }}
       >
-        <div ref={mapRef} className="w-full h-full" />
+        <div ref={mapRef} className="w-full h-full z-0" />
         <button
           onClick={() => setShowRadar(!showRadar)}
           className={`absolute top-2 right-2 z-[1000] flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg border transition-all ${

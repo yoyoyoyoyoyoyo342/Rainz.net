@@ -901,10 +901,43 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     setTrackingState('recording');
   };
 
-  const stopTracking = () => {
+  // Fetch elevation data for route points
+  const fetchElevation = async (points: [number, number][]): Promise<{ data: ElevationPoint[]; gain: number; loss: number }> => {
+    try {
+      const sampleCount = Math.min(20, points.length);
+      const step = Math.max(1, Math.floor(points.length / sampleCount));
+      const sampled = Array.from({ length: sampleCount }, (_, i) => points[Math.min(i * step, points.length - 1)]);
+      const lats = sampled.map(p => p[0]).join(',');
+      const lons = sampled.map(p => p[1]).join(',');
+      const res = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lons}`);
+      const json = await res.json();
+      const elevations: number[] = json.elevation || [];
+      let totalDist = 0;
+      const data: ElevationPoint[] = [];
+      let gain = 0, loss = 0;
+      for (let i = 0; i < sampled.length; i++) {
+        if (i > 0) totalDist += haversineDistance(sampled[i - 1], sampled[i]) / 1000;
+        data.push({ distance: totalDist, elevation: elevations[i] || 0 });
+        if (i > 0) {
+          const diff = (elevations[i] || 0) - (elevations[i - 1] || 0);
+          if (diff > 0) gain += diff;
+          else loss += Math.abs(diff);
+        }
+      }
+      return { data, gain: Math.round(gain), loss: Math.round(loss) };
+    } catch {
+      return { data: [], gain: 0, loss: 0 };
+    }
+  };
+
+  const stopTracking = async () => {
     setTrackingState('idle');
     const distKm = trackDistance / 1000;
     const avgPace = distKm > 0 ? trackElapsed / distKm : 0;
+    
+    // Fetch elevation data
+    const { data: elevationData, gain: elevationGain, loss: elevationLoss } = await fetchElevation(trackPoints);
+    
     setTrackSummary({
       distance: trackDistance,
       duration: trackElapsed,
@@ -912,6 +945,10 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       points: trackPoints,
       startTime: trackStartTime || Date.now(),
       endTime: Date.now(),
+      splits: splitTimesRef.current,
+      elevationData,
+      elevationGain,
+      elevationLoss,
     });
     toast.success('Activity saved! 🎉');
   };

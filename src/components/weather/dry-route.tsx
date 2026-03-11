@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Navigation, MapPin, Loader2, Umbrella, Clock, Route, Maximize2, Minimize2, Car, Bike, Footprints, Calendar, Navigation2, Square, Share2, CloudRain, Camera, Play, Pause, CircleStop, Pencil, Trash2, Timer, Zap, Activity, Check, X } from 'lucide-react';
+import { Navigation, MapPin, Loader2, Umbrella, Clock, Route, Maximize2, Minimize2, Car, Bike, Footprints, Calendar, Navigation2, Square, Share2, CloudRain, Camera, Play, Pause, CircleStop, Pencil, Trash2, Timer, Zap, Activity, Check, X, PersonStanding, Mountain, Image } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, AreaChart, Area, Tooltip } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
@@ -38,9 +39,20 @@ export interface RouteStep {
   geometry: [number, number][];
 }
 
-type TransportMode = 'driving' | 'cycling' | 'walking';
+type TransportMode = 'driving' | 'cycling' | 'walking' | 'running';
 type AppMode = 'route' | 'track' | 'create-route';
 type TrackingState = 'idle' | 'recording' | 'paused';
+
+interface SplitTime {
+  km: number;
+  elapsed: number; // seconds at this km mark
+  pace: number; // seconds per km for this split
+}
+
+interface ElevationPoint {
+  distance: number; // km
+  elevation: number; // meters
+}
 
 interface TrackSummary {
   distance: number;
@@ -49,6 +61,10 @@ interface TrackSummary {
   points: [number, number][];
   startTime: number;
   endTime: number;
+  splits: SplitTime[];
+  elevationData: ElevationPoint[];
+  elevationGain: number;
+  elevationLoss: number;
 }
 
 interface SavedRoute {
@@ -96,8 +112,24 @@ interface SavedActivity {
 const TRANSPORT_MODES: { mode: TransportMode; icon: React.ReactNode; label: string }[] = [
   { mode: 'driving', icon: <Car className="w-3.5 h-3.5" />, label: 'Drive' },
   { mode: 'cycling', icon: <Bike className="w-3.5 h-3.5" />, label: 'Bike' },
+  { mode: 'running', icon: <Zap className="w-3.5 h-3.5" />, label: 'Run' },
   { mode: 'walking', icon: <Footprints className="w-3.5 h-3.5" />, label: 'Walk' },
 ];
+
+const getOsrmProfile = (mode: TransportMode) => {
+  if (mode === 'driving') return 'car';
+  if (mode === 'cycling') return 'bike';
+  return 'foot'; // walking & running both use foot
+};
+
+const getCaloriesPerKm = (mode: TransportMode) => {
+  switch (mode) {
+    case 'running': return 80;
+    case 'walking': return 65;
+    case 'cycling': return 30;
+    default: return 0;
+  }
+};
 
 const APP_MODES: { mode: AppMode; icon: React.ReactNode; label: string }[] = [
   { mode: 'route', icon: <Route className="w-3.5 h-3.5" />, label: 'Route' },
@@ -157,11 +189,17 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   const trackPolylineRef = useRef<any>(null);
   const trackTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pausedElapsedRef = useRef(0);
+  const splitTimesRef = useRef<SplitTime[]>([]);
+  const lastSplitKmRef = useRef(0);
+  const [autoPaused, setAutoPaused] = useState(false);
+  const lastMovementTimeRef = useRef<number>(Date.now());
+  const lastMovementPosRef = useRef<[number, number] | null>(null);
   const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
   const [selectedSavedRoute, setSelectedSavedRoute] = useState<SavedRoute | null>(null);
   const [showSaveActivityModal, setShowSaveActivityModal] = useState(false);
   const [saveActivityNameInput, setSaveActivityNameInput] = useState('');
   const [activityIsPublic, setActivityIsPublic] = useState(false);
+  const shareContainerRef = useRef<HTMLDivElement>(null);
 
   // Create Route mode state
   interface DrawPoint {
@@ -300,9 +338,9 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   // Fetch saved routes when entering track mode
   useEffect(() => {
     if (appMode === 'track') {
-      fetchSavedRoutes();
+      loadSavedRoutes();
     }
-  }, [appMode, fetchSavedRoutes]);
+  }, [appMode]);
 
   // Always track user position for blue dot on map
   useEffect(() => {
@@ -314,12 +352,41 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
         // If tracking, add point
         if (trackingState === 'recording') {
+          // Auto-pause detection: check if moved >10m
+          if (lastMovementPosRef.current) {
+            const moveDist = haversineDistance(lastMovementPosRef.current, newPos);
+            if (moveDist > 10) {
+              lastMovementTimeRef.current = Date.now();
+              lastMovementPosRef.current = newPos;
+              if (autoPaused) setAutoPaused(false);
+            }
+          } else {
+            lastMovementPosRef.current = newPos;
+            lastMovementTimeRef.current = Date.now();
+          }
+
           setTrackPoints(prev => {
             const updated = [...prev, newPos];
             if (prev.length > 0) {
               const dist = haversineDistance(prev[prev.length - 1], newPos);
               if (dist > 2) { // Only count if moved >2m (noise filter)
-                setTrackDistance(d => d + dist);
+                setTrackDistance(d => {
+                  const newDist = d + dist;
+                  // Record split times
+                  const currentKm = Math.floor(newDist / 1000);
+                  if (currentKm > lastSplitKmRef.current && trackStartTime) {
+                    const elapsed = pausedElapsedRef.current + (Date.now() - trackStartTime) / 1000;
+                    const prevSplit = splitTimesRef.current[splitTimesRef.current.length - 1];
+                    const prevElapsed = prevSplit ? prevSplit.elapsed : 0;
+                    splitTimesRef.current.push({
+                      km: currentKm,
+                      elapsed,
+                      pace: elapsed - prevElapsed,
+                    });
+                    lastSplitKmRef.current = currentKm;
+                  }
+                  return newDist;
+                });
               }
             }
             return updated;
@@ -330,7 +397,19 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 2000 }
     );
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [trackingState]);
+  }, [trackingState, autoPaused, trackStartTime]);
+
+  // Auto-pause detection timer
+  useEffect(() => {
+    if (trackingState !== 'recording') return;
+    const interval = setInterval(() => {
+      const timeSinceMovement = Date.now() - lastMovementTimeRef.current;
+      if (timeSinceMovement > 15000 && !autoPaused) {
+        setAutoPaused(true);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [trackingState, autoPaused]);
 
   // Show blue user marker on map with smooth gliding
   useEffect(() => {
@@ -530,7 +609,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   // Snap a single segment (from previous point to new point) to roads
   const snapSegmentToRoads = async (prevPoint: DrawPoint, newPoint: DrawPoint) => {
     try {
-      const profile = transportMode === 'driving' ? 'car' : transportMode === 'cycling' ? 'bike' : 'foot';
+      const profile = getOsrmProfile(transportMode);
       const coordsStr = `${prevPoint.lng},${prevPoint.lat};${newPoint.lng},${newPoint.lat}`;
 
       const res = await fetch(
@@ -592,7 +671,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     setDrawLoading(true);
 
     try {
-      const profile = transportMode === 'driving' ? 'car' : transportMode === 'cycling' ? 'bike' : 'foot';
+      const profile = getOsrmProfile(transportMode);
       const coordsStr = drawRoutePoints.map(p => `${p.lng},${p.lat}`).join(';');
 
       const res = await fetch(
@@ -749,7 +828,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     setLoading(true);
 
     try {
-      const profile = transportMode === 'driving' ? 'car' : transportMode === 'cycling' ? 'bike' : 'foot';
+      const profile = getOsrmProfile(transportMode);
       const res = await fetch(
         `https://router.project-osrm.org/route/v1/${profile}/${fromCoords[1]},${fromCoords[0]};${toCoords[1]},${toCoords[0]}?overview=full&geometries=geojson&alternatives=3&steps=true`
       );
@@ -853,6 +932,11 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     setTrackElapsed(0);
     setTrackSummary(null);
     pausedElapsedRef.current = 0;
+    splitTimesRef.current = [];
+    lastSplitKmRef.current = 0;
+    setAutoPaused(false);
+    lastMovementPosRef.current = null;
+    lastMovementTimeRef.current = Date.now();
     setTrackStartTime(Date.now());
     setTrackingState('recording');
     setIsFullscreen(true);
@@ -869,10 +953,43 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     setTrackingState('recording');
   };
 
-  const stopTracking = () => {
+  // Fetch elevation data for route points
+  const fetchElevation = async (points: [number, number][]): Promise<{ data: ElevationPoint[]; gain: number; loss: number }> => {
+    try {
+      const sampleCount = Math.min(20, points.length);
+      const step = Math.max(1, Math.floor(points.length / sampleCount));
+      const sampled = Array.from({ length: sampleCount }, (_, i) => points[Math.min(i * step, points.length - 1)]);
+      const lats = sampled.map(p => p[0]).join(',');
+      const lons = sampled.map(p => p[1]).join(',');
+      const res = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lons}`);
+      const json = await res.json();
+      const elevations: number[] = json.elevation || [];
+      let totalDist = 0;
+      const data: ElevationPoint[] = [];
+      let gain = 0, loss = 0;
+      for (let i = 0; i < sampled.length; i++) {
+        if (i > 0) totalDist += haversineDistance(sampled[i - 1], sampled[i]) / 1000;
+        data.push({ distance: totalDist, elevation: elevations[i] || 0 });
+        if (i > 0) {
+          const diff = (elevations[i] || 0) - (elevations[i - 1] || 0);
+          if (diff > 0) gain += diff;
+          else loss += Math.abs(diff);
+        }
+      }
+      return { data, gain: Math.round(gain), loss: Math.round(loss) };
+    } catch {
+      return { data: [], gain: 0, loss: 0 };
+    }
+  };
+
+  const stopTracking = async () => {
     setTrackingState('idle');
     const distKm = trackDistance / 1000;
     const avgPace = distKm > 0 ? trackElapsed / distKm : 0;
+    
+    // Fetch elevation data
+    const { data: elevationData, gain: elevationGain, loss: elevationLoss } = await fetchElevation(trackPoints);
+    
     setTrackSummary({
       distance: trackDistance,
       duration: trackElapsed,
@@ -880,111 +997,80 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       points: trackPoints,
       startTime: trackStartTime || Date.now(),
       endTime: Date.now(),
+      splits: splitTimesRef.current,
+      elevationData,
+      elevationGain,
+      elevationLoss,
     });
     toast.success('Activity saved! 🎉');
   };
 
-  // Fetch saved routes from database
-  const fetchSavedRoutes = useCallback(async () => {
-    if (!user) return;
+  // Load/save routes using localStorage (no DB table exists)
+  const loadSavedRoutes = useCallback(() => {
     try {
-      const { data, error } = await supabase
-        .from('saved_routes')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      const stored = localStorage.getItem('dryroutes_saved_routes');
+      if (stored) setSavedRoutes(JSON.parse(stored));
+    } catch { /* ignore */ }
+  }, []);
 
-      if (error) throw error;
-      setSavedRoutes(data as SavedRoute[]);
-    } catch (err) {
-      console.error('Failed to fetch saved routes:', err);
-    }
-  }, [user]);
+  const fetchSavedRoutes = loadSavedRoutes;
 
-  // Save route to database
+  // Save route to localStorage
   const saveRoute = async (routeData: RouteResult, routeName: string, startLoc: string, endLoc: string, isPublic: boolean) => {
-    if (!user) {
-      toast.error('You must be logged in to save routes');
-      return;
-    }
-
-    try {
-      const { error } = await supabase.from('saved_routes').insert({
-        user_id: user.id,
-        name: routeName,
-        description: null,
-        route_type: appMode === 'create-route' ? 'created' : 'found',
-        transport_mode: transportMode,
-        start_location: startLoc,
-        end_location: endLoc,
-        start_coords: routeData.geometry[0] ? { lat: routeData.geometry[0][0], lng: routeData.geometry[0][1] } : null,
-        end_coords: routeData.geometry[routeData.geometry.length - 1] ? { lat: routeData.geometry[routeData.geometry.length - 1][0], lng: routeData.geometry[routeData.geometry.length - 1][1] } : null,
-        geometry: { coordinates: routeData.geometry },
-        distance: routeData.distance,
-        duration: routeData.duration,
-        rain_score: routeData.rainScore,
-        rain_timeline: routeData.rainTimeline,
-        steps: routeData.steps,
-        is_public: isPublic,
-      });
-
-      if (error) throw error;
-      toast.success('Route saved! 🎉');
-      await fetchSavedRoutes();
-      setShowSaveRouteModal(false);
-      setSaveRouteNameInput('');
-      setRouteIsPublic(false);
-    } catch (err) {
-      toast.error('Failed to save route');
-      console.error('Save route error:', err);
-    }
+    const newRoute: SavedRoute = {
+      id: crypto.randomUUID(),
+      user_id: user?.id || 'local',
+      name: routeName,
+      description: null,
+      route_type: appMode === 'create-route' ? 'created' : 'found',
+      transport_mode: transportMode,
+      start_location: startLoc,
+      end_location: endLoc,
+      start_coords: routeData.geometry[0] ? { lat: routeData.geometry[0][0], lng: routeData.geometry[0][1] } : null,
+      end_coords: routeData.geometry[routeData.geometry.length - 1] ? { lat: routeData.geometry[routeData.geometry.length - 1][0], lng: routeData.geometry[routeData.geometry.length - 1][1] } : null,
+      geometry: { coordinates: routeData.geometry },
+      distance: routeData.distance,
+      duration: routeData.duration,
+      rain_score: routeData.rainScore,
+      rain_timeline: routeData.rainTimeline,
+      steps: routeData.steps,
+      is_public: isPublic,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    const updated = [newRoute, ...savedRoutes];
+    setSavedRoutes(updated);
+    localStorage.setItem('dryroutes_saved_routes', JSON.stringify(updated));
+    toast.success('Route saved! 🎉');
+    setShowSaveRouteModal(false);
+    setSaveRouteNameInput('');
+    setRouteIsPublic(false);
   };
 
-  // Save activity to database
+  // Save activity to localStorage
   const saveActivity = async (activityName: string, isPublic: boolean) => {
-    if (!user || !trackSummary) {
-      toast.error('You must be logged in to save activities');
-      return;
-    }
-
+    if (!trackSummary) return;
+    const caloriesEstimate = (trackSummary.distance / 1000) * getCaloriesPerKm(transportMode);
+    const activity = {
+      id: crypto.randomUUID(),
+      name: activityName,
+      transport_mode: transportMode,
+      distance: trackSummary.distance,
+      duration: trackSummary.duration,
+      avg_pace: trackSummary.avgPace,
+      calories_estimate: caloriesEstimate,
+      splits: trackSummary.splits,
+      created_at: new Date().toISOString(),
+    };
     try {
-      // Calculate calories and CO2 estimates
-      const caloriesPerKm = transportMode === 'walking' ? 65 : transportMode === 'cycling' ? 30 : 0;
-      const caloriesEstimate = (trackSummary.distance / 1000) * caloriesPerKm;
-
-      const co2PerKm = transportMode === 'driving' ? 120 : 0;
-      const co2Estimate = (trackSummary.distance / 1000) * co2PerKm;
-
-      const { error } = await supabase.from('saved_activities').insert({
-        user_id: user.id,
-        name: activityName,
-        description: null,
-        activity_type: 'track',
-        transport_mode: transportMode,
-        started_at: new Date(trackSummary.startTime).toISOString(),
-        completed_at: new Date(trackSummary.endTime).toISOString(),
-        distance: trackSummary.distance,
-        duration: trackSummary.duration,
-        avg_pace: trackSummary.avgPace,
-        gps_points: trackSummary.points.map((p, idx) => ({
-          lat: p[0],
-          lng: p[1],
-          timestamp: trackSummary.startTime + (idx * (trackSummary.duration * 1000 / trackSummary.points.length)),
-        })),
-        calories_estimate: caloriesEstimate > 0 ? caloriesEstimate : null,
-        co2_estimate: co2Estimate > 0 ? co2Estimate : null,
-        is_public: isPublic,
-      });
-
-      if (error) throw error;
-      toast.success('Activity saved! 🎉');
-      setShowSaveActivityModal(false);
-      setSaveActivityNameInput('');
-      setActivityIsPublic(false);
-    } catch (err) {
-      toast.error('Failed to save activity');
-      console.error('Save activity error:', err);
-    }
+      const stored = JSON.parse(localStorage.getItem('dryroutes_activities') || '[]');
+      stored.unshift(activity);
+      localStorage.setItem('dryroutes_activities', JSON.stringify(stored.slice(0, 50)));
+    } catch { /* ignore */ }
+    toast.success('Activity saved! 🎉');
+    setShowSaveActivityModal(false);
+    setSaveActivityNameInput('');
+    setActivityIsPublic(false);
   };
 
   const shareActivity = async () => {
@@ -998,6 +1084,27 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
         toast.success('Copied to clipboard!');
       }
     } catch { /* cancelled */ }
+  };
+
+  const shareActivityAsImage = async () => {
+    if (!shareContainerRef.current) return;
+    try {
+      const { toPng } = await import('html-to-image');
+      const dataUrl = await toPng(shareContainerRef.current, { quality: 0.95, backgroundColor: '#1a1a2e' });
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], 'dryroutes-activity.png', { type: 'image/png' });
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'DryRoutes Activity' });
+      } else {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = 'dryroutes-activity.png';
+        link.click();
+        toast.success('Image downloaded!');
+      }
+    } catch {
+      toast.error('Failed to generate image');
+    }
   };
 
   const shareRoute = async () => {
@@ -1038,7 +1145,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
               setDrawRoutePoints([]);
               setDrawnRoute(null);
               setDrawSnappedData(null);
-              setIsDrawing(false);
+              setIsPlacingPoints(false);
               if (drawPolylineRef.current && mapInstance.current) {
                 mapInstance.current.removeLayer(drawPolylineRef.current);
                 drawPolylineRef.current = null;
@@ -1068,7 +1175,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
         {TRANSPORT_MODES.filter(m => m.mode !== 'driving').map(({ mode, icon, label }) => (
           <button
             key={mode}
-            onClick={() => setTransportMode(mode === 'walking' || mode === 'cycling' ? mode : 'walking')}
+            onClick={() => setTransportMode(mode)}
             className={`flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-lg border transition-all ${
               transportMode === mode
                 ? 'bg-primary text-primary-foreground border-primary'
@@ -1142,6 +1249,27 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
             </div>
           </div>
 
+          {/* Auto-pause indicator */}
+          {autoPaused && (
+            <div className="flex items-center justify-center gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2 text-xs text-yellow-600">
+              <Pause className="w-3 h-3" /> Paused — not moving
+            </div>
+          )}
+
+          {/* Live split times */}
+          {splitTimesRef.current.length > 0 && (
+            <div className="bg-muted/30 rounded-lg px-3 py-2 border border-border/20 space-y-1">
+              <p className="text-[10px] font-medium text-muted-foreground">Split Times</p>
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px]">
+                {splitTimesRef.current.map((split, i) => (
+                  <span key={i} className="tabular-nums">
+                    km {split.km}: <span className="font-medium">{formatPace(split.pace)}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Control buttons */}
           <div className="flex gap-2">
             {trackingState === 'recording' ? (
@@ -1162,7 +1290,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
       {/* Activity summary */}
       {trackSummary && (
-        <div className="space-y-3">
+        <div className="space-y-3" ref={shareContainerRef}>
           <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-3">
             <div className="flex items-center gap-2 text-primary font-semibold text-sm">
               <Activity className="w-4 h-4" /> Activity Complete!
@@ -1181,14 +1309,72 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
                 <div className="text-[10px] text-muted-foreground">Avg Pace</div>
               </div>
             </div>
-            {/* Calories estimate (rough: ~60 cal/km walking, ~40 cycling) */}
             <div className="text-center text-xs text-muted-foreground">
-              🔥 ~{Math.round((trackSummary.distance / 1000) * (transportMode === 'walking' ? 60 : 40))} cal burned
+              🔥 ~{Math.round((trackSummary.distance / 1000) * getCaloriesPerKm(transportMode))} cal burned
             </div>
+
+            {/* Elevation stats */}
+            {(trackSummary.elevationGain > 0 || trackSummary.elevationLoss > 0) && (
+              <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Mountain className="w-3 h-3" /> ↑{trackSummary.elevationGain}m
+                </span>
+                <span>↓{trackSummary.elevationLoss}m</span>
+              </div>
+            )}
           </div>
+
+          {/* Split Times Chart */}
+          {trackSummary.splits.length > 1 && (
+            <div className="bg-muted/30 rounded-xl p-3 border border-border/20 space-y-2">
+              <p className="text-[10px] font-medium text-muted-foreground flex items-center gap-1">
+                <Timer className="w-3 h-3" /> Split Pace (per km)
+              </p>
+              <div className="h-24">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={trackSummary.splits.map(s => ({ name: `${s.km}`, pace: Math.round(s.pace) }))}>
+                    <XAxis dataKey="name" tick={{ fontSize: 9 }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 9 }} tickLine={false} axisLine={false} width={30} />
+                    <Tooltip formatter={(v: number) => [`${formatPace(v)}`, 'Pace']} labelFormatter={(l) => `km ${l}`} />
+                    <Bar dataKey="pace" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                {trackSummary.splits.map((split, i) => (
+                  <span key={i} className="tabular-nums">
+                    km {split.km}: <span className="font-medium text-foreground">{formatPace(split.pace)}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Elevation Profile */}
+          {trackSummary.elevationData.length > 2 && (
+            <div className="bg-muted/30 rounded-xl p-3 border border-border/20 space-y-2">
+              <p className="text-[10px] font-medium text-muted-foreground flex items-center gap-1">
+                <Mountain className="w-3 h-3" /> Elevation Profile
+              </p>
+              <div className="h-20">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={trackSummary.elevationData}>
+                    <XAxis dataKey="distance" tick={{ fontSize: 8 }} tickFormatter={(v) => `${v.toFixed(1)}`} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 8 }} tickLine={false} axisLine={false} width={30} domain={['dataMin - 5', 'dataMax + 5']} />
+                    <Tooltip formatter={(v: number) => [`${Math.round(v)}m`, 'Elevation']} labelFormatter={(l) => `${Number(l).toFixed(1)} km`} />
+                    <Area type="monotone" dataKey="elevation" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.15)" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <Button onClick={() => setShowSaveActivityModal(true)} size="sm" className="flex-1 text-xs">
-              <Check className="w-3.5 h-3.5 mr-1.5" /> Save Activity
+              <Check className="w-3.5 h-3.5 mr-1.5" /> Save
+            </Button>
+            <Button onClick={shareActivityAsImage} size="sm" variant="outline" className="text-xs">
+              <Image className="w-3.5 h-3.5" />
             </Button>
             <Button onClick={shareActivity} size="sm" variant="outline" className="flex-1 text-xs">
               <Share2 className="w-3.5 h-3.5 mr-1.5" /> Share
@@ -1603,7 +1789,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
             {TRANSPORT_MODES.filter(m => m.mode !== 'driving').map(({ mode, icon, label }) => (
               <button
                 key={mode}
-                onClick={() => setTransportMode(mode === 'walking' || mode === 'cycling' ? mode : 'walking')}
+                onClick={() => setTransportMode(mode)}
                 className={`flex-1 flex items-center justify-center gap-1 text-xs py-1.5 rounded-lg border transition-all ${
                   transportMode === mode
                     ? 'bg-primary text-primary-foreground border-primary'
@@ -1946,7 +2132,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     switch (appMode) {
       case 'track':
         return trackContent;
-      case 'draw':
+      case 'create-route':
         return drawContent;
       case 'route':
       default:
@@ -2032,7 +2218,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           <CloudRain className="w-3 h-3" />
           Radar
         </button>
-        {appMode === 'draw' && isDrawing && (
+        {appMode === 'create-route' && isPlacingPoints && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[1000] bg-primary text-primary-foreground text-[10px] px-3 py-1.5 rounded-full animate-pulse">
             ✏️ Draw on map
           </div>

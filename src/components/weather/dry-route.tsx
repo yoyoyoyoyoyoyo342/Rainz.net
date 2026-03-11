@@ -1086,6 +1086,27 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     } catch { /* cancelled */ }
   };
 
+  const shareActivityAsImage = async () => {
+    if (!shareContainerRef.current) return;
+    try {
+      const { toPng } = await import('html-to-image');
+      const dataUrl = await toPng(shareContainerRef.current, { quality: 0.95, backgroundColor: '#1a1a2e' });
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], 'dryroutes-activity.png', { type: 'image/png' });
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'DryRoutes Activity' });
+      } else {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = 'dryroutes-activity.png';
+        link.click();
+        toast.success('Image downloaded!');
+      }
+    } catch {
+      toast.error('Failed to generate image');
+    }
+  };
+
   const shareRoute = async () => {
     const route = routes[bestRouteIdx];
     if (!route) return;

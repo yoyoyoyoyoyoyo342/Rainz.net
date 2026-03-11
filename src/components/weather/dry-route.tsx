@@ -2066,7 +2066,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           <CloudRain className="w-3 h-3" />
           Radar
         </button>
-        {appMode === 'draw' && isDrawing && (
+        {appMode === 'create-route' && isPlacingPoints && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[1000] bg-primary text-primary-foreground text-[10px] px-3 py-1.5 rounded-full animate-pulse">
             ✏️ Draw on map
           </div>

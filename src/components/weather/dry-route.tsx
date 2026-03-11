@@ -332,9 +332,9 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   // Fetch saved routes when entering track mode
   useEffect(() => {
     if (appMode === 'track') {
-      fetchSavedRoutes();
+      loadSavedRoutes();
     }
-  }, [appMode, fetchSavedRoutes]);
+  }, [appMode]);
 
   // Always track user position for blue dot on map
   useEffect(() => {

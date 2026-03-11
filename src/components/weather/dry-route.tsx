@@ -352,12 +352,41 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
         // If tracking, add point
         if (trackingState === 'recording') {
+          // Auto-pause detection: check if moved >10m
+          if (lastMovementPosRef.current) {
+            const moveDist = haversineDistance(lastMovementPosRef.current, newPos);
+            if (moveDist > 10) {
+              lastMovementTimeRef.current = Date.now();
+              lastMovementPosRef.current = newPos;
+              if (autoPaused) setAutoPaused(false);
+            }
+          } else {
+            lastMovementPosRef.current = newPos;
+            lastMovementTimeRef.current = Date.now();
+          }
+
           setTrackPoints(prev => {
             const updated = [...prev, newPos];
             if (prev.length > 0) {
               const dist = haversineDistance(prev[prev.length - 1], newPos);
               if (dist > 2) { // Only count if moved >2m (noise filter)
-                setTrackDistance(d => d + dist);
+                setTrackDistance(d => {
+                  const newDist = d + dist;
+                  // Record split times
+                  const currentKm = Math.floor(newDist / 1000);
+                  if (currentKm > lastSplitKmRef.current && trackStartTime) {
+                    const elapsed = pausedElapsedRef.current + (Date.now() - trackStartTime) / 1000;
+                    const prevSplit = splitTimesRef.current[splitTimesRef.current.length - 1];
+                    const prevElapsed = prevSplit ? prevSplit.elapsed : 0;
+                    splitTimesRef.current.push({
+                      km: currentKm,
+                      elapsed,
+                      pace: elapsed - prevElapsed,
+                    });
+                    lastSplitKmRef.current = currentKm;
+                  }
+                  return newDist;
+                });
               }
             }
             return updated;
@@ -368,7 +397,19 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 2000 }
     );
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [trackingState]);
+  }, [trackingState, autoPaused, trackStartTime]);
+
+  // Auto-pause detection timer
+  useEffect(() => {
+    if (trackingState !== 'recording') return;
+    const interval = setInterval(() => {
+      const timeSinceMovement = Date.now() - lastMovementTimeRef.current;
+      if (timeSinceMovement > 15000 && !autoPaused) {
+        setAutoPaused(true);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [trackingState, autoPaused]);
 
   // Show blue user marker on map with smooth gliding
   useEffect(() => {

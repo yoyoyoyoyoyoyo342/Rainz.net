@@ -22,7 +22,7 @@
 
 ### 5. "Go" Navigation Mode
 - Turn-by-turn via `navigator.geolocation.watchPosition()`
-- Blue GPS dot on map, auto-centers
+- Blue GPS dot on map, auto-centers[text]
 - Step-by-step instructions with maneuver icons
 - Rain score + ETA in status bar
 - Auto-advance to next step when within 30m
@@ -57,11 +57,52 @@
 - Added proper z-index stacking (`zIndex: 500`) to ensure layer visibility
 - Rain cloud overlay now displays correctly when Radar button is toggled in Track/Route modes
 
+### 12. Point-Based Route Drawing System
+- **Replaced freehand drawing with click-to-place points**: Users now click on map to place discrete points instead of continuous drawing
+- **Point types with visual markers**:
+  - 🟢 Green circle for start point (route origin)
+  - ⚪ Gray circle for waypoints (intermediate points)
+  - 🏁 Flag emoji for end point (route destination)
+- **Real-time road snapping**: Each point pair automatically snaps to road network via OSRM `/match` endpoint
+- **Real-time distance counter**: Updates as each point is added and after snapping completes
+- **Point management**:
+  - Click any marker to delete that specific point
+  - "Undo Last" button removes most recent point
+  - "Clear All" button resets entire route
+  - Point type selector allows switching between point types while placing
+- **Route confirmation dialog**: When "Done!" is clicked, shows route preview with distance, duration, rain score, and rain timeline before accepting
+- **Rain layer visibility**: Precipitation layer now displays consistently in all DryRoutes modes (Route/Track/Create Route) when Radar toggle is enabled
+
+### 13. Route Saving & Activity Tracking System
+- **Mode Renamed**: "Draw" mode renamed to **"Create Route"** for clarity and intuitive UX
+- **Route Saving Feature**:
+  - After creating or finding a route, users can save with custom name via modal
+  - Modal shows route name input (required), description (optional), public toggle, and route stats preview
+  - Saves to `saved_routes` table with full metadata: geometry, distance, duration, rain score, steps, transport mode
+  - Route type tracked: 'found' (Route mode) / 'created' (Create Route mode) / 'tracked' (Track mode)
+  - Success toast notification after save, auto-refresh of saved routes list
+- **Activity Tracking & Saving**:
+  - After completing Track session (stop button), users can save named activity
+  - Modal auto-populates with "Activity - HH:MM AM/PM" format, user can edit
+  - Saves all GPS points with timestamps, calculates calories/CO2 estimates based on transport mode
+  - Saves to `saved_activities` table with complete geospatial data for future playback/analysis
+  - Public toggle for future sharing features
+- **Track Mode Route Selection**:
+  - Dropdown selector in Track mode shows all user's saved routes with distance/duration/rain score
+  - When selected, route geometry loads on map with visual markers for endpoints
+  - Auto-advance to next waypoint when GPS within 30m (reuses Go navigation logic)
+  - Manual GPS tracking still works in parallel and can be saved as new activity
+- **Database Schema**:
+  - **saved_routes**: Stores user routes with geometry (GeoJSON), rain data, turn-by-turn steps, metadata
+  - **saved_activities**: Stores tracked activities with GPS points (lat/lng/timestamp), stats, estimates
+  - Row Level Security (RLS) policies ensure users can only see/edit their own routes and public routes
+  - Indexes on user_id, created_at, is_public for fast queries
+
 ## Files
 | File | Action |
 |------|--------|
 | `src/hooks/use-lazy-map.tsx` | NEW — IntersectionObserver hook |
-| `src/components/weather/dry-route.tsx` | NEW — Main DryRoute component; Updated for rain layer display fix |
+| `src/components/weather/dry-route.tsx` | Updated: Point-based draw mode, real-time snapping per segment, distance tracking, confirmation dialog, rain layer consistency |
 | `src/components/weather/dry-route-navigation.tsx` | NEW — Turn-by-turn panel |
 | `src/components/weather/dry-route-ar.tsx` | NEW — AR navigation overlay |
 | `src/components/weather/explore-sheet.tsx` | Removed RainRoutePlanner |

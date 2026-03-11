@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Navigation, MapPin, Loader2, Umbrella, Clock, Route, Maximize2, Minimize2, Car, Bike, Footprints, Calendar, Navigation2, Square, Share2, CloudRain, Camera, Play, Pause, CircleStop, Pencil, Trash2, Timer, Zap, Activity } from 'lucide-react';
+import { Navigation, MapPin, Loader2, Umbrella, Clock, Route, Maximize2, Minimize2, Car, Bike, Footprints, Calendar, Navigation2, Square, Share2, CloudRain, Camera, Play, Pause, CircleStop, Pencil, Trash2, Timer, Zap, Activity, Check, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { useLazyMap } from '@/hooks/use-lazy-map';
+import { useAuth } from '@/hooks/use-auth';
 import { DryRouteNavigation } from './dry-route-navigation';
 import { DryRouteAR } from './dry-route-ar';
 import { DryWindows } from './dry-windows';
@@ -38,7 +39,7 @@ export interface RouteStep {
 }
 
 type TransportMode = 'driving' | 'cycling' | 'walking';
-type AppMode = 'route' | 'track' | 'draw';
+type AppMode = 'route' | 'track' | 'create-route';
 type TrackingState = 'idle' | 'recording' | 'paused';
 
 interface TrackSummary {
@@ -50,6 +51,48 @@ interface TrackSummary {
   endTime: number;
 }
 
+interface SavedRoute {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  route_type: 'found' | 'created' | 'tracked';
+  transport_mode: TransportMode;
+  start_location: string | null;
+  end_location: string | null;
+  start_coords: { lat: number; lng: number } | null;
+  end_coords: { lat: number; lng: number } | null;
+  geometry: { coordinates: [number, number][] };
+  distance: number;
+  duration: number;
+  rain_score: number | null;
+  rain_timeline: { distance: number; rainProb: number }[] | null;
+  steps: RouteStep[] | null;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface SavedActivity {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  activity_type: string;
+  transport_mode: TransportMode;
+  started_at: string;
+  completed_at: string;
+  distance: number;
+  duration: number;
+  avg_pace: number | null;
+  gps_points: Array<{ lat: number; lng: number; timestamp: number }>;
+  calories_estimate: number | null;
+  co2_estimate: number | null;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 const TRANSPORT_MODES: { mode: TransportMode; icon: React.ReactNode; label: string }[] = [
   { mode: 'driving', icon: <Car className="w-3.5 h-3.5" />, label: 'Drive' },
   { mode: 'cycling', icon: <Bike className="w-3.5 h-3.5" />, label: 'Bike' },
@@ -59,7 +102,7 @@ const TRANSPORT_MODES: { mode: TransportMode; icon: React.ReactNode; label: stri
 const APP_MODES: { mode: AppMode; icon: React.ReactNode; label: string }[] = [
   { mode: 'route', icon: <Route className="w-3.5 h-3.5" />, label: 'Route' },
   { mode: 'track', icon: <Activity className="w-3.5 h-3.5" />, label: 'Track' },
-  { mode: 'draw', icon: <Pencil className="w-3.5 h-3.5" />, label: 'Draw' },
+  { mode: 'create-route', icon: <Pencil className="w-3.5 h-3.5" />, label: 'Create Route' },
 ];
 
 // Haversine distance between two points in meters
@@ -75,6 +118,7 @@ function haversineDistance(a: [number, number], b: [number, number]): number {
 }
 
 export function DryRoute({ latitude, longitude, locationName, isImperial }: DryRouteProps) {
+  const { user } = useAuth();
   const { containerRef, isVisible } = useLazyMap('300px');
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
@@ -113,16 +157,35 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   const trackPolylineRef = useRef<any>(null);
   const trackTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pausedElapsedRef = useRef(0);
+  const [savedRoutes, setSavedRoutes] = useState<SavedRoute[]>([]);
+  const [selectedSavedRoute, setSelectedSavedRoute] = useState<SavedRoute | null>(null);
+  const [showSaveActivityModal, setShowSaveActivityModal] = useState(false);
+  const [saveActivityNameInput, setSaveActivityNameInput] = useState('');
+  const [activityIsPublic, setActivityIsPublic] = useState(false);
 
-  // Draw mode state
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [drawPoints, setDrawPoints] = useState<[number, number][]>([]);
+  // Create Route mode state
+  interface DrawPoint {
+    lat: number;
+    lng: number;
+    type: 'start' | 'end' | 'waypoint';
+  }
+
+  const [isPlacingPoints, setIsPlacingPoints] = useState(false);
+  const [drawRoutePoints, setDrawRoutePoints] = useState<DrawPoint[]>([]);
+  const [drawDistance, setDrawDistance] = useState(0);
+  const [currentPointType, setCurrentPointType] = useState<'start' | 'waypoint' | 'end'>('start');
   const [drawnRoute, setDrawnRoute] = useState<RouteResult | null>(null);
   const [drawLoading, setDrawLoading] = useState(false);
-  const drawPolylineRef = useRef<any>(null);
-  const drawActiveRef = useRef(false);
   const [drawSnappedData, setDrawSnappedData] = useState<RouteResult | null>(null);
+  const drawPolylineRef = useRef<any>(null);
+  const drawMarkersRef = useRef<any[]>([]);
+  const drawLinesRef = useRef<any[]>([]);
   const drawSnapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showDrawConfirmation, setShowDrawConfirmation] = useState(false);
+  const [drawConfirmationData, setDrawConfirmationData] = useState<RouteResult | null>(null);
+  const [showSaveRouteModal, setShowSaveRouteModal] = useState(false);
+  const [saveRouteNameInput, setSaveRouteNameInput] = useState('');
+  const [routeIsPublic, setRouteIsPublic] = useState(false);
 
   // Lazy load leaflet
   useEffect(() => {
@@ -234,6 +297,13 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     }
   }, [isVisible, leafletLoaded, initMap]);
 
+  // Fetch saved routes when entering track mode
+  useEffect(() => {
+    if (appMode === 'track') {
+      fetchSavedRoutes();
+    }
+  }, [appMode, fetchSavedRoutes]);
+
   // Always track user position for blue dot on map
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -340,109 +410,207 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     };
   }, [trackingState, trackStartTime]);
 
-  // Draw mode: handle pointer events on map
+  // Create Route mode: handle click to place points
   useEffect(() => {
     if (!mapInstance.current || !LRef.current) return;
     const map = mapInstance.current;
     const L = LRef.current;
     const container = map.getContainer();
 
-    if (appMode === 'draw' && isDrawing) {
-      map.dragging.disable();
-      map.touchZoom.disable();
+    if (appMode === 'create-route') {
+      const onClick = (e: any) => {
+        const pt = e.latlng;
+        const newPoint: DrawPoint = {
+          lat: pt.lat,
+          lng: pt.lng,
+          type: currentPointType,
+        };
 
-      const onPointerDown = (e: PointerEvent) => {
-        drawActiveRef.current = true;
-        const pt = map.containerPointToLatLng(L.point(e.offsetX, e.offsetY));
-        setDrawPoints([pt.lat, pt.lng] as any);
-        setDrawPoints([[pt.lat, pt.lng]]);
+        // Handle start point constraint (only one)
+        if (currentPointType === 'start' && drawRoutePoints.some(p => p.type === 'start')) {
+          toast.error('Route can only have one start point');
+          return;
+        }
+
+        // Handle end point constraint (must be last)
+        if (drawRoutePoints.some(p => p.type === 'end')) {
+          toast.error('End point must be the last point - clear it first');
+          return;
+        }
+
+        setDrawRoutePoints(prev => [...prev, newPoint]);
+
+        // Snap the new segment to roads if not the first point
+        if (drawRoutePoints.length > 0 && currentPointType !== 'start') {
+          snapSegmentToRoads(drawRoutePoints[drawRoutePoints.length - 1], newPoint);
+        }
       };
 
-      const onPointerMove = (e: PointerEvent) => {
-        if (!drawActiveRef.current) return;
-        const pt = map.containerPointToLatLng(L.point(e.offsetX, e.offsetY));
-        setDrawPoints(prev => [...prev, [pt.lat, pt.lng]]);
-      };
-
-      const onPointerUp = () => {
-        drawActiveRef.current = false;
-        setIsDrawing(false);
-        // Re-enable map interactions
-        map.dragging.enable();
-        map.touchZoom.enable();
-      };
-
-      container.addEventListener('pointerdown', onPointerDown);
-      container.addEventListener('pointermove', onPointerMove);
-      container.addEventListener('pointerup', onPointerUp);
-      container.addEventListener('pointercancel', onPointerUp);
+      map.on('click', onClick);
       container.style.cursor = 'crosshair';
-      container.style.touchAction = 'none';
 
       return () => {
-        container.removeEventListener('pointerdown', onPointerDown);
-        container.removeEventListener('pointermove', onPointerMove);
-        container.removeEventListener('pointerup', onPointerUp);
-        container.removeEventListener('pointercancel', onPointerUp);
+        map.off('click', onClick);
         container.style.cursor = '';
-        container.style.touchAction = '';
-        map.dragging.enable();
-        map.touchZoom.enable();
       };
     }
-  }, [appMode, isDrawing]);
+  }, [appMode, drawRoutePoints, currentPointType]);
 
-  // Draw the drawn polyline on map
+  // Render points and lines on map
   useEffect(() => {
     if (!mapInstance.current || !LRef.current) return;
     const L = LRef.current;
+    const map = mapInstance.current;
 
-    if (drawPolylineRef.current) {
-      mapInstance.current.removeLayer(drawPolylineRef.current);
-      drawPolylineRef.current = null;
-    }
+    // Clear old markers and lines
+    drawMarkersRef.current.forEach(m => map.removeLayer(m));
+    drawMarkersRef.current = [];
+    drawLinesRef.current.forEach(l => map.removeLayer(l));
+    drawLinesRef.current = [];
 
-    if (drawPoints.length > 1) {
-      drawPolylineRef.current = L.polyline(drawPoints, {
-        color: 'hsl(280, 80%, 55%)',
+    if (drawRoutePoints.length === 0) return;
+
+    // Render markers for each point
+    drawRoutePoints.forEach((point, idx) => {
+      let emoji = '⚪';
+      if (point.type === 'start') emoji = '🟢';
+      else if (point.type === 'end') emoji = '🏁';
+
+      const marker = L.marker([point.lat, point.lng], {
+        icon: L.divIcon({
+          html: `<div style="font-size: 24px; cursor: pointer;">${emoji}</div>`,
+          className: '',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12],
+        }),
+        title: `${point.type} point`,
+      }).addTo(map);
+
+      // Add click handler to delete point
+      marker.on('click', (e: any) => {
+        e.originalEvent.stopPropagation(); // Prevent adding new point
+        setDrawRoutePoints(prev => prev.filter((_, i) => i !== idx));
+      });
+
+      drawMarkersRef.current.push(marker);
+    });
+
+    // Render lines connecting points
+    if (drawnRoute && drawnRoute.geometry) {
+      const line = L.polyline(drawnRoute.geometry, {
+        color: 'hsl(142, 71%, 45%)', // Green for snapped routes
         weight: 4,
         opacity: 0.8,
-        dashArray: drawnRoute ? undefined : '6 6',
         lineCap: 'round',
-      }).addTo(mapInstance.current);
+      }).addTo(map);
+      drawLinesRef.current.push(line);
+    } else if (drawRoutePoints.length > 1) {
+      // Show temporary line connecting points if not snapped yet
+      const tempGeometry = drawRoutePoints.map(p => [p.lat, p.lng]);
+      const line = L.polyline(tempGeometry, {
+        color: 'hsl(280, 80%, 55%)',
+        weight: 3,
+        opacity: 0.5,
+        dashArray: '6 6',
+        lineCap: 'round',
+      }).addTo(map);
+      drawLinesRef.current.push(line);
     }
-  }, [drawPoints, drawnRoute]);
+  }, [drawRoutePoints, drawnRoute]);
 
-  // Snap drawn points to roads via OSRM
-  const snapDrawnRoute = async () => {
-    if (drawPoints.length < 2) return;
-    setDrawLoading(true);
+  // Helper: Calculate haversine distance and format it
+  const getDistanceFromGeometry = (geometry: [number, number][]): number => {
+    let total = 0;
+    for (let i = 0; i < geometry.length - 1; i++) {
+      total += haversineDistance(geometry[i], geometry[i + 1]);
+    }
+    return total;
+  };
 
+  // Snap a single segment (from previous point to new point) to roads
+  const snapSegmentToRoads = async (prevPoint: DrawPoint, newPoint: DrawPoint) => {
     try {
-      // Downsample: take every nth point to get ~20 waypoints max
-      const maxWaypoints = 20;
-      const step = Math.max(1, Math.floor(drawPoints.length / maxWaypoints));
-      const sampled = drawPoints.filter((_, i) => i % step === 0 || i === drawPoints.length - 1);
-
       const profile = transportMode === 'driving' ? 'car' : transportMode === 'cycling' ? 'bike' : 'foot';
-      const coordsStr = sampled.map(p => `${p[1]},${p[0]}`).join(';');
-      const radiuses = sampled.map(() => '50').join(';');
+      const coordsStr = `${prevPoint.lng},${prevPoint.lat};${newPoint.lng},${newPoint.lat}`;
 
       const res = await fetch(
-        `https://router.project-osrm.org/match/v1/${profile}/${coordsStr}?overview=full&geometries=geojson&radiuses=${radiuses}&steps=true`
+        `https://router.project-osrm.org/match/v1/${profile}/${coordsStr}?overview=full&geometries=geojson&radiuses=50;50&steps=true`
       );
+
+      if (!res.ok) return;
       const data = await res.json();
 
       if (data.matchings && data.matchings.length > 0) {
         const matching = data.matchings[0];
-        const geometry: [number, number][] = matching.geometry.coordinates.map(
+        const segmentGeometry: [number, number][] = matching.geometry.coordinates.map(
+          (c: [number, number]) => [c[1], c[0]]
+        );
+
+        // Accumulate geometry
+        const currentGeometry = drawnRoute ? [...drawnRoute.geometry] : [];
+        const newGeometry = [...currentGeometry, ...segmentGeometry];
+
+        // Calculate complete route details
+        const { score: rainScore, timeline: rainTimeline } = await getRainScoreForRoute(newGeometry);
+        const totalDistance = getDistanceFromGeometry(newGeometry);
+
+        const result: RouteResult = {
+          distance: totalDistance,
+          duration: matching.duration * (drawnRoute ? drawnRoute.duration / matching.duration : 1),
+          rainScore,
+          geometry: newGeometry,
+          label: '✏️ Drawing...',
+          steps: [],
+          rainTimeline,
+        };
+
+        setDrawnRoute(result);
+        setDrawDistance(totalDistance);
+      } else {
+        // Fallback: use direct connection without snapping
+        const directDist = haversineDistance([prevPoint.lat, prevPoint.lng], [newPoint.lat, newPoint.lng]);
+        setDrawDistance(prev => prev + directDist);
+      }
+    } catch (err) {
+      // Silent fail for segment snapping
+    }
+  };
+
+  // Finalize route: snap all points together and create final route
+  const finalizeDrawnRoute = async () => {
+    if (drawRoutePoints.length < 2) {
+      toast.error('Need at least 2 points to create a route');
+      return;
+    }
+
+    // Must have start and end points
+    if (!drawRoutePoints.some(p => p.type === 'start') || !drawRoutePoints.some(p => p.type === 'end')) {
+      toast.error('Need both a start point and an end point');
+      return;
+    }
+
+    setDrawLoading(true);
+
+    try {
+      const profile = transportMode === 'driving' ? 'car' : transportMode === 'cycling' ? 'bike' : 'foot';
+      const coordsStr = drawRoutePoints.map(p => `${p.lng},${p.lat}`).join(';');
+
+      const res = await fetch(
+        `https://router.project-osrm.org/route/v1/${profile}/${coordsStr}?overview=full&geometries=geojson&steps=true`
+      );
+
+      const data = await res.json();
+
+      if (data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        const geometry: [number, number][] = route.geometry.coordinates.map(
           (c: [number, number]) => [c[1], c[0]]
         );
 
         const { score: rainScore, timeline: rainTimeline } = await getRainScoreForRoute(geometry);
 
         const steps: RouteStep[] = [];
-        for (const leg of matching.legs) {
+        for (const leg of route.legs) {
           for (const s of (leg.steps || [])) {
             steps.push({
               instruction: s.maneuver?.modifier
@@ -457,8 +625,8 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
         }
 
         const result: RouteResult = {
-          distance: matching.distance,
-          duration: matching.duration,
+          distance: route.distance,
+          duration: route.duration,
           rainScore,
           geometry,
           label: '✏️ Drawn Route',
@@ -467,128 +635,18 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
         };
 
         setDrawnRoute(result);
-        setDrawPoints(geometry); // Replace freehand with snapped
-        toast.success(`Route snapped! ${formatDistance(result.distance)}, ${formatDuration(result.duration)}`);
+        setDrawDistance(route.distance);
+        setDrawConfirmationData(result);
+        setShowDrawConfirmation(true);
+        toast.success('Route ready for confirmation!');
       } else {
-        // Fallback: try route API with waypoints
-        const routeCoords = sampled.map(p => `${p[1]},${p[0]}`).join(';');
-        const routeRes = await fetch(
-          `https://router.project-osrm.org/route/v1/${profile}/${routeCoords}?overview=full&geometries=geojson&steps=true`
-        );
-        const routeData = await routeRes.json();
-
-        if (routeData.routes && routeData.routes.length > 0) {
-          const r = routeData.routes[0];
-          const geometry: [number, number][] = r.geometry.coordinates.map(
-            (c: [number, number]) => [c[1], c[0]]
-          );
-          const { score: rainScore, timeline: rainTimeline } = await getRainScoreForRoute(geometry);
-
-          const result: RouteResult = {
-            distance: r.distance,
-            duration: r.duration,
-            rainScore,
-            geometry,
-            label: '✏️ Drawn Route',
-            steps: [],
-            rainTimeline,
-          };
-
-          setDrawnRoute(result);
-          setDrawPoints(geometry);
-          toast.success(`Route snapped! ${formatDistance(result.distance)}`);
-        } else {
-          toast.error('Could not snap route to roads');
-        }
+        toast.error('Could not create route from points');
       }
     } catch (err) {
-      toast.error('Failed to snap route');
+      toast.error('Failed to create route');
     }
     setDrawLoading(false);
   };
-
-  // Real-time snapping while drawing
-  const snapDrawnRouteRealTime = async (points: [number, number][], isImmediate: boolean = false) => {
-    if (points.length < 3) return;
-
-    // Skip if already loading unless forced
-    if (drawLoading && !isImmediate) return;
-
-    try {
-      // Downsample: take every nth point to get ~20 waypoints max
-      const maxWaypoints = 20;
-      const step = Math.max(1, Math.floor(points.length / maxWaypoints));
-      const sampled = points.filter((_, i) => i % step === 0 || i === points.length - 1);
-
-      const profile = transportMode === 'driving' ? 'car' : transportMode === 'cycling' ? 'bike' : 'foot';
-      const coordsStr = sampled.map(p => `${p[1]},${p[0]}`).join(';');
-      const radiuses = sampled.map(() => '50').join(';');
-
-      const res = await fetch(
-        `https://router.project-osrm.org/match/v1/${profile}/${coordsStr}?overview=full&geometries=geojson&radiuses=${radiuses}&steps=true`
-      );
-
-      if (!res.ok) return;
-      const data = await res.json();
-
-      if (data.matchings && data.matchings.length > 0) {
-        const matching = data.matchings[0];
-        const geometry: [number, number][] = matching.geometry.coordinates.map(
-          (c: [number, number]) => [c[1], c[0]]
-        );
-
-        const { score: rainScore, timeline: rainTimeline } = await getRainScoreForRoute(geometry);
-
-        const result: RouteResult = {
-          distance: matching.distance,
-          duration: matching.duration,
-          rainScore,
-          geometry,
-          label: '✏️ Drawing...',
-          steps: [],
-          rainTimeline,
-        };
-
-        setDrawSnappedData(result);
-      }
-    } catch (err) {
-      // Silent fail for real-time snapping
-    }
-  };
-
-  // Auto-snap when drawing ends
-  useEffect(() => {
-    if (appMode === 'draw' && !isDrawing && drawPoints.length > 3 && !drawnRoute) {
-      snapDrawnRoute();
-    }
-  }, [isDrawing, drawPoints.length, appMode]);
-
-  // Real-time snapping while actively drawing
-  useEffect(() => {
-    if (!isDrawing || drawPoints.length < 3) {
-      if (drawSnapTimerRef.current) {
-        clearTimeout(drawSnapTimerRef.current);
-        drawSnapTimerRef.current = null;
-      }
-      return;
-    }
-
-    // Debounce snapping: snap every 1 second while drawing
-    if (drawSnapTimerRef.current) {
-      clearTimeout(drawSnapTimerRef.current);
-    }
-
-    drawSnapTimerRef.current = setTimeout(() => {
-      snapDrawnRouteRealTime(drawPoints);
-    }, 1000);
-
-    return () => {
-      if (drawSnapTimerRef.current) {
-        clearTimeout(drawSnapTimerRef.current);
-        drawSnapTimerRef.current = null;
-      }
-    };
-  }, [drawPoints, isDrawing]);
 
   // Rain radar overlay toggle
   useEffect(() => {
@@ -826,6 +884,109 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     toast.success('Activity saved! 🎉');
   };
 
+  // Fetch saved routes from database
+  const fetchSavedRoutes = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('saved_routes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setSavedRoutes(data as SavedRoute[]);
+    } catch (err) {
+      console.error('Failed to fetch saved routes:', err);
+    }
+  }, [user]);
+
+  // Save route to database
+  const saveRoute = async (routeData: RouteResult, routeName: string, startLoc: string, endLoc: string, isPublic: boolean) => {
+    if (!user) {
+      toast.error('You must be logged in to save routes');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from('saved_routes').insert({
+        user_id: user.id,
+        name: routeName,
+        description: null,
+        route_type: appMode === 'create-route' ? 'created' : 'found',
+        transport_mode: transportMode,
+        start_location: startLoc,
+        end_location: endLoc,
+        start_coords: routeData.geometry[0] ? { lat: routeData.geometry[0][0], lng: routeData.geometry[0][1] } : null,
+        end_coords: routeData.geometry[routeData.geometry.length - 1] ? { lat: routeData.geometry[routeData.geometry.length - 1][0], lng: routeData.geometry[routeData.geometry.length - 1][1] } : null,
+        geometry: { coordinates: routeData.geometry },
+        distance: routeData.distance,
+        duration: routeData.duration,
+        rain_score: routeData.rainScore,
+        rain_timeline: routeData.rainTimeline,
+        steps: routeData.steps,
+        is_public: isPublic,
+      });
+
+      if (error) throw error;
+      toast.success('Route saved! 🎉');
+      await fetchSavedRoutes();
+      setShowSaveRouteModal(false);
+      setSaveRouteNameInput('');
+      setRouteIsPublic(false);
+    } catch (err) {
+      toast.error('Failed to save route');
+      console.error('Save route error:', err);
+    }
+  };
+
+  // Save activity to database
+  const saveActivity = async (activityName: string, isPublic: boolean) => {
+    if (!user || !trackSummary) {
+      toast.error('You must be logged in to save activities');
+      return;
+    }
+
+    try {
+      // Calculate calories and CO2 estimates
+      const caloriesPerKm = transportMode === 'walking' ? 65 : transportMode === 'cycling' ? 30 : 0;
+      const caloriesEstimate = (trackSummary.distance / 1000) * caloriesPerKm;
+
+      const co2PerKm = transportMode === 'driving' ? 120 : 0;
+      const co2Estimate = (trackSummary.distance / 1000) * co2PerKm;
+
+      const { error } = await supabase.from('saved_activities').insert({
+        user_id: user.id,
+        name: activityName,
+        description: null,
+        activity_type: 'track',
+        transport_mode: transportMode,
+        started_at: new Date(trackSummary.startTime).toISOString(),
+        completed_at: new Date(trackSummary.endTime).toISOString(),
+        distance: trackSummary.distance,
+        duration: trackSummary.duration,
+        avg_pace: trackSummary.avgPace,
+        gps_points: trackSummary.points.map((p, idx) => ({
+          lat: p[0],
+          lng: p[1],
+          timestamp: trackSummary.startTime + (idx * (trackSummary.duration * 1000 / trackSummary.points.length)),
+        })),
+        calories_estimate: caloriesEstimate > 0 ? caloriesEstimate : null,
+        co2_estimate: co2Estimate > 0 ? co2Estimate : null,
+        is_public: isPublic,
+      });
+
+      if (error) throw error;
+      toast.success('Activity saved! 🎉');
+      setShowSaveActivityModal(false);
+      setSaveActivityNameInput('');
+      setActivityIsPublic(false);
+    } catch (err) {
+      toast.error('Failed to save activity');
+      console.error('Save activity error:', err);
+    }
+  };
+
   const shareActivity = async () => {
     if (!trackSummary) return;
     const text = `🏃 Activity Complete!\n📏 ${formatDistance(trackSummary.distance)}\n⏱ ${formatElapsed(trackSummary.duration)}\n⚡ Pace: ${formatPace(trackSummary.avgPace)}\n\nTracked with Rainz DryRoutes`;
@@ -873,8 +1034,8 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           onClick={() => {
             setAppMode(mode);
             // Clean up when switching modes
-            if (mode !== 'draw') {
-              setDrawPoints([]);
+            if (mode !== 'create-route') {
+              setDrawRoutePoints([]);
               setDrawnRoute(null);
               setDrawSnappedData(null);
               setIsDrawing(false);
@@ -918,6 +1079,36 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           </button>
         ))}
       </div>
+
+      {/* Saved routes selector */}
+      {trackingState === 'idle' && savedRoutes.length > 0 && (
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">Or follow a saved route</label>
+          <select
+            value={selectedSavedRoute?.id || ''}
+            onChange={(e) => {
+              const route = savedRoutes.find(r => r.id === e.target.value) || null;
+              setSelectedSavedRoute(route);
+            }}
+            className="w-full text-xs bg-muted/30 rounded-lg px-3 py-2 border border-border/30 focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">Select a saved route...</option>
+            {savedRoutes.map((route) => (
+              <option key={route.id} value={route.id}>
+                {route.name} • {formatDistance(route.distance)}
+              </option>
+            ))}
+          </select>
+          {selectedSavedRoute && (
+            <div className="text-xs bg-primary/5 border border-primary/20 rounded-lg p-2 space-y-1">
+              <div className="font-medium text-foreground">{selectedSavedRoute.name}</div>
+              <div className="text-muted-foreground text-[11px]">
+                {formatDistance(selectedSavedRoute.distance)} • {formatDuration(selectedSavedRoute.duration)} • {selectedSavedRoute.rain_score}% rain
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {trackingState === 'idle' && !trackSummary && (
         <Button onClick={startTracking} size="sm" className="w-full text-xs">
@@ -996,6 +1187,9 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
             </div>
           </div>
           <div className="flex gap-2">
+            <Button onClick={() => setShowSaveActivityModal(true)} size="sm" className="flex-1 text-xs">
+              <Check className="w-3.5 h-3.5 mr-1.5" /> Save Activity
+            </Button>
             <Button onClick={shareActivity} size="sm" variant="outline" className="flex-1 text-xs">
               <Share2 className="w-3.5 h-3.5 mr-1.5" /> Share
             </Button>
@@ -1005,60 +1199,122 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           </div>
         </div>
       )}
+
+      {/* Save Activity Modal */}
+      {showSaveActivityModal && trackSummary && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end animate-in fade-in duration-200">
+          <div className="w-full bg-background border-t border-border/50 rounded-t-2xl p-4 space-y-3 animate-in slide-in-from-bottom duration-300">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-sm">Save Your Activity</h3>
+              <button
+                onClick={() => {
+                  setShowSaveActivityModal(false);
+                  setSaveActivityNameInput('');
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {/* Activity name input */}
+              <input
+                type="text"
+                value={saveActivityNameInput}
+                onChange={(e) => setSaveActivityNameInput(e.target.value)}
+                placeholder={`Activity - ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                className="w-full text-sm bg-muted/30 rounded-lg px-3 py-2 border border-border/30 focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+
+              {/* Public switch */}
+              <div className="flex items-center justify-between">
+                <label className="text-xs text-muted-foreground">Make activity public</label>
+                <button
+                  onClick={() => setActivityIsPublic(!activityIsPublic)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    activityIsPublic ? 'bg-primary' : 'bg-muted'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform ${
+                      activityIsPublic ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Activity stats preview */}
+              <div className="bg-muted/30 rounded-lg p-2 space-y-1 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Distance:</span>
+                  <span className="font-medium">{formatDistance(trackSummary.distance)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Duration:</span>
+                  <span className="font-medium">{formatElapsed(trackSummary.duration)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Avg Pace:</span>
+                  <span className="font-medium">{formatPace(trackSummary.avgPace)}</span>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    setShowSaveActivityModal(false);
+                    setSaveActivityNameInput('');
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    const activityName = saveActivityNameInput.trim() || `Activity - ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                    saveActivity(activityName, activityIsPublic);
+                  }}
+                  size="sm"
+                  className="flex-1"
+                >
+                  Save Activity
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
-  // Draw mode UI
   const drawContent = (
     <div className="space-y-3">
-      {/* Transport mode for drawn route - exclude driving */}
-      <div className="flex gap-1">
-        {TRANSPORT_MODES.filter(m => m.mode !== 'driving').map(({ mode, icon, label }) => (
-          <button
-            key={mode}
-            onClick={() => setTransportMode(mode === 'walking' || mode === 'cycling' ? mode : 'walking')}
-            className={`flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-lg border transition-all ${
-              transportMode === mode
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-muted/30 text-muted-foreground border-border/30 hover:border-primary/40'
-            }`}
-          >
-            {icon} {label}
-          </button>
-        ))}
-      </div>
-
-      {!drawnRoute && !drawLoading && (
-        <div className="space-y-2">
-          {drawPoints.length === 0 && (
-            <div className="text-center space-y-2">
-              <p className="text-xs text-muted-foreground">
-                Draw a route on the map with your finger, then get rain forecasts for it.
-              </p>
-              <Button
-                onClick={() => setIsDrawing(true)}
-                size="sm"
-                className="w-full text-xs"
+      {/* Confirmation Dialog */}
+      {showDrawConfirmation && drawConfirmationData && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end animate-in fade-in duration-200">
+          <div className="w-full bg-background border-t border-border/50 rounded-t-2xl p-4 space-y-3 animate-in slide-in-from-bottom duration-300">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-sm">Confirm Your Route</h3>
+              <button
+                onClick={() => setShowDrawConfirmation(false)}
+                className="text-muted-foreground hover:text-foreground"
               >
-                <Pencil className="w-3.5 h-3.5 mr-1.5" /> Start Drawing
-              </Button>
+                ✕
+              </button>
             </div>
-          )}
-          {isDrawing && (
-            <div className="bg-primary/10 border border-primary/20 rounded-xl px-3 py-2 text-xs text-primary text-center animate-pulse">
-              ✏️ Drawing... drag on map to trace your route
-            </div>
-          )}
 
-          {/* Real-time snapping preview while drawing */}
-          {isDrawing && drawSnappedData && (
-            <div className="space-y-2 animate-in">
+            {/* Route details */}
+            <div className="space-y-2 bg-muted/30 rounded-lg p-3">
               {/* Rain timeline */}
-              {drawSnappedData.rainTimeline?.length > 0 && (
+              {drawConfirmationData.rainTimeline?.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-[10px] text-muted-foreground font-medium">☁️ Rain probability</p>
-                  <div className="flex h-3 rounded-full overflow-hidden border border-border/30">
-                    {drawSnappedData.rainTimeline.map((segment, i) => (
+                  <p className="text-[10px] text-muted-foreground font-medium">Rain along route</p>
+                  <div className="flex h-2 rounded-full overflow-hidden border border-border/30">
+                    {drawConfirmationData.rainTimeline.map((segment, i) => (
                       <div
                         key={i}
                         className="flex-1 transition-colors"
@@ -1077,93 +1333,337 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
                 </div>
               )}
 
-              {/* Distance and duration info */}
-              <div className="flex items-center justify-between bg-muted/30 rounded-lg px-2.5 py-2 text-xs border border-border/20">
-                <span className="font-medium text-muted-foreground">Route Preview</span>
-                <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-1">
-                    <Route className="w-3 h-3" /> {formatDistance(drawSnappedData.distance)}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> {formatDuration(drawSnappedData.duration)}
-                  </span>
+              {/* Stats grid */}
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="text-center">
+                  <p className="text-muted-foreground">{formatDistance(drawConfirmationData.distance)}</p>
+                  <p className="text-[10px] text-muted-foreground">Distance</p>
+                </div>
+                <div className="text-center border-x border-border/30">
+                  <p className="text-muted-foreground">{formatDuration(drawConfirmationData.duration)}</p>
+                  <p className="text-[10px] text-muted-foreground">Duration</p>
+                </div>
+                <div className="text-center">
+                  <p className={`font-bold ${
+                    drawConfirmationData.rainScore < 30 ? 'text-green-500' : drawConfirmationData.rainScore < 60 ? 'text-yellow-500' : 'text-red-500'
+                  }`}>
+                    {drawConfirmationData.rainScore}%
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">Rain</p>
                 </div>
               </div>
             </div>
-          )}
+
+            {/* Action buttons */}
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setShowDrawConfirmation(false)}
+                variant="outline"
+                size="sm"
+                className="flex-1"
+              >
+                Edit Route
+              </Button>
+              <Button
+                onClick={() => setShowSaveRouteModal(true)}
+                size="sm"
+                variant="outline"
+                className="flex-1"
+              >
+                Save Route
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowDrawConfirmation(false);
+                  toast.success('Route created!');
+                }}
+                size="sm"
+                className="flex-1"
+              >
+                Accept & Go
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
-      {drawLoading && (
-        <div className="flex items-center justify-center gap-2 py-4 text-xs text-muted-foreground">
-          <Loader2 className="w-4 h-4 animate-spin" /> Snapping to roads & checking rain...
-        </div>
-      )}
+      {/* Save Route Modal */}
+      {showSaveRouteModal && drawnRoute && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end animate-in fade-in duration-200">
+          <div className="w-full bg-background border-t border-border/50 rounded-t-2xl p-4 space-y-3 animate-in slide-in-from-bottom duration-300">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-sm">Save Your Route</h3>
+              <button
+                onClick={() => {
+                  setShowSaveRouteModal(false);
+                  setSaveRouteNameInput('');
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-      {drawnRoute && (
-        <div className="space-y-2">
-          {/* Rain timeline */}
-          {drawnRoute.rainTimeline?.length > 0 && (
-            <div className="space-y-1">
-              <p className="text-[10px] text-muted-foreground font-medium">Rain along route</p>
-              <div className="flex h-3 rounded-full overflow-hidden border border-border/30">
-                {drawnRoute.rainTimeline.map((segment, i) => (
-                  <div
-                    key={i}
-                    className="flex-1 transition-colors"
-                    style={{
-                      backgroundColor: segment.rainProb < 30
-                        ? 'hsl(142, 71%, 45%)'
-                        : segment.rainProb < 60
-                        ? 'hsl(48, 96%, 53%)'
-                        : 'hsl(0, 84%, 60%)',
-                      opacity: 0.7 + (segment.rainProb / 100) * 0.3,
-                    }}
-                    title={`${segment.rainProb}% rain`}
+            <div className="space-y-3">
+              {/* Route name input */}
+              <input
+                type="text"
+                value={saveRouteNameInput}
+                onChange={(e) => setSaveRouteNameInput(e.target.value)}
+                placeholder="e.g., Morning Commute..."
+                className="w-full text-sm bg-muted/30 rounded-lg px-3 py-2 border border-border/30 focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+
+              {/* Public switch */}
+              <div className="flex items-center justify-between">
+                <label className="text-xs text-muted-foreground">Make route public</label>
+                <button
+                  onClick={() => setRouteIsPublic(!routeIsPublic)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    routeIsPublic ? 'bg-primary' : 'bg-muted'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform ${
+                      routeIsPublic ? 'translate-x-6' : 'translate-x-1'
+                    }`}
                   />
-                ))}
+                </button>
+              </div>
+
+              {/* Route stats preview */}
+              <div className="bg-muted/30 rounded-lg p-2 space-y-1 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Distance:</span>
+                  <span className="font-medium">{formatDistance(drawnRoute.distance)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Duration:</span>
+                  <span className="font-medium">{formatDuration(drawnRoute.duration)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Rain:</span>
+                  <span className={`font-medium ${
+                    drawnRoute.rainScore < 30 ? 'text-green-500' : drawnRoute.rainScore < 60 ? 'text-yellow-500' : 'text-red-500'
+                  }`}>
+                    {drawnRoute.rainScore}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    setShowSaveRouteModal(false);
+                    setSaveRouteNameInput('');
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (!saveRouteNameInput.trim()) {
+                      toast.error('Please enter a route name');
+                      return;
+                    }
+                    saveRoute(drawnRoute, saveRouteNameInput, 'Created Route', 'Created Route', routeIsPublic);
+                  }}
+                  size="sm"
+                  className="flex-1"
+                  disabled={!saveRouteNameInput.trim()}
+                >
+                  Save Route
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!showDrawConfirmation && (
+        <>
+          {/* Point Type Selector */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Point Type</label>
+            <div className="flex gap-1.5">
+              {[
+                { type: 'start' as const, label: '🟢 Start', description: 'Route origin' },
+                { type: 'waypoint' as const, label: '⚪ Waypoint', description: 'Intermediate point' },
+                { type: 'end' as const, label: '🏁 End', description: 'Route destination' },
+              ].map(({ type, label }) => (
+                <button
+                  key={type}
+                  onClick={() => setCurrentPointType(type)}
+                  className={`flex-1 px-2 py-1.5 rounded-lg border text-xs transition-all font-medium ${
+                    currentPointType === type
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-muted/30 text-muted-foreground border-border/30 hover:border-primary/40'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Distance Display */}
+          {drawRoutePoints.length > 0 && (
+            <div className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2 border border-border/20">
+              <Route className="w-4 h-4 text-primary" />
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground">Distance</p>
+                <p className="text-sm font-semibold text-foreground">{formatDistance(drawDistance)}</p>
+              </div>
+              <span className="text-xl">📍</span>
+            </div>
+          )}
+
+          {/* Points Status */}
+          {drawRoutePoints.length > 0 && (
+            <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 text-xs space-y-1">
+              <div className="font-medium text-foreground">
+                {drawRoutePoints.length} point{drawRoutePoints.length !== 1 ? 's' : ''} placed
+              </div>
+              <div className="text-muted-foreground text-[11px]">
+                {drawRoutePoints.filter(p => p.type === 'start').length > 0 ? '✓ Start ' : '○ Start '}
+                {drawRoutePoints.filter(p => p.type === 'end').length > 0 ? '✓ End' : '○ End'}
               </div>
             </div>
           )}
 
-          {/* Route stats */}
-          <div className="flex items-center justify-between bg-muted/30 rounded-xl px-3 py-2.5 text-xs border border-border/20">
-            <span className="font-medium">✏️ Drawn Route</span>
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1">
-                <Route className="w-3 h-3" /> {formatDistance(drawnRoute.distance)}
-              </span>
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" /> {formatDuration(drawnRoute.duration)}
-              </span>
-              <span className={`flex items-center gap-1 font-bold ${
-                drawnRoute.rainScore < 30 ? 'text-green-500' : drawnRoute.rainScore < 60 ? 'text-yellow-500' : 'text-red-500'
-              }`}>
-                <Umbrella className="w-3 h-3" /> {drawnRoute.rainScore}%
-              </span>
+          {/* Instructions */}
+          {drawRoutePoints.length === 0 && (
+            <div className="text-center space-y-2">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Click on the map to place points. Start with a green point (🟢), add waypoints (⚪), and finish with a flag (🏁).
+              </p>
             </div>
+          )}
+
+          {/* Action Buttons */}
+          {drawRoutePoints.length > 0 && (
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  if (drawRoutePoints.length >= 2) {
+                    setDrawRoutePoints(prev => prev.slice(0, -1));
+                    // Reset distance if undoing makes it empty
+                    if (drawRoutePoints.length === 2) {
+                      setDrawDistance(0);
+                      setDrawnRoute(null);
+                    }
+                  }
+                }}
+                size="sm"
+                variant="outline"
+                className="text-xs"
+                disabled={drawRoutePoints.length === 0}
+              >
+                ↶ Undo Last
+              </Button>
+              <Button
+                onClick={() => {
+                  setDrawRoutePoints([]);
+                  setDrawDistance(0);
+                  setDrawnRoute(null);
+                  setShowDrawConfirmation(false);
+                  setCurrentPointType('start');
+                }}
+                size="sm"
+                variant="outline"
+                className="flex-1 text-xs"
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Clear All
+              </Button>
+              <Button
+                onClick={finalizeDrawnRoute}
+                size="sm"
+                disabled={drawLoading || drawRoutePoints.length < 2}
+                className="flex-1 text-xs"
+              >
+                {drawLoading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Creating...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-3.5 h-3.5 mr-1.5" /> Done!
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* Transport modes */}
+          <div className="flex gap-1">
+            {TRANSPORT_MODES.filter(m => m.mode !== 'driving').map(({ mode, icon, label }) => (
+              <button
+                key={mode}
+                onClick={() => setTransportMode(mode === 'walking' || mode === 'cycling' ? mode : 'walking')}
+                className={`flex-1 flex items-center justify-center gap-1 text-xs py-1.5 rounded-lg border transition-all ${
+                  transportMode === mode
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-muted/30 text-muted-foreground border-border/30 hover:border-primary/40'
+                }`}
+              >
+                {icon} {label}
+              </button>
+            ))}
           </div>
 
-          <UmbrellaScore rainScore={drawnRoute.rainScore} />
+          {/* Drawn Route Results */}
+          {drawnRoute && (
+            <div className="space-y-2 border-t border-border/30 pt-3">
+              {/* Rain timeline */}
+              {drawnRoute.rainTimeline?.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-[10px] text-muted-foreground font-medium">Rain along route</p>
+                  <div className="flex h-3 rounded-full overflow-hidden border border-border/30">
+                    {drawnRoute.rainTimeline.map((segment, i) => (
+                      <div
+                        key={i}
+                        className="flex-1 transition-colors"
+                        style={{
+                          backgroundColor: segment.rainProb < 30
+                            ? 'hsl(142, 71%, 45%)'
+                            : segment.rainProb < 60
+                            ? 'hsl(48, 96%, 53%)'
+                            : 'hsl(0, 84%, 60%)',
+                          opacity: 0.7 + (segment.rainProb / 100) * 0.3,
+                        }}
+                        title={`${segment.rainProb}% rain`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
-          <div className="flex gap-2">
-            <Button
-              onClick={() => {
-                setDrawPoints([]);
-                setDrawnRoute(null);
-                if (drawPolylineRef.current && mapInstance.current) {
-                  mapInstance.current.removeLayer(drawPolylineRef.current);
-                  drawPolylineRef.current = null;
-                }
-              }}
-              size="sm"
-              variant="outline"
-              className="flex-1 text-xs"
-            >
-              <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Clear & Redraw
-            </Button>
-          </div>
-        </div>
+              {/* Route stats */}
+              <div className="flex items-center justify-between bg-muted/30 rounded-xl px-3 py-2.5 text-xs border border-border/20">
+                <span className="font-medium">✏️ Drawn Route</span>
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1">
+                    <Route className="w-3 h-3" /> {formatDistance(drawnRoute.distance)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" /> {formatDuration(drawnRoute.duration)}
+                  </span>
+                  <span className={`flex items-center gap-1 font-bold ${
+                    drawnRoute.rainScore < 30 ? 'text-green-500' : drawnRoute.rainScore < 60 ? 'text-yellow-500' : 'text-red-500'
+                  }`}>
+                    <Umbrella className="w-3 h-3" /> {drawnRoute.rainScore}%
+                  </span>
+                </div>
+              </div>
+
+              <UmbrellaScore rainScore={drawnRoute.rainScore} />
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -1299,9 +1799,9 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
         <CloudRain className="w-3 h-3" />
         Radar
       </button>
-      {appMode === 'draw' && isDrawing && (
+      {appMode === 'create-route' && isPlacingPoints && (
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[1000] bg-primary text-primary-foreground text-[10px] px-3 py-1.5 rounded-full animate-pulse">
-          ✏️ Draw on map
+          📍 Click to place points
         </div>
       )}
     </div>

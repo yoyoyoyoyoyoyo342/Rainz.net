@@ -671,7 +671,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     setDrawLoading(true);
 
     try {
-      const profile = transportMode === 'driving' ? 'car' : transportMode === 'cycling' ? 'bike' : 'foot';
+      const profile = getOsrmProfile(transportMode);
       const coordsStr = drawRoutePoints.map(p => `${p.lng},${p.lat}`).join(';');
 
       const res = await fetch(

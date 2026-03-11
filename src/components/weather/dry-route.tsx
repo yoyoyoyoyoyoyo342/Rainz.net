@@ -526,15 +526,13 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           return;
         }
 
-        // add new point and update straight-line distance immediately
-        setDrawRoutePoints(prev => {
-          if (prev.length > 0) {
-            const last = prev[prev.length - 1];
-            const dist = haversineDistance([last.lat, last.lng], [newPoint.lat, newPoint.lng]);
-            setDrawDistance(d => d + dist);
-          }
-          return [...prev, newPoint];
-        });
+        // compute distance using current drawRoutePoints (avoid stale closure)
+        if (drawRoutePoints.length > 0) {
+          const last = drawRoutePoints[drawRoutePoints.length - 1];
+          const dist = haversineDistance([last.lat, last.lng], [newPoint.lat, newPoint.lng]);
+          setDrawDistance(d => d + dist);
+        }
+        setDrawRoutePoints(prev => [...prev, newPoint]);
       };
 
       map.on('click', onClick);
@@ -547,13 +545,12 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     }
   }, [appMode, drawRoutePoints, currentPointType]);
 
-  // Render route points and lines whenever geometry changes
+  // Render markers & lines when points or snapped route change
   useEffect(() => {
     if (!mapInstance.current || !LRef.current) return;
     const L = LRef.current;
     const map = mapInstance.current;
 
-    // Clear old markers and lines
     drawMarkersRef.current.forEach(m => map.removeLayer(m));
     drawMarkersRef.current = [];
     drawLinesRef.current.forEach(l => map.removeLayer(l));
@@ -701,8 +698,12 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     const L = LRef.current;
     if (!mapInstance.current || !L) return;
 
+    // log env var for debugging
+    const projectIdEnv = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    console.log('VITE_SUPABASE_PROJECT_ID', projectIdEnv);
+    const projectId = projectIdEnv || 'ohwtbkudpkfbakynikyj';
+
     if (showRadar && !radarLayerRef.current) {
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'ohwtbkudpkfbakynikyj';
       radarLayerRef.current = L.tileLayer(
         `https://${projectId}.supabase.co/functions/v1/owm-tile-proxy?layer=precipitation_new&z={z}&x={x}&y={y}`,
         { opacity: 0.5, minZoom: 0, maxZoom: 18, zIndex: 500 }
@@ -1449,7 +1450,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
     <div className="space-y-3">
       {/* Confirmation Dialog */}
       {showDrawConfirmation && drawConfirmationData && (
-        <div className="fixed inset-0 z-[2000] bg-black/50 flex items-end animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[3000] bg-black/50 flex items-end animate-in fade-in duration-200">
           <div className="w-full bg-background border-t border-border/50 rounded-t-2xl p-4 space-y-3 animate-in slide-in-from-bottom duration-300">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-sm">Confirm Your Route</h3>

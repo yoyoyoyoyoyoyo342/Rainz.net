@@ -68,21 +68,69 @@ export const Leaderboard = () => {
 
   const fetchMonthlyLeaderboard = async () => {
     try {
-      const { data, error } = await supabase.rpc("get_monthly_leaderboard");
-      if (error) throw error;
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-      const entries: LeaderboardEntry[] = (data || []).map((entry: any, index: number) => ({
-        rank: entry.rank || index + 1,
-        user_id: entry.user_id,
-        display_name: entry.display_name || "Anonymous",
-        total_points: Number(entry.total_points) || 0,
-        current_streak: entry.current_streak || 0,
-        longest_streak: entry.longest_streak || 0,
-        total_predictions: Number(entry.total_predictions) || 0,
-        correct_predictions: Number(entry.correct_predictions) || 0,
-      }));
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("user_id, display_name")
+        .not("display_name", "is", null);
+      if (profilesError) throw profilesError;
 
-      setMonthlyLeaderboard(entries.slice(0, 5));
+      const entries = await Promise.all(
+        (profilesData || []).map(async (profile) => {
+          const { data: streakData } = await supabase
+            .from("user_streaks")
+            .select("current_streak, longest_streak")
+            .eq("user_id", profile.user_id)
+            .maybeSingle();
+
+          const { data: pointsData } = await supabase
+            .from("weather_predictions")
+            .select("points_earned")
+            .eq("user_id", profile.user_id)
+            .eq("is_verified", true)
+            .gte("updated_at", monthStart);
+
+          const { count: totalPredictions } = await supabase
+            .from("weather_predictions")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", profile.user_id)
+            .eq("is_verified", true)
+            .gte("updated_at", monthStart);
+
+          const { count: correctPredictions } = await supabase
+            .from("weather_predictions")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", profile.user_id)
+            .eq("is_verified", true)
+            .eq("is_correct", true)
+            .gte("updated_at", monthStart);
+
+          const totalPoints = (pointsData || []).reduce(
+            (sum, p) => sum + (p.points_earned || 0), 0
+          );
+
+          return {
+            rank: 0,
+            user_id: profile.user_id,
+            display_name: profile.display_name,
+            total_points: totalPoints,
+            current_streak: streakData?.current_streak || 0,
+            longest_streak: streakData?.longest_streak || 0,
+            total_predictions: totalPredictions || 0,
+            correct_predictions: correctPredictions || 0,
+          };
+        })
+      );
+
+      const filtered = entries
+        .filter((e) => e.total_points > 0)
+        .sort((a, b) => b.total_points - a.total_points)
+        .slice(0, 5)
+        .map((e, i) => ({ ...e, rank: i + 1 }));
+
+      setMonthlyLeaderboard(filtered);
     } catch (error) {
       console.error("Error fetching monthly leaderboard:", error);
     }

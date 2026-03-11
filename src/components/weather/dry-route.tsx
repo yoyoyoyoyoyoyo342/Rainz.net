@@ -609,7 +609,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   // Snap a single segment (from previous point to new point) to roads
   const snapSegmentToRoads = async (prevPoint: DrawPoint, newPoint: DrawPoint) => {
     try {
-      const profile = transportMode === 'driving' ? 'car' : transportMode === 'cycling' ? 'bike' : 'foot';
+      const profile = getOsrmProfile(transportMode);
       const coordsStr = `${prevPoint.lng},${prevPoint.lat};${newPoint.lng},${newPoint.lat}`;
 
       const res = await fetch(

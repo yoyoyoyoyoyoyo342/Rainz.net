@@ -1,112 +1,67 @@
-# DryRoutes — Completed Implementation
 
-## What was done
 
-### 1. Renamed "Rain-Free Route Planner" → **DryRoutes** (by Rainz)
+# Plan: DryRoutes v2 — Activity Tracking & UX Improvements
 
-### 2. Performance: Fixed Map Lag
-- Created `src/hooks/use-lazy-map.tsx` — IntersectionObserver-based lazy mount hook
-- All 3 map components (DryRoute, RainMapCard, LiveWeatherMap) now:
-  - Lazy-load Leaflet JS/CSS via dynamic `import()`
-  - Only initialize when scrolled into viewport
-  - Use `preferCanvas: true` for reduced DOM overhead
+## 1. Fix Existing Build Errors (prerequisite)
 
-### 3. Moved DryRoute to Main Weather Page
-- Removed from `explore-sheet.tsx`
-- Added as standalone card in `Weather.tsx` (before Feature Ideas)
-- Larger default map (h-56)
+Before adding features, the current build errors must be resolved:
+- **AppMode type**: Change `'draw'` references to `'create-route'` (the actual type) or add `'draw'` back to the union
+- **`setIsDrawing` / `isDrawing`**: Either declare the missing state or replace with the correct variable name used in the create-route mode
+- **`saved_routes` / `saved_activities` Supabase calls**: These tables don't exist in the typed schema. Convert to `supabase.rpc()` calls or cast through `unknown`, or remove the save-to-DB logic and keep it local-only for now
+- **`fetchSavedRoutes` used before declaration**: Move the `useCallback` definition above the `useEffect` that references it
+- **Deno zod import in `fetch-moon-data`**: Fix the import path
 
-### 4. Fullscreen Mode
-- Expand button (⛶) on card header
-- Opens fullscreen Dialog overlay with full routing UI
+## 2. Add "Running" Transport Mode
 
-### 5. "Go" Navigation Mode
-- Turn-by-turn via `navigator.geolocation.watchPosition()`
-- Blue GPS dot on map, auto-centers[text]
-- Step-by-step instructions with maneuver icons
-- Rain score + ETA in status bar
-- Auto-advance to next step when within 30m
+Currently Track mode only offers Walking and Cycling. Add a **Running** option:
+- Add `'running'` to the `TransportMode` union type
+- Add a new entry in `TRANSPORT_MODES` with a running icon (use `Zap` or import a running person icon)
+- Running uses the OSRM `foot` profile (same as walking) but with different pace/calorie calculations:
+  - Running calories: ~80 kcal/km (vs 65 for walking)
+  - Running default pace display: min/km format
+- Show Running in Track mode's transport selector (alongside Walk and Bike)
 
-### 6. AR Navigation
-- Camera overlay with compass-based directional arrow
-- HUD showing current instruction, rain probability, ETA
-- Reuses proven device orientation pattern from AR overlay
+## 3. Live Split Times & Pace Graph
 
-### 7. Additional Features
-- **Transport modes**: Drive / Bike / Walk (OSRM profiles)
-- **Departure time picker**: Shifts rain forecast window
-- **Rain timeline bar**: Visual per-segment rain probability
-- **Share route**: Native share or clipboard
-- **OSRM steps=true**: Full turn-by-turn instructions
+When tracking an activity, show **per-kilometer split times**:
+- Every time `trackDistance` crosses a new km threshold, record the elapsed time
+- Display splits as a small list: "km 1: 5:32, km 2: 5:18..."
+- After completing a run, show a simple pace chart (bar chart of splits) using existing Recharts dependency
 
-### 8. Fixed Rainz/Temp/Wind Layers on Weather Map
-- Fixed layer visibility issue preventing Rainz, Temperature, and Wind layers from displaying
-- Ensured all weather data layers render correctly on LiveWeatherMap
+## 4. Auto-Pause Detection
 
-### 9. Fixed Map Loading on Track Mode in DryRoutes
-- Fixed map component initialization in Track mode
-- Resolved lazy-loading conflict with Track mode navigation
+Detect when the user has stopped moving and auto-pause the tracker:
+- If no GPS movement >10m in the last 15 seconds, show a subtle "Paused — not moving" indicator
+- Auto-pause the elapsed timer so rest stops don't inflate pace
+- Resume automatically when movement resumes
+- This prevents inflated run times from traffic lights, breaks, etc.
 
-### 10. Added Update Counter & Improved DryRoutes
-- Added update counter to footer showing route recalculation status
-- Improved DryRoutes UI/UX with better visual feedback
-- Enhanced route planning experience with update indicators
+## 5. Elevation Profile for Routes
 
-### 11. Fixed Rain Cloud Layer Display in DryRoutes
-- Added missing zoom constraints (`minZoom: 0`) to rain/precipitation layer
-- Added proper z-index stacking (`zIndex: 500`) to ensure layer visibility
-- Rain cloud overlay now displays correctly when Radar button is toggled in Track/Route modes
+Add basic elevation data to tracked and drawn routes:
+- Fetch elevation from Open-Meteo Elevation API (`https://api.open-meteo.com/v1/elevation`) for sampled route points
+- Show a small elevation profile chart below the route summary
+- Display total elevation gain/loss in the summary card
 
-### 12. Point-Based Route Drawing System
-- **Replaced freehand drawing with click-to-place points**: Users now click on map to place discrete points instead of continuous drawing
-- **Point types with visual markers**:
-  - 🟢 Green circle for start point (route origin)
-  - ⚪ Gray circle for waypoints (intermediate points)
-  - 🏁 Flag emoji for end point (route destination)
-- **Real-time road snapping**: Each point pair automatically snaps to road network via OSRM `/match` endpoint
-- **Real-time distance counter**: Updates as each point is added and after snapping completes
-- **Point management**:
-  - Click any marker to delete that specific point
-  - "Undo Last" button removes most recent point
-  - "Clear All" button resets entire route
-  - Point type selector allows switching between point types while placing
-- **Route confirmation dialog**: When "Done!" is clicked, shows route preview with distance, duration, rain score, and rain timeline before accepting
-- **Rain layer visibility**: Precipitation layer now displays consistently in all DryRoutes modes (Route/Track/Create Route) when Radar toggle is enabled
+## 6. Route Sharing as Image
 
-### 13. Route Saving & Activity Tracking System
-- **Mode Renamed**: "Draw" mode renamed to **"Create Route"** for clarity and intuitive UX
-- **Route Saving Feature**:
-  - After creating or finding a route, users can save with custom name via modal
-  - Modal shows route name input (required), description (optional), public toggle, and route stats preview
-  - Saves to `saved_routes` table with full metadata: geometry, distance, duration, rain score, steps, transport mode
-  - Route type tracked: 'found' (Route mode) / 'created' (Create Route mode) / 'tracked' (Track mode)
-  - Success toast notification after save, auto-refresh of saved routes list
-- **Activity Tracking & Saving**:
-  - After completing Track session (stop button), users can save named activity
-  - Modal auto-populates with "Activity - HH:MM AM/PM" format, user can edit
-  - Saves all GPS points with timestamps, calculates calories/CO2 estimates based on transport mode
-  - Saves to `saved_activities` table with complete geospatial data for future playback/analysis
-  - Public toggle for future sharing features
-- **Track Mode Route Selection**:
-  - Dropdown selector in Track mode shows all user's saved routes with distance/duration/rain score
-  - When selected, route geometry loads on map with visual markers for endpoints
-  - Auto-advance to next waypoint when GPS within 30m (reuses Go navigation logic)
-  - Manual GPS tracking still works in parallel and can be saved as new activity
-- **Database Schema**:
-  - **saved_routes**: Stores user routes with geometry (GeoJSON), rain data, turn-by-turn steps, metadata
-  - **saved_activities**: Stores tracked activities with GPS points (lat/lng/timestamp), stats, estimates
-  - Row Level Security (RLS) policies ensure users can only see/edit their own routes and public routes
-  - Indexes on user_id, created_at, is_public for fast queries
+After completing a track or drawing a route:
+- Use the existing `html-to-image` dependency to capture the map + stats as a shareable PNG
+- Add a "Share" button that generates the image and opens the Web Share API (or downloads)
+- Overlay the route stats (distance, time, pace) on the image
 
-## Files
-| File | Action |
-|------|--------|
-| `src/hooks/use-lazy-map.tsx` | NEW — IntersectionObserver hook |
-| `src/components/weather/dry-route.tsx` | Updated: Point-based draw mode, real-time snapping per segment, distance tracking, confirmation dialog, rain layer consistency |
-| `src/components/weather/dry-route-navigation.tsx` | NEW — Turn-by-turn panel |
-| `src/components/weather/dry-route-ar.tsx` | NEW — AR navigation overlay |
-| `src/components/weather/explore-sheet.tsx` | Removed RainRoutePlanner |
-| `src/pages/Weather.tsx` | Added DryRoute card |
-| `src/components/weather/rain-map-card.tsx` | Lazy map loading |
-| `src/components/weather/live-weather-map.tsx` | Lazy map loading |
-| `src/components/weather/rain-route-planner.tsx` | DELETED |
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/components/weather/dry-route.tsx` | Fix build errors, add Running mode, split times, auto-pause, elevation fetch, share image |
+
+## Implementation Order
+
+1. Fix all build errors first (type mismatches, missing state, declaration order)
+2. Add Running transport mode to Track
+3. Add split times tracking logic + UI
+4. Add auto-pause detection
+5. Add elevation profile (API call + mini chart)
+6. Add share-as-image functionality
+

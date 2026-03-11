@@ -1154,7 +1154,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
         {TRANSPORT_MODES.filter(m => m.mode !== 'driving').map(({ mode, icon, label }) => (
           <button
             key={mode}
-            onClick={() => setTransportMode(mode === 'walking' || mode === 'cycling' ? mode : 'walking')}
+            onClick={() => setTransportMode(mode)}
             className={`flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-lg border transition-all ${
               transportMode === mode
                 ? 'bg-primary text-primary-foreground border-primary'

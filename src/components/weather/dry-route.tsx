@@ -1228,6 +1228,27 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
             </div>
           </div>
 
+          {/* Auto-pause indicator */}
+          {autoPaused && (
+            <div className="flex items-center justify-center gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2 text-xs text-yellow-600">
+              <Pause className="w-3 h-3" /> Paused — not moving
+            </div>
+          )}
+
+          {/* Live split times */}
+          {splitTimesRef.current.length > 0 && (
+            <div className="bg-muted/30 rounded-lg px-3 py-2 border border-border/20 space-y-1">
+              <p className="text-[10px] font-medium text-muted-foreground">Split Times</p>
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px]">
+                {splitTimesRef.current.map((split, i) => (
+                  <span key={i} className="tabular-nums">
+                    km {split.km}: <span className="font-medium">{formatPace(split.pace)}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Control buttons */}
           <div className="flex gap-2">
             {trackingState === 'recording' ? (
@@ -1248,7 +1269,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
       {/* Activity summary */}
       {trackSummary && (
-        <div className="space-y-3">
+        <div className="space-y-3" ref={shareContainerRef}>
           <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-3">
             <div className="flex items-center gap-2 text-primary font-semibold text-sm">
               <Activity className="w-4 h-4" /> Activity Complete!
@@ -1267,14 +1288,72 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
                 <div className="text-[10px] text-muted-foreground">Avg Pace</div>
               </div>
             </div>
-            {/* Calories estimate (rough: ~60 cal/km walking, ~40 cycling) */}
             <div className="text-center text-xs text-muted-foreground">
-              🔥 ~{Math.round((trackSummary.distance / 1000) * (transportMode === 'walking' ? 60 : 40))} cal burned
+              🔥 ~{Math.round((trackSummary.distance / 1000) * getCaloriesPerKm(transportMode))} cal burned
             </div>
+
+            {/* Elevation stats */}
+            {(trackSummary.elevationGain > 0 || trackSummary.elevationLoss > 0) && (
+              <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Mountain className="w-3 h-3" /> ↑{trackSummary.elevationGain}m
+                </span>
+                <span>↓{trackSummary.elevationLoss}m</span>
+              </div>
+            )}
           </div>
+
+          {/* Split Times Chart */}
+          {trackSummary.splits.length > 1 && (
+            <div className="bg-muted/30 rounded-xl p-3 border border-border/20 space-y-2">
+              <p className="text-[10px] font-medium text-muted-foreground flex items-center gap-1">
+                <Timer className="w-3 h-3" /> Split Pace (per km)
+              </p>
+              <div className="h-24">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={trackSummary.splits.map(s => ({ name: `${s.km}`, pace: Math.round(s.pace) }))}>
+                    <XAxis dataKey="name" tick={{ fontSize: 9 }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 9 }} tickLine={false} axisLine={false} width={30} />
+                    <Tooltip formatter={(v: number) => [`${formatPace(v)}`, 'Pace']} labelFormatter={(l) => `km ${l}`} />
+                    <Bar dataKey="pace" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                {trackSummary.splits.map((split, i) => (
+                  <span key={i} className="tabular-nums">
+                    km {split.km}: <span className="font-medium text-foreground">{formatPace(split.pace)}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Elevation Profile */}
+          {trackSummary.elevationData.length > 2 && (
+            <div className="bg-muted/30 rounded-xl p-3 border border-border/20 space-y-2">
+              <p className="text-[10px] font-medium text-muted-foreground flex items-center gap-1">
+                <Mountain className="w-3 h-3" /> Elevation Profile
+              </p>
+              <div className="h-20">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={trackSummary.elevationData}>
+                    <XAxis dataKey="distance" tick={{ fontSize: 8 }} tickFormatter={(v) => `${v.toFixed(1)}`} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 8 }} tickLine={false} axisLine={false} width={30} domain={['dataMin - 5', 'dataMax + 5']} />
+                    <Tooltip formatter={(v: number) => [`${Math.round(v)}m`, 'Elevation']} labelFormatter={(l) => `${Number(l).toFixed(1)} km`} />
+                    <Area type="monotone" dataKey="elevation" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.15)" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <Button onClick={() => setShowSaveActivityModal(true)} size="sm" className="flex-1 text-xs">
-              <Check className="w-3.5 h-3.5 mr-1.5" /> Save Activity
+              <Check className="w-3.5 h-3.5 mr-1.5" /> Save
+            </Button>
+            <Button onClick={shareActivityAsImage} size="sm" variant="outline" className="text-xs">
+              <Image className="w-3.5 h-3.5" />
             </Button>
             <Button onClick={shareActivity} size="sm" variant="outline" className="flex-1 text-xs">
               <Share2 className="w-3.5 h-3.5 mr-1.5" /> Share

@@ -210,6 +210,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
   const [isPlacingPoints, setIsPlacingPoints] = useState(false);
   const [drawRoutePoints, setDrawRoutePoints] = useState<DrawPoint[]>([]);
+  const drawRoutePointsRef = useRef<DrawPoint[]>([]);
   const [drawDistance, setDrawDistance] = useState(0);
   const [currentPointType, setCurrentPointType] = useState<'start' | 'waypoint' | 'end'>('start');
   const [drawnRoute, setDrawnRoute] = useState<RouteResult | null>(null);

@@ -527,13 +527,16 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           return;
         }
 
-        // compute distance using current drawRoutePoints (avoid stale closure)
-        if (drawRoutePoints.length > 0) {
-          const last = drawRoutePoints[drawRoutePoints.length - 1];
+        // compute distance using ref to avoid stale closure
+        const currentPoints = drawRoutePointsRef.current;
+        if (currentPoints.length > 0) {
+          const last = currentPoints[currentPoints.length - 1];
           const dist = haversineDistance([last.lat, last.lng], [newPoint.lat, newPoint.lng]);
           setDrawDistance(d => d + dist);
         }
-        setDrawRoutePoints(prev => [...prev, newPoint]);
+        const updated = [...currentPoints, newPoint];
+        drawRoutePointsRef.current = updated;
+        setDrawRoutePoints(updated);
       };
 
       map.on('click', onClick);

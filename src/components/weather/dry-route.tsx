@@ -210,7 +210,10 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
   const [isPlacingPoints, setIsPlacingPoints] = useState(false);
   const [drawRoutePoints, setDrawRoutePoints] = useState<DrawPoint[]>([]);
+  const drawRoutePointsRef = useRef<DrawPoint[]>([]);
   const [drawDistance, setDrawDistance] = useState(0);
+  // Keep ref in sync with state for use in map event closures
+  useEffect(() => { drawRoutePointsRef.current = drawRoutePoints; }, [drawRoutePoints]);
   const [currentPointType, setCurrentPointType] = useState<'start' | 'waypoint' | 'end'>('start');
   const [drawnRoute, setDrawnRoute] = useState<RouteResult | null>(null);
   const [drawLoading, setDrawLoading] = useState(false);
@@ -526,13 +529,16 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           return;
         }
 
-        // compute distance using current drawRoutePoints (avoid stale closure)
-        if (drawRoutePoints.length > 0) {
-          const last = drawRoutePoints[drawRoutePoints.length - 1];
+        // compute distance using ref to avoid stale closure
+        const currentPoints = drawRoutePointsRef.current;
+        if (currentPoints.length > 0) {
+          const last = currentPoints[currentPoints.length - 1];
           const dist = haversineDistance([last.lat, last.lng], [newPoint.lat, newPoint.lng]);
           setDrawDistance(d => d + dist);
         }
-        setDrawRoutePoints(prev => [...prev, newPoint]);
+        const updated = [...currentPoints, newPoint];
+        drawRoutePointsRef.current = updated;
+        setDrawRoutePoints(updated);
       };
 
       map.on('click', onClick);
@@ -1357,7 +1363,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
       {/* Save Activity Modal */}
       {showSaveActivityModal && trackSummary && (
-        <div className="fixed inset-0 z-[2000] bg-black/50 flex items-end animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[3000] bg-black/50 flex items-end animate-in fade-in duration-200">
           <div className="w-full bg-background border-t border-border/50 rounded-t-2xl p-4 space-y-3 animate-in slide-in-from-bottom duration-300">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-sm">Save Your Activity</h3>
@@ -1544,7 +1550,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
       {/* Save Route Modal */}
       {showSaveRouteModal && drawnRoute && (
-        <div className="fixed inset-0 z-[2000] bg-black/50 flex items-end animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[3000] bg-black/50 flex items-end animate-in fade-in duration-200">
           <div className="w-full bg-background border-t border-border/50 rounded-t-2xl p-4 space-y-3 animate-in slide-in-from-bottom duration-300">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-sm">Save Your Route</h3>

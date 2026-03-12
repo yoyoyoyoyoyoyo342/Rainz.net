@@ -1644,7 +1644,8 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {!showDrawConfirmation && (

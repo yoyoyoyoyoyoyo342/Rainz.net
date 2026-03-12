@@ -1546,7 +1546,8 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Save Route Modal */}

@@ -85,27 +85,27 @@ export const Leaderboard = () => {
             .eq("user_id", profile.user_id)
             .maybeSingle();
 
+          // Monthly points (filtered by created_at)
           const { data: pointsData } = await supabase
             .from("weather_predictions")
             .select("points_earned")
             .eq("user_id", profile.user_id)
             .eq("is_verified", true)
-            .gte("updated_at", monthStart);
+            .gte("created_at", monthStart);
 
+          // All-time accuracy counts (no date filter)
           const { count: totalPredictions } = await supabase
             .from("weather_predictions")
             .select("*", { count: "exact", head: true })
             .eq("user_id", profile.user_id)
-            .eq("is_verified", true)
-            .gte("updated_at", monthStart);
+            .eq("is_verified", true);
 
           const { count: correctPredictions } = await supabase
             .from("weather_predictions")
             .select("*", { count: "exact", head: true })
             .eq("user_id", profile.user_id)
             .eq("is_verified", true)
-            .eq("is_correct", true)
-            .gte("updated_at", monthStart);
+            .eq("is_correct", true);
 
           const totalPoints = (pointsData || []).reduce(
             (sum, p) => sum + (p.points_earned || 0), 0

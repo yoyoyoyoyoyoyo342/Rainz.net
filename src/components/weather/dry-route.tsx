@@ -1362,7 +1362,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       )}
 
       {/* Save Activity Modal */}
-      {showSaveActivityModal && trackSummary && (
+      {showSaveActivityModal && trackSummary && createPortal(
         <div className="fixed inset-0 z-[3000] bg-black/50 flex items-end animate-in fade-in duration-200">
           <div className="w-full bg-background border-t border-border/50 rounded-t-2xl p-4 space-y-3 animate-in slide-in-from-bottom duration-300">
             <div className="flex items-center justify-between">
@@ -1447,7 +1447,8 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -1455,7 +1456,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   const drawContent = (
     <div className="space-y-3">
       {/* Confirmation Dialog */}
-      {showDrawConfirmation && drawConfirmationData && (
+      {showDrawConfirmation && drawConfirmationData && createPortal(
         <div className="fixed inset-0 z-[3000] bg-black/50 flex items-end animate-in fade-in duration-200">
           <div className="w-full bg-background border-t border-border/50 rounded-t-2xl p-4 space-y-3 animate-in slide-in-from-bottom duration-300">
             <div className="flex items-center justify-between">
@@ -1545,11 +1546,12 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Save Route Modal */}
-      {showSaveRouteModal && drawnRoute && (
+      {showSaveRouteModal && drawnRoute && createPortal(
         <div className="fixed inset-0 z-[3000] bg-black/50 flex items-end animate-in fade-in duration-200">
           <div className="w-full bg-background border-t border-border/50 rounded-t-2xl p-4 space-y-3 animate-in slide-in-from-bottom duration-300">
             <div className="flex items-center justify-between">
@@ -1642,7 +1644,8 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {!showDrawConfirmation && (

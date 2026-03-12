@@ -212,6 +212,8 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   const [drawRoutePoints, setDrawRoutePoints] = useState<DrawPoint[]>([]);
   const drawRoutePointsRef = useRef<DrawPoint[]>([]);
   const [drawDistance, setDrawDistance] = useState(0);
+  // Keep ref in sync with state for use in map event closures
+  useEffect(() => { drawRoutePointsRef.current = drawRoutePoints; }, [drawRoutePoints]);
   const [currentPointType, setCurrentPointType] = useState<'start' | 'waypoint' | 'end'>('start');
   const [drawnRoute, setDrawnRoute] = useState<RouteResult | null>(null);
   const [drawLoading, setDrawLoading] = useState(false);

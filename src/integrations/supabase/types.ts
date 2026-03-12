@@ -1950,19 +1950,28 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_monthly_leaderboard: {
-        Args: never
-        Returns: {
-          correct_predictions: number
-          current_streak: number
-          display_name: string
-          longest_streak: number
-          rank: number
-          total_points: number
-          total_predictions: number
-          user_id: string
-        }[]
-      }
+      get_monthly_leaderboard:
+        | {
+            Args: never
+            Returns: {
+              correct_predictions: number
+              current_streak: number
+              display_name: string
+              longest_streak: number
+              rank: number
+              total_points: number
+              total_predictions: number
+              user_id: string
+            }[]
+          }
+        | {
+            Args: { _limit?: number }
+            Returns: {
+              accuracy: number
+              total_points: number
+              user_id: string
+            }[]
+          }
       get_public_profile: {
         Args: { profile_user_id: string }
         Returns: {

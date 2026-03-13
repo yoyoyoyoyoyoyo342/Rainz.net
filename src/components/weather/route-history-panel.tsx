@@ -61,7 +61,7 @@ export function RouteHistoryPanel({ onPlayRoute, isPlaying, onStopPlayback, acti
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(50);
-      return (data || []) as SavedRoute[];
+      return (data || []) as unknown as SavedRoute[];
     },
     enabled: !!user,
   });

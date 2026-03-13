@@ -115,7 +115,7 @@ export function SocialFeed({ isImperial }: { isImperial: boolean }) {
                 <span className="font-medium text-sm truncate">{item.display_name}</span>
                 {item.is_verified && (
                   item.is_correct ? (
-                    <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
+                    <CheckCircle className="h-3.5 w-3.5 text-primary flex-shrink-0" />
                   ) : (
                     <XCircle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
                   )

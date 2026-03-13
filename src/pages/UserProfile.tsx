@@ -51,6 +51,7 @@ import {
   Gift
 } from "lucide-react";
 import { WeatherWrapped } from "@/components/weather/weather-wrapped";
+import { FollowButton, useFollowCounts } from "@/components/weather/follow-button";
 
 interface UserProfileData {
   display_name: string;

@@ -659,7 +659,7 @@ export default function WeatherPage() {
               </CardContent>
             </Card>
           ) : weatherData ? (
-            <>
+            <Suspense fallback={null}>
               {weatherData.demo && (
                 <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-xl">
                   <div className="flex items-center gap-3">

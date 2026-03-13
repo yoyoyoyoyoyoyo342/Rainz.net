@@ -687,6 +687,12 @@ export default function WeatherPage() {
                 </div>
               )}
 
+              {/* Weekly Recap Card */}
+              <WeeklyRecapCard />
+
+              {/* Social Feed */}
+              <SocialFeed isImperial={isImperial} />
+
               <CurrentWeather
                 weatherData={weatherData.sources}
                 mostAccurate={weatherData.mostAccurate}

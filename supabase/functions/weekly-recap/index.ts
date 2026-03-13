@@ -18,6 +18,14 @@ serve(async (req) => {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const since = sevenDaysAgo.toISOString();
 
+    // Calculate week_start (Monday of current week)
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() + mondayOffset);
+    const weekStartStr = weekStart.toISOString().split("T")[0];
+
     // Get all users who have notification enabled
     const { data: users } = await supabase
       .from("profiles")
@@ -36,12 +44,12 @@ serve(async (req) => {
       // Get predictions in the last 7 days
       const { data: predictions } = await supabase
         .from("weather_predictions")
-        .select("is_verified, is_correct, points_earned")
+        .select("is_verified, is_correct, points_earned, predicted_condition, location_name")
         .eq("user_id", user.user_id)
         .gte("created_at", since);
 
       const total = predictions?.length || 0;
-      if (total === 0) continue; // Skip users who didn't predict
+      if (total === 0) continue;
 
       const verified = predictions?.filter(p => p.is_verified) || [];
       const correct = verified.filter(p => p.is_correct).length;
@@ -56,6 +64,35 @@ serve(async (req) => {
         .maybeSingle();
 
       const streak = streakData?.current_streak || 0;
+
+      // Build highlights
+      const conditionCounts: Record<string, number> = {};
+      const locationCounts: Record<string, number> = {};
+      predictions?.forEach(p => {
+        conditionCounts[p.predicted_condition] = (conditionCounts[p.predicted_condition] || 0) + 1;
+        locationCounts[p.location_name] = (locationCounts[p.location_name] || 0) + 1;
+      });
+      const topCondition = Object.entries(conditionCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+      const topLocation = Object.entries(locationCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+      const highlights = {
+        topCondition,
+        topLocation,
+        verifiedCount: verified.length,
+        correctCount: correct,
+      };
+
+      // Store structured recap in weekly_recaps table
+      await supabase.from("weekly_recaps").upsert({
+        user_id: user.user_id,
+        week_start: weekStartStr,
+        total_predictions: total,
+        accuracy,
+        points_earned: pointsEarned,
+        streak,
+        highlights,
+        is_read: false,
+      }, { onConflict: "user_id,week_start" });
 
       // Create in-app notification
       const message = `📊 Weekly Recap: ${total} predictions, ${accuracy}% accuracy, ${pointsEarned > 0 ? "+" : ""}${pointsEarned} points${streak > 0 ? `, ${streak}-day streak 🔥` : ""}`;

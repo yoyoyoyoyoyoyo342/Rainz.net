@@ -59,6 +59,8 @@ const ExploreButton = lazy(() => import("@/components/weather/explore-sheet").th
 const FeatureIdeasCard = lazy(() => import("@/components/weather/feature-ideas-card").then(m => ({ default: m.FeatureIdeasCard })));
 const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-card").then(m => ({ default: m.BattleAcceptCard })));
 const DryRoute = lazy(() => import("@/components/weather/dry-route").then(m => ({ default: m.DryRoute })));
+const WeeklyRecapCard = lazy(() => import("@/components/weather/weekly-recap-card").then(m => ({ default: m.WeeklyRecapCard })));
+const SocialFeed = lazy(() => import("@/components/weather/social-feed").then(m => ({ default: m.SocialFeed })));
 
 export default function WeatherPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -684,6 +686,12 @@ export default function WeatherPage() {
                   />
                 </div>
               )}
+
+              {/* Weekly Recap Card */}
+              <WeeklyRecapCard />
+
+              {/* Social Feed */}
+              <SocialFeed isImperial={isImperial} />
 
               <CurrentWeather
                 weatherData={weatherData.sources}

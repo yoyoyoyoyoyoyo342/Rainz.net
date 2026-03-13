@@ -1,5 +1,5 @@
 import { SEOHead } from "@/components/seo/seo-head";
-import { WidgetGenerator } from "@/components/weather/widget-generator";
+import { WidgetConfigPanel } from "@/components/weather/widget-config-panel";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -30,8 +30,8 @@ export default function WidgetsPage() {
             </p>
           </div>
 
-          {/* Widget Generator */}
-          <WidgetGenerator />
+          {/* Widget Config Panel (polished version) */}
+          <WidgetConfigPanel />
 
           {/* Instructions */}
           <div className="mt-12 prose prose-sm dark:prose-invert max-w-none">
@@ -48,8 +48,9 @@ export default function WidgetsPage() {
               <li>Real-time weather data from multiple sources</li>
               <li>4 beautiful themes: Light, Dark, Glass, and Minimal</li>
               <li>3 size presets: Small, Medium, and Large</li>
-              <li>Optional hourly forecast display</li>
-              <li>Metric or Imperial units</li>
+              <li>Custom accent colors and border radius</li>
+              <li>HTML, React, and Script embed options</li>
+              <li>Responsive preview modes</li>
               <li>Auto-refreshes every 10 minutes</li>
             </ul>
           </div>

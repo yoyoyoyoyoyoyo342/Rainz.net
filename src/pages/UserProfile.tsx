@@ -51,6 +51,7 @@ import {
   Gift
 } from "lucide-react";
 import { WeatherWrapped } from "@/components/weather/weather-wrapped";
+import { FollowButton, useFollowCounts } from "@/components/weather/follow-button";
 
 interface UserProfileData {
   display_name: string;
@@ -161,6 +162,7 @@ const UserProfile = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOwnProfile = user?.id === userId;
+  const { data: followCounts } = useFollowCounts(userId);
 
   useEffect(() => {
     if (userId) {
@@ -537,12 +539,27 @@ const UserProfile = () => {
                   <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{profile.bio}</p>
                 )}
                 
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <Calendar className="h-3 w-3" />
                   <span>Joined {memberSince}</span>
                   <span className="text-border">•</span>
                   <span>{daysSinceJoined} days</span>
                 </div>
+                <div className="flex items-center gap-3 mt-2">
+                  <span className="text-xs">
+                    <strong>{followCounts?.followers || 0}</strong>{" "}
+                    <span className="text-muted-foreground">followers</span>
+                  </span>
+                  <span className="text-xs">
+                    <strong>{followCounts?.following || 0}</strong>{" "}
+                    <span className="text-muted-foreground">following</span>
+                  </span>
+                </div>
+                {!isOwnProfile && userId && (
+                  <div className="mt-2">
+                    <FollowButton targetUserId={userId} />
+                  </div>
+                )}
               </div>
             </div>
 

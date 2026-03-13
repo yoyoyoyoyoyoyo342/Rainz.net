@@ -898,6 +898,33 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ramadan_calendar: {
         Row: {
           created_at: string
@@ -1001,6 +1028,48 @@ export type Database = {
           name?: string
           state?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      saved_routes: {
+        Row: {
+          avg_pace: number | null
+          created_at: string
+          distance: number
+          duration: number
+          elevation_gain: number | null
+          geometry: Json
+          id: string
+          name: string
+          splits: Json | null
+          transport_mode: string
+          user_id: string
+        }
+        Insert: {
+          avg_pace?: number | null
+          created_at?: string
+          distance?: number
+          duration?: number
+          elevation_gain?: number | null
+          geometry: Json
+          id?: string
+          name?: string
+          splits?: Json | null
+          transport_mode?: string
+          user_id: string
+        }
+        Update: {
+          avg_pace?: number | null
+          created_at?: string
+          distance?: number
+          duration?: number
+          elevation_gain?: number | null
+          geometry?: Json
+          id?: string
+          name?: string
+          splits?: Json | null
+          transport_mode?: string
           user_id?: string
         }
         Relationships: []
@@ -1277,6 +1346,27 @@ export type Database = {
           pollen_type?: string | null
           severity?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
         }
         Relationships: []
       }
@@ -1871,6 +1961,45 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      weekly_recaps: {
+        Row: {
+          accuracy: number
+          created_at: string
+          highlights: Json | null
+          id: string
+          is_read: boolean
+          points_earned: number
+          streak: number
+          total_predictions: number
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          accuracy?: number
+          created_at?: string
+          highlights?: Json | null
+          id?: string
+          is_read?: boolean
+          points_earned?: number
+          streak?: number
+          total_predictions?: number
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          accuracy?: number
+          created_at?: string
+          highlights?: Json | null
+          id?: string
+          is_read?: boolean
+          points_earned?: number
+          streak?: number
+          total_predictions?: number
+          user_id?: string
+          week_start?: string
         }
         Relationships: []
       }

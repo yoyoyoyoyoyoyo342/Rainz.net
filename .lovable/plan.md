@@ -1,125 +1,95 @@
-# DryRoutes — Completed Implementation
 
-## What was done
 
-### 1. Renamed "Rain-Free Route Planner" → **DryRoutes** (by Rainz)
+# Plan: Five Feature Additions for Rainz
 
-### 2. Performance: Fixed Map Lag
-- Created `src/hooks/use-lazy-map.tsx` — IntersectionObserver-based lazy mount hook
-- All 3 map components (DryRoute, RainMapCard, LiveWeatherMap) now:
-  - Lazy-load Leaflet JS/CSS via dynamic `import()`
-  - Only initialize when scrolled into viewport
-  - Use `preferCanvas: true` for reduced DOM overhead
+## 1. Weather Alerts & Push Notifications
 
-### 3. Moved DryRoute to Main Weather Page
-- Removed from `explore-sheet.tsx`
-- Added as standalone card in `Weather.tsx` (before Feature Ideas)
-- Larger default map (h-56)
+**Current state**: `usePushNotifications` hook exists with local notification support via service worker. No server-side push delivery or alert triggers exist.
 
-### 4. Fullscreen Mode
-- Expand button (⛶) on card header
-- Opens fullscreen Dialog overlay with full routing UI
+**Changes**:
 
-### 5. "Go" Navigation Mode
-- Turn-by-turn via `navigator.geolocation.watchPosition()`
-- Blue GPS dot on map, auto-centers[text]
-- Step-by-step instructions with maneuver icons
-- Rain score + ETA in status bar
-- Auto-advance to next step when within 30m
+| Area | Work |
+|------|------|
+| **DB** | Create `push_subscriptions` table (user_id, endpoint, p256dh, auth, created_at) and `notification_preferences` columns or table for alert types (rain_soon, severe_weather, prediction_result) |
+| **Edge function** `send-push-notification` | Accepts user_id + payload, looks up push subscription, sends via web-push using VAPID keys. Needs a new `VAPID_PRIVATE_KEY` secret |
+| **Edge function** `check-weather-alerts` | Scheduled cron (every 15 min): fetches weather for users with subscriptions, triggers push if rain starts within 30 min or severe warning issued |
+| **Verify-predictions hook** | After verification, call `send-push-notification` for the user with their result |
+| **Frontend** | In settings dialog, add toggles for each alert type. On enabling, call `subscribeToPush()` and store the subscription in `push_subscriptions` table. Generate VAPID key pair and store private key as Supabase secret |
 
-### 6. AR Navigation
-- Camera overlay with compass-based directional arrow
-- HUD showing current instruction, rain probability, ETA
-- Reuses proven device orientation pattern from AR overlay
+## 2. Social Features (Follow System + Friends Feed)
 
-### 7. Additional Features
-- **Transport modes**: Drive / Bike / Walk (OSRM profiles)
-- **Departure time picker**: Shifts rain forecast window
-- **Rain timeline bar**: Visual per-segment rain probability
-- **Share route**: Native share or clipboard
-- **OSRM steps=true**: Full turn-by-turn instructions
+**Current state**: No follow/friend system exists. Prediction battles exist but are challenge-based, not feed-based.
 
-### 8. Fixed Rainz/Temp/Wind Layers on Weather Map
-- Fixed layer visibility issue preventing Rainz, Temperature, and Wind layers from displaying
-- Ensured all weather data layers render correctly on LiveWeatherMap
+**Changes**:
 
-### 9. Fixed Map Loading on Track Mode in DryRoutes
-- Fixed map component initialization in Track mode
-- Resolved lazy-loading conflict with Track mode navigation
+| Area | Work |
+|------|------|
+| **DB** | Create `user_follows` table (follower_id uuid, following_id uuid, created_at, unique constraint). RLS: users can manage their own follows, can read follows involving them |
+| **DB** | Create `social_feed` view or query joining predictions + follows for feed display |
+| **Component** `social-feed.tsx` | New card showing recent predictions from followed users, with accuracy badges |
+| **Component** `follow-button.tsx` | Follow/unfollow toggle, used on user profiles and leaderboard entries |
+| **UserProfile page** | Add follower/following counts, follow button for other users |
+| **Prediction battles** | Add "Challenge" button next to followed users for quick battle initiation |
+| **Leaderboard** | Add follow button next to each user row |
 
-### 10. Added Update Counter & Improved DryRoutes
-- Added update counter to footer showing route recalculation status
-- Improved DryRoutes UI/UX with better visual feedback
-- Enhanced route planning experience with update indicators
+## 3. Route History & Playback (DryRoutes)
 
-### 11. Fixed Rain Cloud Layer Display in DryRoutes
-- Added missing zoom constraints (`minZoom: 0`) to rain/precipitation layer
-- Added proper z-index stacking (`zIndex: 500`) to ensure layer visibility
-- Rain cloud overlay now displays correctly when Radar button is toggled in Track/Route modes
+**Current state**: Saved routes are stored in localStorage as JSON with geometry arrays. No playback or timeline UI exists.
 
-### 12. Point-Based Route Drawing System
-- **Replaced freehand drawing with click-to-place points**: Users now click on map to place discrete points instead of continuous drawing
-- **Point types with visual markers**:
-  - 🟢 Green circle for start point (route origin)
-  - ⚪ Gray circle for waypoints (intermediate points)
-  - 🏁 Flag emoji for end point (route destination)
-- **Real-time road snapping**: Each point pair automatically snaps to road network via OSRM `/match` endpoint
-- **Real-time distance counter**: Updates as each point is added and after snapping completes
-- **Point management**:
-  - Click any marker to delete that specific point
-  - "Undo Last" button removes most recent point
-  - "Clear All" button resets entire route
-  - Point type selector allows switching between point types while placing
-- **Route confirmation dialog**: When "Done!" is clicked, shows route preview with distance, duration, rain score, and rain timeline before accepting
-- **Rain layer visibility**: Precipitation layer now displays consistently in all DryRoutes modes (Route/Track/Create Route) when Radar toggle is enabled
+**Changes**:
 
-### 13. Route Saving & Activity Tracking System
-- **Mode Renamed**: "Draw" mode renamed to **"Create Route"** for clarity and intuitive UX
-- **Route Saving Feature**:
-  - After creating or finding a route, users can save with custom name via modal
-  - Modal shows route name input (required), description (optional), public toggle, and route stats preview
-  - Saves to `saved_routes` table with full metadata: geometry, distance, duration, rain score, steps, transport mode
-  - Route type tracked: 'found' (Route mode) / 'created' (Create Route mode) / 'tracked' (Track mode)
-  - Success toast notification after save, auto-refresh of saved routes list
-- **Activity Tracking & Saving**:
-  - After completing Track session (stop button), users can save named activity
-  - Modal auto-populates with "Activity - HH:MM AM/PM" format, user can edit
-  - Saves all GPS points with timestamps, calculates calories/CO2 estimates based on transport mode
-  - Saves to `saved_activities` table with complete geospatial data for future playback/analysis
-  - Public toggle for future sharing features
-- **Track Mode Route Selection**:
-  - Dropdown selector in Track mode shows all user's saved routes with distance/duration/rain score
-  - When selected, route geometry loads on map with visual markers for endpoints
-  - Auto-advance to next waypoint when GPS within 30m (reuses Go navigation logic)
-  - Manual GPS tracking still works in parallel and can be saved as new activity
-- **Database Schema**:
-  - **saved_routes**: Stores user routes with geometry (GeoJSON), rain data, turn-by-turn steps, metadata
-  - **saved_activities**: Stores tracked activities with GPS points (lat/lng/timestamp), stats, estimates
-  - Row Level Security (RLS) policies ensure users can only see/edit their own routes and public routes
-  - Indexes on user_id, created_at, is_public for fast queries
+| Area | Work |
+|------|------|
+| **DB** (optional) | Create `saved_routes` table to persist routes to account (user_id, name, geometry jsonb, distance, duration, transport_mode, created_at). Migrate from localStorage |
+| **Component** `route-history-panel.tsx` | Timeline view of saved activities sorted by date, showing distance, duration, transport mode |
+| **Playback feature** | "Play" button on each saved route: animates a marker along the route geometry at configurable speed (1x/2x/5x). Uses `requestAnimationFrame` + interpolation between geometry points. Shows elapsed time/distance counter |
+| **DryRoute integration** | Add a "History" tab alongside Route/Track/Draw. When selecting a saved route, display it on map with playback controls (play/pause/reset/speed) |
+| **Map animation** | Smooth marker movement using Leaflet's `setLatLng` with cubic interpolation. Optional polyline that draws progressively behind the marker |
 
-## Files
-| File | Action |
-|------|--------|
-| `src/hooks/use-lazy-map.tsx` | NEW — IntersectionObserver hook |
-| `src/components/weather/dry-route.tsx` | Updated: Point-based draw mode, real-time snapping per segment, distance tracking, confirmation dialog, rain layer consistency |
-| `src/components/weather/dry-route-navigation.tsx` | NEW — Turn-by-turn panel |
-| `src/components/weather/dry-route-ar.tsx` | NEW — AR navigation overlay |
-| `src/components/weather/explore-sheet.tsx` | Removed RainRoutePlanner |
-| `src/pages/Weather.tsx` | Added DryRoute card |
-| `src/components/weather/rain-map-card.tsx` | Lazy map loading |
-| `src/components/weather/live-weather-map.tsx` | Lazy map loading |
-| `src/components/weather/rain-route-planner.tsx` | DELETED |
+## 4. Weekly Weather Recap
 
-### 14. March 2026 Bug fixes & refinements
-- **Map overlay z‑index**: Fixed issue where fullscreen map would cover route name/save UI in Create Route mode. Modals and bottom sheets now use `z-[2000]` so they always float above map controls.
-- **Distance counter**: Waypoint distance now calculated on every click using straight‑line haversine math; removed road snapping. Display updates immediately instead of sticking at 0.00 km.
-- **Road snapping removed**: OSRM snapping logic stripped from draw mode; routes may pass freely through forests or off‑road without adjustment.
-- **Leaderboard corrections**:
-  - Monthly RPC updated to filter by `prediction_date` rather than `updated_at` and otherwise mirror the all‑time query. Accuracy now matches the all‑time tab exactly (e.g. Seje_ged’s percentage will be identical).
-  - Front‑end fetchMonthlyLeaderboard simplified to trust the RPC output; previous workaround queries were removed.
-  - Added trigger that bumps `updated_at` when predictions are verified/points awarded so the monthly leaderboard reflects new points immediately.
-- **Radar overlay fixes**: `showRadar` effect now re‑runs when the map instance is created and `initMap` explicitly adds the layer if the toggle is on. This prevents cases where radar was toggled before map load and never appeared.
-- **Map stacking tweaks**: Map containers now have `z-0`; all DryRoutes bottom sheets/modals use `z-[2000]` ensuring UI always sits above the map. Cleans up lingering overlay problems.
-- **Legal updates**: Added explicit DryRoutes liability disclaimers to Terms of Service and Privacy Policy; updated "last updated" dates.
-- **Misc**: plan file updated to document the above changes.
+**Current state**: `weather-wrapped.tsx` exists as a full "Wrapped" dialog. The `weekly-recap` edge function sends basic in-app notifications. No visual recap card exists.
+
+**Changes**:
+
+| Area | Work |
+|------|------|
+| **Edge function** `weekly-recap` | Enhance to store structured recap data in a new `weekly_recaps` table (user_id, week_start, total_predictions, accuracy, points_earned, streak, highlights jsonb, created_at) |
+| **Component** `weekly-recap-card.tsx` | Swipeable card stack (like Wrapped) with 4-5 slides: prediction accuracy ring chart, streak flame animation, points earned bar, top weather highlight, comparison vs previous week |
+| **Weather page** | Show recap card at top of page on Mondays (or when new recap available), dismissible. Badge on explore button when unread |
+| **Shareable** | "Share Recap" button generates a PNG using html-to-image (pattern already used in weather-wrapped.tsx) |
+
+## 5. Widget Page Polish
+
+**Current state**: `widget-generator.tsx` has basic config (theme/size/units/toggles) with live iframe preview and copy button. The `/widgets` page wraps it.
+
+**Changes**:
+
+| Area | Work |
+|------|------|
+| **Live preview** | Add auto-refresh on config change (debounced 500ms). Show loading skeleton while iframe loads |
+| **Theme customization** | Add color accent picker, border-radius slider, font size option. Pass as URL params to widget |
+| **Size presets** | Visual size preset cards (thumbnail previews) instead of dropdown. Click to select |
+| **Responsive preview** | "Mobile / Tablet / Desktop" toggle that adjusts the preview container width |
+| **Code output** | Add tabs for iframe / React component / script tag embed options. Syntax-highlighted code blocks |
+| **Widget page** | Add "Popular Widgets" gallery section showing pre-configured examples users can start from |
+
+## Implementation Priority
+
+These are independent features. Recommended order by impact:
+
+1. **Weekly Weather Recap** — builds on existing infra, high engagement value
+2. **Widget Page Polish** — purely frontend, no DB changes
+3. **Weather Alerts** — needs VAPID setup + edge function, medium complexity
+4. **Route History & Playback** — complex animation work, localStorage→DB migration
+5. **Social Features** — largest scope, new DB tables + multiple UI surfaces
+
+## Files to Create/Modify
+
+- **New DB tables**: `user_follows`, `push_subscriptions`, `saved_routes`, `weekly_recaps`
+- **New edge functions**: `send-push-notification`, `check-weather-alerts`
+- **New components**: `social-feed.tsx`, `follow-button.tsx`, `route-history-panel.tsx`, `weekly-recap-card.tsx`
+- **Modified components**: `dry-route.tsx`, `widget-generator.tsx`, `leaderboard.tsx`, `settings-dialog.tsx`, `UserProfile.tsx`, `Weather.tsx`, `Widgets.tsx`
+- **Modified edge functions**: `weekly-recap/index.ts`, `verify-predictions/index.ts`
+- **New secret needed**: `VAPID_PRIVATE_KEY`
+

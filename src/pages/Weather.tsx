@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense, lazy } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CloudSun, LogIn, WifiOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,54 +8,57 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { weatherApi } from "@/lib/weather-api";
-import { LocationSearch } from "@/components/weather/location-search";
-import { CurrentWeather } from "@/components/weather/current-weather";
-import { TenDayForecast } from "@/components/weather/ten-day-forecast";
-import { DetailedMetrics } from "@/components/weather/detailed-metrics";
-import { PollenCard } from "@/components/weather/pollen-card";
-import { SettingsDialog } from "@/components/weather/settings-dialog";
-import { WeatherReportForm } from "@/components/weather/weather-report-form";
 import { WeatherResponse } from "@/types/weather";
 import { checkWeatherAlerts } from "@/lib/weather-alerts";
 import { useAuth } from "@/hooks/use-auth";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { useUserPreferences } from "@/hooks/use-user-preferences";
-import { AIChatButton } from "@/components/weather/ai-chat-button";
-import { AnimatedWeatherBackground } from "@/components/weather/animated-weather-background";
-import { HolidayBackground, getCurrentHoliday } from "@/components/weather/holiday-backgrounds";
-import { MorningWeatherReview } from "@/components/weather/morning-weather-review";
-import { WinterAlerts } from "@/components/weather/winter-alerts";
-import { WeatherStationInfo } from "@/components/weather/weather-station-info";
-
 import { useLanguage } from "@/contexts/language-context";
-import { SocialWeatherCard } from "@/components/weather/social-weather-card";
-import { ARWeatherOverlay } from "@/components/weather/ar-weather-overlay";
-import { PredictionDialog } from "@/components/weather/prediction-dialog";
 import { useTimeOfDay } from "@/hooks/use-time-of-day";
 import { useTimeOfDayContext } from "@/contexts/time-of-day-context";
-import { LockedPredictionButton } from "@/components/weather/locked-prediction-button";
 import { useHyperlocalWeather } from "@/hooks/use-hyperlocal-weather";
-import { AQICard } from "@/components/weather/aqi-card";
-import { BarometerCard } from "@/components/weather/barometer-card";
-import { MobileLocationNav } from "@/components/weather/mobile-location-nav";
-import { HeaderInfoBar } from "@/components/weather/header-info-bar";
-import RainMapCard from "@/components/weather/rain-map-card";
 import { usePremiumSettings } from "@/hooks/use-premium-settings";
-import { AffiliateCard } from "@/components/weather/affiliate-card";
 import { trackWeatherView } from "@/lib/track-event";
-
 import { useAccountStorage } from "@/hooks/use-account-storage";
-import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
 import { useOfflineCache } from "@/hooks/use-offline-cache";
-import { SEOHead } from "@/components/seo/seo-head";
-import { ChristmasCalendar } from "@/components/weather/christmas-calendar";
-import { RamadanCalendar } from "@/components/weather/ramadan-calendar";
-import { OnboardingFlow } from "@/components/weather/onboarding-flow";
-import { ExploreSheet, ExploreButton } from "@/components/weather/explore-sheet";
-import { FeatureIdeasCard } from "@/components/weather/feature-ideas-card";
-import { BattleAcceptCard } from "@/components/weather/battle-accept-card";
-import { DryRoute } from "@/components/weather/dry-route";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
+
+// Critical above-the-fold components — loaded eagerly
+import { LocationSearch } from "@/components/weather/location-search";
+import { CurrentWeather } from "@/components/weather/current-weather";
+import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
+import { SEOHead } from "@/components/seo/seo-head";
+import { AnimatedWeatherBackground } from "@/components/weather/animated-weather-background";
+import { HolidayBackground, getCurrentHoliday } from "@/components/weather/holiday-backgrounds";
+import { HeaderInfoBar } from "@/components/weather/header-info-bar";
+import { SettingsDialog } from "@/components/weather/settings-dialog";
+import { WeatherStationInfo } from "@/components/weather/weather-station-info";
+import { WinterAlerts } from "@/components/weather/winter-alerts";
+import { LockedPredictionButton } from "@/components/weather/locked-prediction-button";
+
+// Below-the-fold components — lazy loaded for faster initial render
+const TenDayForecast = lazy(() => import("@/components/weather/ten-day-forecast").then(m => ({ default: m.TenDayForecast })));
+const DetailedMetrics = lazy(() => import("@/components/weather/detailed-metrics").then(m => ({ default: m.DetailedMetrics })));
+const PollenCard = lazy(() => import("@/components/weather/pollen-card").then(m => ({ default: m.PollenCard })));
+const WeatherReportForm = lazy(() => import("@/components/weather/weather-report-form").then(m => ({ default: m.WeatherReportForm })));
+const AIChatButton = lazy(() => import("@/components/weather/ai-chat-button").then(m => ({ default: m.AIChatButton })));
+const MorningWeatherReview = lazy(() => import("@/components/weather/morning-weather-review").then(m => ({ default: m.MorningWeatherReview })));
+const SocialWeatherCard = lazy(() => import("@/components/weather/social-weather-card").then(m => ({ default: m.SocialWeatherCard })));
+const ARWeatherOverlay = lazy(() => import("@/components/weather/ar-weather-overlay").then(m => ({ default: m.ARWeatherOverlay })));
+const PredictionDialog = lazy(() => import("@/components/weather/prediction-dialog").then(m => ({ default: m.PredictionDialog })));
+const AQICard = lazy(() => import("@/components/weather/aqi-card").then(m => ({ default: m.AQICard })));
+const BarometerCard = lazy(() => import("@/components/weather/barometer-card").then(m => ({ default: m.BarometerCard })));
+const MobileLocationNav = lazy(() => import("@/components/weather/mobile-location-nav").then(m => ({ default: m.MobileLocationNav })));
+const RainMapCard = lazy(() => import("@/components/weather/rain-map-card"));
+const AffiliateCard = lazy(() => import("@/components/weather/affiliate-card").then(m => ({ default: m.AffiliateCard })));
+const ChristmasCalendar = lazy(() => import("@/components/weather/christmas-calendar").then(m => ({ default: m.ChristmasCalendar })));
+const RamadanCalendar = lazy(() => import("@/components/weather/ramadan-calendar").then(m => ({ default: m.RamadanCalendar })));
+const OnboardingFlow = lazy(() => import("@/components/weather/onboarding-flow").then(m => ({ default: m.OnboardingFlow })));
+const ExploreSheet = lazy(() => import("@/components/weather/explore-sheet").then(m => ({ default: m.ExploreSheet })));
+const ExploreButton = lazy(() => import("@/components/weather/explore-sheet").then(m => ({ default: m.ExploreButton })));
+const FeatureIdeasCard = lazy(() => import("@/components/weather/feature-ideas-card").then(m => ({ default: m.FeatureIdeasCard })));
+const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-card").then(m => ({ default: m.BattleAcceptCard })));
+const DryRoute = lazy(() => import("@/components/weather/dry-route").then(m => ({ default: m.DryRoute })));
 
 export default function WeatherPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -656,7 +659,7 @@ export default function WeatherPage() {
               </CardContent>
             </Card>
           ) : weatherData ? (
-            <>
+            <Suspense fallback={null}>
               {weatherData.demo && (
                 <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-xl">
                   <div className="flex items-center gap-3">
@@ -853,36 +856,38 @@ export default function WeatherPage() {
                   </div>
                 </div>
               </footer>
-            </>
+            </Suspense>
           ) : null}
         </div>
 
-        {weatherData && (
-          <AIChatButton
-            weatherData={weatherData.mostAccurate}
-            location={selectedLocation.name}
-            isImperial={isImperial}
-          />
-        )}
-        {user && (
-          <MobileLocationNav
-            onLocationSelect={handleLocationSelect}
-            currentLocation={selectedLocation}
-            isImperial={isImperial}
-          />
-        )}
-        {user && showOnboarding && (
-          <OnboardingFlow
-            open={showOnboarding}
-            userId={user.id}
-            onComplete={(loc) => {
-              setShowOnboarding(false);
-              if (loc) {
-                handleLocationSelect(loc.lat, loc.lon, loc.name);
-              }
-            }}
-          />
-        )}
+        <Suspense fallback={null}>
+          {weatherData && (
+            <AIChatButton
+              weatherData={weatherData.mostAccurate}
+              location={selectedLocation.name}
+              isImperial={isImperial}
+            />
+          )}
+          {user && (
+            <MobileLocationNav
+              onLocationSelect={handleLocationSelect}
+              currentLocation={selectedLocation}
+              isImperial={isImperial}
+            />
+          )}
+          {user && showOnboarding && (
+            <OnboardingFlow
+              open={showOnboarding}
+              userId={user.id}
+              onComplete={(loc) => {
+                setShowOnboarding(false);
+                if (loc) {
+                  handleLocationSelect(loc.lat, loc.lon, loc.name);
+                }
+              }}
+            />
+          )}
+        </Suspense>
       </div>
     </>
   );

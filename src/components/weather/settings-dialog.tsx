@@ -196,6 +196,22 @@ export function SettingsDialog({
         setNotificationsEnabled(false);
         return;
       }
+
+      // Store push subscription in database
+      try {
+        const { subscribeToPush } = await import('@/lib/notification-utils');
+        const subData = await subscribeToPush();
+        if (subData && user) {
+          await supabase.from('push_subscriptions').upsert({
+            user_id: user.id,
+            endpoint: subData.endpoint,
+            p256dh: subData.keys.p256dh,
+            auth: subData.keys.auth,
+          }, { onConflict: 'user_id,endpoint' });
+        }
+      } catch (pushErr) {
+        console.log('Push subscription storage skipped:', pushErr);
+      }
     }
 
     try {

@@ -860,32 +860,34 @@ export default function WeatherPage() {
           ) : null}
         </div>
 
-        {weatherData && (
-          <AIChatButton
-            weatherData={weatherData.mostAccurate}
-            location={selectedLocation.name}
-            isImperial={isImperial}
-          />
-        )}
-        {user && (
-          <MobileLocationNav
-            onLocationSelect={handleLocationSelect}
-            currentLocation={selectedLocation}
-            isImperial={isImperial}
-          />
-        )}
-        {user && showOnboarding && (
-          <OnboardingFlow
-            open={showOnboarding}
-            userId={user.id}
-            onComplete={(loc) => {
-              setShowOnboarding(false);
-              if (loc) {
-                handleLocationSelect(loc.lat, loc.lon, loc.name);
-              }
-            }}
-          />
-        )}
+        <Suspense fallback={null}>
+          {weatherData && (
+            <AIChatButton
+              weatherData={weatherData.mostAccurate}
+              location={selectedLocation.name}
+              isImperial={isImperial}
+            />
+          )}
+          {user && (
+            <MobileLocationNav
+              onLocationSelect={handleLocationSelect}
+              currentLocation={selectedLocation}
+              isImperial={isImperial}
+            />
+          )}
+          {user && showOnboarding && (
+            <OnboardingFlow
+              open={showOnboarding}
+              userId={user.id}
+              onComplete={(loc) => {
+                setShowOnboarding(false);
+                if (loc) {
+                  handleLocationSelect(loc.lat, loc.lon, loc.name);
+                }
+              }}
+            />
+          )}
+        </Suspense>
       </div>
     </>
   );

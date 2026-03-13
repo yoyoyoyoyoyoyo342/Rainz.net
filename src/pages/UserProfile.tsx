@@ -162,6 +162,7 @@ const UserProfile = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOwnProfile = user?.id === userId;
+  const { data: followCounts } = useFollowCounts(userId);
 
   useEffect(() => {
     if (userId) {

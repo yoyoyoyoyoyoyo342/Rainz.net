@@ -46,16 +46,6 @@ const Widget = lazy(() => import("./pages/Widget"));
 const Embed = lazy(() => import("./pages/Embed"));
 const Info = lazy(() => import("./pages/Info"));
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-      gcTime: 1000 * 60 * 10, // Keep in cache for 10 minutes
-      retry: 1,
-      retryDelay: 1000,
-    },
-  },
-});
 
 function AnalyticsTracker() {
   useAnalytics();

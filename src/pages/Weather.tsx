@@ -91,6 +91,8 @@ export default function WeatherPage() {
   const { data: accountData, loading: accountLoading, setUserLocation: saveLocationToAccount, setLocationPermission } = useAccountStorage();
   const { saveToCache, getFromCache, isEnabled: offlineCacheEnabled } = useOfflineCache();
   const [isUsingCachedData, setIsUsingCachedData] = useState(false);
+  const mountTimeRef = useRef(performance.now());
+  const hasLoggedTimingRef = useRef(false);
   const currentHoliday = getCurrentHoliday();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [exploreOpen, setExploreOpen] = useState(false);

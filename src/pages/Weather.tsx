@@ -602,6 +602,14 @@ export default function WeatherPage() {
                 </div>
               )}
 
+              {/* Background refresh indicator */}
+              {!isLoading && weatherData && isFetching && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/10 text-muted-foreground animate-pulse">
+                  <CloudSun className="w-4 h-4 text-primary animate-spin" style={{ animationDuration: '3s' }} />
+                  <span className="text-xs">Refreshing weather data…</span>
+                </div>
+              )}
+
               <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-start">
                 <div className="space-y-2">
                   <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />

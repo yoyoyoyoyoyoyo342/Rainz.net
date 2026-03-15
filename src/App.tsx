@@ -2,7 +2,8 @@ import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { queryClient, queryPersister } from "@/lib/queryClient";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -45,16 +46,6 @@ const Widget = lazy(() => import("./pages/Widget"));
 const Embed = lazy(() => import("./pages/Embed"));
 const Info = lazy(() => import("./pages/Info"));
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-      gcTime: 1000 * 60 * 10, // Keep in cache for 10 minutes
-      retry: 1,
-      retryDelay: 1000,
-    },
-  },
-});
 
 function AnalyticsTracker() {
   useAnalytics();
@@ -225,11 +216,11 @@ function AppContent() {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: queryPersister, maxAge: 1000 * 60 * 60 * 24 }}>
     <TimeOfDayProvider>
       <AppContent />
     </TimeOfDayProvider>
-  </QueryClientProvider>
+  </PersistQueryClientProvider>
 );
 
 export default App;

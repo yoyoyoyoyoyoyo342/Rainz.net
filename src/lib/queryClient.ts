@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -47,13 +48,18 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5, // 5 minutes default cache
-      gcTime: 1000 * 60 * 10, // Keep in cache for 10 minutes
-      retry: 1, // Retry once on failure
-      retryDelay: 1000, // Wait 1 second before retry
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 60 * 24, // 24 hours — keeps cache alive for persistence
+      retry: 1,
+      retryDelay: 1000,
     },
     mutations: {
       retry: false,
     },
   },
+});
+
+export const queryPersister = createSyncStoragePersister({
+  storage: window.localStorage,
+  key: "rainz-query-cache",
 });

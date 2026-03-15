@@ -1,5 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import { createSyncStoragePersister } from "@tanstack/query-persist-client-core";
+import { createSyncStoragePersister } from "@tanstack/react-query-persist-client";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {

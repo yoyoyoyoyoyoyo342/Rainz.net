@@ -272,6 +272,18 @@ export default function WeatherPage() {
     setTimeOfDay(timeOfDay);
   }, [timeOfDay, setTimeOfDay]);
 
+  // Performance: log time-to-data
+  useEffect(() => {
+    if (weatherData && !hasLoggedTimingRef.current) {
+      const elapsed = Math.round(performance.now() - mountTimeRef.current);
+      const fromCache = elapsed < 200;
+      console.log(
+        `⚡ [Rainz Perf] Weather data ready in ${elapsed}ms — ${fromCache ? '📦 from cache' : '🌐 from network'}`
+      );
+      hasLoggedTimingRef.current = true;
+    }
+  }, [weatherData]);
+
   const actualStationName = useMemo(() => {
     const stationInfo = weatherData?.aggregated?.stationInfo || weatherData?.sources?.[0]?.stationInfo;
     return stationInfo?.name || selectedLocation?.name || "Unknown";

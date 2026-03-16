@@ -690,6 +690,7 @@ export default function WeatherPage() {
             <div className="transition-opacity duration-300 ease-out">
               <WeatherPageSkeleton />
             </div>
+          ) : !selectedLocation ? (
             <Card className="glass-card border border-border/20 text-center py-12 rounded-2xl">
               <CardContent className="space-y-4">
                 <CloudSun className="w-16 h-16 text-primary mx-auto" />

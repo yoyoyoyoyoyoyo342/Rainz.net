@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense, lazy } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense, lazy, useTransition } from "react";
+import { queryClient } from "@/lib/queryClient";
 import { useSearchParams } from "react-router-dom";
 import { CloudSun, LogIn, WifiOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";

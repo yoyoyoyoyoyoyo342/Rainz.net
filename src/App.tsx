@@ -172,6 +172,18 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
   );
 }
 
+function LockdownGuard({ children }: { children: React.ReactNode }) {
+  const { isEnabled, isLoading } = useFeatureFlags();
+  const { isAdmin } = useIsAdmin();
+  const isLocked = isEnabled('app_lockdown', false);
+
+  if (!isLoading && isLocked && !isAdmin) {
+    return <AppLockdownScreen />;
+  }
+
+  return <>{children}</>;
+}
+
 function AppContent() {
   const { isNightTime } = useTimeOfDayContext();
   usePrefetchSavedLocations();

@@ -178,8 +178,8 @@ function LockdownGuard({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const isLocked = isEnabled('app_lockdown', false);
 
-  // Always let admins through to /admin route
-  if (location.pathname === '/admin') {
+  // Always let /admin and /auth through for admins to manage lockdown
+  if (location.pathname === '/admin' || location.pathname === '/auth') {
     return <>{children}</>;
   }
 

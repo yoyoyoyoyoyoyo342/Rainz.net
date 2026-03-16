@@ -7,12 +7,13 @@ export function AppLockdownScreen() {
 
   useEffect(() => {
     async function fetchMessage() {
+      // Use .filter() for new columns not yet in generated types
       const { data } = await supabase
         .from('broadcast_messages')
         .select('message')
-        .eq('locks_app', true)
         .eq('is_active', true)
-        .eq('is_emergency', true)
+        .filter('locks_app', 'eq', true)
+        .filter('is_emergency', 'eq', true)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();

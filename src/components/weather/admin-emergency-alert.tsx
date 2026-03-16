@@ -14,7 +14,8 @@ export function AdminEmergencyAlert() {
   const [locksApp, setLocksApp] = useState(false);
   const [sending, setSending] = useState(false);
   const [lifting, setLifting] = useState(false);
-  const { isEnabled, toggleFlag } = useFeatureFlags();
+  const { isEnabled } = useFeatureFlags();
+  const queryClient = useQueryClient();
 
   const isLocked = isEnabled('app_lockdown', false);
 

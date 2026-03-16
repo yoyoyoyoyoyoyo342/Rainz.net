@@ -159,49 +159,10 @@ function AppContent() {
                       <div className="flex flex-col min-h-screen">
                         <div className="flex-1">
                           <AnalyticsTracker />
-                          <Suspense fallback={<LoadingOverlay isOpen={true} />}>
-                            {isApiSubdomain ? (
-                              <Routes>
-                                <Route path="/" element={<Navigate to="https://rainz.net" replace />} />
-                                <Route path="*" element={<Navigate to="/" replace />} />
-                              </Routes>
-                            ) : isBlogSubdomain ? (
-                              <Routes>
-                                <Route path="/" element={<Articles />} />
-                                <Route path="/articles" element={<Articles />} />
-                                <Route path="/articles/:slug" element={<BlogPost />} />
-                                <Route path="/:slug" element={<BlogPost />} />
-                                <Route path="*" element={<Navigate to="/" replace />} />
-                              </Routes>
-                            ) : (
-                              <Routes>
-                                <Route path="/" element={<Weather />} />
-                                <Route path="/auth" element={<Auth />} />
-                                <Route path="/admin" element={<AdminPanel />} />
-
-                                <Route path="/articles" element={<Articles />} />
-                                <Route path="/articles/:slug" element={<BlogPost />} />
-                                <Route path="/blog" element={<Navigate to="/articles" replace />} />
-                                <Route path="/blog/:slug" element={<Navigate to="/articles" replace />} />
-                                <Route path="/terms" element={<TermsOfService />} />
-                                <Route path="/privacy" element={<PrivacyPolicy />} />
-                                <Route path="/data-settings" element={<DataSettings />} />
-                                <Route path="/about" element={<About />} />
-                                <Route path="/profile/:userId" element={<UserProfile />} />
-                                <Route path="/subscription-success" element={<SubscriptionSuccess />} />
-                                <Route path="/subscription-cancel" element={<SubscriptionCancel />} />
-                                <Route path="/affiliate" element={<Affiliate />} />
-                                <Route path="/affiliate-policy" element={<AffiliatePolicy />} />
-                                <Route path="/download" element={<Download />} />
-                                <Route path="/widgets" element={<Widgets />} />
-                                <Route path="/widget" element={<Widget />} />
-                                <Route path="/embed" element={<Embed />} />
-                                <Route path="/info" element={<Info />} />
-                                <Route path="/weather" element={<Navigate to="/" replace />} />
-                                <Route path="*" element={<NotFound />} />
-                              </Routes>
-                            )}
-                          </Suspense>
+                          <AnimatedRoutes
+                            isApiSubdomain={isApiSubdomain}
+                            isBlogSubdomain={isBlogSubdomain}
+                          />
                         </div>
                         <Footer />
                       </div>

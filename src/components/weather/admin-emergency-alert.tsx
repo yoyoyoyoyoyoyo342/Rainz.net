@@ -61,8 +61,8 @@ export function AdminEmergencyAlert() {
       // Deactivate all emergency messages that lock the app
       await supabase
         .from('broadcast_messages')
-        .update({ is_active: false })
-        .eq('locks_app', true)
+        .update({ is_active: false } as any)
+        .filter('locks_app', 'eq', true)
         .eq('is_active', true);
 
       // Disable the lockdown flag

@@ -21,6 +21,7 @@ import { AdminFeatureIdeas } from './admin-feature-ideas';
 import { AdminUserManagement } from './admin-user-management';
 import { AdminFeatureFlags } from './admin-feature-flags';
 import { AdminContentModeration } from './admin-content-moderation';
+import { AdminEmergencyAlert } from './admin-emergency-alert';
 
 interface WeatherReport {
   id: string;

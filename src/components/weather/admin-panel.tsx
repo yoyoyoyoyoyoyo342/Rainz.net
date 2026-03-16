@@ -170,6 +170,13 @@ export function AdminPanel() {
           </AdminSection>
         </TabsContent>
 
+        {/* Emergency */}
+        <TabsContent value="emergency">
+          <AdminSection title="Emergency Alert 🚨" description="Send emergency alerts and lock the app for all users.">
+            <AdminEmergencyAlert />
+          </AdminSection>
+        </TabsContent>
+
         {/* Feature Flags */}
         <TabsContent value="flags">
           <AdminSection title="Feature Flags 🚦" description="Toggle features on and off across the app.">

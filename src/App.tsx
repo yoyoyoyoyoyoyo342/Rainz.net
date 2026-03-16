@@ -55,6 +55,7 @@ const Info = lazy(() => import("./pages/Info"));
 
 function AnalyticsTracker() {
   useAnalytics();
+  useBroadcastListener();
   return null;
 }
 

@@ -214,16 +214,18 @@ function AppContent() {
                     <CookieConsentBanner />
                     <PWAInstallPopup />
                     <BrowserRouter>
-                      <div className="flex flex-col min-h-screen">
-                        <div className="flex-1">
-                          <AnalyticsTracker />
-                          <AnimatedRoutes
-                            isApiSubdomain={isApiSubdomain}
-                            isBlogSubdomain={isBlogSubdomain}
-                          />
+                      <LockdownGuard>
+                        <div className="flex flex-col min-h-screen">
+                          <div className="flex-1">
+                            <AnalyticsTracker />
+                            <AnimatedRoutes
+                              isApiSubdomain={isApiSubdomain}
+                              isBlogSubdomain={isBlogSubdomain}
+                            />
+                          </div>
+                          <Footer />
                         </div>
-                        <Footer />
-                      </div>
+                      </LockdownGuard>
                     </BrowserRouter>
                   </TooltipProvider>
                    </CookieConsentProvider>

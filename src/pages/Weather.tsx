@@ -714,6 +714,7 @@ export default function WeatherPage() {
             </Card>
           ) : weatherData ? (
             <Suspense fallback={null}>
+              <div className="animate-fade-in">
               {weatherData.demo && (
                 <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-xl">
                   <div className="flex items-center gap-3">

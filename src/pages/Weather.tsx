@@ -747,114 +747,135 @@ export default function WeatherPage() {
               {/* Social Feed */}
               <SocialFeed isImperial={isImperial} />
 
-              <CurrentWeather
-                weatherData={weatherData.sources}
-                mostAccurate={weatherData.mostAccurate}
-                onRefresh={handleRefresh}
-                isLoading={isFetching}
-                lastUpdated={lastUpdated}
-                isImperial={isImperial}
-                isAutoDetected={isAutoDetected}
-                currentLocation={selectedLocation}
-                onLocationSelect={handleLocationSelect}
-                displayName={customDisplayName}
-                actualStationName={actualStationName}
-                premiumSettings={premiumSettings}
-                hourlyData={weatherData.mostAccurate.hourlyForecast}
-                is24Hour={is24Hour}
-              />
+              <AnimatedCard index={0}>
+                <CurrentWeather
+                  weatherData={weatherData.sources}
+                  mostAccurate={weatherData.mostAccurate}
+                  onRefresh={handleRefresh}
+                  isLoading={isFetching}
+                  lastUpdated={lastUpdated}
+                  isImperial={isImperial}
+                  isAutoDetected={isAutoDetected}
+                  currentLocation={selectedLocation}
+                  onLocationSelect={handleLocationSelect}
+                  displayName={customDisplayName}
+                  actualStationName={actualStationName}
+                  premiumSettings={premiumSettings}
+                  hourlyData={weatherData.mostAccurate.hourlyForecast}
+                  is24Hour={is24Hour}
+                />
+              </AnimatedCard>
 
               {/* Share & AR Buttons */}
-              <div className="flex gap-2 mb-4">
-                <SocialWeatherCard
-                  location={selectedLocation?.name || "Unknown"}
-                  temperature={weatherData.mostAccurate.currentWeather.temperature}
-                  feelsLike={weatherData.mostAccurate.currentWeather.feelsLike}
-                  condition={weatherData.mostAccurate.currentWeather.condition}
-                  humidity={weatherData.mostAccurate.currentWeather.humidity}
-                  windSpeed={weatherData.mostAccurate.currentWeather.windSpeed}
-                  isImperial={isImperial}
-                  highTemp={weatherData.mostAccurate.dailyForecast?.[0]?.highTemp}
-                  lowTemp={weatherData.mostAccurate.dailyForecast?.[0]?.lowTemp}
-                  actualStationName={actualStationName}
-                />
-                <ARWeatherOverlay
-                  windSpeed={weatherData.mostAccurate.currentWeather.windSpeed}
-                  windDirection={weatherData.mostAccurate.currentWeather.windDirection || 0}
-                  latitude={selectedLocation?.lat || 0}
-                  longitude={selectedLocation?.lon || 0}
-                  condition={weatherData.mostAccurate.currentWeather.condition}
-                  uvIndex={weatherData.mostAccurate.currentWeather.uvIndex}
-                  isImperial={isImperial}
-                />
-              </div>
-
-              {/* Requested card order */}
-              {/* Affiliate card - shown for everyone */}
-              <AffiliateCard />
-
-              <TenDayForecast
-                key="tenDay"
-                dailyForecast={weatherData.mostAccurate.dailyForecast}
-                weatherSources={weatherData.sources}
-                hourlyForecast={weatherData.mostAccurate.hourlyForecast}
-                isImperial={isImperial}
-                is24Hour={is24Hour}
-                premiumSettings={premiumSettings}
-              />
-
-              {weatherData?.mostAccurate?.currentWeather?.pollenData && (
-                <div className="mb-4">
-                  <PollenCard
-                    pollenData={weatherData.mostAccurate.currentWeather.pollenData}
-                    userId={user?.id}
+              <AnimatedCard index={1}>
+                <div className="flex gap-2 mb-4">
+                  <SocialWeatherCard
+                    location={selectedLocation?.name || "Unknown"}
                     temperature={weatherData.mostAccurate.currentWeather.temperature}
-                    windSpeed={weatherData.mostAccurate.currentWeather.windSpeed}
                     feelsLike={weatherData.mostAccurate.currentWeather.feelsLike}
-                    snowfall={weatherData.mostAccurate.currentWeather.snowfall}
-                    snowDepth={weatherData.mostAccurate.currentWeather.snowDepth}
                     condition={weatherData.mostAccurate.currentWeather.condition}
+                    humidity={weatherData.mostAccurate.currentWeather.humidity}
+                    windSpeed={weatherData.mostAccurate.currentWeather.windSpeed}
                     isImperial={isImperial}
-                    latitude={selectedLocation?.lat}
-                    longitude={selectedLocation?.lon}
-                    hyperlocalSnow={hyperlocalData?.snow}
+                    highTemp={weatherData.mostAccurate.dailyForecast?.[0]?.highTemp}
+                    lowTemp={weatherData.mostAccurate.dailyForecast?.[0]?.lowTemp}
+                    actualStationName={actualStationName}
+                  />
+                  <ARWeatherOverlay
+                    windSpeed={weatherData.mostAccurate.currentWeather.windSpeed}
+                    windDirection={weatherData.mostAccurate.currentWeather.windDirection || 0}
+                    latitude={selectedLocation?.lat || 0}
+                    longitude={selectedLocation?.lon || 0}
+                    condition={weatherData.mostAccurate.currentWeather.condition}
+                    uvIndex={weatherData.mostAccurate.currentWeather.uvIndex}
+                    isImperial={isImperial}
                   />
                 </div>
+              </AnimatedCard>
+
+              {/* Affiliate card */}
+              <AnimatedCard index={2}>
+                <AffiliateCard />
+              </AnimatedCard>
+
+              <AnimatedCard index={3}>
+                <TenDayForecast
+                  key="tenDay"
+                  dailyForecast={weatherData.mostAccurate.dailyForecast}
+                  weatherSources={weatherData.sources}
+                  hourlyForecast={weatherData.mostAccurate.hourlyForecast}
+                  isImperial={isImperial}
+                  is24Hour={is24Hour}
+                  premiumSettings={premiumSettings}
+                />
+              </AnimatedCard>
+
+              {weatherData?.mostAccurate?.currentWeather?.pollenData && (
+                <AnimatedCard index={4}>
+                  <div className="mb-4">
+                    <PollenCard
+                      pollenData={weatherData.mostAccurate.currentWeather.pollenData}
+                      userId={user?.id}
+                      temperature={weatherData.mostAccurate.currentWeather.temperature}
+                      windSpeed={weatherData.mostAccurate.currentWeather.windSpeed}
+                      feelsLike={weatherData.mostAccurate.currentWeather.feelsLike}
+                      snowfall={weatherData.mostAccurate.currentWeather.snowfall}
+                      snowDepth={weatherData.mostAccurate.currentWeather.snowDepth}
+                      condition={weatherData.mostAccurate.currentWeather.condition}
+                      isImperial={isImperial}
+                      latitude={selectedLocation?.lat}
+                      longitude={selectedLocation?.lon}
+                      hyperlocalSnow={hyperlocalData?.snow}
+                    />
+                  </div>
+                </AnimatedCard>
               )}
 
-              <MorningWeatherReview
-                weatherData={weatherData.mostAccurate}
-                location={actualStationName}
-                isImperial={isImperial}
-                userId={user?.id}
-              />
+              <AnimatedCard index={5}>
+                <MorningWeatherReview
+                  weatherData={weatherData.mostAccurate}
+                  location={actualStationName}
+                  isImperial={isImperial}
+                  userId={user?.id}
+                />
+              </AnimatedCard>
 
-              <div className="mb-4">
-                <RainMapCard latitude={selectedLocation.lat} longitude={selectedLocation.lon} locationName={actualStationName} />
-              </div>
+              <AnimatedCard index={6}>
+                <div className="mb-4">
+                  <RainMapCard latitude={selectedLocation.lat} longitude={selectedLocation.lon} locationName={actualStationName} />
+                </div>
+              </AnimatedCard>
 
+              <AnimatedCard index={7}>
                 <DetailedMetrics
                   currentWeather={weatherData.mostAccurate.currentWeather}
                   is24Hour={is24Hour}
                   premiumSettings={premiumSettings}
                 />
+              </AnimatedCard>
 
               {hyperlocalData?.aqi ? (
-                <div className="mb-4">
-                  <AQICard data={hyperlocalData.aqi} />
-                </div>
+                <AnimatedCard index={8}>
+                  <div className="mb-4">
+                    <AQICard data={hyperlocalData.aqi} />
+                  </div>
+                </AnimatedCard>
               ) : null}
 
               {/* DryRoutes */}
-              <DryRoute
-                latitude={selectedLocation.lat}
-                longitude={selectedLocation.lon}
-                locationName={actualStationName}
-                isImperial={isImperial}
-              />
+              <AnimatedCard index={9}>
+                <DryRoute
+                  latitude={selectedLocation.lat}
+                  longitude={selectedLocation.lon}
+                  locationName={actualStationName}
+                  isImperial={isImperial}
+                />
+              </AnimatedCard>
 
               {/* Feature Ideas Card */}
-              <FeatureIdeasCard />
+              <AnimatedCard index={10}>
+                <FeatureIdeasCard />
+              </AnimatedCard>
 
               {/* Explore More button */}
               {isFeatureEnabled('explore_enabled') && (

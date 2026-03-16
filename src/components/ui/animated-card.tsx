@@ -15,31 +15,40 @@ export function AnimatedCard({ children, index = 0, className }: AnimatedCardPro
     const el = ref.current;
     if (!el) return;
 
+    // Fallback: if IntersectionObserver doesn't fire within 1s, show anyway
+    const fallbackTimer = setTimeout(() => setIsVisible(true), 800 + index * 75);
+
+    if (!("IntersectionObserver" in window)) {
+      setIsVisible(true);
+      return () => clearTimeout(fallbackTimer);
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
+          // Delay based on index for stagger effect
+          setTimeout(() => setIsVisible(true), index * 75);
           observer.unobserve(el);
         }
       },
-      { threshold: 0.05, rootMargin: "50px" }
+      { threshold: 0.01, rootMargin: "100px" }
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+    return () => {
+      clearTimeout(fallbackTimer);
+      observer.disconnect();
+    };
+  }, [index]);
 
   return (
     <div
       ref={ref}
       className={cn(
         "transition-all duration-500 ease-out",
-        isVisible
-          ? "opacity-100 translate-y-0"
-          : "opacity-0 translate-y-4",
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
         className
       )}
-      style={{ transitionDelay: isVisible ? `${index * 75}ms` : "0ms" }}
     >
       {children}
     </div>

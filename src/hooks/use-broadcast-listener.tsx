@@ -49,13 +49,22 @@ export function useBroadcastListener() {
           if (!dismissedMessages.has(message.id) && !shownMessagesRef.current.has(message.id)) {
             shownMessagesRef.current.add(message.id);
 
-            toast.info('Admin Announcement', {
-              description: message.message,
-              duration: Infinity,
-              position: 'top-center',
-              onDismiss: () => markMessageAsDismissed(message.id),
-              onAutoClose: () => markMessageAsDismissed(message.id),
-            });
+            const isEmergency = (message as any).is_emergency === true;
+            if (isEmergency) {
+              toast.error('⚠️ Emergency Alert', {
+                description: message.message,
+                duration: Infinity,
+                position: 'top-center',
+              });
+            } else {
+              toast.info('Admin Announcement', {
+                description: message.message,
+                duration: Infinity,
+                position: 'top-center',
+                onDismiss: () => markMessageAsDismissed(message.id),
+                onAutoClose: () => markMessageAsDismissed(message.id),
+              });
+            }
           }
         });
       }
@@ -80,6 +89,14 @@ export function useBroadcastListener() {
           if (!dismissedMessages.has(newMessage.id) && !shownMessagesRef.current.has(newMessage.id)) {
             shownMessagesRef.current.add(newMessage.id);
 
+          const isEmergency = (newMessage as any).is_emergency === true;
+          if (isEmergency) {
+            toast.error('⚠️ Emergency Alert', {
+              description: newMessage.message,
+              duration: Infinity,
+              position: 'top-center',
+            });
+          } else {
             toast.info('Admin Announcement', {
               description: newMessage.message,
               duration: Infinity,
@@ -87,6 +104,7 @@ export function useBroadcastListener() {
               onDismiss: () => markMessageAsDismissed(newMessage.id),
               onAutoClose: () => markMessageAsDismissed(newMessage.id),
             });
+          }
           }
         }
       )

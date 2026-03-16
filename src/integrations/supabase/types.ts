@@ -280,6 +280,8 @@ export type Database = {
           created_by: string | null
           id: string
           is_active: boolean | null
+          is_emergency: boolean
+          locks_app: boolean
           message: string
         }
         Insert: {
@@ -289,6 +291,8 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_active?: boolean | null
+          is_emergency?: boolean
+          locks_app?: boolean
           message: string
         }
         Update: {
@@ -298,6 +302,8 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_active?: boolean | null
+          is_emergency?: boolean
+          locks_app?: boolean
           message?: string
         }
         Relationships: []

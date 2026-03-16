@@ -20,6 +20,10 @@ import { Footer } from "@/components/ui/footer";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { PWAInstallPopup } from "@/components/ui/pwa-install-popup";
 import { useAnalytics } from "@/hooks/use-analytics";
+import { useBroadcastListener } from "@/hooks/use-broadcast-listener";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
+import { useIsAdmin } from "@/hooks/use-is-admin";
+import { AppLockdownScreen } from "@/components/ui/app-lockdown-screen";
 import { toast as sonnerToast } from "sonner";
 
 // Critical components - load immediately
@@ -51,6 +55,7 @@ const Info = lazy(() => import("./pages/Info"));
 
 function AnalyticsTracker() {
   useAnalytics();
+  useBroadcastListener();
   return null;
 }
 
@@ -167,6 +172,18 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
   );
 }
 
+function LockdownGuard({ children }: { children: React.ReactNode }) {
+  const { isEnabled, isLoading } = useFeatureFlags();
+  const { isAdmin } = useIsAdmin();
+  const isLocked = isEnabled('app_lockdown', false);
+
+  if (!isLoading && isLocked && !isAdmin) {
+    return <AppLockdownScreen />;
+  }
+
+  return <>{children}</>;
+}
+
 function AppContent() {
   const { isNightTime } = useTimeOfDayContext();
   usePrefetchSavedLocations();
@@ -209,16 +226,18 @@ function AppContent() {
                     <CookieConsentBanner />
                     <PWAInstallPopup />
                     <BrowserRouter>
-                      <div className="flex flex-col min-h-screen">
-                        <div className="flex-1">
-                          <AnalyticsTracker />
-                          <AnimatedRoutes
-                            isApiSubdomain={isApiSubdomain}
-                            isBlogSubdomain={isBlogSubdomain}
-                          />
+                      <LockdownGuard>
+                        <div className="flex flex-col min-h-screen">
+                          <div className="flex-1">
+                            <AnalyticsTracker />
+                            <AnimatedRoutes
+                              isApiSubdomain={isApiSubdomain}
+                              isBlogSubdomain={isBlogSubdomain}
+                            />
+                          </div>
+                          <Footer />
                         </div>
-                        <Footer />
-                      </div>
+                      </LockdownGuard>
                     </BrowserRouter>
                   </TooltipProvider>
                    </CookieConsentProvider>

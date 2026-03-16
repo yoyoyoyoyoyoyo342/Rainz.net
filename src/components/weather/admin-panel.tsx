@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   CheckCircle2, XCircle, Clock, BarChart3, MessageSquare, Database,
   FileText, MapPin, Key, Tag, Lightbulb, ClipboardList,
-  Users, ToggleLeft, Shield,
+  Users, ToggleLeft, Shield, AlertTriangle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { AnalyticsDashboard } from './analytics-dashboard';
@@ -21,6 +21,7 @@ import { AdminFeatureIdeas } from './admin-feature-ideas';
 import { AdminUserManagement } from './admin-user-management';
 import { AdminFeatureFlags } from './admin-feature-flags';
 import { AdminContentModeration } from './admin-content-moderation';
+import { AdminEmergencyAlert } from './admin-emergency-alert';
 
 interface WeatherReport {
   id: string;
@@ -117,6 +118,7 @@ export function AdminPanel() {
   const TAB_ITEMS = [
     { value: 'users', label: 'Users', icon: <Users className="w-3.5 h-3.5" /> },
     { value: 'moderation', label: 'Moderation', icon: <Shield className="w-3.5 h-3.5" /> },
+    { value: 'emergency', label: 'Emergency', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
     { value: 'flags', label: 'Flags', icon: <ToggleLeft className="w-3.5 h-3.5" /> },
     { value: 'ideas', label: 'Ideas', icon: <Lightbulb className="w-3.5 h-3.5" /> },
     { value: 'reports', label: 'Reports', icon: <ClipboardList className="w-3.5 h-3.5" /> },
@@ -165,6 +167,13 @@ export function AdminPanel() {
         <TabsContent value="moderation">
           <AdminSection title="Content Moderation 🛡️" description="Review and delete weather reactions and predictions.">
             <AdminContentModeration />
+          </AdminSection>
+        </TabsContent>
+
+        {/* Emergency */}
+        <TabsContent value="emergency">
+          <AdminSection title="Emergency Alert 🚨" description="Send emergency alerts and lock the app for all users.">
+            <AdminEmergencyAlert />
           </AdminSection>
         </TabsContent>
 

@@ -118,6 +118,7 @@ export function AdminPanel() {
   const TAB_ITEMS = [
     { value: 'users', label: 'Users', icon: <Users className="w-3.5 h-3.5" /> },
     { value: 'moderation', label: 'Moderation', icon: <Shield className="w-3.5 h-3.5" /> },
+    { value: 'emergency', label: 'Emergency', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
     { value: 'flags', label: 'Flags', icon: <ToggleLeft className="w-3.5 h-3.5" /> },
     { value: 'ideas', label: 'Ideas', icon: <Lightbulb className="w-3.5 h-3.5" /> },
     { value: 'reports', label: 'Reports', icon: <ClipboardList className="w-3.5 h-3.5" /> },

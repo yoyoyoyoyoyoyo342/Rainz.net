@@ -174,10 +174,15 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
 
 function LockdownGuard({ children }: { children: React.ReactNode }) {
   const { isEnabled, isLoading } = useFeatureFlags();
-  const { isAdmin } = useIsAdmin();
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
   const isLocked = isEnabled('app_lockdown', false);
 
-  if (!isLoading && isLocked && !isAdmin) {
+  // While loading, show nothing to prevent users slipping through
+  if (isLoading || adminLoading) {
+    return <LoadingOverlay isOpen={true} />;
+  }
+
+  if (isLocked && !isAdmin) {
     return <AppLockdownScreen />;
   }
 

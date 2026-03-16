@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   CheckCircle2, XCircle, Clock, BarChart3, MessageSquare, Database,
   FileText, MapPin, Key, Tag, Lightbulb, ClipboardList,
-  Users, ToggleLeft, Shield,
+  Users, ToggleLeft, Shield, AlertTriangle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { AnalyticsDashboard } from './analytics-dashboard';

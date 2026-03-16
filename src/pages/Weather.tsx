@@ -918,6 +918,7 @@ export default function WeatherPage() {
                   </div>
                 </div>
               </footer>
+              </div>
             </Suspense>
           ) : null}
         </div>

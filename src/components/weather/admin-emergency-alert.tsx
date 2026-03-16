@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,13 +7,15 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { AlertTriangle, ShieldOff, Lock } from 'lucide-react';
 import { useFeatureFlags } from '@/hooks/use-feature-flags';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function AdminEmergencyAlert() {
   const [message, setMessage] = useState('');
   const [locksApp, setLocksApp] = useState(false);
   const [sending, setSending] = useState(false);
   const [lifting, setLifting] = useState(false);
-  const { isEnabled, toggleFlag } = useFeatureFlags();
+  const { isEnabled } = useFeatureFlags();
+  const queryClient = useQueryClient();
 
   const isLocked = isEnabled('app_lockdown', false);
 
@@ -44,6 +46,7 @@ export function AdminEmergencyAlert() {
           .eq('key', 'app_lockdown');
       }
 
+      await queryClient.invalidateQueries({ queryKey: ['feature-flags'] });
       toast.success('Emergency alert sent');
       setMessage('');
     } catch (error) {
@@ -59,17 +62,30 @@ export function AdminEmergencyAlert() {
       setLifting(true);
 
       // Deactivate all emergency messages that lock the app
-      await supabase
+      const { error: msgError } = await supabase
         .from('broadcast_messages')
         .update({ is_active: false } as any)
         .filter('locks_app', 'eq', true)
-        .eq('is_active', true);
+        .filter('is_active', 'eq', true);
+
+      if (msgError) {
+        console.error('Error deactivating messages:', msgError);
+        throw msgError;
+      }
 
       // Disable the lockdown flag
-      await supabase
+      const { error: flagError } = await supabase
         .from('feature_flags')
         .update({ enabled: false, updated_at: new Date().toISOString() })
         .eq('key', 'app_lockdown');
+
+      if (flagError) {
+        console.error('Error disabling flag:', flagError);
+        throw flagError;
+      }
+
+      // Invalidate caches so UI updates immediately
+      await queryClient.invalidateQueries({ queryKey: ['feature-flags'] });
 
       toast.success('Lockdown lifted');
     } catch (error) {

@@ -27,6 +27,7 @@ import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { LocationSearch } from "@/components/weather/location-search";
 import { CurrentWeather } from "@/components/weather/current-weather";
 import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
+import { AnimatedCard } from "@/components/ui/animated-card";
 import { SEOHead } from "@/components/seo/seo-head";
 import { AnimatedWeatherBackground } from "@/components/weather/animated-weather-background";
 import { HolidayBackground, getCurrentHoliday } from "@/components/weather/holiday-backgrounds";

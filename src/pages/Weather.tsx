@@ -286,6 +286,33 @@ export default function WeatherPage() {
     }
   }, [weatherData]);
 
+  // Smart prefetching: prefetch weather for top 3 saved locations after primary data loads
+  const hasPrefetchedRef = useRef(false);
+  useEffect(() => {
+    if (!weatherData || savedLocations.length === 0 || hasPrefetchedRef.current) return;
+    hasPrefetchedRef.current = true;
+
+    const locationsToPreload = savedLocations
+      .filter((loc: any) =>
+        !selectedLocation ||
+        Math.abs(loc.latitude - selectedLocation.lat) > 0.01 ||
+        Math.abs(loc.longitude - selectedLocation.lon) > 0.01
+      )
+      .slice(0, 3);
+
+    locationsToPreload.forEach((loc: any) => {
+      queryClient.prefetchQuery({
+        queryKey: ["/api/weather", loc.latitude, loc.longitude, loc.name],
+        queryFn: () => weatherApi.getWeatherData(loc.latitude, loc.longitude, loc.name),
+        staleTime: 1000 * 60 * 5,
+      });
+    });
+
+    if (locationsToPreload.length > 0) {
+      console.log(`⚡ [Rainz Perf] Prefetching weather for ${locationsToPreload.length} saved locations`);
+    }
+  }, [weatherData, savedLocations, selectedLocation]);
+
   const actualStationName = useMemo(() => {
     const stationInfo = weatherData?.aggregated?.stationInfo || weatherData?.sources?.[0]?.stationInfo;
     return stationInfo?.name || selectedLocation?.name || "Unknown";

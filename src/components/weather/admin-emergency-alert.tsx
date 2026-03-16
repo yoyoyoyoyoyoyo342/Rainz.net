@@ -33,7 +33,7 @@ export function AdminEmergencyAlert() {
           audience: 'all',
           is_emergency: true,
           locks_app: locksApp,
-        });
+        } as any);
 
       if (error) throw error;
 

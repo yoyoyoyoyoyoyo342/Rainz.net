@@ -114,6 +114,59 @@ function usePrefetchSavedLocations() {
   }, []);
 }
 
+function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: boolean; isBlogSubdomain: boolean }) {
+  const location = useLocation();
+
+  return (
+    <Suspense fallback={<LoadingOverlay isOpen={true} />}>
+      <AnimatePresence mode="wait">
+        <PageTransition key={location.pathname}>
+          {isApiSubdomain ? (
+            <Routes location={location}>
+              <Route path="/" element={<Navigate to="https://rainz.net" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          ) : isBlogSubdomain ? (
+            <Routes location={location}>
+              <Route path="/" element={<Articles />} />
+              <Route path="/articles" element={<Articles />} />
+              <Route path="/articles/:slug" element={<BlogPost />} />
+              <Route path="/:slug" element={<BlogPost />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          ) : (
+            <Routes location={location}>
+              <Route path="/" element={<Weather />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/admin" element={<AdminPanel />} />
+              <Route path="/articles" element={<Articles />} />
+              <Route path="/articles/:slug" element={<BlogPost />} />
+              <Route path="/blog" element={<Navigate to="/articles" replace />} />
+              <Route path="/blog/:slug" element={<Navigate to="/articles" replace />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/data-settings" element={<DataSettings />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/profile/:userId" element={<UserProfile />} />
+              <Route path="/subscription-success" element={<SubscriptionSuccess />} />
+              <Route path="/subscription-cancel" element={<SubscriptionCancel />} />
+              <Route path="/affiliate" element={<Affiliate />} />
+              <Route path="/affiliate-policy" element={<AffiliatePolicy />} />
+              <Route path="/download" element={<Download />} />
+              <Route path="/widgets" element={<Widgets />} />
+              <Route path="/widget" element={<Widget />} />
+              <Route path="/embed" element={<Embed />} />
+              <Route path="/info" element={<Info />} />
+              <Route path="/weather" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          )}
+        </PageTransition>
+      </AnimatePresence>
+    </Suspense>
+  );
+}
+
 function AppContent() {
   const { isNightTime } = useTimeOfDayContext();
   usePrefetchSavedLocations();

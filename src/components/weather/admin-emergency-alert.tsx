@@ -46,6 +46,7 @@ export function AdminEmergencyAlert() {
           .eq('key', 'app_lockdown');
       }
 
+      await queryClient.invalidateQueries({ queryKey: ['feature-flags'] });
       toast.success('Emergency alert sent');
       setMessage('');
     } catch (error) {

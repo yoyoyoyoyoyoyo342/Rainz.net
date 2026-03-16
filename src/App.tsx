@@ -20,6 +20,10 @@ import { Footer } from "@/components/ui/footer";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { PWAInstallPopup } from "@/components/ui/pwa-install-popup";
 import { useAnalytics } from "@/hooks/use-analytics";
+import { useBroadcastListener } from "@/hooks/use-broadcast-listener";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
+import { useIsAdmin } from "@/hooks/use-is-admin";
+import { AppLockdownScreen } from "@/components/ui/app-lockdown-screen";
 import { toast as sonnerToast } from "sonner";
 
 // Critical components - load immediately

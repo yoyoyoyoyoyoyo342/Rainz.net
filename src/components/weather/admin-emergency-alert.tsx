@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { AlertTriangle, ShieldOff, Lock } from 'lucide-react';
 import { useFeatureFlags } from '@/hooks/use-feature-flags';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function AdminEmergencyAlert() {
   const [message, setMessage] = useState('');

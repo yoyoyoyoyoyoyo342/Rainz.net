@@ -26,12 +26,6 @@ function pickDailyLocation(dateStr: string) {
   return ALL_LOCATIONS[Math.abs(hash) % ALL_LOCATIONS.length];
 }
 
-function pickConfidence(): number {
-  const roll = Math.random();
-  if (roll < 0.4) return 1;
-  if (roll < 0.8) return 1.5;
-  return 2.5;
-}
 
 const mapWeatherCode = (code: number): string => {
   if (code <= 1) return "sunny";

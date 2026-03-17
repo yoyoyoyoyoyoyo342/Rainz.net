@@ -14,11 +14,13 @@ export function useBroadcastListener() {
   useEffect(() => {
     // Only load and display emergency messages as toasts
     async function loadEmergencyMessages() {
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       const { data: messages } = await supabase
         .from('broadcast_messages')
         .select('id,message,audience,is_active,is_emergency,created_at')
         .eq('is_active', true)
         .filter('is_emergency', 'eq', true)
+        .gte('created_at', fiveMinutesAgo)
         .order('created_at', { ascending: false });
 
       if (messages) {

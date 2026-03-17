@@ -84,7 +84,7 @@ export function AdminFeatureFlags() {
                 </div>
                 <Switch
                   id={flag.id}
-                  checked={flags[flag.key] ?? flag.defaultValue}
+                  checked={flags[flag.key]?.enabled ?? flag.defaultValue}
                   onCheckedChange={() => handleToggle(flag.key)}
                 />
               </div>

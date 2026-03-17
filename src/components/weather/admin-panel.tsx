@@ -136,9 +136,12 @@ export function AdminPanel() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="glass-card rounded-2xl border border-border/30 px-5 py-4">
-        <h1 className="text-lg font-bold text-foreground">Admin Dashboard</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">Rainz control panel</p>
+      <div className="glass-card rounded-2xl border border-border/30 px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-bold text-foreground">Admin Dashboard</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">Rainz control panel</p>
+        </div>
+        <VersionEditor />
       </div>
 
       <Tabs defaultValue="users" className="space-y-4">

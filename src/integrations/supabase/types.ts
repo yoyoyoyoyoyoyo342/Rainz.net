@@ -456,18 +456,21 @@ export type Database = {
           key: string
           updated_at: string
           updated_by: string | null
+          value: string | null
         }
         Insert: {
           enabled?: boolean
           key: string
           updated_at?: string
           updated_by?: string | null
+          value?: string | null
         }
         Update: {
           enabled?: boolean
           key?: string
           updated_at?: string
           updated_by?: string | null
+          value?: string | null
         }
         Relationships: []
       }

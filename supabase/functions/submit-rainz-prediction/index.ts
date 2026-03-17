@@ -26,12 +26,6 @@ function pickDailyLocation(dateStr: string) {
   return ALL_LOCATIONS[Math.abs(hash) % ALL_LOCATIONS.length];
 }
 
-function pickConfidence(): number {
-  const roll = Math.random();
-  if (roll < 0.4) return 1;
-  if (roll < 0.8) return 1.5;
-  return 2.5;
-}
 
 const mapWeatherCode = (code: number): string => {
   if (code <= 1) return "sunny";
@@ -95,8 +89,7 @@ serve(async (req) => {
     const highC = Math.round(dailyData.temperature_2m_max[1]);
     const lowC = Math.round(dailyData.temperature_2m_min[1]);
     const weatherCode = dailyData.weathercode[1];
-    const condition = mapWeatherCode(weatherCode);
-    const confidence = pickConfidence();
+    const confidence = 1;
 
     const { error } = await supabase.from("weather_predictions").insert({
       user_id: RAINZ_BOT_USER_ID,

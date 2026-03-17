@@ -42,7 +42,7 @@ export function AdminFeatureFlags() {
     const flag = FEATURE_FLAGS.find(f => f.key === key);
     const success = await toggleFlag(key);
     if (success) {
-      const newValue = !(flags[key] ?? true);
+      const newValue = !(flags[key]?.enabled ?? true);
       toast.success(`${flag?.label || key} ${newValue ? 'enabled' : 'disabled'}`);
     } else {
       toast.error('Failed to update flag');
@@ -76,7 +76,7 @@ export function AdminFeatureFlags() {
                 <div className="flex-1 min-w-0 mr-3">
                   <div className="flex items-center gap-2">
                     <Label htmlFor={flag.id} className="text-sm font-medium cursor-pointer">{flag.label}</Label>
-                    {flag.key === 'maintenance_mode' && flags[flag.key] && (
+                    {flag.key === 'maintenance_mode' && flags[flag.key]?.enabled && (
                       <Badge variant="destructive" className="text-[10px]">Active</Badge>
                     )}
                   </div>
@@ -84,7 +84,7 @@ export function AdminFeatureFlags() {
                 </div>
                 <Switch
                   id={flag.id}
-                  checked={flags[flag.key] ?? flag.defaultValue}
+                  checked={flags[flag.key]?.enabled ?? flag.defaultValue}
                   onCheckedChange={() => handleToggle(flag.key)}
                 />
               </div>

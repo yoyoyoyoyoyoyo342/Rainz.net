@@ -3,74 +3,43 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSubscription } from '@/hooks/use-subscription';
 
-const DISMISSED_MESSAGES_KEY = 'dismissed_broadcast_messages';
-
-function getDismissedMessages(): Set<string> {
-  try {
-    const stored = localStorage.getItem(DISMISSED_MESSAGES_KEY);
-    return stored ? new Set(JSON.parse(stored)) : new Set();
-  } catch {
-    return new Set();
-  }
-}
-
-function markMessageAsDismissed(messageId: string) {
-  const dismissed = getDismissedMessages();
-  dismissed.add(messageId);
-  localStorage.setItem(DISMISSED_MESSAGES_KEY, JSON.stringify([...dismissed]));
-}
-
-function isMessageForUser(message: { audience?: string }, isSubscribed: boolean) {
-  const audience = message.audience ?? 'all';
-  if (audience === 'all') return true;
-  if (audience === 'premium') return isSubscribed;
-  if (audience === 'free') return !isSubscribed;
-  return true;
-}
-
+/**
+ * Only shows toast popups for emergency alerts.
+ * Regular admin announcements are handled by the inbox (header-info-bar).
+ */
 export function useBroadcastListener() {
   const { isSubscribed } = useSubscription();
   const shownMessagesRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    const dismissedMessages = getDismissedMessages();
-
-    async function loadExistingMessages() {
+    // Only load and display emergency messages as toasts
+    async function loadEmergencyMessages() {
       const { data: messages } = await supabase
         .from('broadcast_messages')
-        .select('id,message,audience,is_active,created_at')
+        .select('id,message,audience,is_active,is_emergency,created_at')
         .eq('is_active', true)
+        .filter('is_emergency', 'eq', true)
         .order('created_at', { ascending: false });
 
       if (messages) {
         messages.forEach((message) => {
-          if (!isMessageForUser(message, isSubscribed)) return;
+          const audience = (message as any).audience ?? 'all';
+          if (audience === 'premium' && !isSubscribed) return;
+          if (audience === 'free' && isSubscribed) return;
 
-          if (!dismissedMessages.has(message.id) && !shownMessagesRef.current.has(message.id)) {
+          if (!shownMessagesRef.current.has(message.id)) {
             shownMessagesRef.current.add(message.id);
-
-            const isEmergency = (message as any).is_emergency === true;
-            if (isEmergency) {
-              toast.error('⚠️ Emergency Alert', {
-                description: message.message,
-                duration: Infinity,
-                position: 'top-center',
-              });
-            } else {
-              toast.info('Admin Announcement', {
-                description: message.message,
-                duration: Infinity,
-                position: 'top-center',
-                onDismiss: () => markMessageAsDismissed(message.id),
-                onAutoClose: () => markMessageAsDismissed(message.id),
-              });
-            }
+            toast.error('⚠️ Emergency Alert', {
+              description: message.message,
+              duration: Infinity,
+              position: 'top-center',
+            });
           }
         });
       }
     }
 
-    loadExistingMessages();
+    loadEmergencyMessages();
 
     const channel = supabase
       .channel('broadcast-messages-changes')
@@ -82,29 +51,22 @@ export function useBroadcastListener() {
           table: 'broadcast_messages',
         },
         (payload) => {
-          const newMessage = payload.new as { id: string; message: string; audience?: string };
+          const newMessage = payload.new as any;
 
-          if (!isMessageForUser(newMessage, isSubscribed)) return;
+          // Only show toast for emergency alerts
+          if (newMessage.is_emergency !== true) return;
 
-          if (!dismissedMessages.has(newMessage.id) && !shownMessagesRef.current.has(newMessage.id)) {
+          const audience = newMessage.audience ?? 'all';
+          if (audience === 'premium' && !isSubscribed) return;
+          if (audience === 'free' && isSubscribed) return;
+
+          if (!shownMessagesRef.current.has(newMessage.id)) {
             shownMessagesRef.current.add(newMessage.id);
-
-          const isEmergency = (newMessage as any).is_emergency === true;
-          if (isEmergency) {
             toast.error('⚠️ Emergency Alert', {
               description: newMessage.message,
               duration: Infinity,
               position: 'top-center',
             });
-          } else {
-            toast.info('Admin Announcement', {
-              description: newMessage.message,
-              duration: Infinity,
-              position: 'top-center',
-              onDismiss: () => markMessageAsDismissed(newMessage.id),
-              onAutoClose: () => markMessageAsDismissed(newMessage.id),
-            });
-          }
           }
         }
       )

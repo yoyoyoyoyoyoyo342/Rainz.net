@@ -3,6 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 
 const FEATURE_FLAGS_KEY = ['feature-flags'];
 
+interface FlagEntry {
+  enabled: boolean;
+  value: string | null;
+}
+
 export function useFeatureFlags() {
   const queryClient = useQueryClient();
 
@@ -11,31 +16,30 @@ export function useFeatureFlags() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('feature_flags')
-        .select('key, enabled');
+        .select('key, enabled, value');
 
       if (error) {
         console.error('Failed to load feature flags:', error);
-        return {} as Record<string, boolean>;
+        return {} as Record<string, FlagEntry>;
       }
 
-      const result: Record<string, boolean> = {};
+      const result: Record<string, FlagEntry> = {};
       (data || []).forEach((row: any) => {
-        result[row.key] = row.enabled;
+        result[row.key] = { enabled: row.enabled, value: row.value ?? null };
       });
       return result;
     },
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 60 * 1000,
     refetchOnWindowFocus: true,
   });
 
   const toggleFlag = async (key: string) => {
-    const current = flags[key] ?? true;
+    const current = flags[key]?.enabled ?? true;
     const newValue = !current;
 
-    // Optimistic update
-    queryClient.setQueryData(FEATURE_FLAGS_KEY, (old: Record<string, boolean> | undefined) => ({
+    queryClient.setQueryData(FEATURE_FLAGS_KEY, (old: Record<string, FlagEntry> | undefined) => ({
       ...old,
-      [key]: newValue,
+      [key]: { ...(old?.[key] || { value: null }), enabled: newValue },
     }));
 
     const { error } = await supabase
@@ -44,10 +48,9 @@ export function useFeatureFlags() {
       .eq('key', key);
 
     if (error) {
-      // Rollback
-      queryClient.setQueryData(FEATURE_FLAGS_KEY, (old: Record<string, boolean> | undefined) => ({
+      queryClient.setQueryData(FEATURE_FLAGS_KEY, (old: Record<string, FlagEntry> | undefined) => ({
         ...old,
-        [key]: current,
+        [key]: { ...(old?.[key] || { value: null }), enabled: current },
       }));
       console.error('Failed to toggle flag:', error);
       return false;
@@ -57,8 +60,30 @@ export function useFeatureFlags() {
   };
 
   const isEnabled = (key: string, defaultValue = true): boolean => {
-    return flags[key] ?? defaultValue;
+    return flags[key]?.enabled ?? defaultValue;
   };
 
-  return { flags, isLoading, toggleFlag, isEnabled };
+  const getValue = (key: string, defaultValue: string): string => {
+    return flags[key]?.value ?? defaultValue;
+  };
+
+  const setValue = async (key: string, val: string) => {
+    queryClient.setQueryData(FEATURE_FLAGS_KEY, (old: Record<string, FlagEntry> | undefined) => ({
+      ...old,
+      [key]: { ...(old?.[key] || { enabled: true }), value: val },
+    }));
+
+    const { error } = await supabase
+      .from('feature_flags')
+      .update({ value: val, updated_at: new Date().toISOString() } as any)
+      .eq('key', key);
+
+    if (error) {
+      console.error('Failed to set flag value:', error);
+      return false;
+    }
+    return true;
+  };
+
+  return { flags, isLoading, toggleFlag, isEnabled, getValue, setValue };
 }

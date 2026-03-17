@@ -52,6 +52,34 @@ function AdminSection({ title, description, children }: { title: string; descrip
   );
 }
 
+function VersionEditor() {
+  const { getValue, setValue } = useFeatureFlags();
+  const [version, setVersion] = useState('');
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+  const current = getValue('app_version', '1.2.82');
+
+  useEffect(() => { setVersion(current); }, [current]);
+
+  const handleSave = async () => {
+    if (!version.trim() || version === current) return;
+    setSaving(true);
+    const ok = await setValue('app_version', version.trim());
+    setSaving(false);
+    toast({ title: ok ? 'Version updated' : 'Error', description: ok ? `Set to V${version.trim()}` : 'Failed to update', variant: ok ? 'default' : 'destructive' });
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-muted-foreground whitespace-nowrap">Version:</span>
+      <Input value={version} onChange={(e) => setVersion(e.target.value)} className="h-7 w-28 text-xs" placeholder="1.2.82" />
+      <Button size="sm" className="h-7 text-xs px-3" onClick={handleSave} disabled={saving || version === current}>
+        {saving ? '...' : 'Update'}
+      </Button>
+    </div>
+  );
+}
+
 export function AdminPanel() {
   const [reports, setReports] = useState<WeatherReport[]>([]);
   const [loading, setLoading] = useState(true);

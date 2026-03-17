@@ -42,7 +42,7 @@ export function AdminFeatureFlags() {
     const flag = FEATURE_FLAGS.find(f => f.key === key);
     const success = await toggleFlag(key);
     if (success) {
-      const newValue = !(flags[key] ?? true);
+      const newValue = !(flags[key]?.enabled ?? true);
       toast.success(`${flag?.label || key} ${newValue ? 'enabled' : 'disabled'}`);
     } else {
       toast.error('Failed to update flag');

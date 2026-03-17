@@ -76,7 +76,7 @@ export function AdminFeatureFlags() {
                 <div className="flex-1 min-w-0 mr-3">
                   <div className="flex items-center gap-2">
                     <Label htmlFor={flag.id} className="text-sm font-medium cursor-pointer">{flag.label}</Label>
-                    {flag.key === 'maintenance_mode' && flags[flag.key] && (
+                    {flag.key === 'maintenance_mode' && flags[flag.key]?.enabled && (
                       <Badge variant="destructive" className="text-[10px]">Active</Badge>
                     )}
                   </div>

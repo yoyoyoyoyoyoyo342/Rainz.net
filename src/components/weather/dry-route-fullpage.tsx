@@ -766,6 +766,15 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
 
   return (
     <div className="fixed inset-0 bg-background overflow-hidden">
+      {/* Loading overlay while leaflet loads */}
+      {!leafletLoaded && (
+        <div className="absolute inset-0 z-[2000] bg-background flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading map...</p>
+          </div>
+        </div>
+      )}
       {/* Full-screen map */}
       <div ref={mapRef} className="absolute inset-0 z-0" />
 

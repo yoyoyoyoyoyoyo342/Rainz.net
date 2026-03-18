@@ -883,7 +883,7 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
             <>
               {/* Transport mode */}
               <div className="flex gap-1.5">
-                {TRANSPORT_MODES.map(({ mode, icon, label }) => (
+                {ROUTE_TRANSPORT_MODES.map(({ mode, icon, label }) => (
                   <button key={mode} onClick={() => setTransportMode(mode)}
                     className={`flex-1 flex items-center justify-center gap-1 text-xs py-2.5 rounded-xl border transition-all font-medium ${
                       transportMode === mode ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/20 text-muted-foreground border-border/30 hover:border-primary/40'
@@ -893,65 +893,119 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
                 ))}
               </div>
 
-              {/* Departure time */}
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-muted-foreground" />
-                <input type="time" value={departureTime} onChange={(e) => setDepartureTime(e.target.value)}
-                  className="flex-1 text-sm bg-muted/20 rounded-xl px-3 py-2.5 border border-border/30 focus:outline-none focus:ring-1 focus:ring-primary" />
-                {departureTime && <button onClick={() => setDepartureTime('')} className="text-xs text-muted-foreground">Now</button>}
-              </div>
-
-              {/* From input */}
-              <div className="space-y-1">
-                <div className="flex gap-1.5">
-                  <div className="relative flex-1">
-                    <input type="text" value={fromQuery}
-                      onChange={(e) => { setFromQuery(e.target.value); setSearching('from'); geocode(e.target.value, 'route'); }}
-                      onFocus={() => setSearching('from')}
-                      placeholder="From..."
-                      className="w-full text-sm bg-muted/20 rounded-xl pl-8 pr-3 py-2.5 border border-border/30 focus:outline-none focus:ring-1 focus:ring-primary" />
-                    <span className="absolute left-2.5 top-2.5 text-sm">🟢</span>
+              {/* Selected POI details */}
+              {selectedPOI && routes.length === 0 && (
+                <div className="space-y-3">
+                  <div className="bg-muted/20 rounded-xl p-4 border border-border/30 space-y-2">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm truncate">{selectedPOI.name}</h3>
+                        <p className="text-xs text-muted-foreground capitalize">{selectedPOI.type.replace(/_/g, ' ')}</p>
+                      </div>
+                      <button onClick={() => { setSelectedPOI(null); setToCoords(null); setToQuery(''); }} className="p-1 hover:bg-muted/30 rounded-lg shrink-0">
+                        <X className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                    </div>
+                    {selectedPOI.address && (
+                      <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                        <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                        <span className="line-clamp-2">{selectedPOI.address}</span>
+                      </div>
+                    )}
+                    {selectedPOI.opening_hours && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Clock className="w-3.5 h-3.5 shrink-0" />
+                        <span>{selectedPOI.opening_hours}</span>
+                      </div>
+                    )}
+                    {selectedPOI.phone && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Phone className="w-3.5 h-3.5 shrink-0" />
+                        <a href={`tel:${selectedPOI.phone}`} className="text-primary">{selectedPOI.phone}</a>
+                      </div>
+                    )}
+                    {selectedPOI.website && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                        <a href={selectedPOI.website} target="_blank" rel="noopener noreferrer" className="text-primary truncate">{selectedPOI.website.replace(/^https?:\/\//, '')}</a>
+                      </div>
+                    )}
                   </div>
-                  <button onClick={() => useCurrentLocation('from')} className="px-3 py-2 rounded-xl bg-muted/20 hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border/30">
-                    <Crosshair className="w-4 h-4" />
-                  </button>
+                  <Button onClick={() => {
+                    const from: [number, number] = userPosition || [latitude, longitude];
+                    setFromCoords(from);
+                    setFromQuery('Current Location');
+                    findRoutes(from, toCoords || undefined);
+                  }} disabled={loading} size="sm" className="w-full">
+                    {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Finding driest route...</> : <><Route className="w-4 h-4 mr-2" /> Generate Driest Route</>}
+                  </Button>
                 </div>
-                {searching === 'from' && routeSearchResults.length > 0 && (
-                  <div className="bg-background border border-border/30 rounded-xl shadow-lg max-h-32 overflow-y-auto">
-                    {routeSearchResults.map((r: any, i: number) => (
-                      <button key={i} onClick={() => selectRouteLocation(r, 'from')} className="w-full text-left text-xs px-3 py-2.5 hover:bg-muted/30 truncate">{r.display_name}</button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              )}
 
-              {/* To input */}
-              <div className="space-y-1">
-                <div className="flex gap-1.5">
-                  <div className="relative flex-1">
-                    <input type="text" value={toQuery}
-                      onChange={(e) => { setToQuery(e.target.value); setSearching('to'); geocode(e.target.value, 'route'); }}
-                      onFocus={() => setSearching('to')}
-                      placeholder="To..."
-                      className="w-full text-sm bg-muted/20 rounded-xl pl-8 pr-3 py-2.5 border border-border/30 focus:outline-none focus:ring-1 focus:ring-primary" />
-                    <span className="absolute left-2.5 top-2.5 text-sm">🔴</span>
+              {/* Manual route inputs (when no POI selected or routes found) */}
+              {!selectedPOI && routes.length === 0 && (
+                <>
+                  {/* Departure time */}
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <input type="time" value={departureTime} onChange={(e) => setDepartureTime(e.target.value)}
+                      className="flex-1 text-sm bg-muted/20 rounded-xl px-3 py-2.5 border border-border/30 focus:outline-none focus:ring-1 focus:ring-primary" />
+                    {departureTime && <button onClick={() => setDepartureTime('')} className="text-xs text-muted-foreground">Now</button>}
                   </div>
-                  <button onClick={() => useCurrentLocation('to')} className="px-3 py-2 rounded-xl bg-muted/20 hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border/30">
-                    <Crosshair className="w-4 h-4" />
-                  </button>
-                </div>
-                {searching === 'to' && routeSearchResults.length > 0 && (
-                  <div className="bg-background border border-border/30 rounded-xl shadow-lg max-h-32 overflow-y-auto">
-                    {routeSearchResults.map((r: any, i: number) => (
-                      <button key={i} onClick={() => selectRouteLocation(r, 'to')} className="w-full text-left text-xs px-3 py-2.5 hover:bg-muted/30 truncate">{r.display_name}</button>
-                    ))}
-                  </div>
-                )}
-              </div>
 
-              <Button onClick={findRoutes} disabled={loading || !fromCoords || !toCoords} size="sm" className="w-full">
-                {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analyzing rain...</> : <><Route className="w-4 h-4 mr-2" /> Find Driest Route</>}
-              </Button>
+                  {/* From input */}
+                  <div className="space-y-1">
+                    <div className="flex gap-1.5">
+                      <div className="relative flex-1">
+                        <input type="text" value={fromQuery}
+                          onChange={(e) => { setFromQuery(e.target.value); setSearching('from'); geocode(e.target.value, 'route'); }}
+                          onFocus={() => setSearching('from')}
+                          placeholder="From..."
+                          className="w-full text-sm bg-muted/20 rounded-xl pl-8 pr-3 py-2.5 border border-border/30 focus:outline-none focus:ring-1 focus:ring-primary" />
+                        <span className="absolute left-2.5 top-2.5 text-sm">🟢</span>
+                      </div>
+                      <button onClick={() => useCurrentLocation('from')} className="px-3 py-2 rounded-xl bg-muted/20 hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border/30">
+                        <Crosshair className="w-4 h-4" />
+                      </button>
+                    </div>
+                    {searching === 'from' && routeSearchResults.length > 0 && (
+                      <div className="bg-background border border-border/30 rounded-xl shadow-lg max-h-32 overflow-y-auto">
+                        {routeSearchResults.map((r: any, i: number) => (
+                          <button key={i} onClick={() => selectRouteLocation(r, 'from')} className="w-full text-left text-xs px-3 py-2.5 hover:bg-muted/30 truncate">{r.display_name}</button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* To input */}
+                  <div className="space-y-1">
+                    <div className="flex gap-1.5">
+                      <div className="relative flex-1">
+                        <input type="text" value={toQuery}
+                          onChange={(e) => { setToQuery(e.target.value); setSearching('to'); geocode(e.target.value, 'route'); }}
+                          onFocus={() => setSearching('to')}
+                          placeholder="To..."
+                          className="w-full text-sm bg-muted/20 rounded-xl pl-8 pr-3 py-2.5 border border-border/30 focus:outline-none focus:ring-1 focus:ring-primary" />
+                        <span className="absolute left-2.5 top-2.5 text-sm">🔴</span>
+                      </div>
+                      <button onClick={() => useCurrentLocation('to')} className="px-3 py-2 rounded-xl bg-muted/20 hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border/30">
+                        <Crosshair className="w-4 h-4" />
+                      </button>
+                    </div>
+                    {searching === 'to' && routeSearchResults.length > 0 && (
+                      <div className="bg-background border border-border/30 rounded-xl shadow-lg max-h-32 overflow-y-auto">
+                        {routeSearchResults.map((r: any, i: number) => (
+                          <button key={i} onClick={() => selectRouteLocation(r, 'to')} className="w-full text-left text-xs px-3 py-2.5 hover:bg-muted/30 truncate">{r.display_name}</button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <Button onClick={() => findRoutes()} disabled={loading || !fromCoords || !toCoords} size="sm" className="w-full">
+                    {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analyzing rain...</> : <><Route className="w-4 h-4 mr-2" /> Find Driest Route</>}
+                  </Button>
+                </>
+              )}
 
               {/* Dry Windows */}
               {fromCoords && toCoords && routes.length > 0 && (
@@ -961,6 +1015,12 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
               {/* Route results */}
               {routes.length > 0 && (
                 <div className="space-y-2">
+                  {/* Back to search */}
+                  <button onClick={() => { setRoutes([]); setBestRouteIdx(0); setSelectedPOI(null); setFromCoords(null); setToCoords(null); setFromQuery(''); setToQuery(''); }}
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    <ArrowLeft className="w-3.5 h-3.5" /> New search
+                  </button>
+
                   {routes[bestRouteIdx]?.rainTimeline?.length > 0 && (
                     <div className="space-y-1">
                       <p className="text-[10px] text-muted-foreground font-medium">Rain along route</p>

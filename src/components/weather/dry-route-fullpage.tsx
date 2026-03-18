@@ -442,18 +442,26 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
     poiMarkersRef.current.forEach(m => mapInstance.current!.removeLayer(m));
     poiMarkersRef.current = [];
     pois.forEach(poi => {
+      const emoji = poi.type === 'restaurant' || poi.type === 'fast_food' ? '🍽️'
+        : poi.type === 'cafe' ? '☕'
+        : poi.type === 'pharmacy' ? '💊'
+        : poi.type === 'fuel' ? '⛽'
+        : poi.type === 'supermarket' ? '🛒'
+        : poi.type === 'hotel' ? '🏨'
+        : '🏪';
       const marker = L.marker([poi.lat, poi.lon], {
         icon: L.divIcon({
-          html: `<div style="background:hsl(var(--primary));color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid white">📍</div>`,
+          html: `<div style="background:hsl(var(--background));border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.25);border:2px solid hsl(var(--border))">${emoji}</div>`,
           className: '',
-          iconSize: [28, 28],
-          iconAnchor: [14, 14],
+          iconSize: [32, 32],
+          iconAnchor: [16, 16],
         }),
       }).addTo(mapInstance.current!);
-      marker.bindPopup(`<div style="font-size:13px"><strong>${poi.name}</strong><br/><span style="color:#666">${poi.type}</span>${poi.address ? `<br/>${poi.address}` : ''}</div>`, { closeButton: false, className: 'poi-popup' });
       marker.on('click', () => {
+        setSelectedPOI(poi);
         setToCoords([poi.lat, poi.lon]);
         setToQuery(poi.name);
+        mapInstance.current?.setView([poi.lat, poi.lon], 16, { animate: true });
       });
       poiMarkersRef.current.push(marker);
     });

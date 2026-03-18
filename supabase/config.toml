@@ -119,3 +119,6 @@ verify_jwt = false
 
 [functions.search-nearby-pois]
 verify_jwt = false
+
+[functions.transit-route]
+verify_jwt = false

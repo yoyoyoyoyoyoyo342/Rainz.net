@@ -10,8 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   optimizeDeps: {
-    force: true,
-    include: ['react', 'react-dom'],
+    include: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
   },
   plugins: [
     react(),

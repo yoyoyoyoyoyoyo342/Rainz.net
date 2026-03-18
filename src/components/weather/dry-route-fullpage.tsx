@@ -1091,7 +1091,7 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
           {appMode === 'track' && (
             <div className="space-y-3">
               <div className="flex gap-1.5">
-                {TRANSPORT_MODES.filter(m => m.mode !== 'driving').map(({ mode, icon, label }) => (
+                {TRACK_TRANSPORT_MODES.map(({ mode, icon, label }) => (
                   <button key={mode} onClick={() => setTransportMode(mode)}
                     className={`flex-1 flex items-center justify-center gap-1 text-xs py-2.5 rounded-xl border transition-all font-medium ${
                       transportMode === mode ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted/20 text-muted-foreground border-border/30'

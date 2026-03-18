@@ -616,34 +616,109 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
     if (customTo) setToCoords(customTo);
     setLoading(true);
     try {
-      const profile = getOsrmProfile(transportMode);
-      const res = await fetch(`https://router.project-osrm.org/route/v1/${profile}/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson&alternatives=3&steps=true`);
-      const data = await res.json();
-      if (!data.routes?.length) { toast.error('No routes found'); setLoading(false); return; }
-      const routeResults: RouteResult[] = [];
-      for (let i = 0; i < data.routes.length; i++) {
-        const route = data.routes[i];
-        const geometry: [number, number][] = route.geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
-        const { score: rainScore, timeline: rainTimeline } = await getRainScoreForRoute(geometry);
-        const steps: RouteStep[] = [];
-        for (const leg of route.legs) {
-          for (const s of leg.steps) {
-            steps.push({
-              instruction: s.maneuver?.modifier ? `${s.maneuver.type.replace(/-/g, ' ')} ${s.maneuver.modifier}` : s.maneuver?.type?.replace(/-/g, ' ') || 'Continue',
-              distance: s.distance, duration: s.duration,
-              maneuver: s.maneuver || { type: 'straight' },
-              geometry: (s.geometry?.coordinates || []).map((c: [number, number]) => [c[1], c[0]]),
-            });
+      if (transportMode === 'transit') {
+        // Use Transitous API for public transit
+        const depTime = departureTime
+          ? (() => { const now = new Date(); const [h, m] = departureTime.split(':').map(Number); now.setHours(h, m, 0, 0); return now.toISOString(); })()
+          : new Date().toISOString();
+
+        const { data, error } = await supabase.functions.invoke('transit-route', {
+          body: { fromLat: from[0], fromLon: from[1], toLat: to[0], toLon: to[1], time: depTime },
+        });
+        if (error) throw error;
+
+        const itineraries = data?.itineraries || [];
+        if (itineraries.length === 0) { toast.error('No transit routes found'); setLoading(false); return; }
+
+        const routeResults: RouteResult[] = [];
+        for (let i = 0; i < itineraries.length; i++) {
+          const itin = itineraries[i];
+          // Build geometry from all legs
+          const geometry: [number, number][] = [];
+          for (const leg of itin.legs) {
+            if (leg.geometry?.length > 0) {
+              geometry.push(...leg.geometry);
+            } else if (leg.from?.lat && leg.to?.lat) {
+              geometry.push([leg.from.lat, leg.from.lon], [leg.to.lat, leg.to.lon]);
+            }
           }
+          if (geometry.length === 0) continue;
+
+          const { score: rainScore, timeline: rainTimeline } = await getRainScoreForRoute(geometry);
+
+          // Build steps from legs
+          const steps: RouteStep[] = itin.legs.map((leg: any) => {
+            const modeLabel = leg.mode === 'WALK' ? '🚶 Walk'
+              : leg.mode === 'BUS' ? `🚌 Bus ${leg.routeShortName || ''}`
+              : leg.mode === 'RAIL' || leg.mode === 'TRAIN' ? `🚆 Train ${leg.routeShortName || ''}`
+              : leg.mode === 'SUBWAY' || leg.mode === 'METRO' ? `🚇 Metro ${leg.routeShortName || ''}`
+              : leg.mode === 'TRAM' ? `🚊 Tram ${leg.routeShortName || ''}`
+              : leg.mode === 'FERRY' ? `⛴️ Ferry ${leg.routeShortName || ''}`
+              : `${leg.mode} ${leg.routeShortName || ''}`;
+
+            const instruction = leg.headsign
+              ? `${modeLabel} → ${leg.headsign}`
+              : `${modeLabel} to ${leg.to?.name || 'stop'}`;
+
+            return {
+              instruction,
+              distance: leg.distance || 0,
+              duration: leg.duration || 0,
+              maneuver: { type: leg.mode === 'WALK' ? 'depart' : 'notification' },
+              geometry: leg.geometry || [],
+            };
+          });
+
+          const totalDist = itin.legs.reduce((sum: number, l: any) => sum + (l.distance || 0), 0);
+
+          routeResults.push({
+            distance: totalDist,
+            duration: itin.duration,
+            rainScore,
+            geometry,
+            label: i === 0 ? `🚌 ${itin.transfers} transfer${itin.transfers !== 1 ? 's' : ''}` : `Alt ${i + 1} (${itin.transfers}x)`,
+            steps,
+            rainTimeline,
+          });
         }
-        routeResults.push({ distance: route.distance, duration: route.duration, rainScore, geometry, label: i === 0 ? 'Fastest' : `Alt ${i}`, steps, rainTimeline });
+
+        if (routeResults.length === 0) { toast.error('No transit routes found'); setLoading(false); return; }
+        routeResults.sort((a, b) => a.rainScore - b.rainScore);
+        routeResults[0].label = '🌂 Driest Transit';
+        setRoutes(routeResults);
+        setBestRouteIdx(0);
+        drawRoutesFn(routeResults, 0);
+      } else {
+        // Use OSRM for driving/cycling/walking
+        const profile = getOsrmProfile(transportMode);
+        const res = await fetch(`https://router.project-osrm.org/route/v1/${profile}/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson&alternatives=3&steps=true`);
+        const data = await res.json();
+        if (!data.routes?.length) { toast.error('No routes found'); setLoading(false); return; }
+        const routeResults: RouteResult[] = [];
+        for (let i = 0; i < data.routes.length; i++) {
+          const route = data.routes[i];
+          const geometry: [number, number][] = route.geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
+          const { score: rainScore, timeline: rainTimeline } = await getRainScoreForRoute(geometry);
+          const steps: RouteStep[] = [];
+          for (const leg of route.legs) {
+            for (const s of leg.steps) {
+              steps.push({
+                instruction: s.maneuver?.modifier ? `${s.maneuver.type.replace(/-/g, ' ')} ${s.maneuver.modifier}` : s.maneuver?.type?.replace(/-/g, ' ') || 'Continue',
+                distance: s.distance, duration: s.duration,
+                maneuver: s.maneuver || { type: 'straight' },
+                geometry: (s.geometry?.coordinates || []).map((c: [number, number]) => [c[1], c[0]]),
+              });
+            }
+          }
+          routeResults.push({ distance: route.distance, duration: route.duration, rainScore, geometry, label: i === 0 ? 'Fastest' : `Alt ${i}`, steps, rainTimeline });
+        }
+        routeResults.sort((a, b) => a.rainScore - b.rainScore);
+        routeResults[0].label = '🌂 Driest';
+        setRoutes(routeResults);
+        setBestRouteIdx(0);
+        drawRoutesFn(routeResults, 0);
       }
-      routeResults.sort((a, b) => a.rainScore - b.rainScore);
-      routeResults[0].label = '🌂 Driest';
-      setRoutes(routeResults);
-      setBestRouteIdx(0);
-      drawRoutesFn(routeResults, 0);
-    } catch { toast.error('Failed to find routes'); }
+    } catch (e) { console.error(e); toast.error('Failed to find routes'); }
     setLoading(false);
   };
 

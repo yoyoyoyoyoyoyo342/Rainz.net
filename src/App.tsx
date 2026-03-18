@@ -51,6 +51,7 @@ const Widgets = lazy(() => import("./pages/Widgets"));
 const Widget = lazy(() => import("./pages/Widget"));
 const Embed = lazy(() => import("./pages/Embed"));
 const Info = lazy(() => import("./pages/Info"));
+const DryRoutes = lazy(() => import("./pages/DryRoutes"));
 
 
 function AnalyticsTracker() {

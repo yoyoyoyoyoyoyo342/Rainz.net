@@ -4,7 +4,7 @@ import { Leaf, Flame, Car } from 'lucide-react';
 interface RouteCarbonTrackerProps {
   distanceMeters: number;
   durationSeconds: number;
-  transportMode: 'driving' | 'cycling' | 'walking' | 'running';
+  transportMode: 'driving' | 'cycling' | 'walking' | 'running' | 'transit';
   isImperial: boolean;
 }
 

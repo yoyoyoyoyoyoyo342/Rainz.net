@@ -77,7 +77,7 @@ const APP_MODES: { mode: AppMode; icon: React.ReactNode; label: string }[] = [
 ];
 
 const getOsrmProfile = (mode: TransportMode) => {
-  if (mode === 'driving' || mode === 'transit') return 'car';
+  if (mode === 'driving') return 'car';
   if (mode === 'cycling') return 'bike';
   return 'foot';
 };

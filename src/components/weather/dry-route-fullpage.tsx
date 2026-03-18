@@ -488,8 +488,17 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
     const coords: [number, number] = [parseFloat(result.lat), parseFloat(result.lon)];
     mapInstance.current?.setView(coords, 15, { animate: true });
     setSearchFocused(false);
-    setSearchQuery(result.display_name.split(',').slice(0, 2).join(','));
+    const name = result.display_name.split(',').slice(0, 2).join(',');
+    setSearchQuery(name);
     setSearchResults([]);
+    setToCoords(coords);
+    setToQuery(name);
+    setSelectedPOI({
+      id: 0, name, type: result.type || 'place',
+      lat: coords[0], lon: coords[1],
+      address: result.display_name || null,
+      phone: null, website: null, opening_hours: null,
+    });
   };
 
   const selectRouteLocation = (result: any, type: 'from' | 'to') => {

@@ -862,14 +862,28 @@ export default function WeatherPage() {
                 </AnimatedCard>
               ) : null}
 
-              {/* DryRoutes */}
+              {/* DryRoutes - Link to full page */}
               <AnimatedCard index={9}>
-                <DryRoute
-                  latitude={selectedLocation.lat}
-                  longitude={selectedLocation.lon}
-                  locationName={actualStationName}
-                  isImperial={isImperial}
-                />
+                <a href="/dryroutes" className="block">
+                  <Card className="glass-card border-border/30 hover:border-primary/40 transition-all cursor-pointer group">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <CloudSun className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-sm">Rainz DryRoutes</h3>
+                            <p className="text-xs text-muted-foreground">Find the driest route to your destination</p>
+                          </div>
+                        </div>
+                        <div className="text-muted-foreground group-hover:text-primary transition-colors">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </a>
               </AnimatedCard>
 
               {/* Feature Ideas Card */}

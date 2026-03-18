@@ -251,6 +251,7 @@ function AppContent() {
                            </div>
                            {window.location.pathname !== '/dryroutes' && (
                           <Footer />
+                           )}
                         </div>
                       </LockdownGuard>
                     </BrowserRouter>

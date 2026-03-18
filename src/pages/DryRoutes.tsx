@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { DryRouteFullPage } from '@/components/weather/dry-route-fullpage';
 
 export default function DryRoutesPage() {
@@ -7,12 +6,10 @@ export default function DryRoutesPage() {
   const [locationName, setLocationName] = useState('Current Location');
 
   useEffect(() => {
-    // Try to get user location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-          // Reverse geocode for location name
           fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`)
             .then(r => r.json())
             .then(data => {
@@ -22,7 +19,6 @@ export default function DryRoutesPage() {
             .catch(() => {});
         },
         () => {
-          // Default fallback
           setCoords({ lat: 51.5074, lon: -0.1278 });
           setLocationName('London');
         },

@@ -524,7 +524,7 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
   const searchPOIs = async (category: string) => {
     if (activePOICategory === category) {
       setActivePOICategory(null);
-      setPois([]);
+      loadAllPOIs(true);
       return;
     }
     setActivePOICategory(category);
@@ -542,6 +542,37 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
     }
     setPoisLoading(false);
   };
+
+  // Load all POIs on init
+  const loadAllPOIs = useCallback(async (force = false) => {
+    if (initialPoisLoaded && !force) return;
+    const center = userPosition || [latitude, longitude];
+    const categories = ['restaurant', 'cafe', 'shop', 'pharmacy', 'supermarket'];
+    const allPois: POI[] = [];
+    try {
+      const results = await Promise.allSettled(
+        categories.map(cat =>
+          supabase.functions.invoke('search-nearby-pois', {
+            body: { lat: center[0], lon: center[1], category: cat, radius: 1000 },
+          })
+        )
+      );
+      results.forEach(r => {
+        if (r.status === 'fulfilled' && r.value.data?.pois) {
+          allPois.push(...r.value.data.pois);
+        }
+      });
+      setPois(allPois);
+      setInitialPoisLoaded(true);
+    } catch {}
+  }, [latitude, longitude, userPosition, initialPoisLoaded]);
+
+  // Auto-load POIs when map is ready
+  useEffect(() => {
+    if (leafletLoaded && mapInstance.current && !initialPoisLoaded) {
+      loadAllPOIs();
+    }
+  }, [leafletLoaded, loadAllPOIs, initialPoisLoaded]);
 
   // Route finding
   const getRainScoreForRoute = async (geometry: [number, number][]): Promise<{ score: number; timeline: { distance: number; rainProb: number }[] }> => {

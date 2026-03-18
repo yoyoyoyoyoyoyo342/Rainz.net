@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense, lazy, useTransition } from "react";
 import { queryClient } from "@/lib/queryClient";
 import { useSearchParams } from "react-router-dom";
-import { CloudSun, LogIn, WifiOff } from "lucide-react";
+import { CloudSun, LogIn, WifiOff, Navigation } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -60,7 +60,7 @@ const ExploreSheet = lazy(() => import("@/components/weather/explore-sheet").the
 const ExploreButton = lazy(() => import("@/components/weather/explore-sheet").then(m => ({ default: m.ExploreButton })));
 const FeatureIdeasCard = lazy(() => import("@/components/weather/feature-ideas-card").then(m => ({ default: m.FeatureIdeasCard })));
 const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-card").then(m => ({ default: m.BattleAcceptCard })));
-const DryRoute = lazy(() => import("@/components/weather/dry-route").then(m => ({ default: m.DryRoute })));
+
 const WeeklyRecapCard = lazy(() => import("@/components/weather/weekly-recap-card").then(m => ({ default: m.WeeklyRecapCard })));
 const SocialFeed = lazy(() => import("@/components/weather/social-feed").then(m => ({ default: m.SocialFeed })));
 
@@ -862,14 +862,28 @@ export default function WeatherPage() {
                 </AnimatedCard>
               ) : null}
 
-              {/* DryRoutes */}
+              {/* DryRoutes - Link to full page */}
               <AnimatedCard index={9}>
-                <DryRoute
-                  latitude={selectedLocation.lat}
-                  longitude={selectedLocation.lon}
-                  locationName={actualStationName}
-                  isImperial={isImperial}
-                />
+                <a href="/dryroutes" className="block">
+                  <Card className="glass-card border-border/30 hover:border-primary/40 transition-all cursor-pointer group">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <Navigation className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-sm">Rainz DryRoutes</h3>
+                            <p className="text-xs text-muted-foreground">Find the driest route to your destination</p>
+                          </div>
+                        </div>
+                        <div className="text-muted-foreground group-hover:text-primary transition-colors">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </a>
               </AnimatedCard>
 
               {/* Feature Ideas Card */}

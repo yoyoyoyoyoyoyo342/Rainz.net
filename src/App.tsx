@@ -51,6 +51,7 @@ const Widgets = lazy(() => import("./pages/Widgets"));
 const Widget = lazy(() => import("./pages/Widget"));
 const Embed = lazy(() => import("./pages/Embed"));
 const Info = lazy(() => import("./pages/Info"));
+const DryRoutes = lazy(() => import("./pages/DryRoutes"));
 
 
 function AnalyticsTracker() {
@@ -162,6 +163,7 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
               <Route path="/widget" element={<Widget />} />
               <Route path="/embed" element={<Embed />} />
               <Route path="/info" element={<Info />} />
+              <Route path="/dryroutes" element={<DryRoutes />} />
               <Route path="/weather" element={<Navigate to="/" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
@@ -237,17 +239,19 @@ function AppContent() {
                     <Sonner />
                     <CookieConsentBanner />
                     <PWAInstallPopup />
-                    <BrowserRouter>
-                      <LockdownGuard>
-                        <div className="flex flex-col min-h-screen">
-                          <div className="flex-1">
-                            <AnalyticsTracker />
-                            <AnimatedRoutes
-                              isApiSubdomain={isApiSubdomain}
-                              isBlogSubdomain={isBlogSubdomain}
-                            />
-                          </div>
+                     <BrowserRouter>
+                       <LockdownGuard>
+                         <div className="flex flex-col min-h-screen">
+                           <div className="flex-1">
+                             <AnalyticsTracker />
+                             <AnimatedRoutes
+                               isApiSubdomain={isApiSubdomain}
+                               isBlogSubdomain={isBlogSubdomain}
+                             />
+                           </div>
+                           {window.location.pathname !== '/dryroutes' && (
                           <Footer />
+                           )}
                         </div>
                       </LockdownGuard>
                     </BrowserRouter>

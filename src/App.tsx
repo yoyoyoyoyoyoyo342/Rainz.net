@@ -163,6 +163,7 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
               <Route path="/widget" element={<Widget />} />
               <Route path="/embed" element={<Embed />} />
               <Route path="/info" element={<Info />} />
+              <Route path="/dryroutes" element={<DryRoutes />} />
               <Route path="/weather" element={<Navigate to="/" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

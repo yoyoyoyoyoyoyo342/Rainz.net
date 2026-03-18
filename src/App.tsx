@@ -239,16 +239,17 @@ function AppContent() {
                     <Sonner />
                     <CookieConsentBanner />
                     <PWAInstallPopup />
-                    <BrowserRouter>
-                      <LockdownGuard>
-                        <div className="flex flex-col min-h-screen">
-                          <div className="flex-1">
-                            <AnalyticsTracker />
-                            <AnimatedRoutes
-                              isApiSubdomain={isApiSubdomain}
-                              isBlogSubdomain={isBlogSubdomain}
-                            />
-                          </div>
+                     <BrowserRouter>
+                       <LockdownGuard>
+                         <div className="flex flex-col min-h-screen">
+                           <div className="flex-1">
+                             <AnalyticsTracker />
+                             <AnimatedRoutes
+                               isApiSubdomain={isApiSubdomain}
+                               isBlogSubdomain={isBlogSubdomain}
+                             />
+                           </div>
+                           {window.location.pathname !== '/dryroutes' && (
                           <Footer />
                         </div>
                       </LockdownGuard>

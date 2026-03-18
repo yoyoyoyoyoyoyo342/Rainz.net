@@ -6,6 +6,7 @@ import {
   Calendar, Navigation2, Square, Share2, CloudRain, Camera, Play, Pause, CircleStop,
   Pencil, Trash2, Timer, Zap, Activity, Check, X, Mountain, Image, ArrowLeft,
   Search, Layers, Crosshair, Coffee, ShoppingBag, Pill, Fuel, Building, UtensilsCrossed,
+  Bus, Star, ExternalLink, Phone,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, AreaChart, Area, Tooltip } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,7 +28,7 @@ interface DryRouteFullPageProps {
   isImperial: boolean;
 }
 
-type TransportMode = 'driving' | 'cycling' | 'walking' | 'running';
+type TransportMode = 'driving' | 'cycling' | 'walking' | 'running' | 'transit';
 type AppMode = 'route' | 'track' | 'create-route';
 type TrackingState = 'idle' | 'recording' | 'paused';
 
@@ -43,10 +44,17 @@ interface DrawPoint { lat: number; lng: number; type: 'start' | 'end' | 'waypoin
 interface POI {
   id: number; name: string; type: string;
   lat: number; lon: number; address: string | null;
+  phone: string | null; website: string | null; opening_hours: string | null;
 }
 
-const TRANSPORT_MODES: { mode: TransportMode; icon: React.ReactNode; label: string }[] = [
+const ROUTE_TRANSPORT_MODES: { mode: TransportMode; icon: React.ReactNode; label: string }[] = [
   { mode: 'driving', icon: <Car className="w-4 h-4" />, label: 'Drive' },
+  { mode: 'transit', icon: <Bus className="w-4 h-4" />, label: 'Transit' },
+  { mode: 'cycling', icon: <Bike className="w-4 h-4" />, label: 'Bike' },
+  { mode: 'walking', icon: <Footprints className="w-4 h-4" />, label: 'Walk' },
+];
+
+const TRACK_TRANSPORT_MODES: { mode: TransportMode; icon: React.ReactNode; label: string }[] = [
   { mode: 'cycling', icon: <Bike className="w-4 h-4" />, label: 'Bike' },
   { mode: 'running', icon: <Zap className="w-4 h-4" />, label: 'Run' },
   { mode: 'walking', icon: <Footprints className="w-4 h-4" />, label: 'Walk' },
@@ -69,7 +77,7 @@ const APP_MODES: { mode: AppMode; icon: React.ReactNode; label: string }[] = [
 ];
 
 const getOsrmProfile = (mode: TransportMode) => {
-  if (mode === 'driving') return 'car';
+  if (mode === 'driving' || mode === 'transit') return 'car';
   if (mode === 'cycling') return 'bike';
   return 'foot';
 };

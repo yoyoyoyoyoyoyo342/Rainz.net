@@ -845,7 +845,7 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
       </div>
 
       {/* Floating action buttons (bottom-right, above bottom sheet) */}
-      <div className="absolute bottom-[calc(45vh+16px)] right-4 z-[1100] flex flex-col gap-2">
+      <div className="absolute bottom-[15vh] right-4 z-[1100] flex flex-col gap-2">
         <button
           onClick={() => setShowRadar(!showRadar)}
           className={`w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all ${

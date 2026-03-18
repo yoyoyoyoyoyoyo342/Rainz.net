@@ -135,6 +135,8 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
   const [activePOICategory, setActivePOICategory] = useState<string | null>(null);
   const [pois, setPois] = useState<POI[]>([]);
   const [poisLoading, setPoisLoading] = useState(false);
+  const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
+  const [initialPoisLoaded, setInitialPoisLoaded] = useState(false);
 
   // Track mode state
   const [trackingState, setTrackingState] = useState<TrackingState>('idle');

@@ -617,7 +617,7 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
     setLoading(true);
     try {
       const profile = getOsrmProfile(transportMode);
-      const res = await fetch(`https://router.project-osrm.org/route/v1/${profile}/${fromCoords[1]},${fromCoords[0]};${toCoords[1]},${toCoords[0]}?overview=full&geometries=geojson&alternatives=3&steps=true`);
+      const res = await fetch(`https://router.project-osrm.org/route/v1/${profile}/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson&alternatives=3&steps=true`);
       const data = await res.json();
       if (!data.routes?.length) { toast.error('No routes found'); setLoading(false); return; }
       const routeResults: RouteResult[] = [];

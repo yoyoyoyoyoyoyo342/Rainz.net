@@ -608,8 +608,12 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
     return { score: Math.round(totalPrecipProb / sampleCount), timeline };
   };
 
-  const findRoutes = async () => {
-    if (!fromCoords || !toCoords) return toast.error('Set both locations!');
+  const findRoutes = async (customFrom?: [number, number], customTo?: [number, number]) => {
+    const from = customFrom || fromCoords;
+    const to = customTo || toCoords;
+    if (!from || !to) return toast.error('Set both locations!');
+    if (customFrom) { setFromCoords(customFrom); setFromQuery('Current Location'); }
+    if (customTo) setToCoords(customTo);
     setLoading(true);
     try {
       const profile = getOsrmProfile(transportMode);

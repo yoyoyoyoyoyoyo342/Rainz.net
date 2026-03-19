@@ -8,7 +8,104 @@ import {
   Search, Layers, Crosshair, Coffee, ShoppingBag, Pill, Fuel, Building, UtensilsCrossed,
   Bus, Star, ExternalLink, Phone,
 } from 'lucide-react';
-...
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, AreaChart, Area, Tooltip } from 'recharts';
+import { supabase } from '@/integrations/supabase/client';
+import { createPortal } from 'react-dom';
+import { toast } from 'sonner';
+import { useAuth } from '@/hooks/use-auth';
+import { DryRouteNavigation } from './dry-route-navigation';
+import { DryRouteAR } from './dry-route-ar';
+import { DryWindows } from './dry-windows';
+import { UmbrellaScore } from './umbrella-score';
+import { RouteCarbonTracker } from './route-carbon-tracker';
+import { DryRouteBottomSheet } from './dry-route-bottom-sheet';
+import type { RouteResult, RouteStep } from './dry-route';
+
+interface DryRouteFullPageProps {
+  latitude: number;
+  longitude: number;
+  locationName: string;
+  isImperial: boolean;
+}
+
+type TransportMode = 'driving' | 'cycling' | 'walking' | 'running' | 'transit';
+type AppMode = 'route' | 'track' | 'create-route';
+type TrackingState = 'idle' | 'recording' | 'paused';
+
+interface SplitTime { km: number; elapsed: number; pace: number; }
+interface ElevationPoint { distance: number; elevation: number; }
+interface TrackSummary {
+  distance: number; duration: number; avgPace: number; points: [number, number][];
+  startTime: number; endTime: number; splits: SplitTime[]; elevationData: ElevationPoint[];
+  elevationGain: number; elevationLoss: number;
+}
+interface DrawPoint { lat: number; lng: number; type: 'start' | 'end' | 'waypoint'; }
+
+interface POI {
+  id: number; name: string; type: string;
+  lat: number; lon: number; address: string | null;
+  phone: string | null; website: string | null; opening_hours: string | null;
+}
+
+const ROUTE_TRANSPORT_MODES: { mode: TransportMode; icon: React.ReactNode; label: string }[] = [
+  { mode: 'driving', icon: <Car className="w-4 h-4" />, label: 'Drive' },
+  { mode: 'transit', icon: <Bus className="w-4 h-4" />, label: 'Transit' },
+  { mode: 'cycling', icon: <Bike className="w-4 h-4" />, label: 'Bike' },
+  { mode: 'walking', icon: <Footprints className="w-4 h-4" />, label: 'Walk' },
+];
+
+const TRACK_TRANSPORT_MODES: { mode: TransportMode; icon: React.ReactNode; label: string }[] = [
+  { mode: 'cycling', icon: <Bike className="w-4 h-4" />, label: 'Bike' },
+  { mode: 'running', icon: <Zap className="w-4 h-4" />, label: 'Run' },
+  { mode: 'walking', icon: <Footprints className="w-4 h-4" />, label: 'Walk' },
+];
+
+const POI_CATEGORIES = [
+  { key: 'restaurant', label: 'Restaurants', icon: <UtensilsCrossed className="w-3.5 h-3.5" /> },
+  { key: 'cafe', label: 'Coffee', icon: <Coffee className="w-3.5 h-3.5" /> },
+  { key: 'shop', label: 'Shopping', icon: <ShoppingBag className="w-3.5 h-3.5" /> },
+  { key: 'pharmacy', label: 'Pharmacy', icon: <Pill className="w-3.5 h-3.5" /> },
+  { key: 'fuel', label: 'Fuel', icon: <Fuel className="w-3.5 h-3.5" /> },
+  { key: 'supermarket', label: 'Grocery', icon: <ShoppingBag className="w-3.5 h-3.5" /> },
+  { key: 'hotel', label: 'Hotels', icon: <Building className="w-3.5 h-3.5" /> },
+];
+
+const APP_MODES: { mode: AppMode; icon: React.ReactNode; label: string }[] = [
+  { mode: 'route', icon: <Route className="w-4 h-4" />, label: 'Route' },
+  { mode: 'track', icon: <Activity className="w-4 h-4" />, label: 'Track' },
+  { mode: 'create-route', icon: <Pencil className="w-4 h-4" />, label: 'Draw' },
+];
+
+const getOsrmProfile = (mode: TransportMode) => {
+  if (mode === 'driving') return 'car';
+  if (mode === 'cycling') return 'bike';
+  return 'foot';
+};
+
+const getCaloriesPerKm = (mode: TransportMode) => {
+  switch (mode) { case 'running': return 80; case 'walking': return 65; case 'cycling': return 30; default: return 0; }
+};
+
+function haversineDistance(a: [number, number], b: [number, number]): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b[0] - a[0]);
+  const dLon = toRad(b[1] - a[1]);
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a[0])) * Math.cos(toRad(b[0])) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+}
+
+export function DryRouteFullPage({ latitude, longitude, locationName, isImperial }: DryRouteFullPageProps) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<any>(null);
+  const routeLayers = useRef<any[]>([]);
+  const LRef = useRef<any>(null);
+  const radarLayerRef = useRef<any>(null);
+  const userMarkerRef = useRef<any>(null);
+  const poiMarkersRef = useRef<any[]>([]);
+
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);

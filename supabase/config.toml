@@ -122,3 +122,6 @@ verify_jwt = false
 
 [functions.transit-route]
 verify_jwt = false
+
+[functions.generate-city-description]
+verify_jwt = false

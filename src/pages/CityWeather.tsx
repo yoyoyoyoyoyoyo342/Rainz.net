@@ -1,15 +1,15 @@
 import { useParams, Link, Navigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Cloud, CloudRain, Droplets, Wind, Thermometer, MapPin, Navigation, ArrowRight, Umbrella } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CITY_MAP } from "@/data/cities";
+import { CITY_MAP, CITIES } from "@/data/cities";
 import { weatherApi } from "@/lib/weather-api";
 import { SEOHead } from "@/components/seo/seo-head";
 import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
 import { AnimatedWeatherBackground } from "@/components/weather/animated-weather-background";
-import { Footer } from "@/components/ui/footer";
+import { supabase } from "@/integrations/supabase/client";
 
 function getWeatherIcon(condition: string) {
   const c = condition.toLowerCase();
@@ -18,49 +18,70 @@ function getWeatherIcon(condition: string) {
   return <Thermometer className="h-8 w-8 text-yellow-400" />;
 }
 
-function CitySchemaMarkup({ cityName, lat, lon }: { cityName: string; lat: number; lon: number }) {
-  const schema = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "WebApplication",
-        "name": "Rainz Weather",
-        "url": "https://rainz.net",
-        "applicationCategory": "WeatherApplication",
-        "operatingSystem": "Web, iOS, Android",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "description": `Live rain forecast and weather data for ${cityName} powered by AI.`,
-      },
-      {
-        "@type": "City",
-        "name": cityName,
-        "geo": {
-          "@type": "GeoCoordinates",
-          "latitude": lat,
-          "longitude": lon,
-        },
-      },
-      {
-        "@type": "WebPage",
-        "name": `Rain Forecast & Weather in ${cityName} | Rainz.net`,
-        "url": `https://rainz.net/weather/${cityName.toLowerCase().replace(/\s+/g, "-")}`,
-        "description": `Check live rain radar, hourly forecasts, and plan rain-free routes in ${cityName} with Rainz — the free AI-powered weather app.`,
-        "isPartOf": { "@type": "WebSite", "name": "Rainz.net", "url": "https://rainz.net" },
-      },
-    ],
-  };
+function useCityDescription(city: { slug: string; name: string; country: string; lat: number; lon: number; description: string } | undefined) {
+  const [description, setDescription] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-    />
-  );
+  useEffect(() => {
+    if (!city) { setLoading(false); return; }
+
+    let cancelled = false;
+
+    async function fetchDescription() {
+      try {
+        // 1. Check Supabase cache
+        const { data: cached } = await supabase
+          .from("city_pages")
+          .select("description")
+          .eq("slug", city!.slug)
+          .maybeSingle();
+
+        if (cached?.description && !cancelled) {
+          setDescription(cached.description);
+          setLoading(false);
+          return;
+        }
+
+        // 2. Call edge function to generate & cache
+        const { data, error } = await supabase.functions.invoke("generate-city-description", {
+          body: {
+            slug: city!.slug,
+            city_name: city!.name,
+            country: city!.country,
+            latitude: city!.lat,
+            longitude: city!.lon,
+          },
+        });
+
+        if (!cancelled) {
+          if (data?.description) {
+            setDescription(data.description);
+          } else {
+            // Fallback to static description from cities.ts
+            setDescription(city!.description);
+          }
+          setLoading(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setDescription(city!.description);
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchDescription();
+    return () => { cancelled = true; };
+  }, [city?.slug]);
+
+  return { description: description || city?.description || "", loading };
 }
 
 export default function CityWeather() {
   const { citySlug } = useParams<{ citySlug: string }>();
   const city = citySlug ? CITY_MAP.get(citySlug) : undefined;
+
+  const { description, loading: descLoading } = useCityDescription(city);
 
   const { data: weatherData, isLoading, error } = useQuery({
     queryKey: ["city-weather", city?.slug],
@@ -118,6 +139,7 @@ export default function CityWeather() {
   const condition = current?.condition ?? "Loading";
 
   const dryRoutesUrl = `/dryroutes?lat=${city.lat}&lon=${city.lon}&name=${encodeURIComponent(city.name)}`;
+  const dryRoutesEmbedUrl = `${window.location.origin}/dryroutes?lat=${city.lat}&lon=${city.lon}&name=${encodeURIComponent(city.name)}&embed=1`;
 
   return (
     <>
@@ -131,9 +153,7 @@ export default function CityWeather() {
 
       <div className="min-h-screen relative">
         {current && (
-          <AnimatedWeatherBackground
-            condition={condition}
-          />
+          <AnimatedWeatherBackground condition={condition} />
         )}
 
         <div className="relative z-10 max-w-2xl mx-auto px-4 py-6 md:py-10">
@@ -147,12 +167,19 @@ export default function CityWeather() {
             </h1>
           </div>
 
-          {/* City Description */}
+          {/* City Description — AI-generated & cached */}
           <Card className="glass-card mb-4">
             <CardContent className="p-4">
-              <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                {city.description}
-              </p>
+              {descLoading ? (
+                <div className="animate-pulse space-y-2">
+                  <div className="h-4 bg-muted/30 rounded w-full" />
+                  <div className="h-4 bg-muted/30 rounded w-3/4" />
+                </div>
+              ) : (
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                  {description}
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -230,38 +257,42 @@ export default function CityWeather() {
                 </CardContent>
               </Card>
 
-              {/* DryRoutes CTA */}
+              {/* DryRoutes Embed + CTA */}
               <Card className="glass-card mb-6 border-primary/20 overflow-hidden">
                 <CardContent className="p-0">
-                  <div className="bg-primary/5 p-6 md:p-8">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="rounded-full bg-primary/10 p-3 shrink-0">
-                        <Navigation className="h-6 w-6 text-primary" />
+                  <div className="bg-primary/5 px-4 pt-4 pb-3">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="rounded-full bg-primary/10 p-2 shrink-0">
+                        <Navigation className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <h2 className="text-lg md:text-xl font-bold text-foreground">
-                          Plan a Rain-Free Route
+                        <h2 className="text-base md:text-lg font-bold text-foreground">
+                          DryRoutes in {city.name}
                         </h2>
-                        <p className="text-sm text-muted-foreground">
-                          in {city.name}
+                        <p className="text-xs text-muted-foreground">
+                          Find the driest path for walking, cycling or driving
                         </p>
                       </div>
                     </div>
-                    <p className="text-sm md:text-base text-muted-foreground mb-5 leading-relaxed">
-                      Find the driest path for walking, cycling, or driving in {city.name}. DryRoutes uses real-time rain data to help you stay dry.
-                    </p>
+                  </div>
+                  {/* Tall iframe embed of DryRoutes */}
+                  <div className="w-full h-[500px] md:h-[600px] bg-background/20">
+                    <iframe
+                      src={dryRoutesEmbedUrl}
+                      className="w-full h-full border-0"
+                      title={`DryRoutes map for ${city.name}`}
+                      loading="lazy"
+                      allow="geolocation"
+                    />
+                  </div>
+                  <div className="px-4 py-3 border-t border-border/30">
                     <Link to={dryRoutesUrl}>
-                      <Button className="w-full gap-2 h-12 text-base" size="lg">
-                        <Navigation className="h-5 w-5" />
-                        Open DryRoutes for {city.name}
-                        <ArrowRight className="h-5 w-5" />
+                      <Button className="w-full gap-2 h-11 text-sm" size="lg">
+                        <Navigation className="h-4 w-4" />
+                        Open Full DryRoutes
+                        <ArrowRight className="h-4 w-4" />
                       </Button>
                     </Link>
-                  </div>
-                  <div className="px-6 py-3 border-t border-border/30">
-                    <p className="text-xs text-muted-foreground text-center">
-                      🌧️ Powered by real-time precipitation data from multiple weather sources
-                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -273,7 +304,7 @@ export default function CityWeather() {
             <CardContent className="p-4">
               <h2 className="text-sm font-semibold text-foreground mb-3">Weather in Other Cities</h2>
               <div className="flex flex-wrap gap-1.5">
-                {Array.from(CITY_MAP.values())
+                {CITIES
                   .filter(c => c.slug !== city.slug)
                   .slice(0, 12)
                   .map(c => (

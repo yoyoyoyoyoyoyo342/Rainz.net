@@ -276,7 +276,7 @@ export default function CityWeather() {
                     </div>
                   </div>
                   {/* Tall iframe embed of DryRoutes */}
-                  <div className="w-full h-[500px] md:h-[600px] bg-background/20">
+                  <div className="w-full h-[calc(100vh-120px)] md:h-[calc(100vh-140px)] bg-background/20">
                     <iframe
                       src={dryRoutesEmbedUrl}
                       className="w-full h-full border-0"

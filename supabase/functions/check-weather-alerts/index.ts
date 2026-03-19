@@ -123,26 +123,63 @@ serve(async (req) => {
           }
         }
 
-        // === DAILY SUMMARY ===
+        // === DAILY SUMMARY (AI-generated mini morning briefing) ===
         if (profile.notify_daily_summary) {
           const now = new Date();
           const preferredTime = profile.notification_time || "08:00";
           const [prefHour] = preferredTime.split(":").map(Number);
-          const currentHour = now.getUTCHours(); // Approximate - ideally use timezone
+          const currentHour = now.getUTCHours();
 
-          // Only send daily summary around the user's preferred hour (within 1 hour window)
           if (Math.abs(currentHour - prefHour) <= 1) {
             const highTemp = weather.daily?.temperature_2m_max?.[0];
             const lowTemp = weather.daily?.temperature_2m_min?.[0];
             const dailyCode = weather.daily?.weathercode?.[0] || 0;
-
             const condition = getConditionFromCode(dailyCode);
+            const hourlyTemps = weather.hourly?.temperature_2m?.slice(0, 6) || [];
+            const hourlyProbs = weather.hourly?.precipitation_probability?.slice(0, 6) || [];
+            const humidity = weather.current?.relative_humidity_2m;
+            const windSpeed = weather.current?.wind_speed_10m;
+
+            // Fetch pollen data for the summary
+            let pollenInfo = "";
+            try {
+              const pollenUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${loc.latitude}&longitude=${loc.longitude}&current=birch_pollen,grass_pollen,ragweed_pollen,alder_pollen`;
+              const pollenResp = await fetch(pollenUrl);
+              const pollenData = await pollenResp.json();
+              if (pollenData.current) {
+                const levels: string[] = [];
+                if ((pollenData.current.grass_pollen || 0) > 50) levels.push("Grass pollen: high");
+                if ((pollenData.current.birch_pollen || 0) > 50) levels.push("Birch pollen: high");
+                if ((pollenData.current.ragweed_pollen || 0) > 20) levels.push("Ragweed pollen: high");
+                if ((pollenData.current.alder_pollen || 0) > 50) levels.push("Alder pollen: high");
+                if (levels.length > 0) pollenInfo = levels.join(", ");
+              }
+            } catch { /* pollen data optional */ }
+
+            // Generate AI mini-summary via Groq
+            let summaryBody = `${condition}. High: ${Math.round(highTemp)}°C, Low: ${Math.round(lowTemp)}°C.`;
+            try {
+              const aiSummary = await generateAIMiniSummary({
+                location: loc.name,
+                currentTemp: Math.round(currentTemp),
+                highTemp: Math.round(highTemp),
+                lowTemp: Math.round(lowTemp),
+                condition,
+                humidity,
+                windSpeed,
+                pollenInfo,
+                rainChance: Math.max(...hourlyProbs, 0),
+              });
+              if (aiSummary) summaryBody = aiSummary;
+            } catch (aiErr) {
+              console.error(`AI summary generation failed for ${userId}:`, aiErr);
+            }
 
             await supabase.functions.invoke("send-push-notification", {
               body: {
                 user_id: userId,
-                title: `☀️ Daily Weather for ${loc.name}`,
-                body: `${condition}. High: ${Math.round(highTemp)}°C, Low: ${Math.round(lowTemp)}°C. Currently ${Math.round(currentTemp)}°C.`,
+                title: `☀️ Good Morning, ${loc.name}`,
+                body: summaryBody,
                 data: { type: "daily_summary", location: loc.name },
               },
             });

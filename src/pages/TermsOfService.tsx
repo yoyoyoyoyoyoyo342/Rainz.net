@@ -242,6 +242,17 @@ export default function TermsOfService() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle>13. Third-Party Design References</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm">
+            <p>
+              Certain visual design elements displayed on Apple devices are inspired by Apple's Liquid Glass design language, introduced in 2025. Apple, iPhone, iPad, and macOS are trademarks of Apple Inc., registered in the U.S. and other countries. Rainz is not affiliated with or endorsed by Apple Inc.
+            </p>
+          </CardContent>
+        </Card>
+
         <div className="text-center text-sm text-muted-foreground py-6">
           By continuing to use this Service, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
         </div>

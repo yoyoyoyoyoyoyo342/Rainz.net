@@ -223,8 +223,9 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
   // Init map
   useEffect(() => {
     if (!leafletLoaded || !mapRef.current) return;
+    setMapReady(false);
     if (mapInstance.current) {
-      try { mapInstance.current.remove(); } catch {} 
+      try { mapInstance.current.remove(); } catch {}
       mapInstance.current = null;
     }
     const L = LRef.current;
@@ -239,12 +240,14 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
       : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
     L.tileLayer(tileUrl, { maxZoom: 19 }).addTo(map);
     mapInstance.current = map;
+    setMapReady(true);
 
     if (routes.length > 0) {
       setTimeout(() => drawRoutesFn(routes, bestRouteIdx), 100);
     }
 
     return () => {
+      setMapReady(false);
       if (mapInstance.current) {
         try { mapInstance.current.remove(); } catch {}
         mapInstance.current = null;

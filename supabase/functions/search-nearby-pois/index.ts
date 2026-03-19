@@ -28,14 +28,17 @@ Deno.serve(async (req: Request) => {
   try {
     const { lat, lon, category, radius = 1000 } = await req.json();
 
-    if (!lat || !lon || !category) {
+    const parsedLat = Number(lat);
+    const parsedLon = Number(lon);
+
+    if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLon) || !category) {
       return new Response(
-        JSON.stringify({ error: 'lat, lon, and category are required' }),
+        JSON.stringify({ error: 'Valid lat, lon, and category are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const cacheKey = `${lat.toFixed(3)}_${lon.toFixed(3)}_${category}_${radius}`;
+    const cacheKey = `${parsedLat.toFixed(3)}_${parsedLon.toFixed(3)}_${category}_${radius}`;
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
       return new Response(JSON.stringify(cached.data), {
@@ -54,8 +57,8 @@ Deno.serve(async (req: Request) => {
     const query = `
       [out:json][timeout:10];
       (
-        node${osmFilter}(around:${radius},${lat},${lon});
-        way${osmFilter}(around:${radius},${lat},${lon});
+        node${osmFilter}(around:${radius},${parsedLat},${parsedLon});
+        way${osmFilter}(around:${radius},${parsedLat},${parsedLon});
       );
       out center body 20;
     `;
@@ -85,7 +88,7 @@ Deno.serve(async (req: Request) => {
         website: el.tags.website || null,
         opening_hours: el.tags.opening_hours || null,
       }))
-      .filter((p: any) => p.lat && p.lon);
+      .filter((p: any) => Number.isFinite(p.lat) && Number.isFinite(p.lon));
 
     const result = { pois, count: pois.length };
     cache.set(cacheKey, { data: result, timestamp: Date.now() });

@@ -1126,7 +1126,7 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
                         <h3 className="font-semibold text-sm truncate">{selectedPOI.name}</h3>
                         <p className="text-xs text-muted-foreground capitalize">{selectedPOI.type.replace(/_/g, ' ')}</p>
                       </div>
-                      <button onClick={() => { setSelectedPOI(null); setToCoords(null); setToQuery(''); }} className="p-1 hover:bg-muted/30 rounded-lg shrink-0">
+                      <button onClick={() => { setSelectedPOI(null); setToCoords(null); setToQuery(''); setDirectionsMode(false); }} className="p-1 hover:bg-muted/30 rounded-lg shrink-0">
                         <X className="w-4 h-4 text-muted-foreground" />
                       </button>
                     </div>
@@ -1155,92 +1155,19 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
                       </div>
                     )}
                   </div>
-                  <Button onClick={() => {
-                    const from: [number, number] = userPosition || [latitude, longitude];
-                    setFromCoords(from);
-                    setFromQuery('Current Location');
-                    findRoutes(from, toCoords || undefined);
-                  }} disabled={loading} size="sm" className="w-full">
-                    {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Finding driest route...</> : <><Route className="w-4 h-4 mr-2" /> Generate Driest Route</>}
+                  <Button onClick={openDirectionsMode} disabled={loading || !toCoords} size="sm" className="w-full">
+                    {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Loading directions...</> : <><Navigation2 className="w-4 h-4 mr-2" /> Directions</>}
                   </Button>
                 </div>
               )}
 
-              {/* Manual route inputs (when no POI selected or routes found) */}
-              {!selectedPOI && routes.length === 0 && (
-                <>
-                  {/* Departure time */}
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <input type="time" value={departureTime} onChange={(e) => setDepartureTime(e.target.value)}
-                      className="flex-1 text-sm bg-muted/20 rounded-xl px-3 py-2.5 border border-border/30 focus:outline-none focus:ring-1 focus:ring-primary" />
-                    {departureTime && <button onClick={() => setDepartureTime('')} className="text-xs text-muted-foreground">Now</button>}
-                  </div>
-
-                  {/* From input */}
-                  <div className="space-y-1">
-                    <div className="flex gap-1.5">
-                      <div className="relative flex-1">
-                        <input type="text" value={fromQuery}
-                          onChange={(e) => { setFromQuery(e.target.value); setSearching('from'); geocode(e.target.value, 'route'); }}
-                          onFocus={() => setSearching('from')}
-                          placeholder="From..."
-                          className="w-full text-sm bg-muted/20 rounded-xl pl-8 pr-3 py-2.5 border border-border/30 focus:outline-none focus:ring-1 focus:ring-primary" />
-                        <span className="absolute left-2.5 top-2.5 text-sm">🟢</span>
-                      </div>
-                      <button onClick={() => useCurrentLocation('from')} className="px-3 py-2 rounded-xl bg-muted/20 hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border/30">
-                        <Crosshair className="w-4 h-4" />
-                      </button>
-                    </div>
-                    {searching === 'from' && routeSearchResults.length > 0 && (
-                      <div className="bg-background border border-border/30 rounded-xl shadow-lg max-h-32 overflow-y-auto">
-                        {routeSearchResults.map((r: any, i: number) => (
-                          <button key={i} onClick={() => selectRouteLocation(r, 'from')} className="w-full text-left text-xs px-3 py-2.5 hover:bg-muted/30 truncate">{r.display_name}</button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* To input */}
-                  <div className="space-y-1">
-                    <div className="flex gap-1.5">
-                      <div className="relative flex-1">
-                        <input type="text" value={toQuery}
-                          onChange={(e) => { setToQuery(e.target.value); setSearching('to'); geocode(e.target.value, 'route'); }}
-                          onFocus={() => setSearching('to')}
-                          placeholder="To..."
-                          className="w-full text-sm bg-muted/20 rounded-xl pl-8 pr-3 py-2.5 border border-border/30 focus:outline-none focus:ring-1 focus:ring-primary" />
-                        <span className="absolute left-2.5 top-2.5 text-sm">🔴</span>
-                      </div>
-                      <button onClick={() => useCurrentLocation('to')} className="px-3 py-2 rounded-xl bg-muted/20 hover:bg-primary/10 text-muted-foreground hover:text-primary border border-border/30">
-                        <Crosshair className="w-4 h-4" />
-                      </button>
-                    </div>
-                    {searching === 'to' && routeSearchResults.length > 0 && (
-                      <div className="bg-background border border-border/30 rounded-xl shadow-lg max-h-32 overflow-y-auto">
-                        {routeSearchResults.map((r: any, i: number) => (
-                          <button key={i} onClick={() => selectRouteLocation(r, 'to')} className="w-full text-left text-xs px-3 py-2.5 hover:bg-muted/30 truncate">{r.display_name}</button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <Button onClick={() => findRoutes()} disabled={loading || !fromCoords || !toCoords} size="sm" className="w-full">
-                    {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analyzing rain...</> : <><Route className="w-4 h-4 mr-2" /> Find Driest Route</>}
-                  </Button>
-                </>
+              {!selectedPOI && !directionsMode && routes.length === 0 && (
+                <div className="rounded-xl border border-border/30 bg-muted/20 p-3 text-xs text-muted-foreground">
+                  Search a place above, tap it, then press <span className="font-medium text-foreground">Directions</span>.
+                </div>
               )}
-
-              {/* Dry Windows */}
-              {fromCoords && toCoords && routes.length > 0 && (
-                <DryWindows fromCoords={fromCoords} toCoords={toCoords} routeGeometry={routes[bestRouteIdx]?.geometry || []} isImperial={isImperial} />
-              )}
-
-              {/* Route results */}
-              {routes.length > 0 && (
-                <div className="space-y-2">
-                  {/* Back to search */}
-                  <button onClick={() => { setRoutes([]); setBestRouteIdx(0); setSelectedPOI(null); setFromCoords(null); setToCoords(null); setFromQuery(''); setToQuery(''); }}
+...
+                  <button onClick={() => { setRoutes([]); setBestRouteIdx(0); setSelectedPOI(null); setDirectionsMode(false); setFromCoords(null); setToCoords(null); setFromQuery(''); setToQuery(''); setSearching(null); setRouteSearchResults([]); }}
                     className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
                     <ArrowLeft className="w-3.5 h-3.5" /> New search
                   </button>

@@ -270,12 +270,12 @@ function AppContent() {
   );
 }
 
+// App root - analytics handled by AnalyticsTracker + Supabase SW
 const App = () => (
   <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: queryPersister, maxAge: 1000 * 60 * 60 * 24 }}>
     <AppleGlassProvider>
       <TimeOfDayProvider>
         <AppContent />
-        
       </TimeOfDayProvider>
     </AppleGlassProvider>
   </PersistQueryClientProvider>

@@ -38,7 +38,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const cacheKey = `${lat.toFixed(3)}_${lon.toFixed(3)}_${category}_${radius}`;
+    const cacheKey = `${parsedLat.toFixed(3)}_${parsedLon.toFixed(3)}_${category}_${radius}`;
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
       return new Response(JSON.stringify(cached.data), {

@@ -19,7 +19,7 @@ export function AIChatButton({ weatherData, location, isImperial }: AIChatButton
       {/* Floating Chat Button */}
       <LiquidButton
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 right-6 xl:bottom-6 z-[60] h-14 w-14 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 p-2 hover-scale"
+        className="fixed bottom-20 right-6 xl:bottom-6 z-[60] h-14 w-14 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 p-2 hover-scale glass-circle"
         size="icon"
       >
         <div className="relative w-full h-full">

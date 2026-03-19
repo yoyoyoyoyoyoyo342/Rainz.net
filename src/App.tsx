@@ -269,9 +269,11 @@ function AppContent() {
 
 const App = () => (
   <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: queryPersister, maxAge: 1000 * 60 * 60 * 24 }}>
-    <TimeOfDayProvider>
-      <AppContent />
-    </TimeOfDayProvider>
+    <AppleGlassProvider>
+      <TimeOfDayProvider>
+        <AppContent />
+      </TimeOfDayProvider>
+    </AppleGlassProvider>
   </PersistQueryClientProvider>
 );
 

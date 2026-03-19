@@ -13,7 +13,8 @@ import { SubscriptionProvider } from "@/hooks/use-subscription";
 import { PremiumSettingsProvider } from "@/hooks/use-premium-settings";
 import { LanguageProvider } from "@/contexts/language-context";
 import { TimeOfDayProvider, useTimeOfDayContext } from "@/contexts/time-of-day-context";
- import { PredictionShareProvider } from "@/contexts/prediction-share-context";
+import { PredictionShareProvider } from "@/contexts/prediction-share-context";
+import { AppleGlassProvider } from "@/hooks/use-apple-device";
 import { CookieConsentProvider } from "@/hooks/use-cookie-consent";
 import { CookieConsentBanner } from "@/components/ui/cookie-consent-banner";
 import { Footer } from "@/components/ui/footer";
@@ -268,9 +269,11 @@ function AppContent() {
 
 const App = () => (
   <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: queryPersister, maxAge: 1000 * 60 * 60 * 24 }}>
-    <TimeOfDayProvider>
-      <AppContent />
-    </TimeOfDayProvider>
+    <AppleGlassProvider>
+      <TimeOfDayProvider>
+        <AppContent />
+      </TimeOfDayProvider>
+    </AppleGlassProvider>
   </PersistQueryClientProvider>
 );
 

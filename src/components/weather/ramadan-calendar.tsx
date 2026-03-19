@@ -282,6 +282,7 @@ export function RamadanCalendar({ userLatitude, userLongitude, sunriseIso, sunse
     );
   }
 
+  // Never return null during Ramadan season - fallback data ensures this won't happen
   if (calendarDays.length === 0) return null;
 
   return (

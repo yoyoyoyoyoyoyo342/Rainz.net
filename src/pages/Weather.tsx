@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense, laz
 import { queryClient } from "@/lib/queryClient";
 import { useSearchParams } from "react-router-dom";
 import { CloudSun, LogIn, WifiOff } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useQuery } from "@tanstack/react-query";
@@ -865,14 +865,24 @@ export default function WeatherPage() {
 
               {/* DryRoutes - embedded card experience */}
               <AnimatedCard index={9}>
-                <div className="mb-4">
-                  <DryRoute
-                    latitude={selectedLocation.lat}
-                    longitude={selectedLocation.lon}
-                    locationName={actualStationName}
-                    isImperial={isImperial}
-                  />
-                </div>
+                <Card className="glass-card mb-4 overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center justify-between text-base">
+                      <span className="flex items-center gap-2">🗺️ DryRoutes</span>
+                      <a href="/dryroutes" className="text-xs text-primary hover:underline flex items-center gap-1">
+                        Full Screen →
+                      </a>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <iframe
+                      src={`/dryroutes?lat=${selectedLocation.lat}&lon=${selectedLocation.lon}&embed=true`}
+                      title="DryRoutes"
+                      className="w-full h-[300px] border-0"
+                      allow="geolocation"
+                    />
+                  </CardContent>
+                </Card>
               </AnimatedCard>
 
               {/* Feature Ideas Card */}

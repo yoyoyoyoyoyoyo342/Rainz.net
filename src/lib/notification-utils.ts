@@ -1,11 +1,7 @@
 /**
- * Notification utilities for Rainz+ premium features
- * Handles Web Push API for persistent notifications on desktop
+ * Notification utilities for Rainz
+ * Handles Web Push API with VAPID from edge function
  */
-
-// VAPID public key - this would be generated and stored securely
-// For now, we use a placeholder - in production, generate with web-push library
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
 
 export interface PushSubscriptionData {
   endpoint: string;
@@ -15,8 +11,29 @@ export interface PushSubscriptionData {
   };
 }
 
+let cachedVapidKey: string | null = null;
+
 /**
- * Convert a base64 string to Uint8Array for VAPID key
+ * Fetch VAPID public key from edge function
+ */
+async function getVapidPublicKey(): Promise<string | null> {
+  if (cachedVapidKey) return cachedVapidKey;
+
+  try {
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    const resp = await fetch(`https://${projectId}.supabase.co/functions/v1/get-vapid-key`);
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    cachedVapidKey = data.publicKey || null;
+    return cachedVapidKey;
+  } catch (error) {
+    console.error('Failed to fetch VAPID key:', error);
+    return null;
+  }
+}
+
+/**
+ * Convert a base64url string to Uint8Array for VAPID key
  */
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -66,8 +83,9 @@ export async function subscribeToPush(): Promise<PushSubscriptionData | null> {
     return null;
   }
 
-  if (!VAPID_PUBLIC_KEY) {
-    console.warn('VAPID public key not configured');
+  const vapidPublicKey = await getVapidPublicKey();
+  if (!vapidPublicKey) {
+    console.warn('VAPID public key not available');
     return null;
   }
 
@@ -78,12 +96,11 @@ export async function subscribeToPush(): Promise<PushSubscriptionData | null> {
     let subscription = await (registration as any).pushManager.getSubscription();
     
     if (subscription) {
-      // Already subscribed
       return extractSubscriptionData(subscription);
     }
     
     // Subscribe with VAPID key
-    const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+    const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
     subscription = await (registration as any).pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: applicationServerKey.buffer as ArrayBuffer,

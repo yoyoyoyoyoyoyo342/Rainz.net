@@ -209,6 +209,34 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// Handle incoming push notifications
+self.addEventListener('push', (event) => {
+  let data = { title: 'Rainz Weather', body: 'You have a new weather update!' };
+
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch {
+      data.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: '/logo.png',
+    badge: '/logo-icon.png',
+    tag: data.data?.type || 'rainz-notification',
+    requireInteraction: data.data?.type === 'severe_weather',
+    data: data.data || {},
+    actions: [
+      { action: 'open', title: 'Open Rainz' },
+      { action: 'dismiss', title: 'Dismiss' },
+    ],
+  };
+
+  event.waitUntil(self.registration.showNotification(data.title, options));
+});
+
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 

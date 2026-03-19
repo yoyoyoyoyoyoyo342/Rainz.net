@@ -1,105 +1,90 @@
-# DryRoutes — Completed Implementation
 
-## What was done
 
-### 1. Renamed "Rain-Free Route Planner" → **DryRoutes** (by Rainz)
+# Apple Liquid Glass for Apple Devices
 
-### 2. Performance: Fixed Map Lag
-- Created `src/hooks/use-lazy-map.tsx` — IntersectionObserver-based lazy mount hook
-- All 3 map components (DryRoute, RainMapCard, LiveWeatherMap) now:
-  - Lazy-load Leaflet JS/CSS via dynamic `import()`
-  - Only initialize when scrolled into viewport
-  - Use `preferCanvas: true` for reduced DOM overhead
+## Overview
+Apply Apple's Liquid Glass design language across the entire app, but **only on Apple devices** (iPhone, iPad, Mac Safari). Non-Apple devices keep the current design unchanged. Add an Apple credit to the Terms of Service.
 
-### 3. Moved DryRoute to Main Weather Page
-- Removed from `explore-sheet.tsx`
-- Added as standalone card in `Weather.tsx` (before Feature Ideas)
-- Larger default map (h-56)
+## 1. Apple Device Detection Utility
+**File**: `src/lib/pwa-utils.ts` (extend) + new `src/hooks/use-apple-device.tsx`
 
-### 4. Fullscreen Mode
-- Expand button (⛶) on card header
-- Opens fullscreen Dialog overlay with full routing UI
+- Add `isAppleDevice()` function that detects iOS, iPadOS, and macOS Safari via user-agent
+- Create a React hook `useIsAppleDevice()` that returns a boolean and a context provider `AppleGlassProvider` that wraps the app, setting a CSS class `apple-glass` on `<html>` when on Apple devices
+- This allows all glass styles to be scoped under `.apple-glass` in CSS
 
-### 5. "Go" Navigation Mode
-- Turn-by-turn via `navigator.geolocation.watchPosition()`
-- Blue GPS dot on map, auto-centers[text]
-- Step-by-step instructions with maneuver icons
-- Rain score + ETA in status bar
-- Auto-advance to next step when within 30m
+## 2. Liquid Glass CSS System
+**File**: `src/index.css`
 
-### 6. AR Navigation
-- Camera overlay with compass-based directional arrow
-- HUD showing current instruction, rain probability, ETA
-- Reuses proven device orientation pattern from AR overlay
+Add an `.apple-glass` scoped layer with 6 component styles matching your Figma components:
 
-### 7. Additional Features
-- **Transport modes**: Drive / Bike / Walk (OSRM profiles)
-- **Departure time picker**: Shifts rain forecast window
-- **Rain timeline bar**: Visual per-segment rain probability
-- **Share route**: Native share or clipboard
-- **OSRM steps=true**: Full turn-by-turn instructions
+| Figma Component | CSS Class | Applied To |
+|---|---|---|
+| Square glass | `.apple-glass .glass-card` | All weather cards, dialogs |
+| Small circle | `.apple-glass .glass-circle` | Avatar bubbles, icon buttons (AI chat FAB, location icons) |
+| Button/pill | `.apple-glass .glass-btn` | All `Button` default variant |
+| Confirm button | `.apple-glass .glass-btn-confirm` | Primary/CTA buttons |
+| Notification | `.apple-glass .glass-notification` | Toast components, emergency alerts |
+| Tab bar | `.apple-glass .glass-tab-bar` | Bottom mobile nav bar |
 
-### 8. Fixed Rainz/Temp/Wind Layers on Weather Map
-- Fixed layer visibility issue preventing Rainz, Temperature, and Wind layers from displaying
-- Ensured all weather data layers render correctly on LiveWeatherMap
+Each style applies:
+- `backdrop-filter: blur(40px) saturate(180%)` (heavier blur than current 12px)
+- Tinted semi-transparent background with specular highlight (white inner glow at top edge)
+- Subtle border with gradient from white/20 to white/5
+- Multi-layer box-shadow for depth and refraction illusion
+- The existing `GlassFilter` SVG filter from `liquid-glass-button.tsx` will be reused for the refraction distortion effect on buttons
 
-### 9. Fixed Map Loading on Track Mode in DryRoutes
-- Fixed map component initialization in Track mode
-- Resolved lazy-loading conflict with Track mode navigation
+## 3. Component Modifications
 
-### 10. Added Update Counter & Improved DryRoutes
-- Added update counter to footer showing route recalculation status
-- Improved DryRoutes UI/UX with better visual feedback
-- Enhanced route planning experience with update indicators
+### Cards (`src/components/ui/card.tsx`)
+- Wrap the existing `glass-card` class; on Apple devices the CSS override kicks in automatically via `.apple-glass .glass-card` — no React changes needed
 
-### 11. Fixed Rain Cloud Layer Display in DryRoutes
-- Added missing zoom constraints (`minZoom: 0`) to rain/precipitation layer
-- Added proper z-index stacking (`zIndex: 500`) to ensure layer visibility
-- Rain cloud overlay now displays correctly when Radar button is toggled in Track/Route modes
+### Buttons (`src/components/ui/liquid-glass-button.tsx`)
+- Add `apple-glass` variant awareness: when on Apple device, the `LiquidButton` becomes the default for all buttons, applying the refraction SVG filter
+- Standard `Button` gets the lighter glass-btn treatment via CSS class injection
 
-### 12. Point-Based Route Drawing System
-- **Replaced freehand drawing with click-to-place points**: Users now click on map to place discrete points instead of continuous drawing
-- **Point types with visual markers**:
-  - 🟢 Green circle for start point (route origin)
-  - ⚪ Gray circle for waypoints (intermediate points)
-  - 🏁 Flag emoji for end point (route destination)
-- **Real-time road snapping**: Each point pair automatically snaps to road network via OSRM `/match` endpoint
-- **Real-time distance counter**: Updates as each point is added and after snapping completes
-- **Point management**:
-  - Click any marker to delete that specific point
-  - "Undo Last" button removes most recent point
-  - "Clear All" button resets entire route
-  - Point type selector allows switching between point types while placing
-- **Route confirmation dialog**: When "Done!" is clicked, shows route preview with distance, duration, rain score, and rain timeline before accepting
-- **Rain layer visibility**: Precipitation layer now displays consistently in all DryRoutes modes (Route/Track/Create Route) when Radar toggle is enabled
+### Bottom Tab Bar (`src/components/weather/mobile-location-nav.tsx`)
+- Add `glass-tab-bar` class alongside existing `glass-card` on the nav container
+- On Apple devices, CSS applies the heavier blur (40px), tinted background, and top-edge specular highlight matching Apple's tab bar style
 
-### 13. Route Saving & Activity Tracking System
-- **Mode Renamed**: "Draw" mode renamed to **"Create Route"** for clarity and intuitive UX
-- **Route Saving Feature**:
-  - After creating or finding a route, users can save with custom name via modal
-  - Modal shows route name input (required), description (optional), public toggle, and route stats preview
-  - Saves to `saved_routes` table with full metadata: geometry, distance, duration, rain score, steps, transport mode
-  - Route type tracked: 'found' (Route mode) / 'created' (Create Route mode) / 'tracked' (Track mode)
-  - Success toast notification after save, auto-refresh of saved routes list
-- **Activity Tracking & Saving**:
-  - After completing Track session (stop button), users can save named activity
-  - Modal auto-populates with "Activity - HH:MM AM/PM" format, user can edit
-  - Saves all GPS points with timestamps, calculates calories/CO2 estimates based on transport mode
-  - Saves to `saved_activities` table with complete geospatial data for future playback/analysis
-  - Public toggle for future sharing features
-- **Track Mode Route Selection**:
-  - Dropdown selector in Track mode shows all user's saved routes with distance/duration/rain score
-  - When selected, route geometry loads on map with visual markers for endpoints
-  - Auto-advance to next waypoint when GPS within 30m (reuses Go navigation logic)
-  - Manual GPS tracking still works in parallel and can be saved as new activity
-- **Database Schema**:
-  - **saved_routes**: Stores user routes with geometry (GeoJSON), rain data, turn-by-turn steps, metadata
-  - **saved_activities**: Stores tracked activities with GPS points (lat/lng/timestamp), stats, estimates
-  - Row Level Security (RLS) policies ensure users can only see/edit their own routes and public routes
-  - Indexes on user_id, created_at, is_public for fast queries
+### Toasts/Notifications (`src/components/ui/toast.tsx`)
+- Add `glass-notification` class to the Toast component
+- On Apple devices, overrides the solid background with translucent glass + blur
 
-## Files
+### Dialogs (`src/components/ui/dialog.tsx`)
+- Add glass treatment to `DialogContent` — on Apple devices the overlay becomes more translucent and the content panel gets the glass card effect
+
+### AI Chat FAB (`src/components/weather/ai-chat-button.tsx`)
+- Add `glass-circle` class for the floating button — on Apple devices it gets circular glass with refraction
+
+## 4. App Provider Integration
+**File**: `src/App.tsx`
+
+- Import and wrap root with `AppleGlassProvider` which sets `apple-glass` class on document element on mount (if Apple device detected)
+
+## 5. Terms of Service Credit
+**File**: `src/pages/TermsOfService.tsx`
+
+Add a "Third-Party Design References" section:
+> "Certain visual design elements on Apple devices are inspired by Apple's Liquid Glass design language, introduced in 2025. Apple, iPhone, iPad, and macOS are trademarks of Apple Inc. Rainz is not affiliated with or endorsed by Apple Inc."
+
+## Files Changed
+
 | File | Action |
+<<<<<<< Updated upstream
+|---|---|
+| `src/lib/pwa-utils.ts` | Add `isAppleDevice()` function |
+| `src/hooks/use-apple-device.tsx` | New — hook + context provider |
+| `src/index.css` | Add `.apple-glass` scoped glass styles |
+| `src/App.tsx` | Wrap with `AppleGlassProvider` |
+| `src/components/ui/card.tsx` | No change needed (CSS handles it) |
+| `src/components/ui/liquid-glass-button.tsx` | Minor: add glass-btn class |
+| `src/components/ui/toast.tsx` | Add `glass-notification` class |
+| `src/components/ui/dialog.tsx` | Add glass treatment class |
+| `src/components/weather/mobile-location-nav.tsx` | Add `glass-tab-bar` class |
+| `src/components/weather/ai-chat-button.tsx` | Add `glass-circle` class |
+| `src/pages/TermsOfService.tsx` | Add Apple trademark credit |
+
+=======
 |------|--------|
 | `src/hooks/use-lazy-map.tsx` | NEW — IntersectionObserver hook |
 | `src/components/weather/dry-route.tsx` | Updated: Point-based draw mode, real-time snapping per segment, distance tracking, confirmation dialog, rain layer consistency |
@@ -116,10 +101,8 @@
 - **Distance counter**: Waypoint distance now calculated on every click using straight‑line haversine math; removed road snapping. Display updates immediately instead of sticking at 0.00 km.
 - **Road snapping removed**: OSRM snapping logic stripped from draw mode; routes may pass freely through forests or off‑road without adjustment.
 - **Leaderboard corrections**:
-  - Monthly RPC updated to filter by `prediction_date` rather than `updated_at` and otherwise mirror the all‑time query. Accuracy now matches the all‑time tab exactly (e.g. Seje_ged’s percentage will be identical).
-  - Front‑end fetchMonthlyLeaderboard simplified to trust the RPC output; previous workaround queries were removed.
-  - Added trigger that bumps `updated_at` when predictions are verified/points awarded so the monthly leaderboard reflects new points immediately.
-- **Radar overlay fixes**: `showRadar` effect now re‑runs when the map instance is created and `initMap` explicitly adds the layer if the toggle is on. This prevents cases where radar was toggled before map load and never appeared.
-- **Map stacking tweaks**: Map containers now have `z-0`; all DryRoutes bottom sheets/modals use `z-[2000]` ensuring UI always sits above the map. Cleans up lingering overlay problems.
+  - Monthly fetch rewritten to recompute prediction counts exactly as all‑time version, guaranteeing accuracy percentages match across tabs.
+  - Added trigger that bumps `updated_at` when predictions are verified/points awarded so monthly leaderboard gets new points instantly.
 - **Legal updates**: Added explicit DryRoutes liability disclaimers to Terms of Service and Privacy Policy; updated "last updated" dates.
 - **Misc**: plan file updated to document the above changes.
+>>>>>>> Stashed changes

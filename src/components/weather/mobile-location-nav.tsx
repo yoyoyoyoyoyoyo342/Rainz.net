@@ -153,7 +153,7 @@ export function MobileLocationNav({ onLocationSelect, currentLocation, isImperia
         ref={navRef}
         className="fixed bottom-0 left-0 right-0 z-50 pb-safe px-2"
       >
-        <div className="glass-card rounded-3xl border border-border/30 backdrop-blur-xl mx-2 mb-2 shadow-lg">
+        <div className="glass-card glass-tab-bar rounded-3xl border border-border/30 backdrop-blur-xl mx-2 mb-2 shadow-lg">
           {/* Handle indicator */}
           <div className="w-full flex items-center justify-center py-2">
             <div className="w-12 h-1 rounded-full bg-muted-foreground/40" />

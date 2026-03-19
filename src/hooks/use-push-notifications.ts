@@ -65,12 +65,30 @@ export function usePushNotifications() {
       setPermission(result);
       
       if (result === 'granted') {
+        // Subscribe to Web Push and save subscription to Supabase
+        const pushSub = await subscribeToPush();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (pushSub && user) {
+          // Upsert push subscription
+          await supabase
+            .from('push_subscriptions')
+            .upsert({
+              user_id: user.id,
+              endpoint: pushSub.endpoint,
+              p256dh: pushSub.keys.p256dh,
+              auth: pushSub.keys.auth,
+            }, { onConflict: 'endpoint' });
+          
+          console.log('Push subscription saved to Supabase');
+        }
+
         toast({
           title: "Notifications enabled",
-          description: "You'll receive daily weather and pollen updates.",
+          description: "You'll receive weather alerts and daily updates.",
         });
         
-        // Schedule daily notifications
+        // Schedule local daily notifications as fallback
         await scheduleDailyNotifications();
         return true;
       } else {

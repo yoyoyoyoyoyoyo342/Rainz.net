@@ -116,3 +116,15 @@ verify_jwt = true
 
 [functions.check-weather-alerts]
 verify_jwt = false
+
+[functions.search-nearby-pois]
+verify_jwt = false
+
+[functions.transit-route]
+verify_jwt = false
+
+[functions.generate-city-description]
+verify_jwt = false
+
+[functions.get-vapid-key]
+verify_jwt = false

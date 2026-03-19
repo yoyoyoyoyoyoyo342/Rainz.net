@@ -1,13 +1,23 @@
 /**
- * Utility functions for PWA installation and iOS detection
+ * Utility functions for PWA installation and iOS/Apple device detection
  */
 
 export const isIOS = (): boolean => {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
 };
 
+export const isAppleDevice = (): boolean => {
+  const ua = navigator.userAgent;
+  // iOS devices
+  if (/iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream) return true;
+  // iPadOS (reports as Mac with touch)
+  if (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) return true;
+  // macOS Safari (exclude Chrome/Firefox/Edge on Mac)
+  if (/Macintosh/.test(ua) && /Safari/.test(ua) && !/Chrome|CriOS|FxiOS|Edg/.test(ua)) return true;
+  return false;
+};
+
 export const isPWAInstalled = (): boolean => {
-  // Check if running in standalone mode (installed as PWA)
   return window.matchMedia('(display-mode: standalone)').matches || 
          (window.navigator as any).standalone === true;
 };
@@ -17,10 +27,8 @@ export const needsPWAInstall = (): boolean => {
 };
 
 export const canRequestNotifications = (): boolean => {
-  // On iOS, notifications only work if PWA is installed
   if (isIOS()) {
     return isPWAInstalled();
   }
-  // On other platforms, check if notifications are supported
   return 'Notification' in window;
 };

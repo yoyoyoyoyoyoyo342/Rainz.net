@@ -1,5 +1,5 @@
 // Service Worker for Rainz Weather App with Infrastructure-Level Analytics
-const VERSION = 'v4.1';
+const VERSION = 'v4.2';
 const CACHE_NAME = `rainz-weather-${VERSION}`;
 const STATIC_CACHE = `rainz-static-${VERSION}`;
 
@@ -83,6 +83,13 @@ const trackAnalytics = (eventData) => {
   }
 };
 
+const shouldBypassRuntimeCache = (request, url) => {
+  if (request.destination === 'script') return true;
+  if (url.pathname.includes('/node_modules/.vite/')) return true;
+  if (url.pathname.includes('/@vite/')) return true;
+  return false;
+};
+
 async function cacheFirst(request) {
   const cached = await caches.match(request);
   if (cached) return cached;
@@ -159,10 +166,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  if (shouldBypassRuntimeCache(event.request, url)) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     (async () => {
       const destination = event.request.destination;
-      const isStatic = ['script', 'style', 'font', 'image'].includes(destination);
+      const isStatic = ['style', 'font', 'image'].includes(destination);
 
       try {
         const response = isStatic ? await cacheFirst(event.request) : await networkFirst(event.request);
@@ -195,6 +207,34 @@ self.addEventListener('fetch', (event) => {
       }
     })()
   );
+});
+
+// Handle incoming push notifications
+self.addEventListener('push', (event) => {
+  let data = { title: 'Rainz Weather', body: 'You have a new weather update!' };
+
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch {
+      data.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: '/logo.png',
+    badge: '/logo-icon.png',
+    tag: data.data?.type || 'rainz-notification',
+    requireInteraction: data.data?.type === 'severe_weather',
+    data: data.data || {},
+    actions: [
+      { action: 'open', title: 'Open Rainz' },
+      { action: 'dismiss', title: 'Dismiss' },
+    ],
+  };
+
+  event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
 self.addEventListener('notificationclick', (event) => {

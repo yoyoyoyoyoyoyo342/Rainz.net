@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense, laz
 import { queryClient } from "@/lib/queryClient";
 import { useSearchParams } from "react-router-dom";
 import { CloudSun, LogIn, WifiOff } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useQuery } from "@tanstack/react-query";
@@ -52,6 +52,7 @@ const AQICard = lazy(() => import("@/components/weather/aqi-card").then(m => ({ 
 const BarometerCard = lazy(() => import("@/components/weather/barometer-card").then(m => ({ default: m.BarometerCard })));
 const MobileLocationNav = lazy(() => import("@/components/weather/mobile-location-nav").then(m => ({ default: m.MobileLocationNav })));
 const RainMapCard = lazy(() => import("@/components/weather/rain-map-card"));
+const DryRoute = lazy(() => import("@/components/weather/dry-route").then(m => ({ default: m.DryRoute })));
 const AffiliateCard = lazy(() => import("@/components/weather/affiliate-card").then(m => ({ default: m.AffiliateCard })));
 const ChristmasCalendar = lazy(() => import("@/components/weather/christmas-calendar").then(m => ({ default: m.ChristmasCalendar })));
 const RamadanCalendar = lazy(() => import("@/components/weather/ramadan-calendar").then(m => ({ default: m.RamadanCalendar })));
@@ -60,7 +61,7 @@ const ExploreSheet = lazy(() => import("@/components/weather/explore-sheet").the
 const ExploreButton = lazy(() => import("@/components/weather/explore-sheet").then(m => ({ default: m.ExploreButton })));
 const FeatureIdeasCard = lazy(() => import("@/components/weather/feature-ideas-card").then(m => ({ default: m.FeatureIdeasCard })));
 const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-card").then(m => ({ default: m.BattleAcceptCard })));
-const DryRoute = lazy(() => import("@/components/weather/dry-route").then(m => ({ default: m.DryRoute })));
+
 const WeeklyRecapCard = lazy(() => import("@/components/weather/weekly-recap-card").then(m => ({ default: m.WeeklyRecapCard })));
 const SocialFeed = lazy(() => import("@/components/weather/social-feed").then(m => ({ default: m.SocialFeed })));
 
@@ -862,14 +863,26 @@ export default function WeatherPage() {
                 </AnimatedCard>
               ) : null}
 
-              {/* DryRoutes */}
+              {/* DryRoutes - embedded card experience */}
               <AnimatedCard index={9}>
-                <DryRoute
-                  latitude={selectedLocation.lat}
-                  longitude={selectedLocation.lon}
-                  locationName={actualStationName}
-                  isImperial={isImperial}
-                />
+                <Card className="glass-card mb-4 overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center justify-between text-base">
+                      <span className="flex items-center gap-2">🗺️ DryRoutes</span>
+                      <a href="/dryroutes" className="text-xs text-primary hover:underline flex items-center gap-1">
+                        Full Screen →
+                      </a>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <iframe
+                      src={`/dryroutes?lat=${selectedLocation.lat}&lon=${selectedLocation.lon}&embed=true`}
+                      title="DryRoutes"
+                      className="w-full h-[300px] border-0"
+                      allow="geolocation"
+                    />
+                  </CardContent>
+                </Card>
               </AnimatedCard>
 
               {/* Feature Ideas Card */}
@@ -902,10 +915,10 @@ export default function WeatherPage() {
                   <ChristmasCalendar />
                 </div>
               )}
-              {user && (() => {
+              {(() => {
                 const now = new Date();
                 const ramadanStart = new Date(2026, 1, 18);
-                const ramadanEnd = new Date(2026, 2, 19);
+                const ramadanEnd = new Date(2026, 2, 21, 23, 59, 59);
                 return now >= ramadanStart && now <= ramadanEnd;
               })() && (
                 <div className="mb-4">

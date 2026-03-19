@@ -13,7 +13,8 @@ import { SubscriptionProvider } from "@/hooks/use-subscription";
 import { PremiumSettingsProvider } from "@/hooks/use-premium-settings";
 import { LanguageProvider } from "@/contexts/language-context";
 import { TimeOfDayProvider, useTimeOfDayContext } from "@/contexts/time-of-day-context";
- import { PredictionShareProvider } from "@/contexts/prediction-share-context";
+import { PredictionShareProvider } from "@/contexts/prediction-share-context";
+import { AppleGlassProvider } from "@/hooks/use-apple-device";
 import { CookieConsentProvider } from "@/hooks/use-cookie-consent";
 import { CookieConsentBanner } from "@/components/ui/cookie-consent-banner";
 import { Footer } from "@/components/ui/footer";
@@ -25,6 +26,7 @@ import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { AppLockdownScreen } from "@/components/ui/app-lockdown-screen";
 import { toast as sonnerToast } from "sonner";
+
 
 // Critical components - load immediately
 import Weather from "./pages/Weather";
@@ -51,6 +53,8 @@ const Widgets = lazy(() => import("./pages/Widgets"));
 const Widget = lazy(() => import("./pages/Widget"));
 const Embed = lazy(() => import("./pages/Embed"));
 const Info = lazy(() => import("./pages/Info"));
+const DryRoutes = lazy(() => import("./pages/DryRoutes"));
+const CityWeather = lazy(() => import("./pages/CityWeather"));
 
 
 function AnalyticsTracker() {
@@ -162,6 +166,8 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
               <Route path="/widget" element={<Widget />} />
               <Route path="/embed" element={<Embed />} />
               <Route path="/info" element={<Info />} />
+              <Route path="/dryroutes" element={<DryRoutes />} />
+              <Route path="/weather/:citySlug" element={<CityWeather />} />
               <Route path="/weather" element={<Navigate to="/" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
@@ -237,17 +243,19 @@ function AppContent() {
                     <Sonner />
                     <CookieConsentBanner />
                     <PWAInstallPopup />
-                    <BrowserRouter>
-                      <LockdownGuard>
-                        <div className="flex flex-col min-h-screen">
-                          <div className="flex-1">
-                            <AnalyticsTracker />
-                            <AnimatedRoutes
-                              isApiSubdomain={isApiSubdomain}
-                              isBlogSubdomain={isBlogSubdomain}
-                            />
-                          </div>
+                     <BrowserRouter>
+                       <LockdownGuard>
+                         <div className="flex flex-col min-h-screen">
+                           <div className="flex-1">
+                             <AnalyticsTracker />
+                             <AnimatedRoutes
+                               isApiSubdomain={isApiSubdomain}
+                               isBlogSubdomain={isBlogSubdomain}
+                             />
+                           </div>
+                           {window.location.pathname !== '/dryroutes' && (
                           <Footer />
+                           )}
                         </div>
                       </LockdownGuard>
                     </BrowserRouter>
@@ -262,11 +270,14 @@ function AppContent() {
   );
 }
 
+// App root - analytics handled by AnalyticsTracker + Supabase SW
 const App = () => (
   <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: queryPersister, maxAge: 1000 * 60 * 60 * 24 }}>
-    <TimeOfDayProvider>
-      <AppContent />
-    </TimeOfDayProvider>
+    <AppleGlassProvider>
+      <TimeOfDayProvider>
+        <AppContent />
+      </TimeOfDayProvider>
+    </AppleGlassProvider>
   </PersistQueryClientProvider>
 );
 

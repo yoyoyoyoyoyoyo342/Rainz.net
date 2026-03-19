@@ -529,6 +529,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           return;
         }
 
+<<<<<<< Updated upstream
         // compute distance using ref to avoid stale closure
         const currentPoints = drawRoutePointsRef.current;
         if (currentPoints.length > 0) {
@@ -559,6 +560,17 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
     drawMarkersRef.current.forEach(m => map.removeLayer(m));
     drawMarkersRef.current = [];
+=======
+        // add new point and update straight-line distance immediately
+        setDrawRoutePoints(prev => {
+          if (prev.length > 0) {
+            const last = prev[prev.length - 1];
+            const dist = haversineDistance([last.lat, last.lng], [newPoint.lat, newPoint.lng]);
+            setDrawDistance(d => d + dist);
+          }
+          return [...prev, newPoint];
+        });
+>>>>>>> Stashed changes
     drawLinesRef.current.forEach(l => map.removeLayer(l));
     drawLinesRef.current = [];
 
@@ -1120,7 +1132,12 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
             if (mode !== 'create-route') {
               setDrawRoutePoints([]);
               setDrawnRoute(null);
+<<<<<<< Updated upstream
               setIsPlacingPoints(false);
+=======
+              // snapping state no longer used
+              setIsDrawing(false);
+>>>>>>> Stashed changes
               if (drawPolylineRef.current && mapInstance.current) {
                 mapInstance.current.removeLayer(drawPolylineRef.current);
                 drawPolylineRef.current = null;
@@ -1362,8 +1379,13 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       )}
 
       {/* Save Activity Modal */}
+<<<<<<< Updated upstream
       {showSaveActivityModal && trackSummary && createPortal(
         <div className="fixed inset-0 z-[3000] bg-black/50 flex items-end animate-in fade-in duration-200">
+=======
+      {showSaveActivityModal && trackSummary && (
+        <div className="fixed inset-0 z-[2000] bg-black/50 flex items-end animate-in fade-in duration-200">
+>>>>>>> Stashed changes
           <div className="w-full bg-background border-t border-border/50 rounded-t-2xl p-4 space-y-3 animate-in slide-in-from-bottom duration-300">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-sm">Save Your Activity</h3>
@@ -1456,8 +1478,13 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   const drawContent = (
     <div className="space-y-3">
       {/* Confirmation Dialog */}
+<<<<<<< Updated upstream
       {showDrawConfirmation && drawConfirmationData && createPortal(
         <div className="fixed inset-0 z-[3000] bg-black/50 flex items-end animate-in fade-in duration-200">
+=======
+      {showDrawConfirmation && drawConfirmationData && (
+        <div className="fixed inset-0 z-[2000] bg-black/50 flex items-end animate-in fade-in duration-200">
+>>>>>>> Stashed changes
           <div className="w-full bg-background border-t border-border/50 rounded-t-2xl p-4 space-y-3 animate-in slide-in-from-bottom duration-300">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-sm">Confirm Your Route</h3>
@@ -1551,8 +1578,13 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       )}
 
       {/* Save Route Modal */}
+<<<<<<< Updated upstream
       {showSaveRouteModal && drawnRoute && createPortal(
         <div className="fixed inset-0 z-[3000] bg-black/50 flex items-end animate-in fade-in duration-200">
+=======
+      {showSaveRouteModal && drawnRoute && (
+        <div className="fixed inset-0 z-[2000] bg-black/50 flex items-end animate-in fade-in duration-200">
+>>>>>>> Stashed changes
           <div className="w-full bg-background border-t border-border/50 rounded-t-2xl p-4 space-y-3 animate-in slide-in-from-bottom duration-300">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-sm">Save Your Route</h3>

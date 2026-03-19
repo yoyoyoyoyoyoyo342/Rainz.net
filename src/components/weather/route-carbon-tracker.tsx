@@ -4,15 +4,15 @@ import { Leaf, Flame, Car } from 'lucide-react';
 interface RouteCarbonTrackerProps {
   distanceMeters: number;
   durationSeconds: number;
-  transportMode: 'driving' | 'cycling' | 'walking' | 'running';
+  transportMode: 'driving' | 'cycling' | 'walking' | 'running' | 'transit';
   isImperial: boolean;
 }
 
 export function RouteCarbonTracker({ distanceMeters, durationSeconds, transportMode, isImperial }: RouteCarbonTrackerProps) {
   const km = distanceMeters / 1000;
 
-  const caloriesPerKm: Record<string, number> = { walking: 65, running: 80, cycling: 30, driving: 0 };
-  const co2PerKm: Record<string, number> = { driving: 120, cycling: 0, walking: 0, running: 0 };
+  const caloriesPerKm: Record<string, number> = { walking: 65, running: 80, cycling: 30, driving: 0, transit: 0 };
+  const co2PerKm: Record<string, number> = { driving: 120, cycling: 0, walking: 0, running: 0, transit: 60 };
 
   const calories = Math.round(km * (caloriesPerKm[transportMode] || 0));
   const co2Grams = Math.round(km * (co2PerKm[transportMode] || 0));

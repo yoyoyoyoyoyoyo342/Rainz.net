@@ -254,3 +254,66 @@ function getConditionFromCode(code: number): string {
   if (code >= 95) return "Thunderstorm";
   return "Mixed conditions";
 }
+
+interface MiniSummaryInput {
+  location: string;
+  currentTemp: number;
+  highTemp: number;
+  lowTemp: number;
+  condition: string;
+  humidity?: number;
+  windSpeed?: number;
+  pollenInfo: string;
+  rainChance: number;
+}
+
+async function generateAIMiniSummary(input: MiniSummaryInput): Promise<string | null> {
+  const groqApiKey = Deno.env.get("GROQ_API_KEY");
+  if (!groqApiKey) return null;
+
+  const systemPrompt = `You are a friendly weather assistant writing a push notification summary. 
+Keep it under 120 characters. Be conversational and actionable.
+Include outfit/umbrella advice, pollen warnings if relevant, and activity tips.
+Examples: "Warm & sunny today! Dress light, SPF up. Grass pollen high—antihistamines recommended 🌿"
+"Rain likely by noon—grab an umbrella. Cool at 12°C, layer up! 🧥"
+Never include the location name or greeting—those are in the title already.`;
+
+  const userPrompt = `Current: ${input.currentTemp}°C, ${input.condition}
+High/Low: ${input.highTemp}°C / ${input.lowTemp}°C
+Humidity: ${input.humidity ?? "N/A"}%, Wind: ${input.windSpeed ?? "N/A"} km/h
+Rain chance: ${input.rainChance}%
+Pollen: ${input.pollenInfo || "Low/none"}`;
+
+  try {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${groqApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        max_tokens: 80,
+        temperature: 0.7,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("Groq mini-summary error:", response.status, errText);
+      return null;
+    }
+
+    const result = await response.json();
+    const content = result.choices?.[0]?.message?.content?.trim();
+    // Strip quotes if the model wraps in them
+    return content ? content.replace(/^["']|["']$/g, "") : null;
+  } catch (err) {
+    console.error("Groq mini-summary call failed:", err);
+    return null;
+  }
+}

@@ -70,6 +70,7 @@ Add a "Third-Party Design References" section:
 ## Files Changed
 
 | File | Action |
+<<<<<<< Updated upstream
 |---|---|
 | `src/lib/pwa-utils.ts` | Add `isAppleDevice()` function |
 | `src/hooks/use-apple-device.tsx` | New — hook + context provider |
@@ -83,3 +84,25 @@ Add a "Third-Party Design References" section:
 | `src/components/weather/ai-chat-button.tsx` | Add `glass-circle` class |
 | `src/pages/TermsOfService.tsx` | Add Apple trademark credit |
 
+=======
+|------|--------|
+| `src/hooks/use-lazy-map.tsx` | NEW — IntersectionObserver hook |
+| `src/components/weather/dry-route.tsx` | Updated: Point-based draw mode, real-time snapping per segment, distance tracking, confirmation dialog, rain layer consistency |
+| `src/components/weather/dry-route-navigation.tsx` | NEW — Turn-by-turn panel |
+| `src/components/weather/dry-route-ar.tsx` | NEW — AR navigation overlay |
+| `src/components/weather/explore-sheet.tsx` | Removed RainRoutePlanner |
+| `src/pages/Weather.tsx` | Added DryRoute card |
+| `src/components/weather/rain-map-card.tsx` | Lazy map loading |
+| `src/components/weather/live-weather-map.tsx` | Lazy map loading |
+| `src/components/weather/rain-route-planner.tsx` | DELETED |
+
+### 14. March 2026 Bug fixes & refinements
+- **Map overlay z‑index**: Fixed issue where fullscreen map would cover route name/save UI in Create Route mode. Modals and bottom sheets now use `z-[2000]` so they always float above map controls.
+- **Distance counter**: Waypoint distance now calculated on every click using straight‑line haversine math; removed road snapping. Display updates immediately instead of sticking at 0.00 km.
+- **Road snapping removed**: OSRM snapping logic stripped from draw mode; routes may pass freely through forests or off‑road without adjustment.
+- **Leaderboard corrections**:
+  - Monthly fetch rewritten to recompute prediction counts exactly as all‑time version, guaranteeing accuracy percentages match across tabs.
+  - Added trigger that bumps `updated_at` when predictions are verified/points awarded so monthly leaderboard gets new points instantly.
+- **Legal updates**: Added explicit DryRoutes liability disclaimers to Terms of Service and Privacy Policy; updated "last updated" dates.
+- **Misc**: plan file updated to document the above changes.
+>>>>>>> Stashed changes

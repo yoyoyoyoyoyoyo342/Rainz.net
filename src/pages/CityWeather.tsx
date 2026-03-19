@@ -133,7 +133,6 @@ export default function CityWeather() {
         {current && (
           <AnimatedWeatherBackground
             condition={condition}
-            isDay={true}
           />
         )}
 

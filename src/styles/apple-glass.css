@@ -57,8 +57,8 @@
 }
 
 .apple-glass.dark .glass-card-strong {
-  background: hsla(0, 0%, 100%, 0.05);
-  border: 1px solid hsla(0, 0%, 100%, 0.07);
+  background: hsla(0, 0%, 100%, 0.03);
+  border: 1px solid hsla(0, 0%, 100%, 0.05);
 }
 
 /* --- Small Circle (Icon Buttons, Avatars) --- */

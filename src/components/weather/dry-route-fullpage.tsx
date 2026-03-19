@@ -442,10 +442,11 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
 
   // POI markers
   useEffect(() => {
-    if (!mapInstance.current || !LRef.current) return;
+    if (!mapReady || !mapInstance.current || !LRef.current) return;
     const L = LRef.current;
     poiMarkersRef.current.forEach(m => mapInstance.current!.removeLayer(m));
     poiMarkersRef.current = [];
+
     pois.forEach(poi => {
       const emoji = poi.type === 'restaurant' || poi.type === 'fast_food' ? '🍽️'
         : poi.type === 'cafe' ? '☕'
@@ -466,23 +467,29 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
         setSelectedPOI(poi);
         setToCoords([poi.lat, poi.lon]);
         setToQuery(poi.name);
+        setDirectionsMode(false);
         mapInstance.current?.setView([poi.lat, poi.lon], 16, { animate: true });
       });
       poiMarkersRef.current.push(marker);
     });
-  }, [pois]);
+  }, [pois, mapReady]);
 
   // Geocode
   const geocodeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const geocode = useCallback((query: string, target: 'search' | 'route') => {
-    if (query.length < 3) return;
+    const trimmedQuery = query.trim();
+    if (trimmedQuery.length < 3) {
+      if (target === 'search') setSearchResults([]);
+      else setRouteSearchResults([]);
+      return;
+    }
     if (geocodeTimerRef.current) clearTimeout(geocodeTimerRef.current);
     geocodeTimerRef.current = setTimeout(async () => {
       try {
-        const { data } = await supabase.functions.invoke('geocode-address', { body: { query } });
+        const { data } = await supabase.functions.invoke('geocode-address', { body: { query: trimmedQuery } });
         if (target === 'search') setSearchResults(data?.results || []);
         else setRouteSearchResults(data?.results || []);
-      } catch { 
+      } catch {
         if (target === 'search') setSearchResults([]);
         else setRouteSearchResults([]);
       }
@@ -496,6 +503,11 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
     const name = result.display_name.split(',').slice(0, 2).join(',');
     setSearchQuery(name);
     setSearchResults([]);
+    setDirectionsMode(false);
+    setRoutes([]);
+    setBestRouteIdx(0);
+    setFromCoords(null);
+    setFromQuery('');
     setToCoords(coords);
     setToQuery(name);
     setSelectedPOI({
@@ -508,16 +520,66 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
 
   const selectRouteLocation = (result: any, type: 'from' | 'to') => {
     const coords: [number, number] = [parseFloat(result.lat), parseFloat(result.lon)];
-    if (type === 'from') { setFromCoords(coords); setFromQuery(result.display_name.split(',').slice(0, 2).join(',')); }
-    else { setToCoords(coords); setToQuery(result.display_name.split(',').slice(0, 2).join(',')); }
+    const label = result.display_name.split(',').slice(0, 2).join(',');
+
+    let nextFrom = fromCoords;
+    let nextTo = toCoords;
+
+    if (type === 'from') {
+      nextFrom = coords;
+      setFromCoords(coords);
+      setFromQuery(label);
+    } else {
+      nextTo = coords;
+      setToCoords(coords);
+      setToQuery(label);
+    }
+
     setSearching(null);
     setRouteSearchResults([]);
+
+    if (directionsMode && appMode === 'route' && nextFrom && nextTo) {
+      setRoutes([]);
+      setBestRouteIdx(0);
+      findRoutes(nextFrom, nextTo);
+    }
   };
 
   const useCurrentLocation = (type: 'from' | 'to') => {
-    const coords: [number, number] = [latitude, longitude];
-    if (type === 'from') { setFromCoords(coords); setFromQuery(locationName); }
-    else { setToCoords(coords); setToQuery(locationName); }
+    const coords: [number, number] = userPosition || [latitude, longitude];
+    let nextFrom = fromCoords;
+    let nextTo = toCoords;
+
+    if (type === 'from') {
+      nextFrom = coords;
+      setFromCoords(coords);
+      setFromQuery('Current Location');
+    } else {
+      nextTo = coords;
+      setToCoords(coords);
+      setToQuery(locationName);
+    }
+
+    if (directionsMode && appMode === 'route' && nextFrom && nextTo) {
+      setRoutes([]);
+      setBestRouteIdx(0);
+      findRoutes(nextFrom, nextTo);
+    }
+  };
+
+  const openDirectionsMode = () => {
+    if (!toCoords) return;
+    const from: [number, number] = userPosition || [latitude, longitude];
+    setDirectionsMode(true);
+    setSearchFocused(false);
+    setSearchResults([]);
+    setSearching(null);
+    setRouteSearchResults([]);
+    setFromCoords(from);
+    setFromQuery('Current Location');
+    setRoutes([]);
+    setBestRouteIdx(0);
+    findRoutes(from, toCoords);
   };
 
   const centerOnUser = () => {

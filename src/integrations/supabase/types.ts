@@ -399,6 +399,42 @@ export type Database = {
           },
         ]
       }
+      city_pages: {
+        Row: {
+          city_name: string
+          country: string | null
+          created_at: string
+          description: string
+          id: string
+          latitude: number
+          longitude: number
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          city_name: string
+          country?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          latitude: number
+          longitude: number
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          city_name?: string
+          country?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           created_at: string | null

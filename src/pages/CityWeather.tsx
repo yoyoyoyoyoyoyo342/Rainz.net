@@ -231,26 +231,37 @@ export default function CityWeather() {
               </Card>
 
               {/* DryRoutes CTA */}
-              <Card className="glass-card mb-6 border-primary/20">
-                <CardContent className="p-5">
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-full bg-primary/10 p-2.5 shrink-0">
-                      <Navigation className="h-5 w-5 text-primary" />
+              <Card className="glass-card mb-6 border-primary/20 overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="bg-primary/5 p-6 md:p-8">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="rounded-full bg-primary/10 p-3 shrink-0">
+                        <Navigation className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg md:text-xl font-bold text-foreground">
+                          Plan a Rain-Free Route
+                        </h2>
+                        <p className="text-sm text-muted-foreground">
+                          in {city.name}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <h2 className="text-base font-semibold text-foreground mb-1">
-                        Plan a Rain-Free Route in {city.name}
-                      </h2>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Use DryRoutes to find the driest path for walking, cycling, or driving in {city.name}.
-                      </p>
-                      <Link to={dryRoutesUrl}>
-                        <Button className="w-full sm:w-auto gap-2" size="lg">
-                          Open DryRoutes
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </div>
+                    <p className="text-sm md:text-base text-muted-foreground mb-5 leading-relaxed">
+                      Find the driest path for walking, cycling, or driving in {city.name}. DryRoutes uses real-time rain data to help you stay dry.
+                    </p>
+                    <Link to={dryRoutesUrl}>
+                      <Button className="w-full gap-2 h-12 text-base" size="lg">
+                        <Navigation className="h-5 w-5" />
+                        Open DryRoutes for {city.name}
+                        <ArrowRight className="h-5 w-5" />
+                      </Button>
+                    </Link>
+                  </div>
+                  <div className="px-6 py-3 border-t border-border/30">
+                    <p className="text-xs text-muted-foreground text-center">
+                      🌧️ Powered by real-time precipitation data from multiple weather sources
+                    </p>
                   </div>
                 </CardContent>
               </Card>

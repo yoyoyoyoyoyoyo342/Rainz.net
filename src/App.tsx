@@ -275,7 +275,7 @@ const App = () => (
     <AppleGlassProvider>
       <TimeOfDayProvider>
         <AppContent />
-        <Analytics />
+        
       </TimeOfDayProvider>
     </AppleGlassProvider>
   </PersistQueryClientProvider>

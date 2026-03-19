@@ -679,7 +679,7 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
     const from = customFrom || fromCoords;
     const to = customTo || toCoords;
     if (!from || !to) return toast.error('Set both locations!');
-    if (customFrom) { setFromCoords(customFrom); setFromQuery('Current Location'); }
+    if (customFrom) setFromCoords(customFrom);
     if (customTo) setToCoords(customTo);
     setLoading(true);
     try {

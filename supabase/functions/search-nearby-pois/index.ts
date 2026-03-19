@@ -88,7 +88,7 @@ Deno.serve(async (req: Request) => {
         website: el.tags.website || null,
         opening_hours: el.tags.opening_hours || null,
       }))
-      .filter((p: any) => p.lat && p.lon);
+      .filter((p: any) => Number.isFinite(p.lat) && Number.isFinite(p.lon));
 
     const result = { pois, count: pois.length };
     cache.set(cacheKey, { data: result, timestamp: Date.now() });

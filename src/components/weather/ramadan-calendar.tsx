@@ -87,6 +87,27 @@ export function RamadanCalendar({ userLatitude, userLongitude, sunriseIso, sunse
     return () => clearInterval(interval);
   }, [sunriseIso, sunsetIso]);
 
+  // Generate fallback calendar data for Ramadan 2026 (Feb 18 - Mar 19)
+  const generateFallbackDays = (): CalendarDay[] => {
+    const rewardTypes = ["shop_points", "prediction_points", "streak_freeze", "double_points", "mystery_box", "xp_boost"];
+    const rewardAmounts: Record<string, number> = { shop_points: 10, prediction_points: 15, streak_freeze: 1, double_points: 1, mystery_box: 1, xp_boost: 1 };
+    const days: CalendarDay[] = [];
+    for (let i = 0; i < 30; i++) {
+      const start = new Date(2026, 1, 18 + i);
+      const end = new Date(2026, 1, 18 + i);
+      const type = rewardTypes[i % rewardTypes.length];
+      days.push({
+        id: `fallback-${i + 1}`,
+        day_number: i + 1,
+        reward_type: type,
+        reward_amount: rewardAmounts[type],
+        gregorian_start_date: start.toISOString().split("T")[0],
+        gregorian_end_date: end.toISOString().split("T")[0],
+      });
+    }
+    return days;
+  };
+
   useEffect(() => {
     loadCalendarData();
   }, [user]);
@@ -101,7 +122,9 @@ export function RamadanCalendar({ userLatitude, userLongitude, sunriseIso, sunse
         .order("day_number");
 
       if (daysError) throw daysError;
-      setCalendarDays(days || []);
+      
+      // Use DB data if available, otherwise use fallback
+      setCalendarDays(days && days.length > 0 ? days : generateFallbackDays());
 
       if (user) {
         const { data: claims, error: claimsError } = await supabase
@@ -114,6 +137,8 @@ export function RamadanCalendar({ userLatitude, userLongitude, sunriseIso, sunse
       }
     } catch (error) {
       console.error("Error loading Ramadan calendar:", error);
+      // On error, still show fallback
+      setCalendarDays(generateFallbackDays());
     } finally {
       setLoading(false);
     }

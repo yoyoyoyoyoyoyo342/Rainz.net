@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense, lazy, useTransition } from "react";
 import { queryClient } from "@/lib/queryClient";
 import { useSearchParams } from "react-router-dom";
-import { CloudSun, LogIn, WifiOff, Navigation } from "lucide-react";
+import { CloudSun, LogIn, WifiOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -52,6 +52,7 @@ const AQICard = lazy(() => import("@/components/weather/aqi-card").then(m => ({ 
 const BarometerCard = lazy(() => import("@/components/weather/barometer-card").then(m => ({ default: m.BarometerCard })));
 const MobileLocationNav = lazy(() => import("@/components/weather/mobile-location-nav").then(m => ({ default: m.MobileLocationNav })));
 const RainMapCard = lazy(() => import("@/components/weather/rain-map-card"));
+const DryRoute = lazy(() => import("@/components/weather/dry-route").then(m => ({ default: m.DryRoute })));
 const AffiliateCard = lazy(() => import("@/components/weather/affiliate-card").then(m => ({ default: m.AffiliateCard })));
 const ChristmasCalendar = lazy(() => import("@/components/weather/christmas-calendar").then(m => ({ default: m.ChristmasCalendar })));
 const RamadanCalendar = lazy(() => import("@/components/weather/ramadan-calendar").then(m => ({ default: m.RamadanCalendar })));

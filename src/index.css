@@ -165,28 +165,28 @@
 @layer components {
   .glass-card {
     position: relative;
-    background: hsl(var(--card) / 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--border) / 0.5);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1),
-                inset 0 1px 0 hsl(var(--card) / 0.4);
+    background: hsl(var(--card) / 0.35);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid hsl(var(--border) / 0.25);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 hsl(var(--card) / 0.2);
     transition: all 0.2s ease;
   }
 
   .glass-card:hover {
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12),
-                inset 0 1px 0 hsl(var(--card) / 0.5);
+                inset 0 1px 0 hsl(var(--card) / 0.3);
   }
 
   .glass-card-strong {
     position: relative;
-    background: hsl(var(--card) / 0.85);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid hsl(var(--border) / 0.6);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12),
-                inset 0 1px 0 hsl(var(--card) / 0.5);
+    background: hsl(var(--card) / 0.5);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid hsl(var(--border) / 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 hsl(var(--card) / 0.3);
   }
 
   .glass-header {

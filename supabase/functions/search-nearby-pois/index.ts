@@ -57,8 +57,8 @@ Deno.serve(async (req: Request) => {
     const query = `
       [out:json][timeout:10];
       (
-        node${osmFilter}(around:${radius},${lat},${lon});
-        way${osmFilter}(around:${radius},${lat},${lon});
+        node${osmFilter}(around:${radius},${parsedLat},${parsedLon});
+        way${osmFilter}(around:${radius},${parsedLat},${parsedLon});
       );
       out center body 20;
     `;

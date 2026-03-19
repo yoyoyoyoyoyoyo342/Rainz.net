@@ -863,28 +863,16 @@ export default function WeatherPage() {
                 </AnimatedCard>
               ) : null}
 
-              {/* DryRoutes - Link to full page */}
+              {/* DryRoutes - embedded card experience */}
               <AnimatedCard index={9}>
-                <a href="/dryroutes" className="block">
-                  <Card className="glass-card border-border/30 hover:border-primary/40 transition-all cursor-pointer group">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                            <Navigation className="w-5 h-5 text-primary" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-sm">Rainz DryRoutes</h3>
-                            <p className="text-xs text-muted-foreground">Find the driest route to your destination</p>
-                          </div>
-                        </div>
-                        <div className="text-muted-foreground group-hover:text-primary transition-colors">
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </a>
+                <div className="mb-4">
+                  <DryRoute
+                    latitude={selectedLocation.lat}
+                    longitude={selectedLocation.lon}
+                    locationName={actualStationName}
+                    isImperial={isImperial}
+                  />
+                </div>
               </AnimatedCard>
 
               {/* Feature Ideas Card */}
@@ -917,7 +905,7 @@ export default function WeatherPage() {
                   <ChristmasCalendar />
                 </div>
               )}
-              {user && (() => {
+              {(() => {
                 const now = new Date();
                 const ramadanStart = new Date(2026, 1, 18);
                 const ramadanEnd = new Date(2026, 2, 21, 23, 59, 59);

@@ -28,9 +28,12 @@ Deno.serve(async (req: Request) => {
   try {
     const { lat, lon, category, radius = 1000 } = await req.json();
 
-    if (!lat || !lon || !category) {
+    const parsedLat = Number(lat);
+    const parsedLon = Number(lon);
+
+    if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLon) || !category) {
       return new Response(
-        JSON.stringify({ error: 'lat, lon, and category are required' }),
+        JSON.stringify({ error: 'Valid lat, lon, and category are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

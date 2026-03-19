@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense, laz
 import { queryClient } from "@/lib/queryClient";
 import { useSearchParams } from "react-router-dom";
 import { CloudSun, LogIn, WifiOff } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useQuery } from "@tanstack/react-query";

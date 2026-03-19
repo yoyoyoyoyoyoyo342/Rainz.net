@@ -529,7 +529,6 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
           return;
         }
 
-<<<<<<< Updated upstream
         // compute distance using ref to avoid stale closure
         const currentPoints = drawRoutePointsRef.current;
         if (currentPoints.length > 0) {
@@ -560,17 +559,6 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
     drawMarkersRef.current.forEach(m => map.removeLayer(m));
     drawMarkersRef.current = [];
-=======
-        // add new point and update straight-line distance immediately
-        setDrawRoutePoints(prev => {
-          if (prev.length > 0) {
-            const last = prev[prev.length - 1];
-            const dist = haversineDistance([last.lat, last.lng], [newPoint.lat, newPoint.lng]);
-            setDrawDistance(d => d + dist);
-          }
-          return [...prev, newPoint];
-        });
->>>>>>> Stashed changes
     drawLinesRef.current.forEach(l => map.removeLayer(l));
     drawLinesRef.current = [];
 

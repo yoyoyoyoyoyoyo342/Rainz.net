@@ -919,7 +919,7 @@ export default function WeatherPage() {
               {user && (() => {
                 const now = new Date();
                 const ramadanStart = new Date(2026, 1, 18);
-                const ramadanEnd = new Date(2026, 2, 19);
+                const ramadanEnd = new Date(2026, 2, 21, 23, 59, 59);
                 return now >= ramadanStart && now <= ramadanEnd;
               })() && (
                 <div className="mb-4">

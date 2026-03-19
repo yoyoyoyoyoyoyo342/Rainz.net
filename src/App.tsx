@@ -26,7 +26,7 @@ import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { AppLockdownScreen } from "@/components/ui/app-lockdown-screen";
 import { toast as sonnerToast } from "sonner";
-import { Analytics } from "@vercel/analytics/react";
+
 
 // Critical components - load immediately
 import Weather from "./pages/Weather";

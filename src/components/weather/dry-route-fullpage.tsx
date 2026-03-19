@@ -1166,7 +1166,16 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
                   Search a place above, tap it, then press <span className="font-medium text-foreground">Directions</span>.
                 </div>
               )}
-...
+
+              {/* Dry Windows */}
+              {fromCoords && toCoords && routes.length > 0 && (
+                <DryWindows fromCoords={fromCoords} toCoords={toCoords} routeGeometry={routes[bestRouteIdx]?.geometry || []} isImperial={isImperial} />
+              )}
+
+              {/* Route results */}
+              {routes.length > 0 && (
+                <div className="space-y-2">
+                  {/* Back to search */}
                   <button onClick={() => { setRoutes([]); setBestRouteIdx(0); setSelectedPOI(null); setDirectionsMode(false); setFromCoords(null); setToCoords(null); setFromQuery(''); setToQuery(''); setSearching(null); setRouteSearchResults([]); }}
                     className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
                     <ArrowLeft className="w-3.5 h-3.5" /> New search

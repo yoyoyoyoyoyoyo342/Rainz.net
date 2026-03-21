@@ -85,6 +85,30 @@ export function AdminDownloadInstructions() {
         />
       </div>
 
+      <div className="border-t border-border/30 pt-4 mt-4">
+        <h3 className="text-xs font-semibold text-foreground mb-3">📱 Mobile / PWA Section</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-xs">Mobile Section Title</Label>
+            <Input value={mobileTitle} onChange={(e) => setMobileTitle(e.target.value)} className="text-xs h-8" placeholder="Prefer not to download?" />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs">Mobile CTA Button Text</Label>
+            <Input value={mobileCta} onChange={(e) => setMobileCta(e.target.value)} className="text-xs h-8" placeholder="Install from Browser" />
+          </div>
+        </div>
+        <div className="space-y-2 mt-3">
+          <Label className="text-xs">Mobile Section Description</Label>
+          <Textarea
+            value={mobileDescription}
+            onChange={(e) => setMobileDescription(e.target.value)}
+            rows={3}
+            className="text-xs"
+            placeholder="Describe how to install via browser..."
+          />
+        </div>
+      </div>
+
       <Button size="sm" onClick={handleSave} disabled={saving} className="gap-2">
         <Save className="w-3.5 h-3.5" />
         {saving ? "Saving..." : "Save Instructions"}

@@ -506,6 +506,15 @@ export default function Auth() {
                 </TabsContent>
                 
                 <TabsContent value="signup" className="mt-0">
+                  {showSurvey ? (
+                    <SignupSurvey
+                      userId={newUserId}
+                      onComplete={() => {
+                        setShowSurvey(false);
+                        // User already got the "check email" toast
+                      }}
+                    />
+                  ) : (
                   <form onSubmit={handleSignUp} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="signup-email" className="text-sm font-medium">Email</Label>
@@ -559,6 +568,7 @@ export default function Auth() {
                       {loading ? "Creating account..." : "Create Account"}
                     </Button>
                   </form>
+                  )}
                   
                   <div className="relative my-6">
                     <Separator />

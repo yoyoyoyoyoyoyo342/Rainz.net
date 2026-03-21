@@ -634,6 +634,10 @@ export default function WeatherPage() {
             </div>
 
             <CardContent className="p-4 sm:p-6 bg-card space-y-4">
+              {/* Guided help banner */}
+              <Suspense fallback={null}>
+                <GuidedHelpBanner tip={activeTip} onDismiss={dismissTip} />
+              </Suspense>
               {/* Offline cache indicator for premium users */}
               {isUsingCachedData && (
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300">

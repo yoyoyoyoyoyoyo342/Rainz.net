@@ -154,6 +154,27 @@ export default function PrivacyPolicy() {
           </CardContent>
         </Card>
 
+        {/* Amplitude Analytics */}
+        <Card>
+          <CardHeader>
+            <CardTitle>5.3 Amplitude Analytics & Session Replay</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm">
+            <p>
+              We use Amplitude, a third-party product analytics platform, to understand how users interact with Rainz. Amplitude may collect the following:
+            </p>
+            <ul className="list-disc list-inside space-y-1 ml-4">
+              <li><strong>Interaction Data:</strong> Clicks, taps, page views, scroll depth, and navigation patterns (via autocapture)</li>
+              <li><strong>Session Replays:</strong> Anonymous recordings of user sessions to identify usability issues — these do not capture passwords, payment details, or other sensitive input fields</li>
+              <li><strong>A/B Testing:</strong> We may run experiments to test feature variations and in-app guidance; your assignment to a test group is random and anonymous</li>
+              <li><strong>Device & Browser Info:</strong> Screen size, browser type, OS version, and language settings</li>
+            </ul>
+            <p>
+              Amplitude data is processed in accordance with Amplitude's privacy policy (<a href="https://amplitude.com/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline">amplitude.com/privacy</a>). You can opt out of analytics tracking by declining analytics cookies in your cookie preferences.
+            </p>
+          </CardContent>
+        </Card>
+
         {/* DryRoutes liability paragraph added to privacy policy for completeness */}
         <Card>
           <CardHeader>

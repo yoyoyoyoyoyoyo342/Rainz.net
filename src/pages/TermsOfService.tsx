@@ -253,6 +253,26 @@ export default function TermsOfService() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle>14. Analytics, Session Replay & A/B Testing</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm">
+            <p>
+              We use Amplitude Analytics and Session Replay to monitor application performance, detect usability issues, and run A/B experiments. By using the Service, you acknowledge and agree that:
+            </p>
+            <ul className="list-disc list-inside space-y-1 ml-4">
+              <li>Your interactions (clicks, navigation, scrolling) may be automatically captured for analytics purposes</li>
+              <li>Anonymous session replays may be recorded to help us improve the user experience — sensitive inputs (passwords, payment data) are excluded</li>
+              <li>You may be randomly assigned to feature experiment groups to test variations of the Service</li>
+              <li>In-app guided help messages may appear based on detected usage patterns to help you navigate the application</li>
+            </ul>
+            <p className="mt-2">
+              You may opt out of analytics tracking at any time via your cookie preferences. For more details, see our Privacy Policy.
+            </p>
+          </CardContent>
+        </Card>
+
         <div className="text-center text-sm text-muted-foreground py-6">
           By continuing to use this Service, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
         </div>

@@ -9,7 +9,29 @@ amplitude.initAll('1134523e7129723aad004d4d744c184b', {
 });
 
 const SW_CLEANUP_FLAG = 'rainz-sw-cleanup-done';
+const CHUNK_RECOVERY_FLAG = 'rainz-chunk-recovery-attempted';
 const shouldRegisterServiceWorker = import.meta.env.PROD && window.location.protocol === 'https:';
+
+const isChunkLikeError = (message: string) => {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes('failed to fetch dynamically imported module') ||
+    normalized.includes('importing a module script failed') ||
+    normalized.includes('chunkloaderror') ||
+    normalized.includes('loading chunk')
+  );
+};
+
+const getErrorMessage = (value: unknown) => {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (value instanceof Error) return value.message;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
 
 const cleanupServiceWorkers = async (): Promise<boolean> => {
   if (!('serviceWorker' in navigator) || !('caches' in window)) {
@@ -26,6 +48,37 @@ const cleanupServiceWorkers = async (): Promise<boolean> => {
 
   return registrations.length > 0 || cacheNames.length > 0;
 };
+
+const recoverFromChunkFailure = async (reason: string) => {
+  const attemptedRecovery = sessionStorage.getItem(CHUNK_RECOVERY_FLAG) === '1';
+  if (attemptedRecovery) return;
+
+  sessionStorage.setItem(CHUNK_RECOVERY_FLAG, '1');
+  console.warn('Detected chunk/runtime asset mismatch. Recovering app...', reason);
+
+  try {
+    await cleanupServiceWorkers();
+  } catch (error) {
+    console.error('Chunk recovery cleanup failed:', error);
+  } finally {
+    window.location.reload();
+  }
+};
+
+window.addEventListener('error', (event) => {
+  const message = getErrorMessage(event.error || event.message);
+  if (isChunkLikeError(message)) {
+    void recoverFromChunkFailure(message);
+  }
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  const message = getErrorMessage(event.reason);
+  if (isChunkLikeError(message)) {
+    event.preventDefault();
+    void recoverFromChunkFailure(message);
+  }
+});
 
 window.addEventListener('load', () => {
   if (shouldRegisterServiceWorker) {

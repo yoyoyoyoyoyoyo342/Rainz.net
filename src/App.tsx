@@ -22,6 +22,7 @@ import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { PWAInstallPopup } from "@/components/ui/pwa-install-popup";
 import { RuntimeErrorBoundary } from "@/components/ui/runtime-error-boundary";
 import { useAnalytics } from "@/hooks/use-analytics";
+import { useAmplitudeInstrumentation } from "@/hooks/use-amplitude-instrumentation";
 import { useBroadcastListener } from "@/hooks/use-broadcast-listener";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { useIsAdmin } from "@/hooks/use-is-admin";
@@ -60,6 +61,7 @@ const CityWeather = lazy(() => import("./pages/CityWeather"));
 
 function AnalyticsTracker() {
   useAnalytics();
+  useAmplitudeInstrumentation();
   useBroadcastListener();
   return null;
 }

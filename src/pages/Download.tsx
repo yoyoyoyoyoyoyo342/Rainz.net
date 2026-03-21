@@ -134,14 +134,11 @@ const DownloadPage = () => {
 
         {/* PWA Alternative */}
         <div className="max-w-2xl mx-auto mt-12 p-6 rounded-xl bg-white border border-gray-200 shadow-sm text-center">
-          <h3 className="font-semibold mb-2 text-gray-900">Prefer not to download?</h3>
-          <p className="text-gray-600 mb-4">
-            You can install Rainz directly from your browser. Visit{" "}
-            <Link to="/" className="text-blue-600 hover:underline">
-              rainz.net
-            </Link>{" "}
-            and select "Add to Home Screen" or "Install App" in your browser menu.
-          </p>
+          <h3 className="font-semibold mb-2 text-gray-900">{mobileTitle}</h3>
+          <p className="text-gray-600 mb-4">{mobileDescription}</p>
+          <Link to="/">
+            <Button variant="outline">{mobileCta}</Button>
+          </Link>
         </div>
       </div>
     </div>

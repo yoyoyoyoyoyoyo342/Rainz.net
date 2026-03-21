@@ -179,19 +179,14 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
 }
 
 function LockdownGuard({ children }: { children: React.ReactNode }) {
-  const { isEnabled, isLoading } = useFeatureFlags();
-  const { isAdmin, loading: adminLoading } = useIsAdmin();
+  const { isEnabled } = useFeatureFlags();
+  const { isAdmin } = useIsAdmin();
   const location = useLocation();
   const isLocked = isEnabled('app_lockdown', false);
 
   // Always let /admin and /auth through for admins to manage lockdown
   if (location.pathname === '/admin' || location.pathname === '/auth') {
     return <>{children}</>;
-  }
-
-  // While checking lockdown status, show loading
-  if (isLoading) {
-    return <LoadingOverlay isOpen={true} />;
   }
 
   // If locked and user is not admin (or still checking), show lockdown

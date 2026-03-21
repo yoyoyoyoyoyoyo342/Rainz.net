@@ -6,6 +6,11 @@ import { Link } from "react-router-dom";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 
 const DownloadPage = () => {
+  const { getValue } = useFeatureFlags();
+
+  const mobileTitle = getValue("download_mobile_title", "Prefer not to download?");
+  const mobileDescription = getValue("download_mobile_description", 'You can install Rainz directly from your browser. Visit rainz.net and select "Add to Home Screen" or "Install App" in your browser menu.');
+  const mobileCta = getValue("download_mobile_cta", "Install from Browser");
   const handleMacDownload = () => {
     window.location.href =
       "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.V1.0.dmg";

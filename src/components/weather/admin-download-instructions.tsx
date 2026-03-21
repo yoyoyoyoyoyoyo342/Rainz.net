@@ -17,6 +17,9 @@ export function AdminDownloadInstructions() {
   const [macVersion, setMacVersion] = useState("");
   const [winVersion, setWinVersion] = useState("");
   const [macInstructions, setMacInstructions] = useState("");
+  const [mobileTitle, setMobileTitle] = useState("");
+  const [mobileDescription, setMobileDescription] = useState("");
+  const [mobileCta, setMobileCta] = useState("");
 
   useEffect(() => {
     setMacUrl(getValue("download_mac_url", "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.V1.0.dmg"));
@@ -24,6 +27,9 @@ export function AdminDownloadInstructions() {
     setMacVersion(getValue("download_mac_version", "1.0.0"));
     setWinVersion(getValue("download_win_version", "1.0.0"));
     setMacInstructions(getValue("download_mac_instructions", "Download the .dmg file above.\nTry to open the app. macOS will block it.\nOpen System Settings → Privacy & Security.\nAt the bottom, you'll see \"Rainz Weather was blocked\" → click Open Anyway.\nConfirm the prompt. Now Rainz Weather will open normally."));
+    setMobileTitle(getValue("download_mobile_title", "Prefer not to download?"));
+    setMobileDescription(getValue("download_mobile_description", 'You can install Rainz directly from your browser. Visit rainz.net and select "Add to Home Screen" or "Install App" in your browser menu.'));
+    setMobileCta(getValue("download_mobile_cta", "Install from Browser"));
   }, [getValue]);
 
   const handleSave = async () => {
@@ -35,6 +41,9 @@ export function AdminDownloadInstructions() {
         setValue("download_mac_version", macVersion.trim()),
         setValue("download_win_version", winVersion.trim()),
         setValue("download_mac_instructions", macInstructions.trim()),
+        setValue("download_mobile_title", mobileTitle.trim()),
+        setValue("download_mobile_description", mobileDescription.trim()),
+        setValue("download_mobile_cta", mobileCta.trim()),
       ]);
       toast({ title: "Download instructions updated" });
     } catch {

@@ -56,7 +56,6 @@ const DryRoute = lazy(() => import("@/components/weather/dry-route").then(m => (
 const AffiliateCard = lazy(() => import("@/components/weather/affiliate-card").then(m => ({ default: m.AffiliateCard })));
 const ChristmasCalendar = lazy(() => import("@/components/weather/christmas-calendar").then(m => ({ default: m.ChristmasCalendar })));
 const RamadanCalendar = lazy(() => import("@/components/weather/ramadan-calendar").then(m => ({ default: m.RamadanCalendar })));
-const OnboardingFlow = lazy(() => import("@/components/weather/onboarding-flow").then(m => ({ default: m.OnboardingFlow })));
 const ExploreSheet = lazy(() => import("@/components/weather/explore-sheet").then(m => ({ default: m.ExploreSheet })));
 const ExploreButton = lazy(() => import("@/components/weather/explore-sheet").then(m => ({ default: m.ExploreButton })));
 const FeatureIdeasCard = lazy(() => import("@/components/weather/feature-ideas-card").then(m => ({ default: m.FeatureIdeasCard })));
@@ -97,19 +96,8 @@ export default function WeatherPage() {
   const mountTimeRef = useRef(performance.now());
   const hasLoggedTimingRef = useRef(false);
   const currentHoliday = getCurrentHoliday();
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const [exploreOpen, setExploreOpen] = useState(false);
   const { isEnabled: isFeatureEnabled } = useFeatureFlags();
-
-  // Show onboarding for new users
-  useEffect(() => {
-    if (user && !accountLoading) {
-      const onboardingDone = localStorage.getItem("rainz-onboarding-complete");
-      if (!onboardingDone && !profile?.display_name) {
-        setShowOnboarding(true);
-      }
-    }
-  }, [user, accountLoading, profile]);
 
   const { data: savedLocations = [] } = useQuery({
     queryKey: ["saved-locations"],
@@ -970,18 +958,6 @@ export default function WeatherPage() {
               onLocationSelect={handleLocationSelect}
               currentLocation={selectedLocation}
               isImperial={isImperial}
-            />
-          )}
-          {user && showOnboarding && (
-            <OnboardingFlow
-              open={showOnboarding}
-              userId={user.id}
-              onComplete={(loc) => {
-                setShowOnboarding(false);
-                if (loc) {
-                  handleLocationSelect(loc.lat, loc.lon, loc.name);
-                }
-              }}
             />
           )}
         </Suspense>

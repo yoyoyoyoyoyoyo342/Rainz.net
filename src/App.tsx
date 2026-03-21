@@ -20,6 +20,7 @@ import { CookieConsentBanner } from "@/components/ui/cookie-consent-banner";
 import { Footer } from "@/components/ui/footer";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { PWAInstallPopup } from "@/components/ui/pwa-install-popup";
+import { RuntimeErrorBoundary } from "@/components/ui/runtime-error-boundary";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { useBroadcastListener } from "@/hooks/use-broadcast-listener";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
@@ -270,7 +271,9 @@ const App = () => (
   <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: queryPersister, maxAge: 1000 * 60 * 60 * 24 }}>
     <AppleGlassProvider>
       <TimeOfDayProvider>
-        <AppContent />
+        <RuntimeErrorBoundary>
+          <AppContent />
+        </RuntimeErrorBoundary>
       </TimeOfDayProvider>
     </AppleGlassProvider>
   </PersistQueryClientProvider>

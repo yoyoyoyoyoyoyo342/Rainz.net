@@ -21,6 +21,8 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [showSurvey, setShowSurvey] = useState(false);
+  const [newUserId, setNewUserId] = useState<string | undefined>();
   const [resetMode, setResetMode] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();

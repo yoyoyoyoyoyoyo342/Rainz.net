@@ -38,6 +38,7 @@ import { SettingsDialog } from "@/components/weather/settings-dialog";
 import { WeatherStationInfo } from "@/components/weather/weather-station-info";
 import { WinterAlerts } from "@/components/weather/winter-alerts";
 import { LockedPredictionButton } from "@/components/weather/locked-prediction-button";
+const GuidedHelpBanner = lazy(() => import("@/components/weather/guided-help-banner").then(m => ({ default: m.GuidedHelpBanner })));
 
 // Below-the-fold components — lazy loaded for faster initial render
 const TenDayForecast = lazy(() => import("@/components/weather/ten-day-forecast").then(m => ({ default: m.TenDayForecast })));

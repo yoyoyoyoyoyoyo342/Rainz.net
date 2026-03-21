@@ -100,6 +100,14 @@ export default function WeatherPage() {
   const currentHoliday = getCurrentHoliday();
   const [exploreOpen, setExploreOpen] = useState(false);
   const { isEnabled: isFeatureEnabled } = useFeatureFlags();
+  const pageLoadedAtRef = useRef(Date.now());
+
+  const { activeTip, dismiss: dismissTip } = useAmplitudeGuidedHelp({
+    hasLocation: !!selectedLocation,
+    hasSavedLocations: savedLocations.length > 0,
+    isNewUser: !user,
+    pageLoadedAt: pageLoadedAtRef.current,
+  });
 
   const { data: savedLocations = [] } = useQuery({
     queryKey: ["saved-locations"],

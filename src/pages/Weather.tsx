@@ -120,6 +120,13 @@ export default function WeatherPage() {
     staleTime: 1000 * 60 * 5,
   });
 
+  const { activeTip, dismiss: dismissTip } = useAmplitudeGuidedHelp({
+    hasLocation: !!selectedLocation,
+    hasSavedLocations: savedLocations.length > 0,
+    isNewUser: !user,
+    pageLoadedAt: pageLoadedAtRef.current,
+  });
+
   const customDisplayName = useMemo(() => {
     if (!selectedLocation || savedLocations.length === 0) return null;
     const savedLoc = savedLocations.find(

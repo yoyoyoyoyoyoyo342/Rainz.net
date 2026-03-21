@@ -161,6 +161,7 @@ export function AdminPanel() {
     { value: 'api-data', label: 'API Data', icon: <Database className="w-3.5 h-3.5" /> },
     { value: 'api-token', label: 'API Token', icon: <Key className="w-3.5 h-3.5" /> },
     { value: 'shop-offers', label: 'Shop', icon: <Tag className="w-3.5 h-3.5" /> },
+    { value: 'downloads', label: 'Downloads', icon: <Download className="w-3.5 h-3.5" /> },
   ];
 
   return (

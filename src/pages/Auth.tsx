@@ -210,6 +210,8 @@ export default function Auth() {
         } catch (profileErr) {
           console.log('Profile upsert skipped:', profileErr);
         }
+        setNewUserId(data.user.id);
+        setShowSurvey(true);
         toast({ title: "Account Created!", description: "Please check your email to verify your account." });
       }
     } catch (error: any) {

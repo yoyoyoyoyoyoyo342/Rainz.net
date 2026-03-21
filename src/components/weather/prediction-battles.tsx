@@ -32,7 +32,15 @@ const getTimeUntilExpiry = (createdAt: string) => {
   return "< 1m";
 };
 
-export const PredictionBattles = ({
+export const PredictionBattles = (props: PredictionBattlesProps) => {
+  return (
+    <AppOnlyGate featureName="Prediction Battles">
+      <PredictionBattlesInner {...props} />
+    </AppOnlyGate>
+  );
+};
+
+const PredictionBattlesInner = ({
   location,
   latitude,
   longitude,

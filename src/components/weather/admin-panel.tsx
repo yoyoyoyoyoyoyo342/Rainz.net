@@ -296,6 +296,12 @@ export function AdminPanel() {
         <TabsContent value="shop-offers">
           <AdminSection title="Shop Offers"><AdminShopOffers /></AdminSection>
         </TabsContent>
+
+        <TabsContent value="downloads">
+          <AdminSection title="Download Instructions 📥" description="Update desktop app download URLs, versions, and macOS bypass instructions.">
+            <AdminDownloadInstructions />
+          </AdminSection>
+        </TabsContent>
       </Tabs>
     </div>
   );

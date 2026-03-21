@@ -3,8 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Monitor, Apple, ArrowDownToLine, CheckCircle, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 
 const DownloadPage = () => {
+  const { getValue } = useFeatureFlags();
+
+  const mobileTitle = getValue("download_mobile_title", "Prefer not to download?");
+  const mobileDescription = getValue("download_mobile_description", 'You can install Rainz directly from your browser. Visit rainz.net and select "Add to Home Screen" or "Install App" in your browser menu.');
+  const mobileCta = getValue("download_mobile_cta", "Install from Browser");
   const handleMacDownload = () => {
     window.location.href =
       "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.V1.0.dmg";
@@ -128,14 +134,11 @@ const DownloadPage = () => {
 
         {/* PWA Alternative */}
         <div className="max-w-2xl mx-auto mt-12 p-6 rounded-xl bg-white border border-gray-200 shadow-sm text-center">
-          <h3 className="font-semibold mb-2 text-gray-900">Prefer not to download?</h3>
-          <p className="text-gray-600 mb-4">
-            You can install Rainz directly from your browser. Visit{" "}
-            <Link to="/" className="text-blue-600 hover:underline">
-              rainz.net
-            </Link>{" "}
-            and select "Add to Home Screen" or "Install App" in your browser menu.
-          </p>
+          <h3 className="font-semibold mb-2 text-gray-900">{mobileTitle}</h3>
+          <p className="text-gray-600 mb-4">{mobileDescription}</p>
+          <Link to="/">
+            <Button variant="outline">{mobileCta}</Button>
+          </Link>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Monitor, Apple, ArrowDownToLine, CheckCircle, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useFeatureFlags } from "@/hooks/use-feature-flags";
 
 const DownloadPage = () => {
   const handleMacDownload = () => {

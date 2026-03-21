@@ -128,14 +128,15 @@ export default function PrivacyPolicy() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <h4 className="font-semibold">5.1 Third-Party Service Providers</h4>
-            <p>We share data with trusted third-party services:</p>
-            <ul className="list-disc list-inside space-y-1 ml-4">
-              <li><strong>Supabase:</strong> Database hosting and authentication</li>
-              <li><strong>Weather APIs:</strong> WeatherAPI.com, Tomorrow.io for weather data</li>
-              <li><strong>Nominatim:</strong> Address geocoding services</li>
-              <li><strong>Stripe:</strong> Payment processing for Rainz+ subscriptions</li>
-              <li><strong>Advertising Networks:</strong> Display advertisements to free users</li>
-            </ul>
+             <p>We share data with trusted third-party services:</p>
+             <ul className="list-disc list-inside space-y-1 ml-4">
+               <li><strong>Supabase:</strong> Database hosting and authentication</li>
+               <li><strong>Weather APIs:</strong> WeatherAPI.com, Tomorrow.io for weather data</li>
+               <li><strong>Nominatim:</strong> Address geocoding services</li>
+               <li><strong>Stripe:</strong> Payment processing for Rainz+ subscriptions</li>
+               <li><strong>Amplitude:</strong> Product analytics, session replay, and A/B testing (see Section 5.3)</li>
+               <li><strong>Advertising Networks:</strong> Display advertisements to free users</li>
+             </ul>
 
             <h4 className="font-semibold mt-4">5.2 Public Information</h4>
             <p>The following information may be visible to other users:</p>

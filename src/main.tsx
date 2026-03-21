@@ -1,6 +1,12 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import * as amplitude from '@amplitude/unified';
+
+amplitude.initAll('1134523e7129723aad004d4d744c184b', {
+  analytics: { autocapture: true },
+  sessionReplay: { sampleRate: 1 },
+});
 
 const SW_CLEANUP_FLAG = 'rainz-sw-cleanup-done';
 const shouldRegisterServiceWorker = import.meta.env.PROD && window.location.protocol === 'https:';

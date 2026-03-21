@@ -23,6 +23,7 @@ import { trackWeatherView } from "@/lib/track-event";
 import { useAccountStorage } from "@/hooks/use-account-storage";
 import { useOfflineCache } from "@/hooks/use-offline-cache";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
+import { useAmplitudeGuidedHelp } from "@/hooks/use-amplitude-guided-help";
 
 // Critical above-the-fold components — loaded eagerly
 import { LocationSearch } from "@/components/weather/location-search";

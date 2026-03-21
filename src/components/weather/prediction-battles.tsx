@@ -6,6 +6,7 @@ import { Swords, Trophy, Clock, CheckCircle, XCircle, Users, Timer } from "lucid
 import { usePredictionBattles } from "@/hooks/use-prediction-battles";
 import { format, differenceInHours, differenceInMinutes } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AppOnlyGate } from "./app-only-gate";
 
 interface PredictionBattlesProps {
   location: string;
@@ -31,7 +32,15 @@ const getTimeUntilExpiry = (createdAt: string) => {
   return "< 1m";
 };
 
-export const PredictionBattles = ({
+export const PredictionBattles = (props: PredictionBattlesProps) => {
+  return (
+    <AppOnlyGate featureName="Prediction Battles">
+      <PredictionBattlesInner {...props} />
+    </AppOnlyGate>
+  );
+};
+
+const PredictionBattlesInner = ({
   location,
   latitude,
   longitude,

@@ -1,5 +1,5 @@
 // Service Worker for Rainz Weather App with Infrastructure-Level Analytics
-const VERSION = 'v4.2';
+const VERSION = 'v4.3';
 const CACHE_NAME = `rainz-weather-${VERSION}`;
 const STATIC_CACHE = `rainz-static-${VERSION}`;
 
@@ -103,8 +103,10 @@ async function cacheFirst(request) {
 async function networkFirst(request) {
   try {
     const response = await fetch(request);
-    const cache = await caches.open(CACHE_NAME);
-    cache.put(request, response.clone());
+    if (response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
     return response;
   } catch {
     return caches.match(request);
@@ -163,6 +165,18 @@ self.addEventListener('fetch', (event) => {
       hostname: url.hostname,
       query: url.search,
     });
+    return;
+  }
+
+  // Always fetch navigation requests from network to prevent stale HTML/chunk mismatches
+  // that can lead to blank/black screens after deployments.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' }).catch(async () => {
+        const cachedHome = await caches.match('/');
+        return cachedHome || Response.error();
+      })
+    );
     return;
   }
 

@@ -128,14 +128,15 @@ export default function PrivacyPolicy() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <h4 className="font-semibold">5.1 Third-Party Service Providers</h4>
-            <p>We share data with trusted third-party services:</p>
-            <ul className="list-disc list-inside space-y-1 ml-4">
-              <li><strong>Supabase:</strong> Database hosting and authentication</li>
-              <li><strong>Weather APIs:</strong> WeatherAPI.com, Tomorrow.io for weather data</li>
-              <li><strong>Nominatim:</strong> Address geocoding services</li>
-              <li><strong>Stripe:</strong> Payment processing for Rainz+ subscriptions</li>
-              <li><strong>Advertising Networks:</strong> Display advertisements to free users</li>
-            </ul>
+             <p>We share data with trusted third-party services:</p>
+             <ul className="list-disc list-inside space-y-1 ml-4">
+               <li><strong>Supabase:</strong> Database hosting and authentication</li>
+               <li><strong>Weather APIs:</strong> WeatherAPI.com, Tomorrow.io for weather data</li>
+               <li><strong>Nominatim:</strong> Address geocoding services</li>
+               <li><strong>Stripe:</strong> Payment processing for Rainz+ subscriptions</li>
+               <li><strong>Amplitude:</strong> Product analytics, session replay, and A/B testing (see Section 5.3)</li>
+               <li><strong>Advertising Networks:</strong> Display advertisements to free users</li>
+             </ul>
 
             <h4 className="font-semibold mt-4">5.2 Public Information</h4>
             <p>The following information may be visible to other users:</p>
@@ -149,6 +150,27 @@ export default function PrivacyPolicy() {
             <h4 className="font-semibold mt-4">5.3 Legal Requirements</h4>
             <p>
               We may disclose your information if required by law, court order, or government request, or to protect our rights, property, or safety.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Amplitude Analytics */}
+        <Card>
+          <CardHeader>
+            <CardTitle>5.3 Amplitude Analytics & Session Replay</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm">
+            <p>
+              We use Amplitude, a third-party product analytics platform, to understand how users interact with Rainz. Amplitude may collect the following:
+            </p>
+            <ul className="list-disc list-inside space-y-1 ml-4">
+              <li><strong>Interaction Data:</strong> Clicks, taps, page views, scroll depth, and navigation patterns (via autocapture)</li>
+              <li><strong>Session Replays:</strong> Anonymous recordings of user sessions to identify usability issues — these do not capture passwords, payment details, or other sensitive input fields</li>
+              <li><strong>A/B Testing:</strong> We may run experiments to test feature variations and in-app guidance; your assignment to a test group is random and anonymous</li>
+              <li><strong>Device & Browser Info:</strong> Screen size, browser type, OS version, and language settings</li>
+            </ul>
+            <p>
+              Amplitude data is processed in accordance with Amplitude's privacy policy (<a href="https://amplitude.com/privacy" target="_blank" rel="noopener noreferrer" className="text-primary underline">amplitude.com/privacy</a>). You can opt out of analytics tracking by declining analytics cookies in your cookie preferences.
             </p>
           </CardContent>
         </Card>

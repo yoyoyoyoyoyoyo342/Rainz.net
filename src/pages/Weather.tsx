@@ -23,6 +23,7 @@ import { trackWeatherView } from "@/lib/track-event";
 import { useAccountStorage } from "@/hooks/use-account-storage";
 import { useOfflineCache } from "@/hooks/use-offline-cache";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
+import { useAmplitudeGuidedHelp } from "@/hooks/use-amplitude-guided-help";
 
 // Critical above-the-fold components — loaded eagerly
 import { LocationSearch } from "@/components/weather/location-search";
@@ -37,6 +38,7 @@ import { SettingsDialog } from "@/components/weather/settings-dialog";
 import { WeatherStationInfo } from "@/components/weather/weather-station-info";
 import { WinterAlerts } from "@/components/weather/winter-alerts";
 import { LockedPredictionButton } from "@/components/weather/locked-prediction-button";
+const GuidedHelpBanner = lazy(() => import("@/components/weather/guided-help-banner").then(m => ({ default: m.GuidedHelpBanner })));
 
 // Below-the-fold components — lazy loaded for faster initial render
 const TenDayForecast = lazy(() => import("@/components/weather/ten-day-forecast").then(m => ({ default: m.TenDayForecast })));
@@ -98,6 +100,7 @@ export default function WeatherPage() {
   const currentHoliday = getCurrentHoliday();
   const [exploreOpen, setExploreOpen] = useState(false);
   const { isEnabled: isFeatureEnabled } = useFeatureFlags();
+  const pageLoadedAtRef = useRef(Date.now());
 
   const { data: savedLocations = [] } = useQuery({
     queryKey: ["saved-locations"],
@@ -115,6 +118,13 @@ export default function WeatherPage() {
       return data;
     },
     staleTime: 1000 * 60 * 5,
+  });
+
+  const { activeTip, dismiss: dismissTip } = useAmplitudeGuidedHelp({
+    hasLocation: !!selectedLocation,
+    hasSavedLocations: savedLocations.length > 0,
+    isNewUser: !user,
+    pageLoadedAt: pageLoadedAtRef.current,
   });
 
   const customDisplayName = useMemo(() => {
@@ -624,6 +634,10 @@ export default function WeatherPage() {
             </div>
 
             <CardContent className="p-4 sm:p-6 bg-card space-y-4">
+              {/* Guided help banner */}
+              <Suspense fallback={null}>
+                <GuidedHelpBanner tip={activeTip} onDismiss={dismissTip} />
+              </Suspense>
               {/* Offline cache indicator for premium users */}
               {isUsingCachedData && (
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300">

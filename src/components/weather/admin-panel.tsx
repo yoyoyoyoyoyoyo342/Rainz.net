@@ -66,9 +66,15 @@ function VersionEditor() {
   const handleSave = async () => {
     if (!version.trim() || version === current) return;
     setSaving(true);
-    const ok = await setValue('app_version', version.trim());
+    const v = version.trim();
+    const [ok1, ok2, ok3] = await Promise.all([
+      setValue('app_version', v),
+      setValue('download_mac_version', v),
+      setValue('download_win_version', v),
+    ]);
+    const ok = ok1 && ok2 && ok3;
     setSaving(false);
-    toast({ title: ok ? 'Version updated' : 'Error', description: ok ? `Set to V${version.trim()}` : 'Failed to update', variant: ok ? 'default' : 'destructive' });
+    toast({ title: ok ? 'Version updated' : 'Error', description: ok ? `Set all versions to V${v}` : 'Failed to update', variant: ok ? 'default' : 'destructive' });
   };
 
   return (

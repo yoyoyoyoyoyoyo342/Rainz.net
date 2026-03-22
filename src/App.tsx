@@ -51,6 +51,8 @@ const SubscriptionCancel = lazy(() => import("./pages/SubscriptionCancel"));
 const Affiliate = lazy(() => import("./pages/Affiliate"));
 const AffiliatePolicy = lazy(() => import("./pages/AffiliatePolicy"));
 const Download = lazy(() => import("./pages/Download"));
+const PwaDownload = lazy(() => import("./pages/PwaDownload"));
+const AppDownload = lazy(() => import("./pages/AppDownload"));
 const Widgets = lazy(() => import("./pages/Widgets"));
 const Widget = lazy(() => import("./pages/Widget"));
 const Embed = lazy(() => import("./pages/Embed"));
@@ -165,6 +167,8 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
               <Route path="/affiliate" element={<Affiliate />} />
               <Route path="/affiliate-policy" element={<AffiliatePolicy />} />
               <Route path="/download" element={<Download />} />
+              <Route path="/pwadownload" element={<PwaDownload />} />
+              <Route path="/appdownload" element={<AppDownload />} />
               <Route path="/widgets" element={<Widgets />} />
               <Route path="/widget" element={<Widget />} />
               <Route path="/embed" element={<Embed />} />

@@ -126,7 +126,7 @@ console.log(data);`;
 export default function MCP() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <SeoHead
+      <SEOHead
         title="Rainz MCP — Weather Data for AI Apps"
         description="Add real-time weather data to your AI applications with the Rainz MCP server. Compatible with Claude, Cursor, Windsurf, and any MCP client."
       />

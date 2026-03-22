@@ -59,6 +59,7 @@ const Embed = lazy(() => import("./pages/Embed"));
 const Info = lazy(() => import("./pages/Info"));
 const DryRoutes = lazy(() => import("./pages/DryRoutes"));
 const CityWeather = lazy(() => import("./pages/CityWeather"));
+const MCP = lazy(() => import("./pages/MCP"));
 
 
 function AnalyticsTracker() {

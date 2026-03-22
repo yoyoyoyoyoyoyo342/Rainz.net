@@ -16,7 +16,10 @@ const PwaDownload = () => {
     { title: "Open rainz.net in your browser", desc: "Use Safari on iOS or Chrome on Android" },
     { title: "Tap the share/menu icon", desc: "Look for the share button (iOS) or three-dot menu (Android)" },
     { title: 'Select "Add to Home Screen"', desc: "Or 'Install App' on android" },
-    { title: "Open from your home screen", desc: "Rainz will launch like a native app" },
+    {
+      title: "On iphone make sure that you have the 'Install as a pwa'switch on, then click install/add!",
+      desc: "Rainz will launch like a native app",
+    },
   ];
 
   return (

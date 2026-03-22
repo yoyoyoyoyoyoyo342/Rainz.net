@@ -6,13 +6,16 @@ import { useFeatureFlags } from "@/hooks/use-feature-flags";
 const PwaDownload = () => {
   const { getValue } = useFeatureFlags();
   const title = getValue("download_mobile_title", "Install Rainz on your device");
-  const description = getValue("download_mobile_description", 'You can install Rainz directly from your browser. Visit rainz.net and select "Add to Home Screen" or "Install App" in your browser menu.');
+  const description = getValue(
+    "download_mobile_description",
+    'You can install Rainz directly from your browser. Visit rainz.net and select "Add to Home Screen" or "Install App" in your browser menu.',
+  );
   const cta = getValue("download_mobile_cta", "Install from Browser");
 
   const steps = [
     { title: "Open rainz.net in your browser", desc: "Use Safari on iOS or Chrome on Android" },
     { title: "Tap the share/menu icon", desc: "Look for the share button (iOS) or three-dot menu (Android)" },
-    { title: 'Select "Add to Home Screen"', desc: "Or 'Install App' if prompted" },
+    { title: 'Select "Add to Home Screen"', desc: "Or 'Install App' on android" },
     { title: "Open from your home screen", desc: "Rainz will launch like a native app" },
   ];
 

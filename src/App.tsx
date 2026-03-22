@@ -167,6 +167,8 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
               <Route path="/affiliate" element={<Affiliate />} />
               <Route path="/affiliate-policy" element={<AffiliatePolicy />} />
               <Route path="/download" element={<Download />} />
+              <Route path="/pwadownload" element={<PwaDownload />} />
+              <Route path="/appdownload" element={<AppDownload />} />
               <Route path="/widgets" element={<Widgets />} />
               <Route path="/widget" element={<Widget />} />
               <Route path="/embed" element={<Embed />} />

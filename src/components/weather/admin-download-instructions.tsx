@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Save } from "lucide-react";
 
 export function AdminDownloadInstructions() {
-  const { getValue, setValue } = useFeatureFlags();
+  const { getValue, setValue, isLoading } = useFeatureFlags();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
+  const initialized = useRef(false);
 
   const [macUrl, setMacUrl] = useState("");
   const [winUrl, setWinUrl] = useState("");
@@ -22,6 +23,8 @@ export function AdminDownloadInstructions() {
   const [mobileCta, setMobileCta] = useState("");
 
   useEffect(() => {
+    if (isLoading || initialized.current) return;
+    initialized.current = true;
     setMacUrl(getValue("download_mac_url", "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.V1.0.dmg"));
     setWinUrl(getValue("download_win_url", "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.Setup.V1.0.exe"));
     setMacVersion(getValue("download_mac_version", "1.0.0"));
@@ -30,7 +33,7 @@ export function AdminDownloadInstructions() {
     setMobileTitle(getValue("download_mobile_title", "Prefer not to download?"));
     setMobileDescription(getValue("download_mobile_description", 'You can install Rainz directly from your browser. Visit rainz.net and select "Add to Home Screen" or "Install App" in your browser menu.'));
     setMobileCta(getValue("download_mobile_cta", "Install from Browser"));
-  }, [getValue]);
+  }, [isLoading]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -52,6 +55,8 @@ export function AdminDownloadInstructions() {
       setSaving(false);
     }
   };
+
+  if (isLoading) return <p className="text-sm text-muted-foreground py-4">Loading...</p>;
 
   return (
     <div className="space-y-4">

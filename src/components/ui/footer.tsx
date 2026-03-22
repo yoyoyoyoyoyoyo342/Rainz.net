@@ -28,6 +28,9 @@ export function Footer() {
             <Link to="/data-settings" className="hover:text-foreground transition-colors">
               Data & Privacy Settings
             </Link>
+            <Link to="/mcp" className="hover:text-foreground transition-colors">
+              MCP
+            </Link>
           </div>
           <div className="text-center md:text-right space-y-1">
             <p>© 2025-{new Date().getFullYear()} Rainz. All rights reserved.</p>

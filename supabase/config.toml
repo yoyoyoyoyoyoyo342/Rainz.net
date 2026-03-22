@@ -128,3 +128,6 @@ verify_jwt = false
 
 [functions.get-vapid-key]
 verify_jwt = false
+
+[functions.rainz-mcp]
+verify_jwt = false

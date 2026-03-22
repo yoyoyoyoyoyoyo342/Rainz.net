@@ -1,263 +1,215 @@
-import { Hono } from "https://deno.land/x/hono@v4.3.11/mod.ts";
 import { McpServer, StreamableHttpTransport } from "npm:mcp-lite@^0.10.0";
+import { Hono } from "jsr:@hono/hono@^4";
 
-const app = new Hono();
-
-const mcpServer = new McpServer({
+const mcp = new McpServer({
   name: "rainz-weather",
   version: "1.0.0",
 });
 
+const fToC = (f: number) => Math.round((f - 32) * 5 / 9);
+
+async function fetchAggregateWeather(lat: number, lon: number, locationName: string) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  const response = await fetch(`${supabaseUrl}/functions/v1/aggregate-weather`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseAnonKey}` },
+    body: JSON.stringify({ lat, lon, locationName }),
+  });
+  if (!response.ok) throw new Error(`Weather fetch failed: ${response.status}`);
+  const data = await response.json();
+  return data.sources || data || [];
+}
+
+async function fetchHyperlocal(lat: number, lon: number) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  const response = await fetch(`${supabaseUrl}/functions/v1/fetch-hyperlocal-weather`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseAnonKey}` },
+    body: JSON.stringify({ latitude: lat, longitude: lon }),
+  });
+  if (!response.ok) throw new Error(`Hyperlocal fetch failed: ${response.status}`);
+  return await response.json();
+}
+
 // Tool: Get current weather
-mcpServer.tool({
-  name: "get_current_weather",
-  description: "Get current weather conditions for a location including temperature, humidity, wind speed, feels like, UV index, and more. Data is aggregated from multiple weather models (ECMWF, GFS, Met.no, WeatherAPI, Open-Meteo) for maximum accuracy.",
+mcp.tool("get_current_weather", {
+  description: "Get current weather conditions for a location. Data aggregated from ECMWF, GFS, Met.no, WeatherAPI, Open-Meteo.",
   inputSchema: {
-    type: "object",
+    type: "object" as const,
     properties: {
-      latitude: { type: "number", description: "Latitude of the location (-90 to 90)" },
-      longitude: { type: "number", description: "Longitude of the location (-180 to 180)" },
-      location_name: { type: "string", description: "Human-readable name of the location (e.g. 'London, UK')" },
+      latitude: { type: "number" as const, description: "Latitude (-90 to 90)" },
+      longitude: { type: "number" as const, description: "Longitude (-180 to 180)" },
+      location_name: { type: "string" as const, description: "Location name e.g. 'London, UK'" },
     },
     required: ["latitude", "longitude"],
   },
-  handler: async ({ latitude, longitude, location_name }: { latitude: number; longitude: number; location_name?: string }) => {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/aggregate-weather`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${supabaseAnonKey}`,
-      },
-      body: JSON.stringify({ lat: latitude, lon: longitude, locationName: location_name || "MCP Request" }),
-    });
-
-    if (!response.ok) {
-      return { content: [{ type: "text", text: `Error fetching weather: ${response.status}` }] };
+  handler: async (args: { latitude: number; longitude: number; location_name?: string }) => {
+    try {
+      const sources = await fetchAggregateWeather(args.latitude, args.longitude, args.location_name || "MCP Request");
+      const best = sources.length > 0
+        ? sources.reduce((a: any, b: any) => ((b.accuracy || 0) > (a.accuracy || 0) ? b : a), sources[0])
+        : null;
+      if (!best) return { content: [{ type: "text" as const, text: "No weather data available." }] };
+      const cw = best.currentWeather;
+      const summary = [
+        `📍 ${args.location_name || `${args.latitude}, ${args.longitude}`}`,
+        `🌡️ Temperature: ${fToC(cw.temperature)}°C (feels like ${fToC(cw.feelsLike)}°C)`,
+        `☁️ Condition: ${cw.condition}${cw.description ? ` — ${cw.description}` : ""}`,
+        `💧 Humidity: ${cw.humidity}%`,
+        `💨 Wind: ${cw.windSpeed} km/h`,
+        `📊 Pressure: ${cw.pressure} hPa`,
+        cw.uvIndex !== undefined ? `☀️ UV Index: ${cw.uvIndex}` : null,
+        `\nSource: ${best.source} | ${sources.length} models queried`,
+      ].filter(Boolean).join("\n");
+      return { content: [{ type: "text" as const, text: summary }] };
+    } catch (e) {
+      return { content: [{ type: "text" as const, text: `Error: ${(e as Error).message}` }] };
     }
-
-    const data = await response.json();
-    const sources = data.sources || data || [];
-
-    // Pick the most accurate source
-    const best = sources.length > 0
-      ? sources.reduce((a: any, b: any) => ((b.accuracy || 0) > (a.accuracy || 0) ? b : a), sources[0])
-      : null;
-
-    if (!best) {
-      return { content: [{ type: "text", text: "No weather data available for this location." }] };
-    }
-
-    const fToC = (f: number) => Math.round((f - 32) * 5 / 9);
-    const cw = best.currentWeather;
-
-    const summary = [
-      `📍 ${location_name || `${latitude}, ${longitude}`}`,
-      `🌡️ Temperature: ${fToC(cw.temperature)}°C (feels like ${fToC(cw.feelsLike)}°C)`,
-      `☁️ Condition: ${cw.condition}${cw.description ? ` — ${cw.description}` : ""}`,
-      `💧 Humidity: ${cw.humidity}%`,
-      `💨 Wind: ${cw.windSpeed} km/h`,
-      `📊 Pressure: ${cw.pressure} hPa`,
-      cw.uvIndex !== undefined ? `☀️ UV Index: ${cw.uvIndex}` : null,
-      cw.visibility !== undefined ? `👁️ Visibility: ${cw.visibility} km` : null,
-      `\nSource: ${best.source} | Sources available: ${sources.length}`,
-    ].filter(Boolean).join("\n");
-
-    return { content: [{ type: "text", text: summary }] };
   },
 });
 
 // Tool: Get hourly forecast
-mcpServer.tool({
-  name: "get_hourly_forecast",
-  description: "Get an hourly weather forecast for the next 24 hours for a location. Returns temperature, condition, and precipitation probability for each hour.",
+mcp.tool("get_hourly_forecast", {
+  description: "Get hourly weather forecast for up to 24 hours.",
   inputSchema: {
-    type: "object",
+    type: "object" as const,
     properties: {
-      latitude: { type: "number", description: "Latitude of the location" },
-      longitude: { type: "number", description: "Longitude of the location" },
-      location_name: { type: "string", description: "Human-readable name of the location" },
-      hours: { type: "number", description: "Number of hours to forecast (default 12, max 24)" },
+      latitude: { type: "number" as const },
+      longitude: { type: "number" as const },
+      location_name: { type: "string" as const },
+      hours: { type: "number" as const, description: "Hours to forecast (default 12, max 24)" },
     },
     required: ["latitude", "longitude"],
   },
-  handler: async ({ latitude, longitude, location_name, hours }: { latitude: number; longitude: number; location_name?: string; hours?: number }) => {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/aggregate-weather`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseAnonKey}` },
-      body: JSON.stringify({ lat: latitude, lon: longitude, locationName: location_name || "MCP Request" }),
-    });
-
-    if (!response.ok) {
-      return { content: [{ type: "text", text: `Error: ${response.status}` }] };
+  handler: async (args: { latitude: number; longitude: number; location_name?: string; hours?: number }) => {
+    try {
+      const sources = await fetchAggregateWeather(args.latitude, args.longitude, args.location_name || "MCP");
+      const best = sources[0];
+      if (!best?.hourlyForecast?.length) return { content: [{ type: "text" as const, text: "No hourly data." }] };
+      const limit = Math.min(args.hours || 12, 24);
+      const lines = best.hourlyForecast.slice(0, limit).map((h: any) =>
+        `${h.time} — ${fToC(h.temperature)}°C, ${h.condition}, 🌧️ ${h.precipitation}%`
+      );
+      return { content: [{ type: "text" as const, text: `⏰ Hourly Forecast\n\n${lines.join("\n")}` }] };
+    } catch (e) {
+      return { content: [{ type: "text" as const, text: `Error: ${(e as Error).message}` }] };
     }
-
-    const data = await response.json();
-    const sources = data.sources || data || [];
-    const best = sources[0];
-    if (!best?.hourlyForecast?.length) {
-      return { content: [{ type: "text", text: "No hourly forecast available." }] };
-    }
-
-    const fToC = (f: number) => Math.round((f - 32) * 5 / 9);
-    const limit = Math.min(hours || 12, 24);
-    const lines = best.hourlyForecast.slice(0, limit).map((h: any) =>
-      `${h.time} — ${fToC(h.temperature)}°C, ${h.condition}, 🌧️ ${h.precipitation}%`
-    );
-
-    return {
-      content: [{
-        type: "text",
-        text: `⏰ Hourly Forecast for ${location_name || `${latitude}, ${longitude}`}\n\n${lines.join("\n")}`,
-      }],
-    };
   },
 });
 
 // Tool: Get daily forecast
-mcpServer.tool({
-  name: "get_daily_forecast",
-  description: "Get a 7-day daily weather forecast for a location. Returns high/low temperatures, conditions, and precipitation probability.",
+mcp.tool("get_daily_forecast", {
+  description: "Get 7-day daily weather forecast.",
   inputSchema: {
-    type: "object",
+    type: "object" as const,
     properties: {
-      latitude: { type: "number", description: "Latitude of the location" },
-      longitude: { type: "number", description: "Longitude of the location" },
-      location_name: { type: "string", description: "Human-readable name of the location" },
+      latitude: { type: "number" as const },
+      longitude: { type: "number" as const },
+      location_name: { type: "string" as const },
     },
     required: ["latitude", "longitude"],
   },
-  handler: async ({ latitude, longitude, location_name }: { latitude: number; longitude: number; location_name?: string }) => {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/aggregate-weather`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseAnonKey}` },
-      body: JSON.stringify({ lat: latitude, lon: longitude, locationName: location_name || "MCP Request" }),
-    });
-
-    if (!response.ok) {
-      return { content: [{ type: "text", text: `Error: ${response.status}` }] };
+  handler: async (args: { latitude: number; longitude: number; location_name?: string }) => {
+    try {
+      const sources = await fetchAggregateWeather(args.latitude, args.longitude, args.location_name || "MCP");
+      const best = sources[0];
+      if (!best?.dailyForecast?.length) return { content: [{ type: "text" as const, text: "No daily data." }] };
+      const lines = best.dailyForecast.slice(0, 7).map((d: any) =>
+        `${d.day} — ${d.condition} | High: ${fToC(d.highTemp)}°C Low: ${fToC(d.lowTemp)}°C | 🌧️ ${d.precipitation}%`
+      );
+      return { content: [{ type: "text" as const, text: `📅 7-Day Forecast\n\n${lines.join("\n")}` }] };
+    } catch (e) {
+      return { content: [{ type: "text" as const, text: `Error: ${(e as Error).message}` }] };
     }
-
-    const data = await response.json();
-    const sources = data.sources || data || [];
-    const best = sources[0];
-    if (!best?.dailyForecast?.length) {
-      return { content: [{ type: "text", text: "No daily forecast available." }] };
-    }
-
-    const fToC = (f: number) => Math.round((f - 32) * 5 / 9);
-    const lines = best.dailyForecast.slice(0, 7).map((d: any) =>
-      `${d.day} — ${d.condition} | High: ${fToC(d.highTemp)}°C, Low: ${fToC(d.lowTemp)}°C | 🌧️ ${d.precipitation}%`
-    );
-
-    return {
-      content: [{
-        type: "text",
-        text: `📅 7-Day Forecast for ${location_name || `${latitude}, ${longitude}`}\n\n${lines.join("\n")}`,
-      }],
-    };
   },
 });
 
 // Tool: Get air quality
-mcpServer.tool({
-  name: "get_air_quality",
-  description: "Get current air quality index (AQI) and pollen data for a location.",
+mcp.tool("get_air_quality", {
+  description: "Get air quality index (AQI) and pollen data.",
   inputSchema: {
-    type: "object",
+    type: "object" as const,
     properties: {
-      latitude: { type: "number", description: "Latitude of the location" },
-      longitude: { type: "number", description: "Longitude of the location" },
+      latitude: { type: "number" as const },
+      longitude: { type: "number" as const },
     },
     required: ["latitude", "longitude"],
   },
-  handler: async ({ latitude, longitude }: { latitude: number; longitude: number }) => {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/fetch-hyperlocal-weather`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseAnonKey}` },
-      body: JSON.stringify({ latitude, longitude }),
-    });
-
-    if (!response.ok) {
-      return { content: [{ type: "text", text: `Error: ${response.status}` }] };
+  handler: async (args: { latitude: number; longitude: number }) => {
+    try {
+      const data = await fetchHyperlocal(args.latitude, args.longitude);
+      const parts: string[] = [];
+      if (data.aqi) {
+        parts.push(`🌬️ AQI: ${data.aqi.us_aqi} (${data.aqi.category || "N/A"})`);
+        if (data.aqi.pm2_5 !== undefined) parts.push(`  PM2.5: ${data.aqi.pm2_5} μg/m³`);
+      }
+      if (data.pollen) {
+        parts.push("\n🌿 Pollen:");
+        for (const [k, v] of Object.entries(data.pollen)) parts.push(`  ${k}: ${v}`);
+      }
+      return { content: [{ type: "text" as const, text: parts.length ? parts.join("\n") : "No AQI data." }] };
+    } catch (e) {
+      return { content: [{ type: "text" as const, text: `Error: ${(e as Error).message}` }] };
     }
-
-    const data = await response.json();
-    const parts: string[] = [];
-
-    if (data.aqi) {
-      parts.push(`🌬️ Air Quality Index: ${data.aqi.us_aqi} (${data.aqi.category || "N/A"})`);
-      if (data.aqi.pm2_5 !== undefined) parts.push(`  PM2.5: ${data.aqi.pm2_5} μg/m³`);
-      if (data.aqi.pm10 !== undefined) parts.push(`  PM10: ${data.aqi.pm10} μg/m³`);
-    }
-
-    if (data.pollen) {
-      parts.push("\n🌿 Pollen Levels:");
-      if (data.pollen.grass !== undefined) parts.push(`  Grass: ${data.pollen.grass}`);
-      if (data.pollen.birch !== undefined) parts.push(`  Birch: ${data.pollen.birch}`);
-      if (data.pollen.ragweed !== undefined) parts.push(`  Ragweed: ${data.pollen.ragweed}`);
-    }
-
-    return {
-      content: [{ type: "text", text: parts.length ? parts.join("\n") : "No air quality data available for this location." }],
-    };
   },
 });
 
 // Tool: Get weather alerts
-mcpServer.tool({
-  name: "get_weather_alerts",
-  description: "Get active severe weather alerts for a location including storms, floods, heat warnings, etc.",
+mcp.tool("get_weather_alerts", {
+  description: "Get active severe weather alerts (storms, floods, heat warnings).",
   inputSchema: {
-    type: "object",
+    type: "object" as const,
     properties: {
-      latitude: { type: "number", description: "Latitude of the location" },
-      longitude: { type: "number", description: "Longitude of the location" },
+      latitude: { type: "number" as const },
+      longitude: { type: "number" as const },
     },
     required: ["latitude", "longitude"],
   },
-  handler: async ({ latitude, longitude }: { latitude: number; longitude: number }) => {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/fetch-hyperlocal-weather`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseAnonKey}` },
-      body: JSON.stringify({ latitude, longitude }),
-    });
-
-    if (!response.ok) {
-      return { content: [{ type: "text", text: `Error: ${response.status}` }] };
+  handler: async (args: { latitude: number; longitude: number }) => {
+    try {
+      const data = await fetchHyperlocal(args.latitude, args.longitude);
+      if (!data.alerts?.length) return { content: [{ type: "text" as const, text: "✅ No active alerts." }] };
+      const lines = data.alerts.map((a: any) => `⚠️ ${a.headline || a.event} — ${a.severity || "Unknown"}`);
+      return { content: [{ type: "text" as const, text: `🚨 Alerts:\n\n${lines.join("\n")}` }] };
+    } catch (e) {
+      return { content: [{ type: "text" as const, text: `Error: ${(e as Error).message}` }] };
     }
-
-    const data = await response.json();
-    if (!data.alerts?.length) {
-      return { content: [{ type: "text", text: "✅ No active weather alerts for this location." }] };
-    }
-
-    const lines = data.alerts.map((a: any) =>
-      `⚠️ ${a.headline || a.event}\n   Severity: ${a.severity || "Unknown"}\n   ${a.description || ""}`
-    );
-
-    return { content: [{ type: "text", text: `🚨 Weather Alerts:\n\n${lines.join("\n\n")}` }] };
   },
 });
 
+// Bind transport to server — this is the key step
 const transport = new StreamableHttpTransport();
+const httpHandler = transport.bind(mcp);
 
-app.all("/*", async (c) => {
-  return await transport.handleRequest(c.req.raw, mcpServer);
+// Two-app pattern for Supabase Edge Functions
+const app = new Hono();
+const mcpApp = new Hono();
+
+mcpApp.get("/", (c) => {
+  return c.json({
+    name: "Rainz Weather MCP",
+    description: "AI-powered weather data from multiple models",
+    tools: ["get_current_weather", "get_hourly_forecast", "get_daily_forecast", "get_air_quality", "get_weather_alerts"],
+    endpoint: "/mcp",
+  });
 });
+
+mcpApp.all("/mcp", async (c) => {
+  const response = await httpHandler(c.req.raw);
+  return response;
+});
+
+// Also handle direct requests (for clients that hit the root)
+mcpApp.all("/", async (c) => {
+  if (c.req.method === "POST") {
+    const response = await httpHandler(c.req.raw);
+    return response;
+  }
+  return c.json({ name: "Rainz Weather MCP", endpoint: "/mcp" });
+});
+
+app.route("/rainz-mcp", mcpApp);
 
 Deno.serve(app.fetch);

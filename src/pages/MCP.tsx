@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SEOHead } from "@/components/seo/seo-head";
 
-const MCP_URL = "https://pjatisrbiggxzinalosy.supabase.co/functions/v1/rainz-mcp";
+const MCP_URL = "https://ohwtbkudpkfbakynikyj.supabase.co/functions/v1/rainz-mcp/mcp";
 
 function CopyBlock({ code, language = "json" }: { code: string; language?: string }) {
   const [copied, setCopied] = useState(false);

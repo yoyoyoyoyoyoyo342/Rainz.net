@@ -899,6 +899,7 @@ export type Database = {
           notify_daily_summary: boolean | null
           notify_pollen: boolean | null
           notify_severe_weather: boolean | null
+          referral_code: string | null
           shop_points: number
           total_points: number | null
           updated_at: string
@@ -917,6 +918,7 @@ export type Database = {
           notify_daily_summary?: boolean | null
           notify_pollen?: boolean | null
           notify_severe_weather?: boolean | null
+          referral_code?: string | null
           shop_points?: number
           total_points?: number | null
           updated_at?: string
@@ -935,6 +937,7 @@ export type Database = {
           notify_daily_summary?: boolean | null
           notify_pollen?: boolean | null
           notify_severe_weather?: boolean | null
+          referral_code?: string | null
           shop_points?: number
           total_points?: number | null
           updated_at?: string
@@ -1037,6 +1040,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      referrals: {
+        Row: {
+          created_at: string | null
+          id: string
+          points_awarded: boolean | null
+          referee_id: string
+          referral_code: string
+          referrer_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          points_awarded?: boolean | null
+          referee_id: string
+          referral_code: string
+          referrer_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          points_awarded?: boolean | null
+          referee_id?: string
+          referral_code?: string
+          referrer_id?: string
+        }
+        Relationships: []
       }
       saved_locations: {
         Row: {

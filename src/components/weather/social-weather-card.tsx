@@ -283,14 +283,23 @@ export function SocialWeatherCard({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 mt-4">
-            <Button className="flex-1" onClick={handleDownload} disabled={isGenerating || imageLoading}>
-              {isGenerating ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4 mr-2" />
-              )}
-              {navigator.share ? "Share" : "Download"}
+          <div className="flex flex-col gap-2 mt-4">
+            <div className="flex gap-2">
+              <Button className="flex-1" onClick={handleDownload} disabled={isGenerating || imageLoading}>
+                {isGenerating ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
+                {navigator.share ? "Share" : "Download"}
+              </Button>
+              <Button variant="outline" size="icon" onClick={handleCopyImage} disabled={isGenerating || imageLoading} title="Copy image">
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button variant="outline" className="w-full" onClick={handleShareToTwitter}>
+              <Share2 className="h-4 w-4 mr-2" />
+              Share on X / Twitter
             </Button>
           </div>
         </DialogContent>

@@ -28,6 +28,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const { processReferral } = useReferral();
 
   useEffect(() => {
     const isReset = searchParams.get('reset') === 'true';

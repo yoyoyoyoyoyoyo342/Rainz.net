@@ -1,9 +1,10 @@
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Download, Camera, Loader2, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Wind, Droplets, Thermometer } from "lucide-react";
+import { Download, Camera, Loader2, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Wind, Droplets, Thermometer, Copy, Share2 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { useToast } from "@/hooks/use-toast";
+import * as amplitude from "@amplitude/unified";
 import rainzLogo from "@/assets/rainz-logo-new.png";
 import { LocationCard } from "./location-card";
 import { supabase } from "@/integrations/supabase/client";

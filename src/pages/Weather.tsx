@@ -65,6 +65,7 @@ const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-c
 
 const WeeklyRecapCard = lazy(() => import("@/components/weather/weekly-recap-card").then(m => ({ default: m.WeeklyRecapCard })));
 const SocialFeed = lazy(() => import("@/components/weather/social-feed").then(m => ({ default: m.SocialFeed })));
+const ReferralProgram = lazy(() => import("@/components/weather/referral-program").then(m => ({ default: m.ReferralProgram })));
 
 export default function WeatherPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -887,8 +888,13 @@ export default function WeatherPage() {
                 </Card>
               </AnimatedCard>
 
+              {/* Referral Program */}
+              <AnimatedCard index={10} data-amplitude-card="referral-program">
+                <ReferralProgram />
+              </AnimatedCard>
+
               {/* Feature Ideas Card */}
-              <AnimatedCard index={10}>
+              <AnimatedCard index={11} data-amplitude-card="feature-ideas">
                 <FeatureIdeasCard />
               </AnimatedCard>
 

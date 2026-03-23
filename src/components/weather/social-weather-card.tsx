@@ -1,9 +1,10 @@
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Download, Camera, Loader2, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Wind, Droplets, Thermometer } from "lucide-react";
+import { Download, Camera, Loader2, Sun, Cloud, CloudRain, Snowflake, CloudLightning, Wind, Droplets, Thermometer, Copy, Share2 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { useToast } from "@/hooks/use-toast";
+import * as amplitude from "@amplitude/unified";
 import rainzLogo from "@/assets/rainz-logo-new.png";
 import { LocationCard } from "./location-card";
 import { supabase } from "@/integrations/supabase/client";
@@ -144,10 +145,34 @@ export function SocialWeatherCard({
       link.href = dataUrl;
       link.click();
 
+      amplitude.track("weather_card_shared", { platform: "native_share_or_download", location });
       toast({ title: "Downloaded!", description: "Weather card saved to your device" });
     } catch (error) {
       console.error("Error generating image:", error);
       toast({ title: "Error", description: "Failed to generate image", variant: "destructive" });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleShareToTwitter = () => {
+    const text = encodeURIComponent(`Weather in ${location}: ${Math.round(temperature)}° ${condition} 🌤️ Check it out on Rainz.net!`);
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent("https://rainz.net")}`, "_blank");
+    amplitude.track("weather_card_shared", { platform: "twitter", location });
+  };
+
+  const handleCopyImage = async () => {
+    if (!cardRef.current) return;
+    setIsGenerating(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const dataUrl = await toPng(cardRef.current, { quality: 1, pixelRatio: 2, cacheBust: true, skipFonts: true });
+      const blob = await (await fetch(dataUrl)).blob();
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      amplitude.track("weather_card_shared", { platform: "clipboard", location });
+      toast({ title: "Copied!", description: "Weather card image copied to clipboard" });
+    } catch {
+      toast({ title: "Error", description: "Could not copy image — try downloading instead", variant: "destructive" });
     } finally {
       setIsGenerating(false);
     }
@@ -258,14 +283,23 @@ export function SocialWeatherCard({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 mt-4">
-            <Button className="flex-1" onClick={handleDownload} disabled={isGenerating || imageLoading}>
-              {isGenerating ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4 mr-2" />
-              )}
-              {navigator.share ? "Share" : "Download"}
+          <div className="flex flex-col gap-2 mt-4">
+            <div className="flex gap-2">
+              <Button className="flex-1" onClick={handleDownload} disabled={isGenerating || imageLoading}>
+                {isGenerating ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
+                {navigator.share ? "Share" : "Download"}
+              </Button>
+              <Button variant="outline" size="icon" onClick={handleCopyImage} disabled={isGenerating || imageLoading} title="Copy image">
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button variant="outline" className="w-full" onClick={handleShareToTwitter}>
+              <Share2 className="h-4 w-4 mr-2" />
+              Share on X / Twitter
             </Button>
           </div>
         </DialogContent>

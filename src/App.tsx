@@ -66,6 +66,7 @@ const MCP = lazy(() => import("./pages/MCP"));
 function AnalyticsTracker() {
   useAnalytics();
   useAmplitudeInstrumentation();
+  useAmplitudeFunnels();
   useBroadcastListener();
   return null;
 }

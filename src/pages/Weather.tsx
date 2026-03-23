@@ -888,8 +888,13 @@ export default function WeatherPage() {
                 </Card>
               </AnimatedCard>
 
+              {/* Referral Program */}
+              <AnimatedCard index={10} data-amplitude-card="referral-program">
+                <ReferralProgram />
+              </AnimatedCard>
+
               {/* Feature Ideas Card */}
-              <AnimatedCard index={10}>
+              <AnimatedCard index={11} data-amplitude-card="feature-ideas">
                 <FeatureIdeasCard />
               </AnimatedCard>
 

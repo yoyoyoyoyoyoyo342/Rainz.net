@@ -214,6 +214,13 @@ export default function Auth() {
         }
         setNewUserId(data.user.id);
         setShowSurvey(true);
+        
+        // Process referral if ref param exists
+        const refCode = searchParams.get('ref');
+        if (refCode) {
+          processReferral(refCode, data.user.id);
+        }
+        
         toast({ title: "Account Created!", description: "Please check your email to verify your account." });
       }
     } catch (error: any) {

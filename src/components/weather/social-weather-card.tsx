@@ -145,10 +145,34 @@ export function SocialWeatherCard({
       link.href = dataUrl;
       link.click();
 
+      amplitude.track("weather_card_shared", { platform: "native_share_or_download", location });
       toast({ title: "Downloaded!", description: "Weather card saved to your device" });
     } catch (error) {
       console.error("Error generating image:", error);
       toast({ title: "Error", description: "Failed to generate image", variant: "destructive" });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleShareToTwitter = () => {
+    const text = encodeURIComponent(`Weather in ${location}: ${Math.round(temperature)}° ${condition} 🌤️ Check it out on Rainz.net!`);
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent("https://rainz.net")}`, "_blank");
+    amplitude.track("weather_card_shared", { platform: "twitter", location });
+  };
+
+  const handleCopyImage = async () => {
+    if (!cardRef.current) return;
+    setIsGenerating(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const dataUrl = await toPng(cardRef.current, { quality: 1, pixelRatio: 2, cacheBust: true, skipFonts: true });
+      const blob = await (await fetch(dataUrl)).blob();
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      amplitude.track("weather_card_shared", { platform: "clipboard", location });
+      toast({ title: "Copied!", description: "Weather card image copied to clipboard" });
+    } catch {
+      toast({ title: "Error", description: "Could not copy image — try downloading instead", variant: "destructive" });
     } finally {
       setIsGenerating(false);
     }

@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { User } from '@supabase/supabase-js';
 import { Eye, EyeOff, CloudRain, Mail, Lock, ArrowLeft, Sparkles, Shield, Zap } from 'lucide-react';
 import { SignupSurvey } from '@/components/weather/signup-survey';
+import { useReferral } from '@/hooks/use-referral';
 import { Separator } from '@/components/ui/separator';
 import rainzLogo from '@/assets/rainz-logo-new.png';
 

@@ -1,108 +1,79 @@
 
 
-# Apple Liquid Glass for Apple Devices
+## Plan: Growth & Viral Features + Enhanced Amplitude Real-Time Tracking
 
-## Overview
-Apply Apple's Liquid Glass design language across the entire app, but **only on Apple devices** (iPhone, iPad, Mac Safari). Non-Apple devices keep the current design unchanged. Add an Apple credit to the Terms of Service.
+### What We're Building
 
-## 1. Apple Device Detection Utility
-**File**: `src/lib/pwa-utils.ts` (extend) + new `src/hooks/use-apple-device.tsx`
+**1. Referral Program with Rewards**
+- New `referrals` Supabase table tracking referrer/referee relationships
+- Each user gets a unique referral code (stored in profiles)
+- Shareable referral link (`rainz.net/?ref=CODE`) that awards points to both parties
+- Referral dashboard showing stats (invited, joined, points earned)
+- Track all referral events in Amplitude (`referral_link_shared`, `referral_signup_completed`)
 
-- Add `isAppleDevice()` function that detects iOS, iPadOS, and macOS Safari via user-agent
-- Create a React hook `useIsAppleDevice()` that returns a boolean and a context provider `AppleGlassProvider` that wraps the app, setting a CSS class `apple-glass` on `<html>` when on Apple devices
-- This allows all glass styles to be scoped under `.apple-glass` in CSS
+**2. Shareable Weather Cards for Social Media**
+- Enhance existing `SocialWeatherCard` with "Share to Instagram Stories", "Share to X/Twitter", "Copy Image" actions
+- Generate branded OG-image-style cards with weather data + Rainz branding
+- One-tap native share via Web Share API with fallback copy
+- Amplitude tracking on every share action (`weather_card_shared`, platform, location)
 
-## 2. Liquid Glass CSS System
-**File**: `src/index.css`
+**3. Embeddable Blog Widgets (Quick Share Snippet)**
+- Add a "Get Embed Code" button on the weather page that generates a lightweight `<iframe>` snippet
+- Links to existing `/embed` widget with pre-filled location
+- Amplitude: `widget_embed_copied`
 
-Add an `.apple-glass` scoped layer with 6 component styles matching your Figma components:
+**4. Enhanced Real-Time Amplitude Tracking**
+- **Funnel tracking**: Track user journey steps (landed → searched → viewed forecast → made prediction → shared)
+- **Feature adoption**: Track which features users discover vs ignore (scroll depth, card visibility via IntersectionObserver)
+- **Engagement scoring**: Compute and send user engagement level as Amplitude user property (casual/active/power)
+- **Churn signals**: Track when users dismiss features, close dialogs early, or leave pages quickly
+- **Real-time cohort properties**: Update user properties like `days_since_signup`, `prediction_count`, `share_count` on each session
 
-| Figma Component | CSS Class | Applied To |
-|---|---|---|
-| Square glass | `.apple-glass .glass-card` | All weather cards, dialogs |
-| Small circle | `.apple-glass .glass-circle` | Avatar bubbles, icon buttons (AI chat FAB, location icons) |
-| Button/pill | `.apple-glass .glass-btn` | All `Button` default variant |
-| Confirm button | `.apple-glass .glass-btn-confirm` | Primary/CTA buttons |
-| Notification | `.apple-glass .glass-notification` | Toast components, emergency alerts |
-| Tab bar | `.apple-glass .glass-tab-bar` | Bottom mobile nav bar |
+### Technical Details
 
-Each style applies:
-- `backdrop-filter: blur(40px) saturate(180%)` (heavier blur than current 12px)
-- Tinted semi-transparent background with specular highlight (white inner glow at top edge)
-- Subtle border with gradient from white/20 to white/5
-- Multi-layer box-shadow for depth and refraction illusion
-- The existing `GlassFilter` SVG filter from `liquid-glass-button.tsx` will be reused for the refraction distortion effect on buttons
+**Database Migration**
+```sql
+-- Referral tracking table
+CREATE TABLE public.referrals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  referrer_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  referee_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  referral_code TEXT NOT NULL,
+  points_awarded BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(referee_id)
+);
 
-## 3. Component Modifications
+-- Add referral_code to profiles
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS referral_code TEXT UNIQUE;
+```
 
-### Cards (`src/components/ui/card.tsx`)
-- Wrap the existing `glass-card` class; on Apple devices the CSS override kicks in automatically via `.apple-glass .glass-card` — no React changes needed
+**New Files**
+- `src/components/weather/referral-program.tsx` — Referral dashboard + share UI
+- `src/hooks/use-referral.tsx` — Referral code generation, tracking, point awarding
+- `src/hooks/use-amplitude-funnels.tsx` — Funnel tracking, feature adoption via IntersectionObserver, engagement scoring
 
-### Buttons (`src/components/ui/liquid-glass-button.tsx`)
-- Add `apple-glass` variant awareness: when on Apple device, the `LiquidButton` becomes the default for all buttons, applying the refraction SVG filter
-- Standard `Button` gets the lighter glass-btn treatment via CSS class injection
+**Modified Files**
+- `src/pages/Auth.tsx` — Capture `?ref=` query param on signup, record referral
+- `src/components/weather/social-weather-card.tsx` — Add platform-specific share buttons
+- `src/hooks/use-amplitude-instrumentation.tsx` — Add scroll depth, visibility tracking, churn signals
+- `src/pages/Weather.tsx` or `src/pages/Index.tsx` — Add referral card in Explore section
+- `src/components/ui/footer.tsx` — Add "Refer a Friend" link
 
-### Bottom Tab Bar (`src/components/weather/mobile-location-nav.tsx`)
-- Add `glass-tab-bar` class alongside existing `glass-card` on the nav container
-- On Apple devices, CSS applies the heavier blur (40px), tinted background, and top-edge specular highlight matching Apple's tab bar style
+**Amplitude Events Added**
+- `referral_link_shared`, `referral_link_clicked`, `referral_signup_completed`
+- `weather_card_shared` (with platform property)
+- `widget_embed_copied`
+- `feature_visible` (per card, via IntersectionObserver)
+- `scroll_depth_reached` (25%, 50%, 75%, 100%)
+- `dialog_dismissed_early`, `session_engagement_score`
+- User properties: `engagement_level`, `total_shares`, `referral_count`, `features_discovered`
 
-### Toasts/Notifications (`src/components/ui/toast.tsx`)
-- Add `glass-notification` class to the Toast component
-- On Apple devices, overrides the solid background with translucent glass + blur
+### Implementation Order
+1. Create referrals DB table + migration
+2. Build referral hook and referral program component
+3. Enhance social weather card sharing
+4. Add Amplitude funnel/adoption/engagement tracking
+5. Wire referral into Auth signup flow
+6. Add navigation links (footer, explore section)
 
-### Dialogs (`src/components/ui/dialog.tsx`)
-- Add glass treatment to `DialogContent` — on Apple devices the overlay becomes more translucent and the content panel gets the glass card effect
-
-### AI Chat FAB (`src/components/weather/ai-chat-button.tsx`)
-- Add `glass-circle` class for the floating button — on Apple devices it gets circular glass with refraction
-
-## 4. App Provider Integration
-**File**: `src/App.tsx`
-
-- Import and wrap root with `AppleGlassProvider` which sets `apple-glass` class on document element on mount (if Apple device detected)
-
-## 5. Terms of Service Credit
-**File**: `src/pages/TermsOfService.tsx`
-
-Add a "Third-Party Design References" section:
-> "Certain visual design elements on Apple devices are inspired by Apple's Liquid Glass design language, introduced in 2025. Apple, iPhone, iPad, and macOS are trademarks of Apple Inc. Rainz is not affiliated with or endorsed by Apple Inc."
-
-## Files Changed
-
-| File | Action |
-<<<<<<< Updated upstream
-|---|---|
-| `src/lib/pwa-utils.ts` | Add `isAppleDevice()` function |
-| `src/hooks/use-apple-device.tsx` | New — hook + context provider |
-| `src/index.css` | Add `.apple-glass` scoped glass styles |
-| `src/App.tsx` | Wrap with `AppleGlassProvider` |
-| `src/components/ui/card.tsx` | No change needed (CSS handles it) |
-| `src/components/ui/liquid-glass-button.tsx` | Minor: add glass-btn class |
-| `src/components/ui/toast.tsx` | Add `glass-notification` class |
-| `src/components/ui/dialog.tsx` | Add glass treatment class |
-| `src/components/weather/mobile-location-nav.tsx` | Add `glass-tab-bar` class |
-| `src/components/weather/ai-chat-button.tsx` | Add `glass-circle` class |
-| `src/pages/TermsOfService.tsx` | Add Apple trademark credit |
-
-=======
-|------|--------|
-| `src/hooks/use-lazy-map.tsx` | NEW — IntersectionObserver hook |
-| `src/components/weather/dry-route.tsx` | Updated: Point-based draw mode, real-time snapping per segment, distance tracking, confirmation dialog, rain layer consistency |
-| `src/components/weather/dry-route-navigation.tsx` | NEW — Turn-by-turn panel |
-| `src/components/weather/dry-route-ar.tsx` | NEW — AR navigation overlay |
-| `src/components/weather/explore-sheet.tsx` | Removed RainRoutePlanner |
-| `src/pages/Weather.tsx` | Added DryRoute card |
-| `src/components/weather/rain-map-card.tsx` | Lazy map loading |
-| `src/components/weather/live-weather-map.tsx` | Lazy map loading |
-| `src/components/weather/rain-route-planner.tsx` | DELETED |
-
-### 14. March 2026 Bug fixes & refinements
-- **Map overlay z‑index**: Fixed issue where fullscreen map would cover route name/save UI in Create Route mode. Modals and bottom sheets now use `z-[2000]` so they always float above map controls.
-- **Distance counter**: Waypoint distance now calculated on every click using straight‑line haversine math; removed road snapping. Display updates immediately instead of sticking at 0.00 km.
-- **Road snapping removed**: OSRM snapping logic stripped from draw mode; routes may pass freely through forests or off‑road without adjustment.
-- **Leaderboard corrections**:
-  - Monthly fetch rewritten to recompute prediction counts exactly as all‑time version, guaranteeing accuracy percentages match across tabs.
-  - Added trigger that bumps `updated_at` when predictions are verified/points awarded so monthly leaderboard gets new points instantly.
-- **Legal updates**: Added explicit DryRoutes liability disclaimers to Terms of Service and Privacy Policy; updated "last updated" dates.
-- **Misc**: plan file updated to document the above changes.
->>>>>>> Stashed changes

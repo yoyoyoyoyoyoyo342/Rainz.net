@@ -135,7 +135,7 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
   const location = useLocation();
 
   return (
-    <Suspense fallback={<LoadingOverlay isOpen={true} />}>
+    <Suspense fallback={<div className="min-h-screen bg-background p-4"><WeatherPageSkeleton /></div>}>
       <AnimatePresence mode="wait">
         <PageTransition key={location.pathname}>
           {isApiSubdomain ? (

@@ -18,7 +18,7 @@ import { AppleGlassProvider } from "@/hooks/use-apple-device";
 import { CookieConsentProvider } from "@/hooks/use-cookie-consent";
 import { CookieConsentBanner } from "@/components/ui/cookie-consent-banner";
 import { Footer } from "@/components/ui/footer";
-import { LoadingOverlay } from "@/components/ui/loading-overlay";
+import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
 import { PWAInstallPopup } from "@/components/ui/pwa-install-popup";
 import { RuntimeErrorBoundary } from "@/components/ui/runtime-error-boundary";
 import { useAnalytics } from "@/hooks/use-analytics";
@@ -135,7 +135,7 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
   const location = useLocation();
 
   return (
-    <Suspense fallback={<LoadingOverlay isOpen={true} />}>
+    <Suspense fallback={<div className="min-h-screen bg-background p-4"><WeatherPageSkeleton /></div>}>
       <AnimatePresence mode="wait">
         <PageTransition key={location.pathname}>
           {isApiSubdomain ? (
@@ -224,7 +224,7 @@ function AppContent() {
         <LanguageProvider>
           <TooltipProvider>
             <BrowserRouter>
-              <Suspense fallback={<LoadingOverlay isOpen={true} />}>
+              <Suspense fallback={<div className="min-h-screen bg-background p-4"><WeatherPageSkeleton /></div>}>
                 <Routes>
                   <Route path="/embed" element={<Embed />} />
                 </Routes>

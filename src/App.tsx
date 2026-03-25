@@ -224,7 +224,7 @@ function AppContent() {
         <LanguageProvider>
           <TooltipProvider>
             <BrowserRouter>
-              <Suspense fallback={<LoadingOverlay isOpen={true} />}>
+              <Suspense fallback={<div className="min-h-screen bg-background p-4"><WeatherPageSkeleton /></div>}>
                 <Routes>
                   <Route path="/embed" element={<Embed />} />
                 </Routes>

@@ -18,7 +18,7 @@ import { AppleGlassProvider } from "@/hooks/use-apple-device";
 import { CookieConsentProvider } from "@/hooks/use-cookie-consent";
 import { CookieConsentBanner } from "@/components/ui/cookie-consent-banner";
 import { Footer } from "@/components/ui/footer";
-import { LoadingOverlay } from "@/components/ui/loading-overlay";
+import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
 import { PWAInstallPopup } from "@/components/ui/pwa-install-popup";
 import { RuntimeErrorBoundary } from "@/components/ui/runtime-error-boundary";
 import { useAnalytics } from "@/hooks/use-analytics";

@@ -25,7 +25,6 @@ export function AdminEmergencyAlert() {
           message: message.trim(),
           audience: 'all',
           is_emergency: true,
-          locks_app: false,
         } as any);
 
       if (error) throw error;

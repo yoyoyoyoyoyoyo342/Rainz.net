@@ -25,9 +25,6 @@ import { useAnalytics } from "@/hooks/use-analytics";
 import { useAmplitudeInstrumentation } from "@/hooks/use-amplitude-instrumentation";
 import { useAmplitudeFunnels } from "@/hooks/use-amplitude-funnels";
 import { useBroadcastListener } from "@/hooks/use-broadcast-listener";
-import { useFeatureFlags } from "@/hooks/use-feature-flags";
-import { useIsAdmin } from "@/hooks/use-is-admin";
-import { AppLockdownScreen } from "@/components/ui/app-lockdown-screen";
 import { toast as sonnerToast } from "sonner";
 
 
@@ -189,25 +186,6 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
   );
 }
 
-function LockdownGuard({ children }: { children: React.ReactNode }) {
-  const { isEnabled } = useFeatureFlags();
-  const { isAdmin } = useIsAdmin();
-  const location = useLocation();
-  const isLocked = isEnabled('app_lockdown', false);
-
-  // Always let /admin and /auth through for admins to manage lockdown
-  if (location.pathname === '/admin' || location.pathname === '/auth') {
-    return <>{children}</>;
-  }
-
-  // If locked and user is not admin (or still checking), show lockdown
-  if (isLocked && !isAdmin) {
-    return <AppLockdownScreen />;
-  }
-
-  return <>{children}</>;
-}
-
 function AppContent() {
   const { isNightTime } = useTimeOfDayContext();
   usePrefetchSavedLocations();
@@ -250,20 +228,18 @@ function AppContent() {
                     <CookieConsentBanner />
                     <PWAInstallPopup />
                      <BrowserRouter>
-                       <LockdownGuard>
-                         <div className="flex flex-col min-h-screen">
-                           <div className="flex-1">
-                             <AnalyticsTracker />
-                             <AnimatedRoutes
-                               isApiSubdomain={isApiSubdomain}
-                               isBlogSubdomain={isBlogSubdomain}
-                             />
-                           </div>
-                           {window.location.pathname !== '/dryroutes' && (
-                          <Footer />
-                           )}
-                        </div>
-                      </LockdownGuard>
+                        <div className="flex flex-col min-h-screen">
+                          <div className="flex-1">
+                            <AnalyticsTracker />
+                            <AnimatedRoutes
+                              isApiSubdomain={isApiSubdomain}
+                              isBlogSubdomain={isBlogSubdomain}
+                            />
+                          </div>
+                          {window.location.pathname !== '/dryroutes' && (
+                         <Footer />
+                          )}
+                       </div>
                     </BrowserRouter>
                   </TooltipProvider>
                    </CookieConsentProvider>

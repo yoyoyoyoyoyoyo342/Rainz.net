@@ -5,25 +5,14 @@ interface PageTransitionProps {
   children: React.ReactNode;
 }
 
-const pageVariants = {
-  initial: { opacity: 0, scale: 0.98 },
-  animate: { opacity: 1, scale: 1 },
-  exit: { opacity: 0, scale: 0.98 },
-};
-
-const pageTransition = {
-  duration: 0.25,
-  ease: "easeInOut" as const,
-};
-
 export function PageTransition({ children }: PageTransitionProps) {
   return (
     <motion.div
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      variants={pageVariants}
-      transition={pageTransition}
+      initial={false}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0 }}
+      className="min-h-screen"
     >
       {children}
     </motion.div>

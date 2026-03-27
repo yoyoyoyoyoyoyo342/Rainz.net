@@ -1,4 +1,5 @@
 import { useParams, Link, Navigate } from "react-router-dom";
+import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Cloud, CloudRain, Droplets, Wind, Thermometer, MapPin, Navigation, ArrowRight, Umbrella } from "lucide-react";

@@ -553,7 +553,7 @@ export default function WeatherPage() {
         }
         keywords={`Rainz Weather, ${selectedLocation?.name || "local"} weather, weather forecast, AI weather, pollen tracker, weather alerts, accurate weather`}
       />
-      <div className="min-h-screen overflow-x-hidden relative bg-background">
+      <div className="min-h-screen overflow-x-hidden relative">
         {/* Animated backgrounds - always render both to avoid hook count issues */}
         {premiumSettings.animatedBackgrounds && (
           <>

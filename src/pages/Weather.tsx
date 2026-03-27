@@ -725,7 +725,7 @@ export default function WeatherPage() {
                 </div>
               }
             >
-              <div className="animate-fade-in">
+              <div>
               {weatherData.demo && (
                 <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-xl">
                   <div className="flex items-center gap-3">
@@ -979,7 +979,7 @@ export default function WeatherPage() {
           {weatherData && (
             <AIChatButton
               weatherData={weatherData.mostAccurate}
-              location={selectedLocation.name}
+              location={selectedLocation?.name ?? ""}
               isImperial={isImperial}
             />
           )}

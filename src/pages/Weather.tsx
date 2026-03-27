@@ -979,7 +979,7 @@ export default function WeatherPage() {
           {weatherData && (
             <AIChatButton
               weatherData={weatherData.mostAccurate}
-              location={selectedLocation.name}
+              location={selectedLocation?.name ?? ""}
               isImperial={isImperial}
             />
           )}

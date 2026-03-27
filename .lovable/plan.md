@@ -1,79 +1,84 @@
 
 
-## Plan: Growth & Viral Features + Enhanced Amplitude Real-Time Tracking
+# SEO Improvement Plan for Rainz Weather
 
-### What We're Building
+## Current State
 
-**1. Referral Program with Rewards**
-- New `referrals` Supabase table tracking referrer/referee relationships
-- Each user gets a unique referral code (stored in profiles)
-- Shareable referral link (`rainz.net/?ref=CODE`) that awards points to both parties
-- Referral dashboard showing stats (invited, joined, points earned)
-- Track all referral events in Amplitude (`referral_link_shared`, `referral_signup_completed`)
+You already have strong foundations: structured data (JSON-LD), 250 programmatic city pages, a detailed `llm.txt`, FAQ schema, and a comprehensive sitemap. The main gaps are around **crawlability of your SPA**, **dynamic content in the sitemap**, and **internal linking**.
 
-**2. Shareable Weather Cards for Social Media**
-- Enhance existing `SocialWeatherCard` with "Share to Instagram Stories", "Share to X/Twitter", "Copy Image" actions
-- Generate branded OG-image-style cards with weather data + Rainz branding
-- One-tap native share via Web Share API with fallback copy
-- Amplitude tracking on every share action (`weather_card_shared`, platform, location)
+---
 
-**3. Embeddable Blog Widgets (Quick Share Snippet)**
-- Add a "Get Embed Code" button on the weather page that generates a lightweight `<iframe>` snippet
-- Links to existing `/embed` widget with pre-filled location
-- Amplitude: `widget_embed_copied`
+## Plan
 
-**4. Enhanced Real-Time Amplitude Tracking**
-- **Funnel tracking**: Track user journey steps (landed → searched → viewed forecast → made prediction → shared)
-- **Feature adoption**: Track which features users discover vs ignore (scroll depth, card visibility via IntersectionObserver)
-- **Engagement scoring**: Compute and send user engagement level as Amplitude user property (casual/active/power)
-- **Churn signals**: Track when users dismiss features, close dialogs early, or leave pages quickly
-- **Real-time cohort properties**: Update user properties like `days_since_signup`, `prediction_count`, `share_count` on each session
+### 1. Add Pre-rendering for Search Engine Crawlers
 
-### Technical Details
+**Problem**: Rainz is a React SPA — Google and Bing see a blank `<div id="root"></div>` until JavaScript executes. While Googlebot can render JS, it's slow, unreliable, and other engines (Bing, social crawlers) often can't.
 
-**Database Migration**
-```sql
--- Referral tracking table
-CREATE TABLE public.referrals (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  referrer_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  referee_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  referral_code TEXT NOT NULL,
-  points_awarded BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(referee_id)
-);
+**Solution**: Add a lightweight pre-rendering proxy via Vercel middleware or a service like [prerender.io](https://prerender.io). When a bot requests a page, it gets fully-rendered HTML.
 
--- Add referral_code to profiles
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS referral_code TEXT UNIQUE;
-```
+- Update `vercel.json` to route bot user-agents to a pre-render endpoint
+- Alternatively, add `react-snap` or `react-helmet-async` with a static pre-render build step that generates HTML snapshots for key pages (home, about, city pages, articles)
+- This is the **single highest-impact SEO change** for a client-side rendered app
 
-**New Files**
-- `src/components/weather/referral-program.tsx` — Referral dashboard + share UI
-- `src/hooks/use-referral.tsx` — Referral code generation, tracking, point awarding
-- `src/hooks/use-amplitude-funnels.tsx` — Funnel tracking, feature adoption via IntersectionObserver, engagement scoring
+### 2. Dynamic Sitemap from Blog Posts
 
-**Modified Files**
-- `src/pages/Auth.tsx` — Capture `?ref=` query param on signup, record referral
-- `src/components/weather/social-weather-card.tsx` — Add platform-specific share buttons
-- `src/hooks/use-amplitude-instrumentation.tsx` — Add scroll depth, visibility tracking, churn signals
-- `src/pages/Weather.tsx` or `src/pages/Index.tsx` — Add referral card in Explore section
-- `src/components/ui/footer.tsx` — Add "Refer a Friend" link
+**Problem**: The sitemap is a static XML file — new blog posts aren't included, so Google doesn't discover them promptly.
 
-**Amplitude Events Added**
-- `referral_link_shared`, `referral_link_clicked`, `referral_signup_completed`
-- `weather_card_shared` (with platform property)
-- `widget_embed_copied`
-- `feature_visible` (per card, via IntersectionObserver)
-- `scroll_depth_reached` (25%, 50%, 75%, 100%)
-- `dialog_dismissed_early`, `session_engagement_score`
-- User properties: `engagement_level`, `total_shares`, `referral_count`, `features_discovered`
+**Solution**: Create a Supabase edge function (`generate-sitemap`) that:
+- Queries `blog_posts` where `is_published = true`
+- Merges with the existing static routes and 250 city pages
+- Returns valid XML with proper `lastmod` dates from `published_at`
+- Add a Vercel rewrite: `/sitemap.xml` → edge function URL
+- Update `robots.txt` sitemap reference if needed
 
-### Implementation Order
-1. Create referrals DB table + migration
-2. Build referral hook and referral program component
-3. Enhance social weather card sharing
-4. Add Amplitude funnel/adoption/engagement tracking
-5. Wire referral into Auth signup flow
-6. Add navigation links (footer, explore section)
+### 3. Internal Linking & Content Pages
+
+**Problem**: Most pages are app screens with little crawlable text. There's no cross-linking between city pages, blog posts, and feature pages.
+
+**Solution**:
+- **City page footer links**: Add a "Nearby cities" or "Popular cities" section at the bottom of each `/weather/:citySlug` page linking to related city pages
+- **Blog post interlinking**: Add "Related articles" at the bottom of each blog post
+- **Add an FAQ page** at `/faq` with crawlable HTML (you already have FAQ schema in `index.html` — make it a real page too)
+- **Add breadcrumbs** to city pages and blog posts (visible, not just schema) for both UX and SEO
+- **Footer links**: Add links to key pages (About, Articles, FAQ, Download, DryRoutes) in the global footer
+
+### 4. Core Web Vitals & Performance
+
+**Problem**: Large JS bundle from lazy-loading many routes, potential LCP issues from the weather background animation.
+
+**Solution**:
+- **Preload critical fonts** — add `<link rel="preload">` for any custom fonts used
+- **Optimize LCP**: Ensure the main weather content (or city page hero) renders before the animated background initializes
+- **Add `fetchpriority="high"`** to hero images on city pages and blog cover images
+- **Review bundle size**: Audit if any large dependencies (e.g., Framer Motion, chart libraries) can be further code-split
+- **Add `<meta name="theme-color">` media queries** for light/dark mode
+
+### 5. Quick Fixes (Low effort, high value)
+
+- **Fix title typo**: `index.html` line 14 has `"Rainz Weather -Hyper-Local"` (missing space after dash)
+- **Update `twitter:site`** from `@lovable_dev` to your own Twitter handle if you have one
+- **Update `llm.txt`** line 9: still references `rainz.lovable.app` — should be `rainz.net` only
+- **Add `hreflang` tag** if you plan multi-language support (you have a `LanguageProvider`)
+- **Add `dateModified`** to blog post JSON-LD schema in `BlogPost.tsx`
+
+---
+
+## Technical Details
+
+### File changes summary
+
+| Area | Files |
+|------|-------|
+| Pre-rendering | `vercel.json`, new middleware or build script |
+| Dynamic sitemap | New edge function `supabase/functions/generate-sitemap/index.ts`, `vercel.json` rewrite |
+| Internal linking | `CityWeather.tsx`, `BlogPost.tsx`, footer component, new `FAQ.tsx` page |
+| Performance | `index.html`, `vite.config.ts` (bundle analysis) |
+| Quick fixes | `index.html`, `public/llm.txt`, `BlogPost.tsx` |
+
+### Priority order
+1. Quick fixes (immediate, 10 min)
+2. Dynamic sitemap (30 min, ensures new content is discoverable)
+3. Internal linking & FAQ page (45 min, builds topical authority)
+4. Pre-rendering (1-2 hours, biggest crawlability impact)
+5. Performance tuning (ongoing)
 

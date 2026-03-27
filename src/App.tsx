@@ -58,7 +58,7 @@ const Info = lazy(() => import("./pages/Info"));
 const DryRoutes = lazy(() => import("./pages/DryRoutes"));
 const CityWeather = lazy(() => import("./pages/CityWeather"));
 const MCP = lazy(() => import("./pages/MCP"));
-
+const FAQ = lazy(() => import("./pages/FAQ"));
 
 function AnalyticsTracker() {
   useAnalytics();
@@ -177,6 +177,7 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
               <Route path="/weather/:citySlug" element={<CityWeather />} />
               <Route path="/weather" element={<Navigate to="/" replace />} />
               <Route path="/mcp" element={<MCP />} />
+              <Route path="/faq" element={<FAQ />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           )}

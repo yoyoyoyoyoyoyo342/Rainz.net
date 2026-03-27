@@ -16,8 +16,14 @@ export function Footer() {
             <Link to="/articles" className="hover:text-foreground transition-colors">
               Blog
             </Link>
+            <Link to="/faq" className="hover:text-foreground transition-colors">
+              FAQ
+            </Link>
             <Link to="/download" className="hover:text-foreground transition-colors">
               Download
+            </Link>
+            <Link to="/dryroutes" className="hover:text-foreground transition-colors">
+              DryRoutes
             </Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">
               Privacy Policy

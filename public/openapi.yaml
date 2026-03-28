@@ -5,27 +5,185 @@ info:
     Rainz Weather provides AI-enhanced weather forecasts using multi-model ensemble predictions.
     This API returns real-time weather data aggregated from multiple sources including ECMWF, GFS, 
     Met.no, WeatherAPI, Tomorrow.io, and Open-Meteo, processed through AI for enhanced accuracy.
-  version: 1.0.0
+    
+    ## Authentication
+    All API endpoints require a Bearer token (API key) in the Authorization header.
+    
+    ## Rate Limits
+    API keys are subject to rate limiting. Contact support for higher limits.
+  version: 2.0.0
   contact:
     name: Rainz Weather Support
     url: https://rainz.net
 servers:
+  - url: https://ohwtbkudpkfbakynikyj.supabase.co/functions/v1
+    description: API server
   - url: https://rainz.net
-    description: Production server
+    description: Web application
 
 paths:
+  /weather-api:
+    get:
+      operationId: getWeather
+      summary: Get weather data for a location
+      description: |
+        Returns AI-enhanced weather data for the specified coordinates, including current conditions,
+        hourly forecasts (48h), daily forecasts (10-14 days), and AI-generated insights.
+        Data is aggregated from ECMWF, GFS, Met.no, WeatherAPI, Tomorrow.io, and Open-Meteo.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          description: Latitude of the location (-90 to 90)
+          schema:
+            type: number
+            format: float
+            minimum: -90
+            maximum: 90
+            example: 59.9139
+        - name: lon
+          in: query
+          required: true
+          description: Longitude of the location (-180 to 180)
+          schema:
+            type: number
+            format: float
+            minimum: -180
+            maximum: 180
+            example: 10.7522
+      responses:
+        '200':
+          description: Weather data successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeatherResponse'
+        '401':
+          description: Invalid or missing API key
+        '429':
+          description: Rate limit exceeded
+
+  /aggregate-weather:
+    post:
+      operationId: getAggregatedWeather
+      summary: Get multi-source aggregated weather
+      description: |
+        Fetches and aggregates weather data from all available sources for the specified location.
+        Returns raw and ensemble-averaged data points.
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lon
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Aggregated weather data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AggregatedWeather'
+
+  /ai-weather-insights:
+    post:
+      operationId: getAIWeatherInsights
+      summary: Get AI-generated weather insights
+      description: |
+        Analyzes weather data using Groq's Llama models and returns natural-language insights,
+        activity suggestions, and forecast confidence scores.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [weatherData, locationName]
+              properties:
+                weatherData:
+                  type: object
+                  description: Weather data object to analyze
+                locationName:
+                  type: string
+                  description: Human-readable location name
+                  example: "Oslo, Norway"
+      responses:
+        '200':
+          description: AI-generated weather insights
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  insights:
+                    type: string
+                    description: Natural-language weather analysis
+
+  /extended-pollen:
+    get:
+      operationId: getPollenData
+      summary: Get pollen forecast data
+      description: Returns pollen levels for grass, tree, and weed pollen with allergy severity forecasts.
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lon
+          in: query
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Pollen forecast data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollenData'
+
+  /rainz-mcp:
+    post:
+      operationId: mcpWeatherTool
+      summary: MCP endpoint for AI assistants
+      description: |
+        Model Context Protocol endpoint allowing AI assistants (ChatGPT, Claude, Gemini)
+        to query Rainz Weather data directly as a tool.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [get_weather, get_forecast]
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+      responses:
+        '200':
+          description: Weather data for AI consumption
+
   /:
     get:
       operationId: getWeatherApp
       summary: Access the Rainz Weather application
       description: |
-        The main Rainz Weather web application providing:
-        - Real-time weather conditions
-        - Hourly and 10-day forecasts
-        - AI-enhanced weather predictions
-        - Pollen and air quality tracking
-        - Weather alerts and notifications
-        - Gamified weather prediction games
+        The main Rainz Weather web application providing real-time weather conditions,
+        hourly and 10-day forecasts, AI-enhanced predictions, pollen and air quality tracking,
+        weather alerts, and gamified weather prediction games.
+      servers:
+        - url: https://rainz.net
       responses:
         '200':
           description: The Rainz Weather web application
@@ -35,6 +193,8 @@ paths:
       operationId: getAboutPage
       summary: Learn about Rainz Weather
       description: Information about Rainz Weather features, mission, and premium subscription options.
+      servers:
+        - url: https://rainz.net
       responses:
         '200':
           description: About page content
@@ -43,31 +203,159 @@ paths:
     get:
       operationId: getBlogArticles
       summary: Weather blog and articles
-      description: Weather-related blog posts, tips, and educational content.
+      description: |
+        Weather-related blog posts published every Tuesday and Thursday, covering weather science,
+        forecasting techniques, seasonal guides, and AI in meteorology.
+      servers:
+        - url: https://rainz.net
       responses:
         '200':
           description: List of blog articles
 
+  /faq:
+    get:
+      operationId: getFAQ
+      summary: Frequently Asked Questions
+      description: |
+        Comprehensive FAQ with 25+ questions about Rainz Weather, AI forecasting,
+        ensemble predictions, gamification, privacy, and technical details.
+      servers:
+        - url: https://rainz.net
+      responses:
+        '200':
+          description: FAQ page
+
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: API key obtained from Rainz Weather admin panel
+
   schemas:
-    WeatherData:
+    WeatherResponse:
       type: object
       properties:
-        temperature:
-          type: number
-          description: Current temperature
-        condition:
+        current:
+          type: object
+          properties:
+            temperature:
+              type: number
+              description: Current temperature in Celsius
+            feels_like:
+              type: number
+              description: Feels-like temperature
+            condition:
+              type: string
+              description: Weather condition (sunny, cloudy, rainy, etc.)
+            humidity:
+              type: number
+              description: Humidity percentage (0-100)
+            wind_speed:
+              type: number
+              description: Wind speed in km/h
+            wind_direction:
+              type: string
+              description: Wind direction (N, NE, E, etc.)
+            pressure:
+              type: number
+              description: Atmospheric pressure in hPa
+            uv_index:
+              type: number
+              description: UV index (0-11+)
+            visibility:
+              type: number
+              description: Visibility in km
+            air_quality:
+              type: number
+              description: Air Quality Index (1-5 scale)
+        hourly:
+          type: array
+          description: Hourly forecast for next 48 hours
+          items:
+            type: object
+            properties:
+              time:
+                type: string
+                format: date-time
+              temperature:
+                type: number
+              condition:
+                type: string
+              precipitation_probability:
+                type: number
+              wind_speed:
+                type: number
+        daily:
+          type: array
+          description: Daily forecast for 10-14 days
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              high:
+                type: number
+              low:
+                type: number
+              condition:
+                type: string
+              precipitation_probability:
+                type: number
+              sunrise:
+                type: string
+              sunset:
+                type: string
+        ai_insights:
           type: string
-          description: Weather condition (sunny, cloudy, rainy, etc.)
-        humidity:
-          type: number
-          description: Humidity percentage
-        wind_speed:
-          type: number
-          description: Wind speed
-        uv_index:
-          type: number
-          description: UV index
-        air_quality:
-          type: number
-          description: Air quality index
+          description: AI-generated natural-language weather summary
+
+    AggregatedWeather:
+      type: object
+      properties:
+        sources:
+          type: object
+          description: Raw data from each weather source
+          additionalProperties:
+            type: object
+        ensemble:
+          type: object
+          description: Averaged ensemble prediction
+          properties:
+            temperature:
+              type: number
+            condition:
+              type: string
+            confidence:
+              type: number
+              description: Confidence score (0-1)
+
+    PollenData:
+      type: object
+      properties:
+        grass:
+          type: object
+          properties:
+            level:
+              type: string
+              enum: [none, low, moderate, high, very_high]
+            value:
+              type: number
+        tree:
+          type: object
+          properties:
+            level:
+              type: string
+            value:
+              type: number
+        weed:
+          type: object
+          properties:
+            level:
+              type: string
+            value:
+              type: number
+        overall_risk:
+          type: string
+          description: Overall allergy risk assessment

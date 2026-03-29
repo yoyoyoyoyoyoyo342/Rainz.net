@@ -173,14 +173,18 @@ serve(async (req) => {
       });
     }
 
-    // Always create in-app notification
-    await supabase.from("user_notifications").insert({
-      user_id,
-      type: data?.type || "push",
-      title,
-      message: body,
-      metadata: data || {},
-    });
+    // Only create in-app notification if skip_inbox is not set
+    // (prevents infinite loop when triggered by inbox insert trigger)
+    const skipInbox = data?.skip_inbox === true;
+    if (!skipInbox) {
+      await supabase.from("user_notifications").insert({
+        user_id,
+        type: data?.type || "push",
+        title,
+        message: body,
+        metadata: data || {},
+      });
+    }
 
     let pushesSent = 0;
     let pushesFailed = 0;

@@ -227,6 +227,30 @@ export type Database = {
         }
         Relationships: []
       }
+      app_versions: {
+        Row: {
+          changelog: string[]
+          created_at: string
+          id: string
+          previous_version: string | null
+          version: string
+        }
+        Insert: {
+          changelog?: string[]
+          created_at?: string
+          id?: string
+          previous_version?: string | null
+          version: string
+        }
+        Update: {
+          changelog?: string[]
+          created_at?: string
+          id?: string
+          previous_version?: string | null
+          version?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_id: string

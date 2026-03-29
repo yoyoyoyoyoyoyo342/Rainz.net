@@ -21,33 +21,55 @@ let dbPromise: Promise<IDBDatabase> | null = null;
 
 /**
  * Open or create the IndexedDB database
+ * Handles stale connections from cleared browser storage gracefully.
  */
 function openDatabase(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
   
   dbPromise = new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    
-    request.onerror = () => {
-      console.error('Failed to open offline cache database');
-      reject(request.error);
-    };
-    
-    request.onsuccess = () => {
-      resolve(request.result);
-    };
-    
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
+    try {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
       
-      if (!db.objectStoreNames.contains(WEATHER_STORE)) {
-        const store = db.createObjectStore(WEATHER_STORE, { keyPath: 'id' });
-        store.createIndex('location', ['latitude', 'longitude'], { unique: false });
-        store.createIndex('timestamp', 'timestamp', { unique: false });
-      }
-    };
+      request.onerror = () => {
+        console.error('Failed to open offline cache database');
+        dbPromise = null;
+        reject(request.error);
+      };
+      
+      request.onsuccess = () => {
+        const db = request.result;
+        // If the user clears storage, the DB gets deleted but the cached
+        // promise still holds a dead connection. Reset so we retry next call.
+        db.onclose = () => {
+          dbPromise = null;
+        };
+        db.onversionchange = () => {
+          db.close();
+          dbPromise = null;
+        };
+        resolve(db);
+      };
+      
+      request.onupgradeneeded = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        
+        if (!db.objectStoreNames.contains(WEATHER_STORE)) {
+          const store = db.createObjectStore(WEATHER_STORE, { keyPath: 'id' });
+          store.createIndex('location', ['latitude', 'longitude'], { unique: false });
+          store.createIndex('timestamp', 'timestamp', { unique: false });
+        }
+      };
+    } catch (err) {
+      dbPromise = null;
+      reject(err);
+    }
   });
   
+  // If the promise itself rejects, clear the cache so the next call retries
+  dbPromise.catch(() => {
+    dbPromise = null;
+  });
+
   return dbPromise;
 }
 

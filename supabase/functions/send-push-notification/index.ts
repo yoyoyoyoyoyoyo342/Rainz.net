@@ -128,8 +128,7 @@ async function sendWebPush(
     const response = await fetch(subscription.endpoint, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Content-Encoding": "aes128gcm",
+      "Content-Type": "application/json",
         TTL: "86400",
         Authorization: `vapid t=${jwt}, k=${vapidPublicKey}`,
         Urgency: "high",

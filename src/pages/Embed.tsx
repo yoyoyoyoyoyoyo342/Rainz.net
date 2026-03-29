@@ -250,7 +250,21 @@ export default function EmbedPage() {
   let displayTemp = llmForecast?.current?.temperature ?? rawCurrent?.temperature ?? 0;
   let displayCondition = llmForecast?.current?.condition ?? rawCurrent?.condition ?? "Unknown";
   let displayWind = llmForecast?.current?.windSpeed ?? rawCurrent?.windSpeed ?? 0;
-  let displayPrecip = 0;
+  // Get precipitation from current weather data (actual mm) or from hourly forecast probability
+  let displayPrecip = rawCurrent?.precipitation ?? 0;
+  // If no actual precipitation amount, try to show current hour's probability
+  if (displayPrecip === 0 && weatherData?.mostAccurate?.hourlyForecast?.length) {
+    const currentHour = new Date().getHours();
+    const currentHourForecast = weatherData.mostAccurate.hourlyForecast.find(h => {
+      try {
+        const hHour = parseInt(h.time);
+        return hHour === currentHour || hHour === (currentHour % 12) || hHour === (currentHour > 12 ? currentHour - 12 : currentHour);
+      } catch { return false; }
+    });
+    if (currentHourForecast?.precipitation) {
+      displayPrecip = currentHourForecast.precipitation;
+    }
+  }
   let displayDateStr = "";
   let displayTimeStr = "";
 
@@ -394,7 +408,7 @@ export default function EmbedPage() {
           <div className="flex flex-col items-center">
             <Droplets className={`h-3.5 w-3.5 mb-0.5 ${textSecondary}`} />
             <span className={`text-[9px] ${textMuted}`}>{t.precip}</span>
-            <span className={`text-xs font-semibold ${textPrimary} ${dropShadowSm}`}>{displayPrecip} mm</span>
+            <span className={`text-xs font-semibold ${textPrimary} ${dropShadowSm}`}>{displayPrecip > 0 ? `${Math.round(displayPrecip)}%` : "0%"}</span>
           </div>
         </div>
 

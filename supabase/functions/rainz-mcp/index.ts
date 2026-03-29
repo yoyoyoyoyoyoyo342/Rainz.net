@@ -18,7 +18,28 @@ async function fetchAggregateWeather(lat: number, lon: number, locationName: str
   });
   if (!response.ok) throw new Error(`Weather fetch failed: ${response.status}`);
   const data = await response.json();
-  return data.sources || data || [];
+  return data.sources || [];
+}
+
+async function fetchLLMForecast(sources: any[], location: string) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  
+  // Prepare sources for LLM (strip unnecessary fields)
+  const cleanSources = sources.map(s => ({
+    source: s.source,
+    currentWeather: s.currentWeather,
+    hourlyForecast: s.hourlyForecast?.slice(0, 12),
+    dailyForecast: s.dailyForecast?.slice(0, 7),
+  }));
+
+  const response = await fetch(`${supabaseUrl}/functions/v1/llm-weather-forecast`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseAnonKey}` },
+    body: JSON.stringify({ sources: cleanSources, location }),
+  });
+  if (!response.ok) throw new Error(`LLM forecast failed: ${response.status}`);
+  return await response.json();
 }
 
 async function fetchHyperlocal(lat: number, lon: number) {
@@ -33,9 +54,26 @@ async function fetchHyperlocal(lat: number, lon: number) {
   return await response.json();
 }
 
+// Helper to get AI-enhanced weather data
+async function getAIWeather(lat: number, lon: number, locationName: string) {
+  const sources = await fetchAggregateWeather(lat, lon, locationName);
+  if (!sources || sources.length === 0) throw new Error("No weather sources available");
+  
+  // Try to get AI-enhanced data, fall back to raw
+  try {
+    const llm = await fetchLLMForecast(sources, locationName);
+    return { llm, sources, aiEnhanced: !llm.rawApiData };
+  } catch (e) {
+    console.error("LLM forecast failed, using raw data:", e);
+    // Fall back to best raw source
+    const best = sources.reduce((a: any, b: any) => ((b.accuracy || 0) > (a.accuracy || 0) ? b : a), sources[0]);
+    return { llm: null, sources, best, aiEnhanced: false };
+  }
+}
+
 // Tool: Get current weather
 mcp.tool("get_current_weather", {
-  description: "Get current weather conditions for a location. Data aggregated from ECMWF, GFS, Met.no, WeatherAPI, Open-Meteo.",
+  description: "Get AI-enhanced current weather conditions for a location. Data aggregated from 13+ weather models (ECMWF, GFS, DWD ICON, UKMO, METEOFRANCE, JMA, GEM, Met.no, WeatherAPI, SMHI, 7Timer, OpenWeatherMap) and analyzed by AI for accuracy.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -47,20 +85,36 @@ mcp.tool("get_current_weather", {
   },
   handler: async (args: { latitude: number; longitude: number; location_name?: string }) => {
     try {
-      const sources = await fetchAggregateWeather(args.latitude, args.longitude, args.location_name || "MCP Request");
-      const best = sources.length > 0
-        ? sources.reduce((a: any, b: any) => ((b.accuracy || 0) > (a.accuracy || 0) ? b : a), sources[0])
-        : null;
-      if (!best) return { content: [{ type: "text" as const, text: "No weather data available." }] };
+      const locName = args.location_name || "Unknown Location";
+      const { llm, sources, aiEnhanced } = await getAIWeather(args.latitude, args.longitude, locName);
+      
+      if (llm?.current) {
+        const c = llm.current;
+        const summary = [
+          `📍 ${locName}`,
+          `🌡️ Temperature: ${fToC(c.temperature)}°C (feels like ${fToC(c.feelsLike)}°C)`,
+          `☁️ Condition: ${c.condition}${c.description ? ` — ${c.description}` : ""}`,
+          `💧 Humidity: ${c.humidity}%`,
+          `💨 Wind: ${Math.round(c.windSpeed * 1.60934)} km/h`,
+          `📊 Pressure: ${c.pressure} hPa`,
+          `🎯 AI Confidence: ${c.confidence}%`,
+          llm.summary ? `\n📝 ${llm.summary}` : null,
+          llm.insights?.length ? `\n💡 Insights:\n${llm.insights.map((i: string) => `  • ${i}`).join("\n")}` : null,
+          `\n📊 Model Agreement: ${llm.modelAgreement}% | ${sources.length} models queried${aiEnhanced ? " | AI-enhanced" : ""}`,
+        ].filter(Boolean).join("\n");
+        return { content: [{ type: "text" as const, text: summary }] };
+      }
+      
+      // Fallback to raw data
+      const best = sources.reduce((a: any, b: any) => ((b.accuracy || 0) > (a.accuracy || 0) ? b : a), sources[0]);
       const cw = best.currentWeather;
       const summary = [
-        `📍 ${args.location_name || `${args.latitude}, ${args.longitude}`}`,
+        `📍 ${locName}`,
         `🌡️ Temperature: ${fToC(cw.temperature)}°C (feels like ${fToC(cw.feelsLike)}°C)`,
-        `☁️ Condition: ${cw.condition}${cw.description ? ` — ${cw.description}` : ""}`,
+        `☁️ Condition: ${cw.condition}`,
         `💧 Humidity: ${cw.humidity}%`,
-        `💨 Wind: ${cw.windSpeed} km/h`,
+        `💨 Wind: ${Math.round(cw.windSpeed * 1.60934)} km/h`,
         `📊 Pressure: ${cw.pressure} hPa`,
-        cw.uvIndex !== undefined ? `☀️ UV Index: ${cw.uvIndex}` : null,
         `\nSource: ${best.source} | ${sources.length} models queried`,
       ].filter(Boolean).join("\n");
       return { content: [{ type: "text" as const, text: summary }] };
@@ -72,7 +126,7 @@ mcp.tool("get_current_weather", {
 
 // Tool: Get hourly forecast
 mcp.tool("get_hourly_forecast", {
-  description: "Get hourly weather forecast for up to 24 hours.",
+  description: "Get AI-enhanced hourly weather forecast for up to 24 hours, analyzed from 13+ weather models.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -85,10 +139,20 @@ mcp.tool("get_hourly_forecast", {
   },
   handler: async (args: { latitude: number; longitude: number; location_name?: string; hours?: number }) => {
     try {
-      const sources = await fetchAggregateWeather(args.latitude, args.longitude, args.location_name || "MCP");
-      const best = sources[0];
-      if (!best?.hourlyForecast?.length) return { content: [{ type: "text" as const, text: "No hourly data." }] };
+      const locName = args.location_name || "Unknown Location";
+      const { llm, sources } = await getAIWeather(args.latitude, args.longitude, locName);
       const limit = Math.min(args.hours || 12, 24);
+      
+      if (llm?.hourly?.length) {
+        const lines = llm.hourly.slice(0, limit).map((h: any) =>
+          `${h.time} — ${fToC(h.temperature)}°C, ${h.condition}, 🌧️ ${h.precipitation}% (${h.confidence}% confidence)`
+        );
+        return { content: [{ type: "text" as const, text: `⏰ AI-Enhanced Hourly Forecast for ${locName}\n\n${lines.join("\n")}` }] };
+      }
+      
+      // Fallback
+      const best = sources[0];
+      if (!best?.hourlyForecast?.length) return { content: [{ type: "text" as const, text: "No hourly data available." }] };
       const lines = best.hourlyForecast.slice(0, limit).map((h: any) =>
         `${h.time} — ${fToC(h.temperature)}°C, ${h.condition}, 🌧️ ${h.precipitation}%`
       );
@@ -101,7 +165,7 @@ mcp.tool("get_hourly_forecast", {
 
 // Tool: Get daily forecast
 mcp.tool("get_daily_forecast", {
-  description: "Get 7-day daily weather forecast.",
+  description: "Get AI-enhanced 7-day daily weather forecast, analyzed from 13+ weather models.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -113,9 +177,19 @@ mcp.tool("get_daily_forecast", {
   },
   handler: async (args: { latitude: number; longitude: number; location_name?: string }) => {
     try {
-      const sources = await fetchAggregateWeather(args.latitude, args.longitude, args.location_name || "MCP");
+      const locName = args.location_name || "Unknown Location";
+      const { llm, sources } = await getAIWeather(args.latitude, args.longitude, locName);
+      
+      if (llm?.daily?.length) {
+        const lines = llm.daily.slice(0, 7).map((d: any) =>
+          `${d.day} — ${d.condition} | High: ${fToC(d.highTemp)}°C Low: ${fToC(d.lowTemp)}°C | 🌧️ ${d.precipitation}% | ${d.confidence}% confidence${d.description ? ` — ${d.description}` : ""}`
+        );
+        return { content: [{ type: "text" as const, text: `📅 AI-Enhanced 7-Day Forecast for ${locName}\n\n${lines.join("\n")}` }] };
+      }
+      
+      // Fallback
       const best = sources[0];
-      if (!best?.dailyForecast?.length) return { content: [{ type: "text" as const, text: "No daily data." }] };
+      if (!best?.dailyForecast?.length) return { content: [{ type: "text" as const, text: "No daily data available." }] };
       const lines = best.dailyForecast.slice(0, 7).map((d: any) =>
         `${d.day} — ${d.condition} | High: ${fToC(d.highTemp)}°C Low: ${fToC(d.lowTemp)}°C | 🌧️ ${d.precipitation}%`
       );
@@ -142,14 +216,17 @@ mcp.tool("get_air_quality", {
       const data = await fetchHyperlocal(args.latitude, args.longitude);
       const parts: string[] = [];
       if (data.aqi) {
-        parts.push(`🌬️ AQI: ${data.aqi.us_aqi} (${data.aqi.category || "N/A"})`);
-        if (data.aqi.pm2_5 !== undefined) parts.push(`  PM2.5: ${data.aqi.pm2_5} μg/m³`);
+        parts.push(`🌬️ AQI: ${data.aqi.value ?? data.aqi.us_aqi ?? "N/A"} (${data.aqi.category || "N/A"})`);
+        if (data.aqi.pm25 !== undefined) parts.push(`  PM2.5: ${data.aqi.pm25} μg/m³`);
+        if (data.aqi.pm10 !== undefined) parts.push(`  PM10: ${data.aqi.pm10} μg/m³`);
+        if (data.aqi.o3 !== undefined) parts.push(`  O₃: ${data.aqi.o3} μg/m³`);
+        if (data.aqi.no2 !== undefined) parts.push(`  NO₂: ${data.aqi.no2} μg/m³`);
       }
       if (data.pollen) {
         parts.push("\n🌿 Pollen:");
         for (const [k, v] of Object.entries(data.pollen)) parts.push(`  ${k}: ${v}`);
       }
-      return { content: [{ type: "text" as const, text: parts.length ? parts.join("\n") : "No AQI data." }] };
+      return { content: [{ type: "text" as const, text: parts.length ? parts.join("\n") : "No AQI data available for this location." }] };
     } catch (e) {
       return { content: [{ type: "text" as const, text: `Error: ${(e as Error).message}` }] };
     }
@@ -170,27 +247,26 @@ mcp.tool("get_weather_alerts", {
   handler: async (args: { latitude: number; longitude: number }) => {
     try {
       const data = await fetchHyperlocal(args.latitude, args.longitude);
-      if (!data.alerts?.length) return { content: [{ type: "text" as const, text: "✅ No active alerts." }] };
-      const lines = data.alerts.map((a: any) => `⚠️ ${a.headline || a.event} — ${a.severity || "Unknown"}`);
-      return { content: [{ type: "text" as const, text: `🚨 Alerts:\n\n${lines.join("\n")}` }] };
+      if (!data.alerts?.length) return { content: [{ type: "text" as const, text: "✅ No active weather alerts for this location." }] };
+      const lines = data.alerts.map((a: any) => `⚠️ ${a.headline || a.event} — Severity: ${a.severity || "Unknown"}${a.description ? `\n   ${a.description.slice(0, 200)}` : ""}`);
+      return { content: [{ type: "text" as const, text: `🚨 Active Weather Alerts:\n\n${lines.join("\n\n")}` }] };
     } catch (e) {
       return { content: [{ type: "text" as const, text: `Error: ${(e as Error).message}` }] };
     }
   },
 });
 
-// Bind transport to server — this is the key step
+// Bind transport to server
 const transport = new StreamableHttpTransport();
 const httpHandler = transport.bind(mcp);
 
-// Two-app pattern for Supabase Edge Functions
 const app = new Hono();
 const mcpApp = new Hono();
 
 mcpApp.get("/", (c) => {
   return c.json({
     name: "Rainz Weather MCP",
-    description: "AI-powered weather data from multiple models",
+    description: "AI-powered weather data from 13+ models with Groq LLM analysis",
     tools: ["get_current_weather", "get_hourly_forecast", "get_daily_forecast", "get_air_quality", "get_weather_alerts"],
     endpoint: "/mcp",
   });
@@ -201,7 +277,6 @@ mcpApp.all("/mcp", async (c) => {
   return response;
 });
 
-// Also handle direct requests (for clients that hit the root)
 mcpApp.all("/", async (c) => {
   if (c.req.method === "POST") {
     const response = await httpHandler(c.req.raw);

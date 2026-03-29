@@ -408,7 +408,7 @@ export default function EmbedPage() {
           <div className="flex flex-col items-center">
             <Droplets className={`h-3.5 w-3.5 mb-0.5 ${textSecondary}`} />
             <span className={`text-[9px] ${textMuted}`}>{t.precip}</span>
-            <span className={`text-xs font-semibold ${textPrimary} ${dropShadowSm}`}>{displayPrecip} mm</span>
+            <span className={`text-xs font-semibold ${textPrimary} ${dropShadowSm}`}>{displayPrecip > 0 ? `${Math.round(displayPrecip)}%` : "0%"}</span>
           </div>
         </div>
 

@@ -133,7 +133,7 @@ export default function PrivacyPolicy() {
                <li><strong>Supabase:</strong> Database hosting and authentication</li>
                <li><strong>Weather APIs:</strong> WeatherAPI.com, Tomorrow.io for weather data</li>
                <li><strong>Nominatim:</strong> Address geocoding services</li>
-               <li><strong>Stripe:</strong> Payment processing for Rainz+ subscriptions</li>
+               <li><strong>Stripe:</strong> Payment processing for subscriptions</li>
                <li><strong>Amplitude:</strong> Product analytics, session replay, and A/B testing (see Section 5.3)</li>
                <li><strong>Advertising Networks:</strong> Display advertisements to free users</li>
              </ul>

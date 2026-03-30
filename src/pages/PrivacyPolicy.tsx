@@ -117,7 +117,7 @@ export default function PrivacyPolicy() {
 
             <h4 className="font-semibold mt-4">4.4 Payment Processing</h4>
             <p>
-              Rainz+ subscription payments are processed by Stripe. When you subscribe, your payment information is sent directly to Stripe's secure servers. Please review Stripe's privacy policy for information on how they handle your payment data.
+              Subscription payments are processed by Stripe. When you subscribe, your payment information is sent directly to Stripe's secure servers. Please review Stripe's privacy policy for information on how they handle your payment data.
             </p>
           </CardContent>
         </Card>

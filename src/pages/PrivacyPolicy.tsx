@@ -143,7 +143,7 @@ export default function PrivacyPolicy() {
             <ul className="list-disc list-inside space-y-1 ml-4">
               <li>Display name and profile picture</li>
               <li>Prediction accuracy and leaderboard rankings</li>
-              <li>Rainz+ subscriber status (shown as a badge)</li>
+              <li>Subscriber status (shown as a badge)</li>
               <li>Weather reports you submit</li>
             </ul>
 

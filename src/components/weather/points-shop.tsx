@@ -339,7 +339,7 @@ export const PointsShop = () => {
 
   const openMysteryBox = async (): Promise<MysteryBoxReward> => {
     // Random reward logic with more variety
-    // Adjust probabilities if user already has Rainz+ (exclude premium_trial)
+    // Adjust probabilities (exclude premium_trial)
     const roll = Math.random();
     let reward: MysteryBoxReward;
     

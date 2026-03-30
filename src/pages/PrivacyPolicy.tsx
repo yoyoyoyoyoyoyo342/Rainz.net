@@ -50,7 +50,7 @@ export default function PrivacyPolicy() {
               <li><strong>Location Data:</strong> Saved locations and addresses you search for</li>
               <li><strong>Preferences:</strong> Display settings, notification preferences, and cookie choices</li>
               <li><strong>Feedback:</strong> Messages and feedback you submit through our forms</li>
-              <li><strong>Payment Information:</strong> Rainz+ subscription payments are processed securely by Stripe. We do not store your payment card details.</li>
+              <li><strong>Payment Information:</strong> Subscription payments are processed securely by Stripe. We do not store your payment card details.</li>
             </ul>
 
             <h4 className="font-semibold mt-4">2.2 Automatically Collected Information</h4>

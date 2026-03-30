@@ -50,7 +50,7 @@ export default function PrivacyPolicy() {
               <li><strong>Location Data:</strong> Saved locations and addresses you search for</li>
               <li><strong>Preferences:</strong> Display settings, notification preferences, and cookie choices</li>
               <li><strong>Feedback:</strong> Messages and feedback you submit through our forms</li>
-              <li><strong>Payment Information:</strong> Rainz+ subscription payments are processed securely by Stripe. We do not store your payment card details.</li>
+              <li><strong>Payment Information:</strong> Subscription payments are processed securely by Stripe. We do not store your payment card details.</li>
             </ul>
 
             <h4 className="font-semibold mt-4">2.2 Automatically Collected Information</h4>
@@ -82,10 +82,10 @@ export default function PrivacyPolicy() {
             <ul className="list-disc list-inside space-y-1 ml-4">
               <li><strong>Service Delivery:</strong> Provide weather predictions and location-based forecasts</li>
               <li><strong>Account Management:</strong> Create and maintain your user account</li>
-              <li><strong>Subscription Management:</strong> Process Rainz+ subscriptions and manage premium features</li>
+              <li><strong>Subscription Management:</strong> Process subscriptions and manage features</li>
               <li><strong>Personalization:</strong> Save your preferences and display customized content</li>
               <li><strong>Analytics:</strong> Understand usage patterns and improve the Service (with consent)</li>
-              <li><strong>Notifications:</strong> Send weather alerts and updates if you opt in (Rainz+ feature)</li>
+              <li><strong>Notifications:</strong> Send weather alerts and updates if you opt in</li>
               <li><strong>Leaderboards:</strong> Display prediction accuracy rankings</li>
               <li><strong>Advertising:</strong> Display relevant advertisements to free users</li>
               <li><strong>Communication:</strong> Respond to feedback and support requests</li>
@@ -112,12 +112,12 @@ export default function PrivacyPolicy() {
 
             <h4 className="font-semibold mt-4">4.3 Opting Out of Targeted Advertising</h4>
             <p>
-              You can manage your advertising preferences through our cookie consent settings. Rainz+ subscribers do not see advertisements and are not subject to advertising tracking within our application.
+              You can manage your advertising preferences through our cookie consent settings.
             </p>
 
             <h4 className="font-semibold mt-4">4.4 Payment Processing</h4>
             <p>
-              Rainz+ subscription payments are processed by Stripe. When you subscribe, your payment information is sent directly to Stripe's secure servers. Please review Stripe's privacy policy for information on how they handle your payment data.
+              Subscription payments are processed by Stripe. When you subscribe, your payment information is sent directly to Stripe's secure servers. Please review Stripe's privacy policy for information on how they handle your payment data.
             </p>
           </CardContent>
         </Card>
@@ -133,7 +133,7 @@ export default function PrivacyPolicy() {
                <li><strong>Supabase:</strong> Database hosting and authentication</li>
                <li><strong>Weather APIs:</strong> WeatherAPI.com, Tomorrow.io for weather data</li>
                <li><strong>Nominatim:</strong> Address geocoding services</li>
-               <li><strong>Stripe:</strong> Payment processing for Rainz+ subscriptions</li>
+               <li><strong>Stripe:</strong> Payment processing for subscriptions</li>
                <li><strong>Amplitude:</strong> Product analytics, session replay, and A/B testing (see Section 5.3)</li>
                <li><strong>Advertising Networks:</strong> Display advertisements to free users</li>
              </ul>
@@ -143,7 +143,7 @@ export default function PrivacyPolicy() {
             <ul className="list-disc list-inside space-y-1 ml-4">
               <li>Display name and profile picture</li>
               <li>Prediction accuracy and leaderboard rankings</li>
-              <li>Rainz+ subscriber status (shown as a badge)</li>
+              <li>Subscriber status (shown as a badge)</li>
               <li>Weather reports you submit</li>
             </ul>
 

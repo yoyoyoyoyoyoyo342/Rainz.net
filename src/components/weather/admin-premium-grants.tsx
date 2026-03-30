@@ -175,7 +175,7 @@ export function AdminPremiumGrants() {
             <Gift className="w-5 h-5" />
             Grant Free Premium
           </CardTitle>
-          <CardDescription>Give users free Rainz+ access</CardDescription>
+          <CardDescription>Give users free premium access</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-2">

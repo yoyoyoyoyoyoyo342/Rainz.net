@@ -21,7 +21,7 @@ const faqs = [
     category: "General",
     question: "Is Rainz Weather free to use?",
     answer:
-      "Yes, Rainz Weather is completely free to use with all core features available at no cost. An optional Rainz+ premium subscription offers additional features like ad-free experience, 14-day forecasts, and AI Weather Companion.",
+      "Yes, Rainz Weather is completely free to use with all features available at no cost, including AI-enhanced predictions, pollen tracking, weather alerts, and prediction games.",
   },
   {
     category: "General",

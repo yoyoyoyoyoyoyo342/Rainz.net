@@ -32,6 +32,46 @@ export function BroadcastMessage() {
     }
   }
 
+  async function sendPushToAllSubscribers(title: string, body: string) {
+    try {
+      // Get all push-subscribed user IDs
+      const { data: subscriptions, error } = await supabase
+        .from('push_subscriptions')
+        .select('user_id');
+      
+      if (error) {
+        console.error('Error fetching push subscriptions:', error);
+        return;
+      }
+
+      if (!subscriptions || subscriptions.length === 0) {
+        console.log('No push subscribers to notify');
+        return;
+      }
+
+      // Deduplicate user IDs
+      const uniqueUserIds = [...new Set(subscriptions.map(s => s.user_id))];
+      console.log(`Sending push to ${uniqueUserIds.length} subscribers`);
+
+      // Send push notification to each subscriber
+      const pushPromises = uniqueUserIds.map(userId =>
+        supabase.functions.invoke('send-push-notification', {
+          body: {
+            user_id: userId,
+            title,
+            body,
+            data: { type: 'broadcast', skip_inbox: true },
+          },
+        }).catch(err => console.error(`Push failed for ${userId}:`, err))
+      );
+
+      await Promise.allSettled(pushPromises);
+      console.log('Broadcast push notifications sent');
+    } catch (error) {
+      console.error('Error sending push notifications:', error);
+    }
+  }
+
   async function sendBroadcast() {
     if (!message.trim()) {
       toast({
@@ -54,6 +94,12 @@ export function BroadcastMessage() {
         });
 
       if (error) throw error;
+
+      // Send push notifications to all subscribed users
+      await sendPushToAllSubscribers(
+        '📢 Rainz Broadcast',
+        message.trim()
+      );
 
       toast({
         title: 'Success',

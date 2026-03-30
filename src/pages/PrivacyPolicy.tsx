@@ -82,7 +82,7 @@ export default function PrivacyPolicy() {
             <ul className="list-disc list-inside space-y-1 ml-4">
               <li><strong>Service Delivery:</strong> Provide weather predictions and location-based forecasts</li>
               <li><strong>Account Management:</strong> Create and maintain your user account</li>
-              <li><strong>Subscription Management:</strong> Process Rainz+ subscriptions and manage premium features</li>
+              <li><strong>Subscription Management:</strong> Process subscriptions and manage features</li>
               <li><strong>Personalization:</strong> Save your preferences and display customized content</li>
               <li><strong>Analytics:</strong> Understand usage patterns and improve the Service (with consent)</li>
               <li><strong>Notifications:</strong> Send weather alerts and updates if you opt in (Rainz+ feature)</li>

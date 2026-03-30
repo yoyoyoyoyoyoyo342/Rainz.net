@@ -85,7 +85,7 @@ export default function PrivacyPolicy() {
               <li><strong>Subscription Management:</strong> Process subscriptions and manage features</li>
               <li><strong>Personalization:</strong> Save your preferences and display customized content</li>
               <li><strong>Analytics:</strong> Understand usage patterns and improve the Service (with consent)</li>
-              <li><strong>Notifications:</strong> Send weather alerts and updates if you opt in (Rainz+ feature)</li>
+              <li><strong>Notifications:</strong> Send weather alerts and updates if you opt in</li>
               <li><strong>Leaderboards:</strong> Display prediction accuracy rankings</li>
               <li><strong>Advertising:</strong> Display relevant advertisements to free users</li>
               <li><strong>Communication:</strong> Respond to feedback and support requests</li>

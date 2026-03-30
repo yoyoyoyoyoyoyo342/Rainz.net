@@ -112,7 +112,7 @@ export default function PrivacyPolicy() {
 
             <h4 className="font-semibold mt-4">4.3 Opting Out of Targeted Advertising</h4>
             <p>
-              You can manage your advertising preferences through our cookie consent settings. Rainz+ subscribers do not see advertisements and are not subject to advertising tracking within our application.
+              You can manage your advertising preferences through our cookie consent settings.
             </p>
 
             <h4 className="font-semibold mt-4">4.4 Payment Processing</h4>

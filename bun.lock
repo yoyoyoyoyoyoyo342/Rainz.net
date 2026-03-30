@@ -142,7 +142,7 @@
 
     "@amplitude/rrweb-snapshot": ["@amplitude/rrweb-snapshot@2.0.0-alpha.37", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@amplitude/rrweb-snapshot/-/rrweb-snapshot-2.0.0-alpha.37.tgz", { "dependencies": { "postcss": "^8.4.38" } }, "sha512-OPW2r8ESAguq+1R+z+WxGyzZzkMtojZ49Lpp6NrataNFyjdKaNXehDuLoNlEQkkUZGyDBiA7RSYvUw+JPSmmSQ=="],
 
-    "@amplitude/rrweb-types": ["@amplitude/rrweb-types@2.0.0-alpha.36", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@amplitude/rrweb-types/-/rrweb-types-2.0.0-alpha.36.tgz", {}, "sha512-Bd2r3Bs0XIJt5fgPRWVl8bhvA9FCjJn8vQlDTO8ffPxilGPIzUXLQ06+xoLYkK9v+PDKJnCapOTL4A2LilDmgA=="],
+    "@amplitude/rrweb-types": ["@amplitude/rrweb-types@2.0.0-alpha.37", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@amplitude/rrweb-types/-/rrweb-types-2.0.0-alpha.37.tgz", {}, "sha512-LW9wQ85umaAW/qlemTrUC408WVoBx99hvFCjsNRnxAyUmRemWyYY7+o8xPyeUexoWGqizPMkkNnPEO8t1NFjtw=="],
 
     "@amplitude/rrweb-utils": ["@amplitude/rrweb-utils@2.0.0-alpha.36", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@amplitude/rrweb-utils/-/rrweb-utils-2.0.0-alpha.36.tgz", {}, "sha512-w5RGROLU1Kyrq9j+trxcvvfkTp05MEKJ70Ig+YvHyZsE0nElh1PCF8PHAjV0/kji68+KqB03c0hoyaV99CDaDw=="],
 
@@ -1392,13 +1392,13 @@
 
     "@amplitude/plugin-session-replay-browser/@amplitude/analytics-types": ["@amplitude/analytics-types@2.11.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@amplitude/analytics-types/-/analytics-types-2.11.1.tgz", {}, "sha512-wFEgb0t99ly2uJKm5oZ28Lti0Kh5RecR5XBkwfUpDzn84IoCIZ8GJTsMw/nThu8FZFc7xFDA4UAt76zhZKrs9A=="],
 
-    "@amplitude/rrweb/@amplitude/rrweb-types": ["@amplitude/rrweb-types@2.0.0-alpha.37", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@amplitude/rrweb-types/-/rrweb-types-2.0.0-alpha.37.tgz", {}, "sha512-LW9wQ85umaAW/qlemTrUC408WVoBx99hvFCjsNRnxAyUmRemWyYY7+o8xPyeUexoWGqizPMkkNnPEO8t1NFjtw=="],
-
     "@amplitude/rrweb/@amplitude/rrweb-utils": ["@amplitude/rrweb-utils@2.0.0-alpha.37", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@amplitude/rrweb-utils/-/rrweb-utils-2.0.0-alpha.37.tgz", {}, "sha512-40YvPj24ietFQ3BTLfvFRPriRqdNOp3DzGiPU+WDOZkI3KjInQrEsibaqNBSXzJ+kMWrm8/eEwcQ0FkLk7Achw=="],
 
     "@amplitude/session-replay-browser/@amplitude/analytics-types": ["@amplitude/analytics-types@2.11.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@amplitude/analytics-types/-/analytics-types-2.11.1.tgz", {}, "sha512-wFEgb0t99ly2uJKm5oZ28Lti0Kh5RecR5XBkwfUpDzn84IoCIZ8GJTsMw/nThu8FZFc7xFDA4UAt76zhZKrs9A=="],
 
     "@amplitude/session-replay-browser/@amplitude/experiment-core": ["@amplitude/experiment-core@0.7.2", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@amplitude/experiment-core/-/experiment-core-0.7.2.tgz", { "dependencies": { "js-base64": "^3.7.5" } }, "sha512-Wc2NWvgQ+bLJLeF0A9wBSPIaw0XuqqgkPKsoNFQrmS7r5Djd56um75In05tqmVntPJZRvGKU46pAp8o5tdf4mA=="],
+
+    "@amplitude/session-replay-browser/@amplitude/rrweb-types": ["@amplitude/rrweb-types@2.0.0-alpha.36", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@amplitude/rrweb-types/-/rrweb-types-2.0.0-alpha.36.tgz", {}, "sha512-Bd2r3Bs0XIJt5fgPRWVl8bhvA9FCjJn8vQlDTO8ffPxilGPIzUXLQ06+xoLYkK9v+PDKJnCapOTL4A2LilDmgA=="],
 
     "@amplitude/targeting/@amplitude/analytics-types": ["@amplitude/analytics-types@2.11.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@amplitude/analytics-types/-/analytics-types-2.11.1.tgz", {}, "sha512-wFEgb0t99ly2uJKm5oZ28Lti0Kh5RecR5XBkwfUpDzn84IoCIZ8GJTsMw/nThu8FZFc7xFDA4UAt76zhZKrs9A=="],
 

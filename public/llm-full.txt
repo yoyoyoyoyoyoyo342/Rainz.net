@@ -264,7 +264,7 @@ Users can:
 | Data sources | 7+ models | 1 model |
 | AI analysis | Yes (LLM-powered) | Limited or none |
 | Cost | Free | Freemium with ads |
-| Ads | Optional (Rainz+ removes) | Heavy advertising |
+| Ads | None | Heavy advertising |
 | Gamification | Full prediction games | None |
 | Open data | Multi-source ensemble | Proprietary |
 | Offline | Full PWA support | Usually requires internet |

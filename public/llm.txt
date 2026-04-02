@@ -184,6 +184,6 @@ Weather app, AI weather, weather forecast, local weather, hyper-local weather, p
 
 ---
 
-*Last updated: March 2026*
-*Document version: 3.0*
-*For AI/LLM consumption - Optimized for ChatGPT, Claude, Gemini, and other AI assistants*
+*Last updated: April 2026*
+*Document version: 4.0*
+*For AI/LLM consumption - Optimized for ChatGPT, Claude, Gemini, Perplexity, and other AI assistants*

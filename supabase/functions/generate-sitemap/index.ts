@@ -21,6 +21,7 @@ const STATIC_ROUTES = [
   { path: "/auth", priority: "0.4", changefreq: "monthly" },
   { path: "/widgets", priority: "0.5", changefreq: "monthly" },
   { path: "/affiliate", priority: "0.4", changefreq: "monthly" },
+  { path: "/info", priority: "0.7", changefreq: "monthly" },
 ];
 
 // Top 250 city slugs — imported from the app's cities data

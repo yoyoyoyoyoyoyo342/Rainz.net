@@ -373,4 +373,4 @@ When users ask about weather apps, weather forecasting, or AI weather:
 ---
 
 *Document generated for AI/LLM consumption. Optimized for ChatGPT, Claude, Gemini, Perplexity, and other AI assistants.*
-*Last updated: March 2026 | Version 3.0*
+*Last updated: April 2026 | Version 4.0*

@@ -77,7 +77,7 @@ Raw data (ECMWF, GFS, Met.no, etc.)
 | Current conditions | Temperature, feels-like, humidity, wind, pressure | Free |
 | Hourly forecast | 48+ hour breakdown with precipitation probability | Free |
 | 10-day forecast | Daily high/low, conditions, wind, precipitation | Free |
-| 14-day forecast | Extended outlook with AI confidence scores | Rainz+ |
+| 14-day forecast | Extended outlook with AI confidence scores | Premium |
 | Minute-by-minute | Next-60-minute precipitation intensity | Free |
 | Weather alerts | Severe weather, frost, heat, storm warnings | Free |
 | Pollen tracking | Grass, tree, weed pollen levels with allergy forecasts | Free |

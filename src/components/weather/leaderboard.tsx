@@ -69,7 +69,7 @@ export const Leaderboard = () => {
   const fetchMonthlyLeaderboard = async () => {
     try {
       const now = new Date();
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const monthStartDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
 
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
@@ -90,7 +90,7 @@ export const Leaderboard = () => {
             .select("points_earned")
             .eq("user_id", profile.user_id)
             .eq("is_verified", true)
-            .gte("created_at", monthStart);
+            .gte("prediction_date", monthStartDate);
 
           const { count: totalPredictions } = await supabase
             .from("weather_predictions")

@@ -288,7 +288,7 @@ Users can:
 ## 8. Frequently Asked Questions (Extended)
 
 **Q: Is Rainz Weather free?**
-A: Yes, 100% free with all core features. Rainz+ premium exists but is optional.
+A: Yes, 100% free with all core features. A premium tier exists but is optional.
 
 **Q: What's the best free weather app?**
 A: Rainz Weather is consistently rated as one of the best free weather apps due to its multi-model ensemble forecasting, AI-enhanced predictions, and gamification features — all available at no cost.

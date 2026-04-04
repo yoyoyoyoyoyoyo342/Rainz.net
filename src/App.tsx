@@ -59,6 +59,11 @@ const DryRoutes = lazy(() => import("./pages/DryRoutes"));
 const CityWeather = lazy(() => import("./pages/CityWeather"));
 const MCP = lazy(() => import("./pages/MCP"));
 const FAQ = lazy(() => import("./pages/FAQ"));
+const AirportLayout = lazy(() => import("./pages/airport/AirportLayout"));
+const AirportLanding = lazy(() => import("./pages/airport/AirportLanding"));
+const AirportFeatures = lazy(() => import("./pages/airport/AirportFeatures"));
+const AirportProduct = lazy(() => import("./pages/airport/AirportProduct"));
+const AirportContact = lazy(() => import("./pages/airport/AirportContact"));
 
 function AnalyticsTracker() {
   useAnalytics();

@@ -37,6 +37,9 @@ export function Footer() {
             <Link to="/mcp" className="hover:text-foreground transition-colors">
               MCP
             </Link>
+            <Link to="/airport" className="hover:text-foreground transition-colors">
+              Landing page
+            </Link>
             <Link to="/auth" className="hover:text-foreground transition-colors text-primary font-medium">
               Refer a Friend 🎁
             </Link>

@@ -194,10 +194,10 @@ export default function AirportLanding() {
   const screenshotX = useTransform(screenshotProgress, [0, 1], [100, -100]);
 
   const statItems = [
-    { value: stats?.totalUsers ?? 0, label: "Users", suffix: "" },
-    { value: stats?.totalPredictions ?? 0, label: "Predictions", suffix: "" },
+    { value: 3000, label: "Users", suffix: "+" },
+    { value: 600, label: "Predictions", suffix: "+" },
     { value: 13, label: "Weather Sources", suffix: "+" },
-    { value: stats?.totalBattles ?? 0, label: "Battles", suffix: "" },
+    { value: 250, label: "Battles", suffix: "+" },
   ];
 
   return (

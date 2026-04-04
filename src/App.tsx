@@ -59,6 +59,11 @@ const DryRoutes = lazy(() => import("./pages/DryRoutes"));
 const CityWeather = lazy(() => import("./pages/CityWeather"));
 const MCP = lazy(() => import("./pages/MCP"));
 const FAQ = lazy(() => import("./pages/FAQ"));
+const AirportLayout = lazy(() => import("./pages/airport/AirportLayout"));
+const AirportLanding = lazy(() => import("./pages/airport/AirportLanding"));
+const AirportFeatures = lazy(() => import("./pages/airport/AirportFeatures"));
+const AirportProduct = lazy(() => import("./pages/airport/AirportProduct"));
+const AirportContact = lazy(() => import("./pages/airport/AirportContact"));
 
 function AnalyticsTracker() {
   useAnalytics();
@@ -178,6 +183,12 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
               <Route path="/weather" element={<Navigate to="/" replace />} />
               <Route path="/mcp" element={<MCP />} />
               <Route path="/faq" element={<FAQ />} />
+              <Route path="/airport" element={<AirportLayout />}>
+                <Route index element={<AirportLanding />} />
+                <Route path="features" element={<AirportFeatures />} />
+                <Route path="product" element={<AirportProduct />} />
+                <Route path="contact" element={<AirportContact />} />
+              </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
           )}

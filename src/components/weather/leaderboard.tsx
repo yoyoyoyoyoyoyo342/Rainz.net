@@ -72,6 +72,8 @@ export const Leaderboard = () => {
       const { data, error } = await supabase.rpc("get_monthly_leaderboard");
       if (error) throw error;
 
+      console.log("Monthly leaderboard RPC response:", data);
+
       const entries: LeaderboardEntry[] = (data || []).map((row: any) => ({
         rank: row.rank,
         user_id: row.user_id,
@@ -84,6 +86,7 @@ export const Leaderboard = () => {
         trophy_count: row.trophy_count,
       }));
 
+      console.log("Mapped monthly entries:", entries);
       setMonthlyLeaderboard(entries.slice(0, 5));
     } catch (error) {
       console.error("Error fetching monthly leaderboard:", error);
@@ -94,6 +97,8 @@ export const Leaderboard = () => {
     try {
       const { data, error } = await supabase.rpc("get_leaderboard");
       if (error) throw error;
+
+      console.log("All-time leaderboard RPC response:", data);
 
       const leaderboardWithStreaks: LeaderboardEntry[] = (data || []).map((row: any, index: number) => ({
         rank: row.rank || index + 1,
@@ -106,6 +111,8 @@ export const Leaderboard = () => {
         correct_predictions: row.correct_predictions,
         trophy_count: row.trophy_count,
       }));
+
+      console.log("Mapped all-time entries:", leaderboardWithStreaks);
 
       if (user) {
         const userEntry = leaderboardWithStreaks.find(e => e.user_id === user.id);

@@ -31,7 +31,7 @@ function ContactParticles() {
 }
 
 /* ── Magnetic button ── */
-function MagneticButton({ children, className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { className?: string }) {
+function MagneticButton({ children, className, disabled, type, onClick }: { children: React.ReactNode; className?: string; disabled?: boolean; type?: "submit" | "button"; onClick?: () => void }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const springX = useSpring(x, { stiffness: 300, damping: 20 });
@@ -45,12 +45,14 @@ function MagneticButton({ children, className, ...props }: React.ButtonHTMLAttri
 
   return (
     <motion.button
+      type={type}
+      disabled={disabled}
+      onClick={onClick}
       className={className}
       style={{ x: springX, y: springY }}
       onMouseMove={handleMouse}
       onMouseLeave={() => { x.set(0); y.set(0); }}
       whileTap={{ scale: 0.95 }}
-      {...props}
     >
       {children}
     </motion.button>

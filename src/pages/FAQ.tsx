@@ -108,7 +108,7 @@ const faqs = [
     category: "Gamification",
     question: "How do prediction leaderboards work?",
     answer:
-      "Rainz has a monthly leaderboard for the current month and a trophy leaderboard for all time. The monthly leaderboard resets each month and ranks players by correct verified predictions. The all-time trophy board tracks permanent trophies won by month, so top performers keep their trophies as the season changes.",
+      "Rainz has a monthly points leaderboard and an all-time trophy leaderboard. Each month ranks players by earned points, and the player with the most points wins 1 trophy at month-end. The trophy board shows total trophies accumulated across all months.",
   },
   // --- Features ---
   {

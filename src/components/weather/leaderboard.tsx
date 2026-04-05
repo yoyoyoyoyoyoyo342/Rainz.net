@@ -269,13 +269,13 @@ export const Leaderboard = () => {
                 <div className="text-right">
                   {activeTab === "alltime" ? (
                     <>
-                      <p className="text-2xl font-bold text-primary">{entry.trophy_count}</p>
-                      <p className="text-xs text-muted-foreground">🏆 trophies</p>
+                      <p className="text-2xl font-bold text-amber-400">🏆 {entry.trophy_count}</p>
+                      <p className="text-xs text-muted-foreground">total trophies</p>
                     </>
                   ) : (
                     <>
-                      <p className="text-2xl font-bold text-primary">{entry.correct_predictions}</p>
-                      <p className="text-xs text-muted-foreground">correct</p>
+                      <p className="text-2xl font-bold text-primary">{entry.total_points.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">points</p>
                     </>
                   )}
                 </div>
@@ -309,8 +309,8 @@ export const Leaderboard = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-primary">{currentUserRank.trophy_count}</p>
-                  <p className="text-xs text-muted-foreground">🏆 trophies</p>
+                  <p className="text-2xl font-bold text-amber-400">🏆 {currentUserRank.trophy_count}</p>
+                  <p className="text-xs text-muted-foreground">total trophies</p>
                 </div>
               </div>
             </>
@@ -352,8 +352,8 @@ export const Leaderboard = () => {
         </div>
         <p className="text-xs text-muted-foreground mt-3">
           {activeTab === "monthly" 
-            ? `Monthly leaderboard resets on the 1st of each month. The current month ranks players by correct predictions.`
-            : `Trophy leaderboard ranks players by total trophies earned across all months. Trophies are permanent and carry over month to month.`
+            ? `Monthly leaderboard resets on the 1st of each month and ranks by total points earned. At month-end, the player with the most points wins 1 trophy.`
+            : `Trophy board ranks players by total trophies earned across all months. Trophies carry over month to month.`
           }
         </p>
       </div>

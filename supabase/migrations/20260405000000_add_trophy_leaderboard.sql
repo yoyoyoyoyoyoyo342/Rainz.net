@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.monthly_trophies (
   CONSTRAINT monthly_trophies_unique_month UNIQUE (year, month)
 );
 
--- Retroactively award one trophy per month to the player with the most correct verified predictions.
+-- Retroactively award one trophy per month to the player with the most points in that month.
 WITH monthly_summary AS (
   SELECT
     date_part('year', prediction_date)::int AS year,
@@ -29,8 +29,8 @@ monthly_winner AS (
     month,
     user_id
   FROM monthly_summary
-  WHERE correct_predictions > 0
-  ORDER BY year, month, correct_predictions DESC, month_points DESC, user_id
+  WHERE month_points > 0
+  ORDER BY year, month, month_points DESC, user_id
 )
 INSERT INTO public.monthly_trophies (year, month, user_id)
 SELECT year, month, user_id
@@ -163,8 +163,8 @@ AS $$
       month,
       user_id
     FROM month_summary
-    WHERE correct_predictions > 0
-    ORDER BY year, month, correct_predictions DESC, month_points DESC, user_id
+    WHERE month_points > 0
+    ORDER BY year, month, month_points DESC, user_id
   )
   INSERT INTO public.monthly_trophies (year, month, user_id)
   SELECT year, month, user_id FROM winner

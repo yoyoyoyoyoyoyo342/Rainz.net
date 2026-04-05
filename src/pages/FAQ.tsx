@@ -108,7 +108,7 @@ const faqs = [
     category: "Gamification",
     question: "How do prediction leaderboards work?",
     answer:
-      "Rainz has global and monthly leaderboards ranking users by total prediction points. Your rank is based on accuracy across all your predictions. Monthly leaderboards reset each month, giving everyone a fresh chance to compete. You can also create private prediction leagues with friends.",
+      "Rainz has a monthly leaderboard for the current month and a trophy leaderboard for all time. The monthly leaderboard resets each month and ranks players by correct verified predictions. The all-time trophy board tracks permanent trophies won by month, so top performers keep their trophies as the season changes.",
   },
   // --- Features ---
   {

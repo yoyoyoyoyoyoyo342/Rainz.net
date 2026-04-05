@@ -89,6 +89,7 @@ serve(async (req) => {
     const highC = Math.round(dailyData.temperature_2m_max[1]);
     const lowC = Math.round(dailyData.temperature_2m_min[1]);
     const weatherCode = dailyData.weathercode[1];
+    const condition = mapWeatherCode(weatherCode);
     const confidence = 1;
 
     const { error } = await supabase.from("weather_predictions").insert({

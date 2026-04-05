@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Trophy, Medal, Award, TrendingUp, Crown, Target, Flame, Info, Bot, Calendar } from "lucide-react";
@@ -19,6 +19,7 @@ interface LeaderboardEntry {
   longest_streak: number;
   total_predictions: number;
   correct_predictions: number;
+  trophy_count: number;
   is_subscriber?: boolean;
 }
 
@@ -68,67 +69,22 @@ export const Leaderboard = () => {
 
   const fetchMonthlyLeaderboard = async () => {
     try {
-      const now = new Date();
-      const monthStartDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+      const { data, error } = await supabase.rpc("get_monthly_leaderboard");
+      if (error) throw error;
 
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("user_id, display_name")
-        .not("display_name", "is", null);
-      if (profilesError) throw profilesError;
+      const entries: LeaderboardEntry[] = (data || []).map((row: any) => ({
+        rank: row.rank,
+        user_id: row.user_id,
+        display_name: row.display_name,
+        total_points: row.total_points,
+        current_streak: row.current_streak,
+        longest_streak: row.longest_streak,
+        total_predictions: row.total_predictions,
+        correct_predictions: row.correct_predictions,
+        trophy_count: row.trophy_count,
+      }));
 
-      const entries = await Promise.all(
-        (profilesData || []).map(async (profile) => {
-          const { data: streakData } = await supabase
-            .from("user_streaks")
-            .select("current_streak, longest_streak")
-            .eq("user_id", profile.user_id)
-            .maybeSingle();
-
-          const { data: pointsData } = await supabase
-            .from("weather_predictions")
-            .select("points_earned")
-            .eq("user_id", profile.user_id)
-            .eq("is_verified", true)
-            .gte("prediction_date", monthStartDate);
-
-          const { count: totalPredictions } = await supabase
-            .from("weather_predictions")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", profile.user_id)
-            .eq("is_verified", true);
-
-          const { count: correctPredictions } = await supabase
-            .from("weather_predictions")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", profile.user_id)
-            .eq("is_verified", true)
-            .eq("is_correct", true);
-
-          const totalPoints = (pointsData || []).reduce(
-            (sum, p) => sum + (p.points_earned || 0), 0
-          );
-
-          return {
-            rank: 0,
-            user_id: profile.user_id,
-            display_name: profile.display_name,
-            total_points: totalPoints,
-            current_streak: streakData?.current_streak || 0,
-            longest_streak: streakData?.longest_streak || 0,
-            total_predictions: totalPredictions || 0,
-            correct_predictions: correctPredictions || 0,
-          };
-        })
-      );
-
-      const filtered = entries
-        .filter((e) => e.total_points > 0)
-        .sort((a, b) => b.total_points - a.total_points)
-        .slice(0, 5)
-        .map((e, i) => ({ ...e, rank: i + 1 }));
-
-      setMonthlyLeaderboard(filtered);
+      setMonthlyLeaderboard(entries.slice(0, 5));
     } catch (error) {
       console.error("Error fetching monthly leaderboard:", error);
     }
@@ -136,48 +92,20 @@ export const Leaderboard = () => {
 
   const fetchAllTimeLeaderboard = async () => {
     try {
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("user_id, display_name, total_points")
-        .not("display_name", "is", null)
-        .order("total_points", { ascending: false })
-        .limit(10);
+      const { data, error } = await supabase.rpc("get_leaderboard");
+      if (error) throw error;
 
-      if (profilesError) throw profilesError;
-
-      const leaderboardWithStreaks = await Promise.all(
-        (profilesData || []).map(async (profile, index) => {
-          const { data: streakData } = await supabase
-            .from("user_streaks")
-            .select("current_streak, longest_streak")
-            .eq("user_id", profile.user_id)
-            .maybeSingle();
-
-          const { count: totalPredictions } = await supabase
-            .from("weather_predictions")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", profile.user_id)
-            .eq("is_verified", true);
-
-          const { count: correctPredictions } = await supabase
-            .from("weather_predictions")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", profile.user_id)
-            .eq("is_verified", true)
-            .eq("is_correct", true);
-
-          return {
-            rank: index + 1,
-            user_id: profile.user_id,
-            display_name: profile.display_name,
-            total_points: profile.total_points || 0,
-            current_streak: streakData?.current_streak || 0,
-            longest_streak: streakData?.longest_streak || 0,
-            total_predictions: totalPredictions || 0,
-            correct_predictions: correctPredictions || 0,
-          };
-        })
-      );
+      const leaderboardWithStreaks: LeaderboardEntry[] = (data || []).map((row: any, index: number) => ({
+        rank: row.rank || index + 1,
+        user_id: row.user_id,
+        display_name: row.display_name,
+        total_points: row.total_points,
+        current_streak: row.current_streak,
+        longest_streak: row.longest_streak,
+        total_predictions: row.total_predictions,
+        correct_predictions: row.correct_predictions,
+        trophy_count: row.trophy_count,
+      }));
 
       if (user) {
         const userEntry = leaderboardWithStreaks.find(e => e.user_id === user.id);
@@ -245,7 +173,7 @@ export const Leaderboard = () => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-6 w-6 text-primary" />
-          <h3 className="text-xl font-bold">Top Weather Predictors</h3>
+          <h3 className="text-xl font-bold">Monthly & Trophy Leaderboard</h3>
         </div>
         <button
           onClick={() => setShowNameDialog(true)}
@@ -263,7 +191,7 @@ export const Leaderboard = () => {
           </TabsTrigger>
           <TabsTrigger value="alltime" className="flex items-center gap-1.5">
             <Crown className="w-3.5 h-3.5" />
-            All Time
+            Trophy Board
           </TabsTrigger>
         </TabsList>
       </Tabs>
@@ -332,11 +260,24 @@ export const Leaderboard = () => {
                       </Tooltip>
                     </TooltipProvider>
                     <span className="text-muted-foreground/60">{entry.total_predictions} predictions</span>
+                    <span className="inline-flex items-center gap-1 text-muted-foreground/80">
+                      <Trophy className="w-3 h-3 text-amber-400" />
+                      {entry.trophy_count}
+                    </span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-primary">{entry.total_points.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">pts</p>
+                  {activeTab === "alltime" ? (
+                    <>
+                      <p className="text-2xl font-bold text-primary">{entry.trophy_count}</p>
+                      <p className="text-xs text-muted-foreground">🏆 trophies</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-primary">{entry.correct_predictions}</p>
+                      <p className="text-xs text-muted-foreground">correct</p>
+                    </>
+                  )}
                 </div>
               </div>
             );
@@ -368,8 +309,8 @@ export const Leaderboard = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-primary">{currentUserRank.total_points.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">pts</p>
+                  <p className="text-2xl font-bold text-primary">{currentUserRank.trophy_count}</p>
+                  <p className="text-xs text-muted-foreground">🏆 trophies</p>
                 </div>
               </div>
             </>
@@ -411,8 +352,8 @@ export const Leaderboard = () => {
         </div>
         <p className="text-xs text-muted-foreground mt-3">
           {activeTab === "monthly" 
-            ? `Monthly leaderboard resets on the 1st of each month. Predictions are scored at 10 PM CET daily.`
-            : `Predictions are scored at 10 PM CET daily. High temp, low temp, and condition are each evaluated (within 3° tolerance for temps).`
+            ? `Monthly leaderboard resets on the 1st of each month. The current month ranks players by correct predictions.`
+            : `Trophy leaderboard ranks players by total trophies earned across all months. Trophies are permanent and carry over month to month.`
           }
         </p>
       </div>

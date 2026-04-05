@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, Cloud, Zap, Users, Trophy, MapPin, Sparkles } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import carousel1 from "@/assets/carousel-1.png";
 import carousel2 from "@/assets/carousel-2.png";
 import carousel3 from "@/assets/carousel-3.png";
@@ -14,12 +16,33 @@ const fadeUp = {
   transition: { duration: 0.6 },
 };
 
-const stats = [
-  { value: "13+", label: "Weather Sources" },
-  { value: "50K+", label: "Daily Predictions" },
-  { value: "99.2%", label: "Uptime" },
-  { value: "4.8★", label: "User Rating" },
-];
+function useLiveStats() {
+  return useQuery({
+    queryKey: ["airport-live-stats"],
+    queryFn: async () => {
+      const [usersRes, predictionsRes, streaksRes, battlesRes] = await Promise.all([
+        supabase.from("profiles").select("id", { count: "exact", head: true }),
+        supabase.from("weather_predictions").select("id", { count: "exact", head: true }),
+        supabase.from("user_streaks").select("id", { count: "exact", head: true }),
+        supabase.from("prediction_battles").select("id", { count: "exact", head: true }),
+      ]);
+      return {
+        totalUsers: usersRes.count ?? 0,
+        totalPredictions: predictionsRes.count ?? 0,
+        activeForecasters: streaksRes.count ?? 0,
+        totalBattles: battlesRes.count ?? 0,
+      };
+    },
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+  });
+}
+
+function formatStat(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toString();
+}
 
 const testimonials = [
   { name: "Sigrid K.", location: "Oslo", quote: "I haven't been caught in the rain since I started using Rainz. My umbrella is collecting dust.", rating: 5 },
@@ -38,6 +61,15 @@ const highlights = [
 ];
 
 export default function AirportLanding() {
+  const { data: stats } = useLiveStats();
+
+  const liveStats = [
+    { value: stats ? formatStat(stats.totalUsers) : "—", label: "Users" },
+    { value: stats ? formatStat(stats.totalPredictions) : "—", label: "Predictions Made" },
+    { value: "13+", label: "Weather Sources" },
+    { value: stats ? formatStat(stats.totalBattles) : "—", label: "Battles Fought" },
+  ];
+
   return (
     <div className="overflow-hidden">
       {/* Hero */}
@@ -110,22 +142,25 @@ export default function AirportLanding() {
         </div>
       </section>
 
-      {/* Stats bar */}
+      {/* Live Stats bar */}
       <section className="border-y border-white/10 py-12 px-6">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-8">
-          {stats.map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.5 }}
-              className="text-center"
-            >
-              <div className="text-3xl sm:text-4xl font-black text-white">{s.value}</div>
-              <div className="text-sm text-white/40 mt-1">{s.label}</div>
-            </motion.div>
-          ))}
+        <div className="max-w-5xl mx-auto">
+          <p className="text-center text-[10px] font-mono uppercase tracking-[0.3em] text-white/30 mb-6">Live from Rainz.net</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
+            {liveStats.map((s, i) => (
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+                className="text-center"
+              >
+                <div className="text-3xl sm:text-4xl font-black text-white tabular-nums">{s.value}</div>
+                <div className="text-sm text-white/40 mt-1">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 

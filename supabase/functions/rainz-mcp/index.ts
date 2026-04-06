@@ -1,4 +1,4 @@
-import { McpServer, StreamableHttpTransport } from "npm:mcp-lite@^0.10.0";
+import { McpServer, StreamableHttpTransport } from "npm:mcp-lite@0.8.2";
 import { Hono } from "jsr:@hono/hono@^4";
 
 const mcp = new McpServer({

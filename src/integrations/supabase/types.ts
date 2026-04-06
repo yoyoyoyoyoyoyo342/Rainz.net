@@ -729,6 +729,30 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_trophies: {
+        Row: {
+          awarded_at: string
+          id: string
+          month: number
+          user_id: string
+          year: number
+        }
+        Insert: {
+          awarded_at?: string
+          id?: string
+          month: number
+          user_id: string
+          year: number
+        }
+        Update: {
+          awarded_at?: string
+          id?: string
+          month?: number
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
       prediction_battles: {
         Row: {
           battle_date: string
@@ -2168,6 +2192,10 @@ export type Database = {
       }
     }
     Functions: {
+      award_monthly_trophy: {
+        Args: { target_date: string }
+        Returns: undefined
+      }
       get_leaderboard: {
         Args: never
         Returns: {

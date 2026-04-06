@@ -729,6 +729,30 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_trophies: {
+        Row: {
+          awarded_at: string
+          id: string
+          month: number
+          user_id: string
+          year: number
+        }
+        Insert: {
+          awarded_at?: string
+          id?: string
+          month: number
+          user_id: string
+          year: number
+        }
+        Update: {
+          awarded_at?: string
+          id?: string
+          month?: number
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
       prediction_battles: {
         Row: {
           battle_date: string
@@ -926,6 +950,7 @@ export type Database = {
           referral_code: string | null
           shop_points: number
           total_points: number | null
+          trophy_count: number
           updated_at: string
           user_id: string
           username: string | null
@@ -945,6 +970,7 @@ export type Database = {
           referral_code?: string | null
           shop_points?: number
           total_points?: number | null
+          trophy_count?: number
           updated_at?: string
           user_id: string
           username?: string | null
@@ -964,6 +990,7 @@ export type Database = {
           referral_code?: string | null
           shop_points?: number
           total_points?: number | null
+          trophy_count?: number
           updated_at?: string
           user_id?: string
           username?: string | null
@@ -2165,6 +2192,10 @@ export type Database = {
       }
     }
     Functions: {
+      award_monthly_trophy: {
+        Args: { target_date: string }
+        Returns: undefined
+      }
       get_leaderboard: {
         Args: never
         Returns: {
@@ -2175,31 +2206,24 @@ export type Database = {
           rank: number
           total_points: number
           total_predictions: number
+          trophy_count: number
           user_id: string
         }[]
       }
-      get_monthly_leaderboard:
-        | {
-            Args: never
-            Returns: {
-              correct_predictions: number
-              current_streak: number
-              display_name: string
-              longest_streak: number
-              rank: number
-              total_points: number
-              total_predictions: number
-              user_id: string
-            }[]
-          }
-        | {
-            Args: { _limit?: number }
-            Returns: {
-              accuracy: number
-              total_points: number
-              user_id: string
-            }[]
-          }
+      get_monthly_leaderboard: {
+        Args: never
+        Returns: {
+          correct_predictions: number
+          current_streak: number
+          display_name: string
+          longest_streak: number
+          rank: number
+          total_points: number
+          total_predictions: number
+          trophy_count: number
+          user_id: string
+        }[]
+      }
       get_public_profile: {
         Args: { profile_user_id: string }
         Returns: {

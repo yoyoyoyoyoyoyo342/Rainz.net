@@ -1,82 +1,77 @@
+# Fix: Monthly Leaderboard & Trophy Board
 
+## Root Cause Analysis
 
-# Plan: Add `/airport` Landing Page Section (Oryzo.ai-inspired)
+Three issues found after investigating the live database:
 
-## Overview
+1. **Monthly leaderboard says "no predictions"**: There are TWO `get_monthly_leaderboard` functions -- one with no args, one with `(_limit integer DEFAULT 10)`. When the frontend calls `supabase.rpc("get_monthly_leaderboard")`, Postgres cannot decide which to call and throws an ambiguity error ("function is not unique"). The RPC fails silently, returning no data.
+2. **Trophy board shows blank trophies**: The `get_leaderboard()` function in the live database does NOT return a `trophy_count` column (the migration that adds it was never applied). The frontend maps `row.trophy_count` which is `undefined`, displaying as blank.
+3. **Migrations not applied**: The `monthly_trophies` table does not exist. The `trophy_count` column does not exist on `profiles`. The three trophy-related migrations (`20260405000000`, `20260405001000`, `20260405002000`) were never deployed.
 
-Create a premium, visually striking marketing page at `/airport` inspired by oryzo.ai's playful, dark-themed aesthetic -- but adapted entirely for Rainz Weather. The page will have a sticky nav with links to sub-pages: `/airport/features`, `/airport/product`, and `/airport/contact`.
+## Fix Plan
 
-The oryzo.ai site is a tongue-in-cheek, over-engineered product page with sections like a hero with bold typography, animated feature cards, fake testimonials, pricing tiers, and a mock research paper. We will replicate this energy but for a weather app -- leaning into Rainz's personality for 13-35 year-old Scandinavians.
+### Step 1: Single new migration to do everything cleanly
 
----
+Create one migration that:
 
-## Pages & Content Mapping
+- **Adds `trophy_count` column** to `profiles` (integer, default 0)
+- **Creates `monthly_trophies` table** (year, month, user_id, with unique constraint on year+month)
+- **Drops the old `get_monthly_leaderboard(_limit integer)` overload** -- this is the root cause of the ambiguity error
+- **Replaces `get_monthly_leaderboard()**` to filter by current month using `prediction_date`, rank by points, and include `trophy_count`
+- **Replaces `get_leaderboard()**` to rank by `trophy_count DESC` (trophy board) and include the column
+- **Creates `award_monthly_trophy(date)` function** to insert the month's winner
+- **Backfills trophies** for all months from August 2025 through March 2026
+- **Syncs `profiles.trophy_count**` from the `monthly_trophies` table
+- **Adds RLS** on `monthly_trophies` (public SELECT, admin ALL)
 
-### `/airport` -- Main Landing (Hero + Overview)
-- **Sticky nav bar**: Rainz logo + links (Intro, Features, Product, Contact)
-- **Hero section**: Large bold text -- "Made for rain. Built for Scandinavia." with a tagline like "The world's most unnecessarily accurate weather app."
-- **Video/image spotlight**: Rainz app screenshots using existing carousel images
-- **"Isn't just a weather app" section**: Playful copy about AI-powered forecasts, gamification, and community
-- **Animated stats**: "13+ weather sources", "50,000+ daily predictions", "99.2% uptime"
-- **Testimonials section**: Fun fake/real user quotes with ratings (styled like oryzo.ai's review cards)
-- **Social content grid**: Mosaic of app screenshots and feature highlights
-- **Footer with links** back to main app
+### Step 2: Delete the three broken migration files
 
-### `/airport/features` -- Feature Deep Dive
-- Feature cards grid (similar to oryzo.ai's technical sections) covering:
-  - Multi-source forecasts (ECMWF, GFS, DWD ICON etc.)
-  - AI Weather Companion
-  - Prediction Battles & Leaderboards
-  - DryRoutes navigation
-  - Pollen & Air Quality tracking
-  - Weather games & achievements
-- Each feature gets a bold title, playful description, and an illustrative icon or screenshot
-- Styled with glassmorphism cards on dark background
+Remove the three migrations that were never applied and conflict with each other:
 
-### `/airport/product` -- Product/Pricing
-- Three tier cards (like oryzo.ai's ORYZO / Pro / Pro Max):
-  - **Rainz Free**: Core weather, predictions, leaderboard
-  - **Rainz Premium**: AI companion, advanced maps, no ads, pollen
-  - **Rainz API**: Developer access, MCP integration
-- Comparison table below
-- CTA buttons linking to `/auth` (sign up) and `/download`
+- `20260405000000_add_trophy_leaderboard.sql`
+- `20260405001000_fix_monthly_leaderboard_and_award_trophies.sql`
+- `20260405002000_comprehensive_leaderboard_fix.sql`
 
-### `/airport/contact` -- Contact Page
-- Clean contact section with hello@rainz.net
-- Social links
-- Simple contact form (name, email, message) that could use the existing `send-feedback` edge function
-- Office location: "Somewhere in Scandinavia, under a cloud"
+### Step 3: Fix the build error
 
----
+Fix the unrelated build error in `supabase/functions/rainz-mcp/index.ts` (bad `npm:mcp-lite@^0.10.0` import).
+
+### Step 4: No frontend changes needed
+
+The existing `leaderboard.tsx` component already correctly maps `trophy_count` from both RPCs and displays it. Once the database functions return the column, everything will work.
+
+&nbsp;
+
+Step 5:
+
+Also make sure that monthly still uses points and the user with the most points at the end of the month wins 1 trophy for the all time.
 
 ## Technical Details
 
-### New Files
-1. **`src/pages/airport/AirportLayout.tsx`** -- Shared layout with sticky nav and footer for all `/airport/*` routes
-2. **`src/pages/airport/AirportLanding.tsx`** -- Main `/airport` page
-3. **`src/pages/airport/AirportFeatures.tsx`** -- `/airport/features`
-4. **`src/pages/airport/AirportProduct.tsx`** -- `/airport/product`
-5. **`src/pages/airport/AirportContact.tsx`** -- `/airport/contact`
+**Key SQL for the monthly leaderboard fix:**
 
-### Modified Files
-1. **`src/App.tsx`** -- Add 4 new lazy-loaded routes under `/airport/*`
+```sql
+-- Drop the ambiguous overload
+DROP FUNCTION IF EXISTS public.get_monthly_leaderboard(integer);
 
-### Design Approach
-- Dark background (`bg-black` / `bg-zinc-950`) with white/light text -- matching oryzo.ai's dark aesthetic
-- Large, bold serif or display typography for headlines
-- Glassmorphism cards with subtle borders
-- Smooth scroll animations using Framer Motion (already installed)
-- Reuse existing assets: `rainz-logo-new.png`, `carousel-1.png` through `carousel-5.png`
-- Responsive: mobile-first, works at the current 640px viewport
-- No new dependencies needed -- Tailwind, Framer Motion, Lucide icons all already available
-
-### Routing
-```
-/airport           -> AirportLanding
-/airport/features  -> AirportFeatures
-/airport/product   -> AirportProduct
-/airport/contact   -> AirportContact
+-- Recreate with trophy_count column, filtered to current month
+CREATE FUNCTION public.get_monthly_leaderboard()
+RETURNS TABLE(rank bigint, display_name text, total_points bigint,
+  current_streak integer, longest_streak integer,
+  total_predictions bigint, correct_predictions bigint,
+  trophy_count bigint, user_id uuid)
+-- filters on prediction_date >= date_trunc('month', now())
 ```
 
-All wrapped in `AirportLayout` which provides the shared sticky nav and footer. The nav links use standard React Router `Link` components. The airport pages will NOT show the main app footer -- they have their own minimal footer.
+**Key SQL for the trophy board fix:**
 
+```sql
+CREATE FUNCTION public.get_leaderboard()
+RETURNS TABLE(rank bigint, display_name text, total_points integer,
+  current_streak integer, longest_streak integer,
+  total_predictions bigint, correct_predictions bigint,
+  trophy_count bigint, user_id uuid)
+-- orders by trophy_count DESC, total_points DESC
+```
+
+**Trophy backfill** awards 1 trophy per month to the user with the most verified points that month, for Aug 2025 through Mar 2026 (8 months of history).

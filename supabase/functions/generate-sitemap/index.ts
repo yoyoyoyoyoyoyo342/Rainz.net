@@ -22,6 +22,11 @@ const STATIC_ROUTES = [
   { path: "/widgets", priority: "0.5", changefreq: "monthly" },
   { path: "/affiliate", priority: "0.4", changefreq: "monthly" },
   { path: "/info", priority: "0.7", changefreq: "monthly" },
+  { path: "/market-report", priority: "0.6", changefreq: "quarterly" },
+  { path: "/airport", priority: "0.6", changefreq: "monthly" },
+  { path: "/airport/features", priority: "0.5", changefreq: "monthly" },
+  { path: "/airport/product", priority: "0.5", changefreq: "monthly" },
+  { path: "/airport/contact", priority: "0.4", changefreq: "monthly" },
 ];
 
 // Top 250 city slugs — imported from the app's cities data

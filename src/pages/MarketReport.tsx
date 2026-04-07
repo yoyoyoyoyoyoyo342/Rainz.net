@@ -35,6 +35,15 @@ interface QuarterData {
   newUsers: number;
   battles: number;
   articles: number;
+  savedLocations: number;
+  searchQueries: number;
+  dailySpins: number;
+  shopPurchases: number;
+  aiConversations: number;
+  featureIdeas: number;
+  streakChallenges: number;
+  weatherDebates: number;
+  cityPages: number;
   highlights: string[];
   milestones: string[];
   isPartial?: boolean;

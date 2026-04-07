@@ -184,6 +184,7 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
               <Route path="/weather" element={<Navigate to="/" replace />} />
               <Route path="/mcp" element={<MCP />} />
               <Route path="/faq" element={<FAQ />} />
+              <Route path="/market-report" element={<MarketReport />} />
               <Route path="/airport" element={<AirportLayout />}>
                 <Route index element={<AirportLanding />} />
                 <Route path="features" element={<AirportFeatures />} />

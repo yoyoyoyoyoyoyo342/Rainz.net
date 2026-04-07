@@ -18,6 +18,13 @@ import {
   BarChart3,
   Cloud,
   Sparkles,
+  Search,
+  ShoppingBag,
+  MessageSquare,
+  Lightbulb,
+  Flame,
+  Globe,
+  Dices,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -62,6 +69,15 @@ const QUARTER_DATA: Record<QuarterKey, QuarterData> = {
     newUsers: 1,
     battles: 0,
     articles: 0,
+    savedLocations: 0,
+    searchQueries: 0,
+    dailySpins: 0,
+    shopPurchases: 0,
+    aiConversations: 0,
+    featureIdeas: 0,
+    streakChallenges: 0,
+    weatherDebates: 0,
+    cityPages: 0,
     highlights: [
       "Rainz Weather launched in August 2025, bringing AI-powered hyper-local weather forecasting to Scandinavia",
       "Core platform built with multi-model ensemble forecasting (ECMWF, GFS, Met.no, SMHI)",
@@ -86,20 +102,29 @@ const QUARTER_DATA: Record<QuarterKey, QuarterData> = {
     pointsEarned: 2100,
     newUsers: 10,
     battles: 7,
-    articles: 3,
+    articles: 8,
+    savedLocations: 8,
+    searchQueries: 79,
+    dailySpins: 0,
+    shopPurchases: 0,
+    aiConversations: 0,
+    featureIdeas: 0,
+    streakChallenges: 0,
+    weatherDebates: 0,
+    cityPages: 0,
     highlights: [
       "Prediction system went live — 60 weather predictions made by 8 users",
       "Prediction Battles launched with 7 head-to-head challenges",
-      "First blog articles published, establishing Rainz as a weather content hub",
+      "8 blog articles published, establishing Rainz as a weather content hub",
+      "Location saving and weather search features saw early adoption with 79 searches",
       "User base grew to 11 registered accounts across Scandinavia",
-      "Leaderboard and points system introduced to gamify forecasting",
     ],
     milestones: [
       "🎯 First 60 weather predictions submitted",
       "⚔️ Prediction Battles feature launched",
-      "📝 3 weather articles published",
-      "👥 10 new users joined the platform",
-      "🏆 Monthly leaderboard system introduced",
+      "📝 8 weather articles published",
+      "📍 8 locations saved by users",
+      "🔍 79 weather searches performed",
     ],
   },
   "Q1-2026": {
@@ -113,24 +138,35 @@ const QUARTER_DATA: Record<QuarterKey, QuarterData> = {
     pointsEarned: 71000,
     newUsers: 3,
     battles: 56,
-    articles: 7,
+    articles: 2,
+    savedLocations: 5,
+    searchQueries: 26,
+    dailySpins: 119,
+    shopPurchases: 54,
+    aiConversations: 30,
+    featureIdeas: 2,
+    streakChallenges: 1,
+    weatherDebates: 1,
+    cityPages: 1,
     highlights: [
       "Prediction volume surged 177% quarter-over-quarter — 166 verified predictions",
       "Accuracy rate skyrocketed to 98.8%, up from 30% in Q4 — users mastered the system",
       "Prediction Battles exploded with 56 battles, an 8x increase from Q4",
-      "71,000 points earned across the platform, a 33x increase from Q4",
-      "7 new weather articles published, more than doubling Q4 content output",
-      "Trophy system launched — monthly winners now earn permanent trophies",
-      "AI Weather Companion (PAI) fully integrated for personalized forecasts",
+      "Daily Spin Wheel launched — 119 spins in Q1, driving daily engagement",
+      "Points Shop went live with 54 purchases, creating a thriving in-app economy",
+      "PAI AI Weather Companion fully deployed — 30 conversations in first quarter",
+      "Community features launched: Weather Debates, Streak Challenges, and Feature Ideas",
+      "First programmatic city page generated for SEO expansion",
     ],
     milestones: [
       "📈 177% growth in predictions (60 → 166)",
       "🎯 98.8% prediction accuracy achieved",
       "⚔️ 56 Prediction Battles fought (8x growth)",
-      "💰 71,000 total points earned (33x growth)",
+      "🎰 Daily Spin Wheel launched (119 spins)",
+      "🛒 Points Shop opened (54 purchases)",
+      "🤖 PAI AI assistant fully deployed (30 chats)",
+      "💡 Community Feature Ideas board launched",
       "🏆 Trophy Board & monthly awards launched",
-      "🤖 PAI AI assistant fully deployed",
-      "📰 7 weather science articles published",
     ],
   },
   "Q2-2026": {
@@ -145,12 +181,22 @@ const QUARTER_DATA: Record<QuarterKey, QuarterData> = {
     newUsers: 1,
     battles: 3,
     articles: 2,
+    savedLocations: 0,
+    searchQueries: 0,
+    dailySpins: 11,
+    shopPurchases: 3,
+    aiConversations: 0,
+    featureIdeas: 0,
+    streakChallenges: 0,
+    weatherDebates: 0,
+    cityPages: 0,
     isPartial: true,
     highlights: [
       "Q2 is just getting started — early data shows 100% prediction accuracy maintained",
       "Market report system launched for full platform transparency",
       "Airport weather intelligence product page published",
       "Continued investment in AI-enhanced forecasting models",
+      "Daily engagement features (spins, shop) showing sustained usage",
     ],
     milestones: [
       "📊 Quarterly Market Reports launched",
@@ -164,6 +210,7 @@ const QUARTER_DATA: Record<QuarterKey, QuarterData> = {
 const QUARTERS: QuarterKey[] = ["Q3-2025", "Q4-2025", "Q1-2026", "Q2-2026"];
 
 function getGrowth(current: number, previous: number): { value: string; direction: "up" | "down" | "flat" } {
+  if (previous === 0 && current === 0) return { value: "—", direction: "flat" };
   if (previous === 0) return { value: "New", direction: "up" };
   const pct = Math.round(((current - previous) / previous) * 100);
   if (pct > 0) return { value: `+${pct}%`, direction: "up" };
@@ -199,8 +246,8 @@ function MetricCard({
   previous: number;
 }) {
   return (
-    <Card className="p-5 bg-card/60 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-colors">
-      <div className="flex items-start justify-between mb-3">
+    <Card className="p-4 bg-card/60 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-colors">
+      <div className="flex items-start justify-between mb-2">
         <div className="p-2 rounded-lg bg-primary/10">
           <Icon className="h-4 w-4 text-primary" />
         </div>
@@ -210,6 +257,11 @@ function MetricCard({
       <p className="text-xs text-muted-foreground mt-1">{label}</p>
     </Card>
   );
+}
+
+function formatNum(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return n.toLocaleString();
 }
 
 function QuarterReport({ quarterKey }: { quarterKey: QuarterKey }) {
@@ -239,68 +291,43 @@ function QuarterReport({ quarterKey }: { quarterKey: QuarterKey }) {
         </p>
       </div>
 
-      {/* Key Metrics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <MetricCard
-          icon={Target}
-          label="Predictions Made"
-          value={data.predictions.toLocaleString()}
-          current={data.predictions}
-          previous={prev?.predictions ?? 0}
-        />
-        <MetricCard
-          icon={Users}
-          label="Active Predictors"
-          value={data.uniquePredictors.toLocaleString()}
-          current={data.uniquePredictors}
-          previous={prev?.uniquePredictors ?? 0}
-        />
-        <MetricCard
-          icon={Swords}
-          label="Battles Fought"
-          value={data.battles.toLocaleString()}
-          current={data.battles}
-          previous={prev?.battles ?? 0}
-        />
-        <MetricCard
-          icon={TrendingUp}
-          label="Points Earned"
-          value={data.pointsEarned >= 1000 ? `${(data.pointsEarned / 1000).toFixed(1)}K` : data.pointsEarned.toString()}
-          current={data.pointsEarned}
-          previous={prev?.pointsEarned ?? 0}
-        />
+      {/* Predictions & Engagement */}
+      <div>
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">
+          Predictions & Competitions
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <MetricCard icon={Target} label="Predictions Made" value={formatNum(data.predictions)} current={data.predictions} previous={prev?.predictions ?? 0} />
+          <MetricCard icon={Zap} label="Accuracy Rate" value={data.accuracyRate > 0 ? `${data.accuracyRate}%` : "N/A"} current={data.accuracyRate} previous={prev?.accuracyRate ?? 0} />
+          <MetricCard icon={Swords} label="Battles Fought" value={formatNum(data.battles)} current={data.battles} previous={prev?.battles ?? 0} />
+          <MetricCard icon={TrendingUp} label="Points Earned" value={formatNum(data.pointsEarned)} current={data.pointsEarned} previous={prev?.pointsEarned ?? 0} />
+        </div>
       </div>
 
-      {/* Secondary Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <MetricCard
-          icon={Zap}
-          label="Accuracy Rate"
-          value={data.accuracyRate > 0 ? `${data.accuracyRate}%` : "N/A"}
-          current={data.accuracyRate}
-          previous={prev?.accuracyRate ?? 0}
-        />
-        <MetricCard
-          icon={Users}
-          label="New Users"
-          value={data.newUsers.toLocaleString()}
-          current={data.newUsers}
-          previous={prev?.newUsers ?? 0}
-        />
-        <MetricCard
-          icon={FileText}
-          label="Articles Published"
-          value={data.articles.toLocaleString()}
-          current={data.articles}
-          previous={prev?.articles ?? 0}
-        />
-        <MetricCard
-          icon={Trophy}
-          label="Correct Predictions"
-          value={data.correctPredictions.toLocaleString()}
-          current={data.correctPredictions}
-          previous={prev?.correctPredictions ?? 0}
-        />
+      {/* Platform Usage */}
+      <div>
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">
+          Platform Usage
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <MetricCard icon={Search} label="Weather Searches" value={formatNum(data.searchQueries)} current={data.searchQueries} previous={prev?.searchQueries ?? 0} />
+          <MetricCard icon={MapPin} label="Locations Saved" value={formatNum(data.savedLocations)} current={data.savedLocations} previous={prev?.savedLocations ?? 0} />
+          <MetricCard icon={MessageSquare} label="AI Conversations" value={formatNum(data.aiConversations)} current={data.aiConversations} previous={prev?.aiConversations ?? 0} />
+          <MetricCard icon={Globe} label="City Pages" value={formatNum(data.cityPages)} current={data.cityPages} previous={prev?.cityPages ?? 0} />
+        </div>
+      </div>
+
+      {/* Economy & Community */}
+      <div>
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">
+          Economy & Community
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <MetricCard icon={Dices} label="Daily Spins" value={formatNum(data.dailySpins)} current={data.dailySpins} previous={prev?.dailySpins ?? 0} />
+          <MetricCard icon={ShoppingBag} label="Shop Purchases" value={formatNum(data.shopPurchases)} current={data.shopPurchases} previous={prev?.shopPurchases ?? 0} />
+          <MetricCard icon={Users} label="New Users" value={formatNum(data.newUsers)} current={data.newUsers} previous={prev?.newUsers ?? 0} />
+          <MetricCard icon={FileText} label="Articles Published" value={formatNum(data.articles)} current={data.articles} previous={prev?.articles ?? 0} />
+        </div>
       </div>
 
       {/* Highlights & Milestones */}
@@ -340,34 +367,35 @@ function QuarterReport({ quarterKey }: { quarterKey: QuarterKey }) {
         <h3 className="text-sm font-medium text-muted-foreground mb-4 uppercase tracking-wider">
           Cumulative Platform Totals (as of end of {data.label})
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {(() => {
             const idx = QUARTERS.indexOf(quarterKey);
-            const cumPredictions = QUARTERS.slice(0, idx + 1).reduce((s, q) => s + QUARTER_DATA[q].predictions, 0);
-            const cumBattles = QUARTERS.slice(0, idx + 1).reduce((s, q) => s + QUARTER_DATA[q].battles, 0);
-            const cumArticles = QUARTERS.slice(0, idx + 1).reduce((s, q) => s + QUARTER_DATA[q].articles, 0);
-            const cumUsers = QUARTERS.slice(0, idx + 1).reduce((s, q) => s + QUARTER_DATA[q].newUsers, 0);
-            const cumPoints = QUARTERS.slice(0, idx + 1).reduce((s, q) => s + QUARTER_DATA[q].pointsEarned, 0);
+            const sum = (key: keyof QuarterData) =>
+              QUARTERS.slice(0, idx + 1).reduce((s, q) => s + (QUARTER_DATA[q][key] as number), 0);
             return (
               <>
                 <div>
-                  <p className="text-xl font-bold text-foreground">{cumPredictions.toLocaleString()}</p>
+                  <p className="text-xl font-bold text-foreground">{sum("predictions").toLocaleString()}</p>
                   <p className="text-xs text-muted-foreground">Total Predictions</p>
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-foreground">{cumBattles.toLocaleString()}</p>
+                  <p className="text-xl font-bold text-foreground">{sum("battles").toLocaleString()}</p>
                   <p className="text-xs text-muted-foreground">Total Battles</p>
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-foreground">{cumUsers.toLocaleString()}</p>
+                  <p className="text-xl font-bold text-foreground">{sum("newUsers").toLocaleString()}</p>
                   <p className="text-xs text-muted-foreground">Registered Users</p>
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-foreground">{cumPoints >= 1000 ? `${(cumPoints / 1000).toFixed(1)}K` : cumPoints}</p>
+                  <p className="text-xl font-bold text-foreground">{formatNum(sum("pointsEarned"))}</p>
                   <p className="text-xs text-muted-foreground">Points Distributed</p>
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-foreground">{cumArticles}</p>
+                  <p className="text-xl font-bold text-foreground">{sum("searchQueries").toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Weather Searches</p>
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-foreground">{sum("articles")}</p>
                   <p className="text-xs text-muted-foreground">Articles Published</p>
                 </div>
               </>

@@ -43,9 +43,10 @@ export function Footer() {
             <Link to="/airport" className="hover:text-foreground transition-colors">
               Landing page
             </Link>
-            <Link to="/auth" className="hover:text-foreground transition-colors text-primary font-medium">
+            <button onClick={() => setReferralOpen(true)} className="hover:text-foreground transition-colors text-primary font-medium">
               Refer a Friend 🎁
-            </Link>
+            </button>
+            <ReferralProgram open={referralOpen} onOpenChange={setReferralOpen} />
           </div>
           <div className="text-center md:text-right space-y-1">
             <p>© 2025-{new Date().getFullYear()} Rainz. All rights reserved.</p>

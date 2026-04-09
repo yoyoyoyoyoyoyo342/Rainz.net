@@ -41,7 +41,35 @@ export function useAmplitudeInstrumentation() {
   };
 
   useEffect(() => {
-    safeTrack("page_viewed", {
+    // Map routes to descriptive event names
+    const getPageEventName = (path: string): string => {
+      if (path === "/" || path === "") return "home_viewed";
+      if (path.startsWith("/weather")) return "weather_viewed";
+      if (path.startsWith("/blog/")) return "blog_post_viewed";
+      if (path === "/blog") return "blog_list_viewed";
+      if (path === "/about") return "about_viewed";
+      if (path === "/faq") return "faq_viewed";
+      if (path === "/download" || path === "/pwa-download") return "download_page_viewed";
+      if (path === "/auth") return "auth_page_viewed";
+      if (path === "/admin") return "admin_panel_viewed";
+      if (path === "/dry-routes") return "dry_routes_viewed";
+      if (path === "/market-report") return "market_report_viewed";
+      if (path === "/affiliate") return "affiliate_page_viewed";
+      if (path === "/info") return "info_viewed";
+      if (path === "/embed") return "embed_viewed";
+      if (path === "/widgets") return "widgets_viewed";
+      if (path === "/articles") return "articles_viewed";
+      if (path === "/mcp") return "mcp_viewed";
+      if (path === "/data-settings") return "data_settings_viewed";
+      if (path.startsWith("/profile/")) return "user_profile_viewed";
+      if (path.startsWith("/city/")) return "city_weather_viewed";
+      if (path.startsWith("/airport")) return "airport_page_viewed";
+      if (path === "/privacy-policy") return "privacy_policy_viewed";
+      if (path === "/terms-of-service") return "terms_viewed";
+      return "page_viewed";
+    };
+
+    safeTrack(getPageEventName(location.pathname), {
       page_path: location.pathname,
       page_query: location.search || null,
       page_hash: location.hash || null,

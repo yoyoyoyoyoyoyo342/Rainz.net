@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ReferralProgram } from "@/components/weather/referral-program";
 
 export function Footer() {
   const { getValue } = useFeatureFlags();
   const version = getValue('app_version', '1.2.82');
+  const [referralOpen, setReferralOpen] = useState(false);
 
   return (
     <footer className="w-full border-t border-border bg-background/80 backdrop-blur-sm mt-auto">
@@ -40,9 +44,14 @@ export function Footer() {
             <Link to="/airport" className="hover:text-foreground transition-colors">
               Landing page
             </Link>
-            <Link to="/auth" className="hover:text-foreground transition-colors text-primary font-medium">
+            <button onClick={() => setReferralOpen(true)} className="hover:text-foreground transition-colors text-primary font-medium">
               Refer a Friend 🎁
-            </Link>
+            </button>
+            <Dialog open={referralOpen} onOpenChange={setReferralOpen}>
+              <DialogContent className="max-w-md">
+                <ReferralProgram />
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="text-center md:text-right space-y-1">
             <p>© 2025-{new Date().getFullYear()} Rainz. All rights reserved.</p>

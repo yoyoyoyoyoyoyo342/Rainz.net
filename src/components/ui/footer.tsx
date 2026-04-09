@@ -47,7 +47,11 @@ export function Footer() {
             <button onClick={() => setReferralOpen(true)} className="hover:text-foreground transition-colors text-primary font-medium">
               Refer a Friend 🎁
             </button>
-            <ReferralProgram open={referralOpen} onOpenChange={setReferralOpen} />
+            <Dialog open={referralOpen} onOpenChange={setReferralOpen}>
+              <DialogContent className="max-w-md">
+                <ReferralProgram />
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="text-center md:text-right space-y-1">
             <p>© 2025-{new Date().getFullYear()} Rainz. All rights reserved.</p>

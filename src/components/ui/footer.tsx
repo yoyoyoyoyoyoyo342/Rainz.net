@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
+import { ReferralProgram } from "@/components/weather/referral-program";
 
 export function Footer() {
   const { getValue } = useFeatureFlags();
   const version = getValue('app_version', '1.2.82');
+  const [referralOpen, setReferralOpen] = useState(false);
 
   return (
     <footer className="w-full border-t border-border bg-background/80 backdrop-blur-sm mt-auto">

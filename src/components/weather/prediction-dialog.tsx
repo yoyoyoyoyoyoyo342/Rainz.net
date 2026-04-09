@@ -70,20 +70,29 @@ export const PredictionDialog = ({
         .eq("user_id", user.id)
         .maybeSingle();
 
-      // Get rank from leaderboard
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("total_points")
-        .eq("user_id", user.id)
-        .single();
+      // Get monthly rank based on predictions this month
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
 
-      const { count } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .gt("total_points", profile?.total_points || 0);
+      const { data: monthlyPredictions } = await supabase
+        .from("weather_predictions")
+        .select("user_id, points_earned")
+        .gte("prediction_date", monthStart.split("T")[0])
+        .lt("prediction_date", monthEnd.split("T")[0]);
+
+      // Aggregate points per user for this month
+      const userMonthlyPoints: Record<string, number> = {};
+      (monthlyPredictions || []).forEach((p) => {
+        const uid = p.user_id;
+        userMonthlyPoints[uid] = (userMonthlyPoints[uid] || 0) + (p.points_earned || 0);
+      });
+
+      const myMonthlyPoints = userMonthlyPoints[user.id] || 0;
+      const monthlyRank = Object.values(userMonthlyPoints).filter((pts) => pts > myMonthlyPoints).length + 1;
 
       setUserStats({
-        rank: (count || 0) + 1,
+        rank: monthlyRank,
         streak: streakData?.current_streak || 0,
         totalPredictions: predictions?.length || 0,
         accuracy

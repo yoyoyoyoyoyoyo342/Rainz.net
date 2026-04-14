@@ -131,19 +131,23 @@ export default async function handler(req, res) {
     // Build response from best available data
     let temp, condition, humidity, wind, description, precipitation;
 
-    if (llmData?.current) {
+    // Find a source with actual non-zero temperature data
+    const validSource = sources.find(s =>
+      s.currentWeather && (s.currentWeather.temperature !== 0 || s.currentWeather.humidity !== 0)
+    ) || sources[0];
+
+    if (llmData?.current && llmData.current.temperature !== 0) {
       temp = fToC(llmData.current.temperature);
       condition = llmData.current.condition || 'Unknown';
       humidity = llmData.current.humidity || 0;
       wind = llmData.current.windSpeed || 0;
       description = llmData.summary || llmData.current.description || condition;
       precipitation = 0;
-    } else if (sources.length > 0) {
-      const src = sources[0];
-      temp = fToC(src.currentWeather?.temperature || 32);
-      condition = src.currentWeather?.condition || 'Unknown';
-      humidity = src.currentWeather?.humidity || 0;
-      wind = src.currentWeather?.windSpeed || 0;
+    } else if (validSource) {
+      temp = fToC(validSource.currentWeather?.temperature || 32);
+      condition = validSource.currentWeather?.condition || 'Unknown';
+      humidity = validSource.currentWeather?.humidity || 0;
+      wind = validSource.currentWeather?.windSpeed || 0;
       description = condition;
       precipitation = 0;
     } else {

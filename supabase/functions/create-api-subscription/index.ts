@@ -12,6 +12,21 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-API-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
+const TIER_CONFIG: Record<string, { lookupKey: string; name: string; unitAmount: number; dailyLimit: number }> = {
+  pro: {
+    lookupKey: "rainz_api_pro",
+    name: "Rainz API Pro",
+    unitAmount: 900, // €9.00
+    dailyLimit: 10000,
+  },
+  business: {
+    lookupKey: "rainz_api_business",
+    name: "Rainz API Business",
+    unitAmount: 4900, // €49.00
+    dailyLimit: -1, // unlimited
+  },
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -22,11 +37,11 @@ serve(async (req) => {
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    logStep("Stripe key verified");
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
     );
 
     const authHeader = req.headers.get("Authorization");
@@ -39,76 +54,76 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    const { tier = "pro" } = await req.json().catch(() => ({ tier: "pro" }));
+    const tierConfig = TIER_CONFIG[tier];
+    if (!tierConfig) throw new Error(`Invalid tier: ${tier}`);
+    logStep("Tier selected", { tier, config: tierConfig });
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Check if customer exists
+    // Find or create customer
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string;
-    
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
-      logStep("Found existing customer", { customerId });
     } else {
       const customer = await stripe.customers.create({
         email: user.email,
-        metadata: { supabase_user_id: user.id }
+        metadata: { supabase_user_id: user.id },
       });
       customerId = customer.id;
-      logStep("Created new customer", { customerId });
     }
+    logStep("Customer resolved", { customerId });
 
-    // Create a metered price if it doesn't exist - €0.01 per API call
-    // First check for existing metered price
-    const prices = await stripe.prices.list({
-      lookup_keys: ['rainz_api_metered'],
-      limit: 1
-    });
-
+    // Find or create the price for this tier
+    const prices = await stripe.prices.list({ lookup_keys: [tierConfig.lookupKey], limit: 1 });
     let priceId: string;
 
     if (prices.data.length > 0) {
       priceId = prices.data[0].id;
-      logStep("Found existing metered price", { priceId });
     } else {
-      // Create product and metered price
       const product = await stripe.products.create({
-        name: 'Rainz Weather API',
-        description: 'Pay-as-you-go API access with metered billing'
+        name: tierConfig.name,
+        description: `Rainz Weather API - ${tier.charAt(0).toUpperCase() + tier.slice(1)} tier`,
       });
-
       const price = await stripe.prices.create({
         product: product.id,
-        currency: 'eur',
-        unit_amount: 1, // €0.01 in cents
-        recurring: {
-          interval: 'month',
-          usage_type: 'metered'
-        },
-        lookup_key: 'rainz_api_metered'
+        currency: "eur",
+        unit_amount: tierConfig.unitAmount,
+        recurring: { interval: "month" },
+        lookup_key: tierConfig.lookupKey,
       });
       priceId = price.id;
-      logStep("Created new metered price", { priceId, productId: product.id });
+      logStep("Created new price", { priceId, productId: product.id });
     }
 
-    // Create checkout session for metered subscription
+    // Create checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      line_items: [
-        {
-          price: priceId,
-        },
-      ],
+      line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       success_url: `${req.headers.get("origin")}/api?subscription=success`,
       cancel_url: `${req.headers.get("origin")}/api?subscription=cancelled`,
       subscription_data: {
         metadata: {
-          supabase_user_id: user.id
-        }
-      }
+          supabase_user_id: user.id,
+          api_tier: tier,
+          daily_limit: String(tierConfig.dailyLimit),
+        },
+      },
     });
 
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
+    // Upsert the subscription record (will be confirmed by webhook in production)
+    await supabaseClient.from("api_subscriptions").upsert(
+      {
+        user_id: user.id,
+        tier: tier,
+        daily_limit: tierConfig.dailyLimit === -1 ? 999999999 : tierConfig.dailyLimit,
+      },
+      { onConflict: "user_id" }
+    );
+
+    logStep("Checkout session created", { sessionId: session.id });
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

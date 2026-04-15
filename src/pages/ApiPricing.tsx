@@ -191,7 +191,7 @@ export default function ApiPricing() {
       <SEOHead
         title="Rainz Weather API — Pricing & Developer Access"
         description="Access real-time AI-enhanced weather data for Scandinavia. Free tier available. Pro and Business plans for developers and businesses."
-        canonicalPath="/api"
+        canonicalUrl="https://rainz.net/api"
       />
       <div className="min-h-screen bg-background">
         <div className="max-w-6xl mx-auto px-4 py-8">

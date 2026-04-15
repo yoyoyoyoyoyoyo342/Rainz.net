@@ -25,8 +25,29 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
+    mode === 'development' && componentTagger(),
+    mode === 'production' && vitePrerender({
+      routes: [
+        '/',
+        '/about',
+        '/affiliate',
+        '/affiliate-policy',
+        '/info',
+        '/terms',
+        '/privacy',
+        '/faq',
+        '/download',
+        '/mcp',
+        '/api',
+        '/articles',
+        '/market-report',
+        '/widgets',
+        '/airport',
+        '/airport/features',
+        '/airport/product',
+        '/airport/contact',
+      ],
+    }),
   ].filter(Boolean),
   resolve: {
     dedupe: ['react', 'react-dom'],

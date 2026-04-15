@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { trackPredictionMade } from "@/lib/track-event";
+import { AffiliatePopup } from "./affiliate-popup";
 
 interface PredictionDialogProps {
   location: string;

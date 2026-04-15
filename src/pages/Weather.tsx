@@ -682,6 +682,7 @@ export default function WeatherPage() {
                       longitude={selectedLocation?.lon || 0}
                       isImperial={isImperial}
                       onPredictionMade={() => {}}
+                      currentWeatherCondition={weatherData?.mostAccurate?.currentWeather?.condition}
                     />
                   ) : (
                     <LockedPredictionButton />

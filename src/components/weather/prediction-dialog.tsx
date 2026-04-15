@@ -23,6 +23,7 @@ interface PredictionDialogProps {
   longitude: number;
   isImperial: boolean;
   onPredictionMade: () => void;
+  currentWeatherCondition?: string;
 }
 
 export const PredictionDialog = ({
@@ -30,11 +31,13 @@ export const PredictionDialog = ({
   latitude,
   longitude,
   isImperial,
-  onPredictionMade
+  onPredictionMade,
+  currentWeatherCondition
 }: PredictionDialogProps): React.JSX.Element => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("predict");
+  const [showAffiliatePopup, setShowAffiliatePopup] = useState(false);
   
   const [userStats, setUserStats] = useState<{
     rank: number;

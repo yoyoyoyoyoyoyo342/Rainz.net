@@ -58,14 +58,15 @@ const affiliateSchema = z.object({
   contactEmail: z.string().trim().email("Invalid email address").max(255, "Email is too long"),
   websiteUrl: z.string().trim().url("Invalid URL - must start with https://").refine((url) => url.startsWith("https://"), "URL must use HTTPS"),
   description: z.string().trim().max(500, "Description is too long").optional(),
-  weatherCondition: z.enum(["rain", "cloudy", "snow", "wind", "storm"], { required_error: "Please select a weather condition" }),
+  weatherCondition: z.enum(["rain", "cloudy", "snow", "wind", "storm", "sunny"], { required_error: "Please select a weather condition" }),
 });
 
 const season = getCurrentSeason();
 const seasonLabel = season.charAt(0).toUpperCase() + season.slice(1);
 
 const weatherConditions = [
-  { value: "cloudy", label: "When it's Cloudy", icon: CloudRain, description: `${seasonLabel} pricing — your link shows during cloudy weather`, price: `${AFFILIATE_PRICING.cloudy.price}/mo` },
+  { value: "sunny", label: "When it's Sunny", icon: Sun, description: `${seasonLabel} pricing — your link shows during clear/sunny weather`, price: `${AFFILIATE_PRICING.sunny.price}/mo` },
+  { value: "cloudy", label: "When it's Cloudy", icon: Cloud, description: `${seasonLabel} pricing — your link shows during cloudy weather`, price: `${AFFILIATE_PRICING.cloudy.price}/mo` },
   { value: "rain", label: "When it's Raining", icon: CloudRain, description: `${seasonLabel} pricing — your link shows when rain is detected`, price: `${AFFILIATE_PRICING.rain.price}/mo` },
   { value: "wind", label: "When it's Windy", icon: Wind, description: `${seasonLabel} pricing — your link shows during high winds`, price: `${AFFILIATE_PRICING.wind.price}/mo` },
   { value: "storm", label: "During Storms", icon: Zap, description: `${seasonLabel} pricing — your link shows during thunderstorms`, price: `${AFFILIATE_PRICING.storm.price}/mo` },

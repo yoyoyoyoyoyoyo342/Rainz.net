@@ -27,6 +27,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' && componentTagger(),
     mode === 'production' && vitePrerender({
+      staticDir: path.resolve(__dirname, 'dist'),
       routes: [
         '/',
         '/about',

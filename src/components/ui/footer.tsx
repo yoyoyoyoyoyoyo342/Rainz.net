@@ -53,7 +53,10 @@ export function Footer() {
               </DialogContent>
             </Dialog>
           </div>
-          <div className="text-center md:text-right space-y-1">
+          <div className="text-center md:text-right space-y-3">
+            <a href="https://www.producthunt.com/products/rainz-weather?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-rainz-weather" target="_blank" rel="noopener noreferrer">
+              <img alt="Rainz Weather - Weather but smarter. | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1063846&theme=light&t=1776278577169" />
+            </a>
             <p>© 2025-{new Date().getFullYear()} Rainz. All rights reserved.</p>
             <p className="text-xs text-muted-foreground/70">V{version}</p>
           </div>

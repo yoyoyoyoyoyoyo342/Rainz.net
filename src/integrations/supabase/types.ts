@@ -197,6 +197,42 @@ export type Database = {
         }
         Relationships: []
       }
+      api_subscriptions: {
+        Row: {
+          calls_today: number
+          created_at: string
+          daily_limit: number
+          id: string
+          last_reset_date: string
+          stripe_subscription_id: string | null
+          tier: Database["public"]["Enums"]["api_tier"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calls_today?: number
+          created_at?: string
+          daily_limit?: number
+          id?: string
+          last_reset_date?: string
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["api_tier"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calls_today?: number
+          created_at?: string
+          daily_limit?: number
+          id?: string
+          last_reset_date?: string
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["api_tier"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       api_usage: {
         Row: {
           api_key: string
@@ -2247,6 +2283,7 @@ export type Database = {
       trigger_verify_predictions: { Args: never; Returns: undefined }
     }
     Enums: {
+      api_tier: "free" | "pro" | "business"
       app_role: "admin" | "user"
     }
     CompositeTypes: {
@@ -2375,6 +2412,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      api_tier: ["free", "pro", "business"],
       app_role: ["admin", "user"],
     },
   },

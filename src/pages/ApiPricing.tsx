@@ -8,7 +8,7 @@ import { ArrowLeft, Check, Copy, Key, Loader2, Trash2, Eye, EyeOff, Zap, Crown, 
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { SeoHead } from "@/components/seo/seo-head";
+import { SEOHead } from "@/components/seo/seo-head";
 
 const TIERS = [
   {

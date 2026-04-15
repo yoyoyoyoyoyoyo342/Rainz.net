@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, CloudRain, Snowflake, Wind, Zap, Loader2, CheckCircle, ExternalLink } from "lucide-react";
+import { ArrowLeft, Cloud, CloudRain, Snowflake, Wind, Zap, Loader2, CheckCircle, ExternalLink, Sun } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +29,7 @@ function getSeasonalMultiplier(condition: string): number {
     snow:   { winter: 2.0, spring: 0.8, summer: 0.3, autumn: 0.5 },
     wind:   { winter: 1.5, spring: 1.2, summer: 0.8, autumn: 1.3 },
     storm:  { winter: 1.0, spring: 1.0, summer: 1.5, autumn: 1.2 },
+    sunny:  { winter: 0.5, spring: 1.0, summer: 2.0, autumn: 0.8 },
   };
   return multipliers[condition]?.[season] ?? 1.0;
 }
@@ -37,7 +38,7 @@ function getSeasonalPrice(basePrice: number, condition: string): number {
   return Math.round(basePrice * getSeasonalMultiplier(condition));
 }
 
-const BASE_PRICES = { rain: 15, cloudy: 20, snow: 10, wind: 12, storm: 10 };
+const BASE_PRICES = { rain: 8, cloudy: 10, snow: 5, wind: 6, storm: 5, sunny: 12 };
 
 function getAffiliatePricing() {
   return {
@@ -46,6 +47,7 @@ function getAffiliatePricing() {
     snow:   { price: `€${getSeasonalPrice(BASE_PRICES.snow, "snow")}`, priceId: "price_1Sh0n18mRhH1c6KOhmxF97O8" },
     wind:   { price: `€${getSeasonalPrice(BASE_PRICES.wind, "wind")}`, priceId: "price_1Sh0n18mRhH1c6KOhmxF97O8" },
     storm:  { price: `€${getSeasonalPrice(BASE_PRICES.storm, "storm")}`, priceId: "price_1Sh0n18mRhH1c6KOhmxF97O8" },
+    sunny:  { price: `€${getSeasonalPrice(BASE_PRICES.sunny, "sunny")}`, priceId: "price_1Sh0n18mRhH1c6KOhmxF97O8" },
   };
 }
 
@@ -56,14 +58,15 @@ const affiliateSchema = z.object({
   contactEmail: z.string().trim().email("Invalid email address").max(255, "Email is too long"),
   websiteUrl: z.string().trim().url("Invalid URL - must start with https://").refine((url) => url.startsWith("https://"), "URL must use HTTPS"),
   description: z.string().trim().max(500, "Description is too long").optional(),
-  weatherCondition: z.enum(["rain", "cloudy", "snow", "wind", "storm"], { required_error: "Please select a weather condition" }),
+  weatherCondition: z.enum(["rain", "cloudy", "snow", "wind", "storm", "sunny"], { required_error: "Please select a weather condition" }),
 });
 
 const season = getCurrentSeason();
 const seasonLabel = season.charAt(0).toUpperCase() + season.slice(1);
 
 const weatherConditions = [
-  { value: "cloudy", label: "When it's Cloudy", icon: CloudRain, description: `${seasonLabel} pricing — your link shows during cloudy weather`, price: `${AFFILIATE_PRICING.cloudy.price}/mo` },
+  { value: "sunny", label: "When it's Sunny", icon: Sun, description: `${seasonLabel} pricing — your link shows during clear/sunny weather`, price: `${AFFILIATE_PRICING.sunny.price}/mo` },
+  { value: "cloudy", label: "When it's Cloudy", icon: Cloud, description: `${seasonLabel} pricing — your link shows during cloudy weather`, price: `${AFFILIATE_PRICING.cloudy.price}/mo` },
   { value: "rain", label: "When it's Raining", icon: CloudRain, description: `${seasonLabel} pricing — your link shows when rain is detected`, price: `${AFFILIATE_PRICING.rain.price}/mo` },
   { value: "wind", label: "When it's Windy", icon: Wind, description: `${seasonLabel} pricing — your link shows during high winds`, price: `${AFFILIATE_PRICING.wind.price}/mo` },
   { value: "storm", label: "During Storms", icon: Zap, description: `${seasonLabel} pricing — your link shows during thunderstorms`, price: `${AFFILIATE_PRICING.storm.price}/mo` },

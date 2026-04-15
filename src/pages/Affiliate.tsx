@@ -29,6 +29,7 @@ function getSeasonalMultiplier(condition: string): number {
     snow:   { winter: 2.0, spring: 0.8, summer: 0.3, autumn: 0.5 },
     wind:   { winter: 1.5, spring: 1.2, summer: 0.8, autumn: 1.3 },
     storm:  { winter: 1.0, spring: 1.0, summer: 1.5, autumn: 1.2 },
+    sunny:  { winter: 0.5, spring: 1.0, summer: 2.0, autumn: 0.8 },
   };
   return multipliers[condition]?.[season] ?? 1.0;
 }
@@ -46,6 +47,7 @@ function getAffiliatePricing() {
     snow:   { price: `€${getSeasonalPrice(BASE_PRICES.snow, "snow")}`, priceId: "price_1Sh0n18mRhH1c6KOhmxF97O8" },
     wind:   { price: `€${getSeasonalPrice(BASE_PRICES.wind, "wind")}`, priceId: "price_1Sh0n18mRhH1c6KOhmxF97O8" },
     storm:  { price: `€${getSeasonalPrice(BASE_PRICES.storm, "storm")}`, priceId: "price_1Sh0n18mRhH1c6KOhmxF97O8" },
+    sunny:  { price: `€${getSeasonalPrice(BASE_PRICES.sunny, "sunny")}`, priceId: "price_1Sh0n18mRhH1c6KOhmxF97O8" },
   };
 }
 

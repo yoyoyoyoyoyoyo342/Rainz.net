@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, CloudRain, Snowflake, Wind, Zap, Loader2, CheckCircle, ExternalLink } from "lucide-react";
+import { ArrowLeft, Cloud, CloudRain, Snowflake, Wind, Zap, Loader2, CheckCircle, ExternalLink, Sun } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,7 +37,7 @@ function getSeasonalPrice(basePrice: number, condition: string): number {
   return Math.round(basePrice * getSeasonalMultiplier(condition));
 }
 
-const BASE_PRICES = { rain: 15, cloudy: 20, snow: 10, wind: 12, storm: 10 };
+const BASE_PRICES = { rain: 8, cloudy: 10, snow: 5, wind: 6, storm: 5, sunny: 12 };
 
 function getAffiliatePricing() {
   return {

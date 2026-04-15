@@ -111,6 +111,10 @@ export const PredictionDialog = ({
     onPredictionMade();
     setOpen(false);
     fetchUserStats();
+    // Show affiliate popup after prediction
+    if (currentWeatherCondition) {
+      setTimeout(() => setShowAffiliatePopup(true), 500);
+    }
   };
 
   return (

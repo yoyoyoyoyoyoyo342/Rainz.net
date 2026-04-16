@@ -23,6 +23,9 @@ Download it at rainz.net/download
 ## Getting Started
 
 git clone https://github.com/yoyoyoyoyoyoyo342/Rainz.net.git
+
 cd Rainz.net
+
 npm install
+
 npm run dev

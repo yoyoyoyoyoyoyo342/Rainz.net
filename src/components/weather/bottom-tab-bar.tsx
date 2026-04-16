@@ -61,7 +61,7 @@ export function BottomTabBar() {
                   className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl transition-all active:scale-95 relative ${
                     isActive
                       ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground/60 hover:text-foreground"
                   }`}
                 >
                   <div className="relative">

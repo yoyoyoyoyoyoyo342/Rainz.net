@@ -54,7 +54,8 @@ const ARWeatherOverlay = lazy(() => import("@/components/weather/ar-weather-over
 const PredictionDialog = lazy(() => import("@/components/weather/prediction-dialog").then(m => ({ default: m.PredictionDialog })));
 const AQICard = lazy(() => import("@/components/weather/aqi-card").then(m => ({ default: m.AQICard })));
 const BarometerCard = lazy(() => import("@/components/weather/barometer-card").then(m => ({ default: m.BarometerCard })));
-const MobileLocationNav = lazy(() => import("@/components/weather/mobile-location-nav").then(m => ({ default: m.MobileLocationNav })));
+const SocialTab = lazy(() => import("@/components/weather/social-tab").then(m => ({ default: m.SocialTab })));
+const BottomTabBar = lazy(() => import("@/components/weather/bottom-tab-bar").then(m => ({ default: m.BottomTabBar })));
 const RainMapCard = lazy(() => import("@/components/weather/rain-map-card"));
 const DryRoute = lazy(() => import("@/components/weather/dry-route").then(m => ({ default: m.DryRoute })));
 const AffiliateCard = lazy(() => import("@/components/weather/affiliate-card").then(m => ({ default: m.AffiliateCard })));
@@ -66,7 +67,7 @@ const FeatureIdeasCard = lazy(() => import("@/components/weather/feature-ideas-c
 const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-card").then(m => ({ default: m.BattleAcceptCard })));
 
 const WeeklyRecapCard = lazy(() => import("@/components/weather/weekly-recap-card").then(m => ({ default: m.WeeklyRecapCard })));
-const SocialFeed = lazy(() => import("@/components/weather/social-feed").then(m => ({ default: m.SocialFeed })));
+
 const ReferralProgram = lazy(() => import("@/components/weather/referral-program").then(m => ({ default: m.ReferralProgram })));
 
 export default function WeatherPage() {
@@ -102,6 +103,9 @@ export default function WeatherPage() {
   const hasLoggedTimingRef = useRef(false);
   const currentHoliday = getCurrentHoliday();
   const [exploreOpen, setExploreOpen] = useState(false);
+  const [socialOpen, setSocialOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("home");
+  const predictionSectionRef = useRef<HTMLDivElement>(null);
   const { isEnabled: isFeatureEnabled } = useFeatureFlags();
   const pageLoadedAtRef = useRef(Date.now());
 
@@ -665,6 +669,29 @@ export default function WeatherPage() {
               <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-start">
                 <div className="space-y-2">
                   <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
+                  {/* Saved location chips */}
+                  {savedLocations.length > 0 && (
+                    <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+                      {savedLocations.map((loc: any) => {
+                        const isActive = selectedLocation &&
+                          Math.abs(loc.latitude - selectedLocation.lat) < 0.01 &&
+                          Math.abs(loc.longitude - selectedLocation.lon) < 0.01;
+                        return (
+                          <button
+                            key={loc.id}
+                            onClick={() => handleLocationSelect(loc.latitude, loc.longitude, loc.name)}
+                            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                              isActive
+                                ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+                                : "bg-muted/50 text-foreground hover:bg-muted/80"
+                            }`}
+                          >
+                            {loc.name.split(',')[0].trim()}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                   {weatherData?.aggregated?.stationInfo && (
                     <WeatherStationInfo stationInfo={weatherData.aggregated.stationInfo} />
                   )}
@@ -679,7 +706,7 @@ export default function WeatherPage() {
               </div>
 
               {selectedLocation && (
-                <div className="pt-3 border-t border-border/20">
+                <div ref={predictionSectionRef} className="pt-3 border-t border-border/20">
                   {user ? (
                     <PredictionDialog
                       location={selectedLocation?.name || "Unknown"}
@@ -760,8 +787,6 @@ export default function WeatherPage() {
               {/* Weekly Recap Card */}
               <WeeklyRecapCard />
 
-              {/* Social Feed */}
-              <SocialFeed isImperial={isImperial} />
 
               <AnimatedCard index={0}>
                 <CurrentWeather
@@ -989,13 +1014,19 @@ export default function WeatherPage() {
               isImperial={isImperial}
             />
           )}
-          {user && (
-            <MobileLocationNav
-              onLocationSelect={handleLocationSelect}
-              currentLocation={selectedLocation}
-              isImperial={isImperial}
-            />
-          )}
+          <BottomTabBar
+            activeTab={activeTab}
+            onTabChange={(tab) => {
+              setActiveTab(tab);
+              if (tab === "home") window.scrollTo({ top: 0, behavior: "smooth" });
+              if (tab === "predict" && predictionSectionRef.current) {
+                predictionSectionRef.current.scrollIntoView({ behavior: "smooth" });
+              }
+              if (tab === "social") setSocialOpen(true);
+              if (tab === "explore") setExploreOpen(true);
+            }}
+          />
+          <SocialTab open={socialOpen} onOpenChange={(open) => { setSocialOpen(open); if (!open) setActiveTab("home"); }} />
         </Suspense>
         <OnboardingTour />
       </div>

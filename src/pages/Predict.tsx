@@ -23,10 +23,23 @@ const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-c
 export default function PredictPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("predict");
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lon: number; name: string } | null>(null);
   const [isImperial, setIsImperial] = useState(false);
+  const acceptBattleId = searchParams.get("accept_battle");
+
+  // If we land here with accept_battle, ensure we're on the predict tab
+  useEffect(() => {
+    if (acceptBattleId) setActiveTab("predict");
+  }, [acceptBattleId]);
+
+  const clearAcceptBattle = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("accept_battle");
+    setSearchParams(next, { replace: true });
+  };
 
   // Load user's primary saved location
   const { data: savedLocations = [] } = useQuery({

@@ -66,6 +66,9 @@ const AirportFeatures = lazy(() => import("./pages/airport/AirportFeatures"));
 const AirportProduct = lazy(() => import("./pages/airport/AirportProduct"));
 const AirportContact = lazy(() => import("./pages/airport/AirportContact"));
 const ApiPricing = lazy(() => import("./pages/ApiPricing"));
+const Predict = lazy(() => import("./pages/Predict"));
+const Social = lazy(() => import("./pages/Social"));
+const Explore = lazy(() => import("./pages/Explore"));
 
 function AnalyticsTracker() {
   useAnalytics();
@@ -158,6 +161,9 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
           ) : (
             <Routes location={location}>
               <Route path="/" element={<Weather />} />
+              <Route path="/predict" element={<Predict />} />
+              <Route path="/social" element={<Social />} />
+              <Route path="/explore" element={<Explore />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<AdminPanel />} />
               <Route path="/articles" element={<Articles />} />

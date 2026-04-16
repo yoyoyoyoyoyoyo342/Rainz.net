@@ -566,6 +566,15 @@ export const WeatherPredictionForm = ({
           )}
         </Button>
 
+        {/* First Prediction Bonus Hint */}
+        {user && (
+          <div className="text-center p-3 rounded-xl bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/20">
+            <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+              🎁 New here? Make your first prediction within 24h for <span className="font-bold">500 bonus points!</span>
+            </p>
+          </div>
+        )}
+
         {/* Scoring Info */}
         <div className="text-center text-xs text-muted-foreground space-y-1 pt-2">
           <p>🎯 All 3 correct = <span className="text-green-500 font-medium">+300 pts + Free Streak Freeze!</span></p>

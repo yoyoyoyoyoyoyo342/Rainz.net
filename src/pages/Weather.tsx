@@ -586,6 +586,9 @@ export default function WeatherPage() {
             />
           )}
 
+          {/* Product Hunt Launch Banner */}
+          <ProductHuntLaunchBanner />
+
           {/* Maintenance Mode Banner */}
           {isFeatureEnabled('maintenance_mode', false) && (
             <div className="mb-4 flex items-center gap-3 p-4 rounded-2xl bg-destructive/10 border border-destructive/30">

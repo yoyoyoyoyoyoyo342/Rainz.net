@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Send, MessageSquare, Heart, LogIn, ChevronDown, ChevronUp } from "lucide-react";
+import { Bell, Send, MessageSquare, Heart, LogIn, ChevronDown, ChevronUp, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { SEOHead } from "@/components/seo/seo-head";
@@ -22,6 +22,28 @@ export default function SocialPage() {
   const [postContent, setPostContent] = useState("");
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   // Notifications
   const { data: notifications = [], isLoading: loadingNotifs } = useQuery({
@@ -58,7 +80,6 @@ export default function SocialPage() {
         .in("user_id", userIds);
       const profileMap = new Map(profiles?.map((p: any) => [p.user_id, p]) || []);
 
-      // Check user's likes
       const postIds = data.map((p: any) => p.id);
       const { data: userLikes } = await supabase
         .from("social_post_likes")
@@ -117,16 +138,20 @@ export default function SocialPage() {
         .eq("user_id", user.id)
         .eq("is_read", false);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["user-notifications"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["unread-notification-count"] });
+    },
   });
 
   // Create post
   const createPostMutation = useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async ({ content, imageUrl }: { content: string; imageUrl?: string }) => {
       if (!user) throw new Error("Not authenticated");
       const { error } = await supabase.from("social_posts").insert({
         user_id: user.id,
         content,
+        image_url: imageUrl || null,
         post_type: "user",
       });
       if (error) throw error;
@@ -134,10 +159,33 @@ export default function SocialPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["social-posts-feed"] });
       setPostContent("");
+      removeImage();
       toast.success("Post shared!");
     },
     onError: () => toast.error("Failed to post"),
   });
+
+  const handlePost = async () => {
+    if (!postContent.trim() && !imageFile) return;
+    let imageUrl: string | undefined;
+
+    if (imageFile && user) {
+      const fileExt = imageFile.name.split(".").pop();
+      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from("social-images")
+        .upload(filePath, imageFile);
+      if (uploadError) {
+        // If bucket doesn't exist, post without image
+        console.warn("Image upload failed:", uploadError.message);
+      } else {
+        const { data: urlData } = supabase.storage.from("social-images").getPublicUrl(filePath);
+        imageUrl = urlData.publicUrl;
+      }
+    }
+
+    createPostMutation.mutate({ content: postContent.trim() || "📷", imageUrl });
+  };
 
   // Like/unlike
   const likeMutation = useMutation({
@@ -252,12 +300,41 @@ export default function SocialPage() {
                   className="min-h-[70px] bg-transparent border-0 resize-none focus-visible:ring-0 p-0 text-sm"
                   maxLength={280}
                 />
+
+                {/* Image preview */}
+                {imagePreview && (
+                  <div className="relative inline-block">
+                    <img src={imagePreview} alt="Preview" className="h-24 w-auto rounded-xl object-cover" />
+                    <button
+                      onClick={removeImage}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-muted-foreground">{postContent.length}/280</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageSelect}
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-muted/30"
+                    >
+                      <ImagePlus className="h-5 w-5" />
+                    </button>
+                    <span className="text-[10px] text-muted-foreground">{postContent.length}/280</span>
+                  </div>
                   <Button
                     size="sm"
-                    onClick={() => postContent.trim() && createPostMutation.mutate(postContent.trim())}
-                    disabled={!postContent.trim() || createPostMutation.isPending}
+                    onClick={handlePost}
+                    disabled={(!postContent.trim() && !imageFile) || createPostMutation.isPending}
                     className="h-8 gap-1"
                   >
                     <Send className="h-3.5 w-3.5" /> Post
@@ -298,6 +375,16 @@ export default function SocialPage() {
                   </div>
 
                   <p className="text-sm text-foreground/90 leading-relaxed">{post.content}</p>
+
+                  {/* Post image */}
+                  {post.image_url && (
+                    <img
+                      src={post.image_url}
+                      alt="Post image"
+                      className="w-full rounded-xl object-cover max-h-64"
+                      loading="lazy"
+                    />
+                  )}
 
                   {post.location_name && (
                     <p className="text-[10px] text-muted-foreground">📍 {post.location_name}</p>
@@ -401,7 +488,7 @@ export default function SocialPage() {
                     {!n.is_read && <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />}
                   </div>
                   <p className="text-[10px] text-muted-foreground/60 mt-1">
-                    {new Date(n.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    {new Date(n.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                   </p>
                 </div>
               ))}

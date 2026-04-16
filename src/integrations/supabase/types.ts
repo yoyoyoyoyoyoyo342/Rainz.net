@@ -1332,6 +1332,33 @@ export type Database = {
         }
         Relationships: []
       }
+      social_posts: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          image_url: string | null
+          location_name: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          location_name?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          location_name?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       streak_challenge_progress: {
         Row: {
           accuracy_score: number | null

@@ -706,7 +706,7 @@ export default function WeatherPage() {
               </div>
 
               {selectedLocation && (
-                <div className="pt-3 border-t border-border/20">
+                <div ref={predictionSectionRef} className="pt-3 border-t border-border/20">
                   {user ? (
                     <PredictionDialog
                       location={selectedLocation?.name || "Unknown"}

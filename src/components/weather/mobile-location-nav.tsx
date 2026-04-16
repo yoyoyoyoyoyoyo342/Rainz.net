@@ -56,6 +56,7 @@ export function MobileLocationNav({ onLocationSelect, currentLocation, isImperia
     mutationFn: async ({ name, lat, lon }: { name: string; lat: number; lon: number }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+      if (savedLocations.length >= 3) throw new Error("MAX_REACHED");
 
       const { error } = await supabase.from("saved_locations").insert({
         user_id: user.id,
@@ -72,7 +73,13 @@ export function MobileLocationNav({ onLocationSelect, currentLocation, isImperia
       setIsAddingLocation(false);
       toast.success("Location saved");
     },
-    onError: () => toast.error("Failed to save location"),
+    onError: (err: Error) => {
+      if (err.message === "MAX_REACHED") {
+        toast.error("3 is the max for saved locations.");
+      } else {
+        toast.error("Failed to save location");
+      }
+    },
   });
 
   const renameLocationMutation = useMutation({
@@ -161,7 +168,8 @@ export function MobileLocationNav({ onLocationSelect, currentLocation, isImperia
           
           <div className="overflow-x-auto overflow-y-hidden scrollbar-hide">
             <div className="flex items-center gap-1 p-2 pt-0 min-w-max">
-              {/* Add Location Button */}
+              {/* Add Location Button — hidden at max */}
+              {savedLocations.length < 3 && (
               <Dialog open={isAddingLocation} onOpenChange={setIsAddingLocation}>
                 <button
                   onClick={handleAddClick}
@@ -183,6 +191,7 @@ export function MobileLocationNav({ onLocationSelect, currentLocation, isImperia
                   <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
                 </DialogContent>
               </Dialog>
+              )}
 
               {/* Saved Locations */}
               {savedLocations.map((location) => (

@@ -141,6 +141,7 @@ export function CurrentWeather({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (!currentLocation) throw new Error("No current location");
+      if (savedLocations.length >= 3) throw new Error("MAX_REACHED");
       const { error } = await supabase.from("saved_locations").insert({
         user_id: user.id,
         name: currentLocation.name,
@@ -154,7 +155,13 @@ export function CurrentWeather({
       queryClient.invalidateQueries({ queryKey: ["saved-locations"] });
       toast.success("Location saved");
     },
-    onError: () => toast.error("Failed to save location"),
+    onError: (err: Error) => {
+      if (err.message === "MAX_REACHED") {
+        toast.error("3 is the max for saved locations.");
+      } else {
+        toast.error("Failed to save location");
+      }
+    },
   });
 
   const removeLocationMutation = useMutation({
@@ -256,7 +263,7 @@ export function CurrentWeather({
             <div className="flex items-center gap-2">
               <MapPin className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} ${textMuted}`} />
               <span className={`${textColor} font-semibold ${isCompact ? 'text-base' : 'text-lg'}`}>{locationDisplay}</span>
-              {currentLocation && !isCompact && (
+              {currentLocation && !isCompact && (isLocationSaved || savedLocations.length < 3) && (
                 <button
                   onClick={() => isLocationSaved ? removeLocationMutation.mutate() : addLocationMutation.mutate()}
                   className={`w-6 h-6 rounded-full ${bgOverlayHover} flex items-center justify-center hover:opacity-80 transition-colors`}

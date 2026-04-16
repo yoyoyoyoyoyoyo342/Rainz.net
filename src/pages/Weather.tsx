@@ -590,7 +590,7 @@ export default function WeatherPage() {
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                  <HeaderInfoBar user={user} />
+                  <HeaderInfoBar user={user} showInbox={false} />
                   <SettingsDialog
                     isImperial={isImperial}
                     onUnitsChange={setIsImperial}
@@ -640,47 +640,35 @@ export default function WeatherPage() {
               )}
 
               <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-start">
-              <div className="min-w-0 space-y-2">
-                <div className="min-w-0">
-                  <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
-                </div>
-                {/* Saved locations */}
+              <div className="min-w-0 space-y-3">
+                <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
+                {/* Saved locations — fixed 3-up grid, no scroll */}
                 {savedLocations.length > 0 && (
-                  <div className="min-w-0 overflow-hidden">
-                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory" style={{ WebkitOverflowScrolling: 'touch' }}>
-                      {savedLocations.map((loc: any) => {
-                        const isActive = selectedLocation &&
-                          Math.abs(loc.latitude - selectedLocation.lat) < 0.01 &&
-                          Math.abs(loc.longitude - selectedLocation.lon) < 0.01;
-                        const cityName = loc.name.split(',')[0].trim();
-                        const countryOrState = loc.name.split(',').slice(1).join(',').trim();
-                        return (
-                          <button
-                            key={loc.id}
-                            onClick={() => handleLocationSelect(loc.latitude, loc.longitude, loc.name)}
-                            className={`shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-left transition-all active:scale-95 ${
-                              isActive
-                                ? "bg-primary/15 ring-1 ring-primary/40"
-                                : "bg-card/60 hover:bg-card/80 ring-1 ring-border/20"
-                            }`}
-                          >
-                            <span className={`text-base ${isActive ? "" : "opacity-60"}`}>
-                              {loc.is_primary ? "📍" : "🌍"}
-                            </span>
-                            <div className="min-w-0">
-                              <p className={`text-xs font-semibold leading-tight truncate ${isActive ? "text-primary" : "text-foreground"}`}>
-                                {cityName}
-                              </p>
-                              {countryOrState && (
-                                <p className="text-[10px] text-muted-foreground leading-tight truncate max-w-[80px]">
-                                  {countryOrState}
-                                </p>
-                              )}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {savedLocations.slice(0, 3).map((loc: any) => {
+                      const isActive = selectedLocation &&
+                        Math.abs(loc.latitude - selectedLocation.lat) < 0.01 &&
+                        Math.abs(loc.longitude - selectedLocation.lon) < 0.01;
+                      const cityName = loc.name.split(',')[0].trim();
+                      return (
+                        <button
+                          key={loc.id}
+                          onClick={() => handleLocationSelect(loc.latitude, loc.longitude, loc.name)}
+                          className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-left transition-all active:scale-95 truncate ${
+                            isActive
+                              ? "bg-primary/15 ring-1 ring-primary/40"
+                              : "bg-card/60 hover:bg-card/80 ring-1 ring-border/20"
+                          }`}
+                        >
+                          <span className={`text-sm shrink-0 ${isActive ? "" : "opacity-60"}`}>
+                            {loc.is_primary ? "📍" : "🌍"}
+                          </span>
+                          <span className={`text-xs font-semibold truncate ${isActive ? "text-primary" : "text-foreground"}`}>
+                            {cityName}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
                 {weatherData?.aggregated?.stationInfo && (

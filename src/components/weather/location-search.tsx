@@ -419,7 +419,7 @@ export function LocationSearch({
   }
 
   return (
-    <div className="relative rounded-2xl glass-card flex-1 max-w-md z-[9999]">
+    <div className="relative rounded-2xl glass-card flex-1 z-[9999]">
       {/* Search Input */}
       <div className="p-4">
         <div className="relative">

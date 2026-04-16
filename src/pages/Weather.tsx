@@ -24,6 +24,7 @@ import { useAccountStorage } from "@/hooks/use-account-storage";
 import { useOfflineCache } from "@/hooks/use-offline-cache";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { useAmplitudeGuidedHelp } from "@/hooks/use-amplitude-guided-help";
+import { ProductHuntLaunchBanner } from "@/components/weather/producthunt-launch-banner";
 
 // Critical above-the-fold components — loaded eagerly
 import { LocationSearch } from "@/components/weather/location-search";
@@ -585,6 +586,9 @@ export default function WeatherPage() {
               onComplete={clearAcceptBattle}
             />
           )}
+
+          {/* Product Hunt Launch Banner */}
+          <ProductHuntLaunchBanner />
 
           {/* Maintenance Mode Banner */}
           {isFeatureEnabled('maintenance_mode', false) && (

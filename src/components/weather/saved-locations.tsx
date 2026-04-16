@@ -134,24 +134,28 @@ export function SavedLocations({ onLocationSelect, currentLocation, isImperial }
             <MapPin className="h-4 w-4 text-primary" />
             Saved Locations
           </h3>
-          <Dialog open={isAddingLocation} onOpenChange={setIsAddingLocation}>
-            <DialogTrigger asChild>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="h-8 gap-2 bg-background/50 hover:bg-background/80"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Location</DialogTitle>
-              </DialogHeader>
-              <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
-            </DialogContent>
-          </Dialog>
+          {savedLocations.length < 3 ? (
+            <Dialog open={isAddingLocation} onOpenChange={setIsAddingLocation}>
+              <DialogTrigger asChild>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="h-8 gap-2 bg-background/50 hover:bg-background/80"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add Location</DialogTitle>
+                </DialogHeader>
+                <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <span className="text-[10px] text-muted-foreground">3 max</span>
+          )}
         </div>
       </div>
 

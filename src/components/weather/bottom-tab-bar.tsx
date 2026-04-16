@@ -1,19 +1,39 @@
 import { CloudSun, Target, Bell, Compass } from "lucide-react";
-
-interface BottomTabBarProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-  hasUnreadNotifications?: boolean;
-}
+import { useNavigate, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
 const tabs = [
-  { id: "home", label: "Home", icon: CloudSun },
-  { id: "predict", label: "Predict", icon: Target },
-  { id: "social", label: "Social", icon: Bell },
-  { id: "explore", label: "Explore", icon: Compass },
+  { id: "home", path: "/", label: "Home", icon: CloudSun },
+  { id: "predict", path: "/predict", label: "Predict", icon: Target },
+  { id: "social", path: "/social", label: "Social", icon: Bell },
+  { id: "explore", path: "/explore", label: "Explore", icon: Compass },
 ];
 
-export function BottomTabBar({ activeTab, onTabChange, hasUnreadNotifications }: BottomTabBarProps) {
+export function BottomTabBar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ["unread-notification-count", user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { count } = await supabase
+        .from("user_notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("is_read", false);
+      return count || 0;
+    },
+    enabled: !!user,
+    staleTime: 1000 * 30,
+    refetchInterval: 1000 * 60,
+  });
+
+  const activeTab = tabs.find((t) => t.path === location.pathname)?.id || "home";
+
   return (
     <>
       <nav className="fixed bottom-0 left-0 right-0 z-50 pb-safe px-2">
@@ -25,7 +45,13 @@ export function BottomTabBar({ activeTab, onTabChange, hasUnreadNotifications }:
               return (
                 <button
                   key={tab.id}
-                  onClick={() => onTabChange(tab.id)}
+                  onClick={() => {
+                    if (tab.path === location.pathname) {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    } else {
+                      navigate(tab.path);
+                    }
+                  }}
                   className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl transition-all active:scale-95 relative ${
                     isActive
                       ? "text-primary"
@@ -34,7 +60,7 @@ export function BottomTabBar({ activeTab, onTabChange, hasUnreadNotifications }:
                 >
                   <div className="relative">
                     <Icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
-                    {tab.id === "social" && hasUnreadNotifications && (
+                    {tab.id === "social" && unreadCount > 0 && (
                       <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-destructive animate-pulse" />
                     )}
                   </div>

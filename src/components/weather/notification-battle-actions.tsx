@@ -45,7 +45,7 @@ export function NotificationBattleActions({
       // Close popover and navigate to weather page with battle param
       onRequestCloseParent?.();
       onActionComplete?.();
-      navigate(`/?accept_battle=${battleId}`);
+      navigate(`/predict?accept_battle=${battleId}`);
     } catch (err) {
       console.error("Error accepting battle:", err);
       toast({

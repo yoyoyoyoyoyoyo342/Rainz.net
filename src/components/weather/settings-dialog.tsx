@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
-import { Settings, Globe, LogOut, User, Eye, RotateCcw, GripVertical, Languages, Moon, Sun, Shield, Bell, Smartphone, Cookie, FlaskConical, Thermometer, Droplets, Wind, Gauge, Sunrise, MoonIcon, ChevronRight } from "lucide-react";
+import { Settings, Globe, LogOut, User, Eye, RotateCcw, GripVertical, Languages, Moon, Sun, Shield, Bell, Smartphone, Cookie, FlaskConical, Thermometer, Droplets, Wind, Gauge, Sunrise, MoonIcon, ChevronRight, MapPin, Edit2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { MAX_SAVED_LOCATIONS } from "@/lib/saved-locations";
 import { useLanguage, Language, languageFlags } from "@/contexts/language-context";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -148,6 +151,41 @@ export function SettingsDialog({
     ai_preview: true,
   });
   const [loadingNotifications, setLoadingNotifications] = useState(true);
+  const [renamingLocation, setRenamingLocation] = useState<{ id: string; name: string } | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const queryClient = useQueryClient();
+
+  const { data: savedLocations = [] } = useQuery({
+    queryKey: ["saved-locations"],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("saved_locations")
+        .select("*")
+        .order("is_primary", { ascending: false })
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const renameLocationMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase
+        .from("saved_locations")
+        .update({ name })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["saved-locations"] });
+      setRenamingLocation(null);
+      setRenameValue("");
+      toast({ title: "Location renamed" });
+    },
+    onError: () => toast({ title: "Failed to rename", variant: "destructive" }),
+  });
 
   useEffect(() => {
     if (user) {
@@ -640,6 +678,69 @@ export function SettingsDialog({
                 </div>
               </div>
             </SettingsSection>
+
+            {/* Saved Locations */}
+            {user && savedLocations.length > 0 && (
+              <SettingsSection title="Saved Locations" icon={MapPin}>
+                <div className="space-y-2">
+                  {savedLocations.slice(0, MAX_SAVED_LOCATIONS).map((loc: any) => (
+                    <div key={loc.id} className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/40">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="text-sm shrink-0">{loc.is_primary ? "📍" : "🌍"}</span>
+                        {renamingLocation?.id === loc.id ? (
+                          <div className="flex items-center gap-2 flex-1">
+                            <Input
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              className="h-7 text-xs"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && renameValue.trim()) {
+                                  renameLocationMutation.mutate({ id: loc.id, name: renameValue.trim() });
+                                } else if (e.key === "Escape") {
+                                  setRenamingLocation(null);
+                                }
+                              }}
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-xs px-2"
+                              onClick={() => {
+                                if (renameValue.trim()) {
+                                  renameLocationMutation.mutate({ id: loc.id, name: renameValue.trim() });
+                                }
+                              }}
+                              disabled={renameLocationMutation.isPending}
+                            >
+                              Save
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-sm truncate">{loc.name}</span>
+                        )}
+                      </div>
+                      {renamingLocation?.id !== loc.id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 shrink-0"
+                          onClick={() => {
+                            setRenamingLocation({ id: loc.id, name: loc.name });
+                            setRenameValue(loc.name);
+                          }}
+                        >
+                          <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <p className="text-xs text-muted-foreground">
+                    {savedLocations.length}/{MAX_SAVED_LOCATIONS} locations saved
+                  </p>
+                </div>
+              </SettingsSection>
+            )}
 
             {/* Card Visibility - Only for authenticated users */}
             {user && (

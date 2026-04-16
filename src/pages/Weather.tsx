@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense, lazy, useTransition } from "react";
+import React, { useState, useEffect, useMemo, useRef, Suspense, lazy, useTransition } from "react";
 import { queryClient } from "@/lib/queryClient";
-import { useSearchParams } from "react-router-dom";
 import { CloudSun, LogIn, WifiOff } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,22 +57,14 @@ const DryRoute = lazy(() => import("@/components/weather/dry-route").then(m => (
 const AffiliateCard = lazy(() => import("@/components/weather/affiliate-card").then(m => ({ default: m.AffiliateCard })));
 const ChristmasCalendar = lazy(() => import("@/components/weather/christmas-calendar").then(m => ({ default: m.ChristmasCalendar })));
 const RamadanCalendar = lazy(() => import("@/components/weather/ramadan-calendar").then(m => ({ default: m.RamadanCalendar })));
-const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-card").then(m => ({ default: m.BattleAcceptCard })));
-const WeeklyRecapCard = lazy(() => import("@/components/weather/weekly-recap-card").then(m => ({ default: m.WeeklyRecapCard })));
+
 
 import { BottomTabBar } from "@/components/weather/bottom-tab-bar";
 
 export default function WeatherPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const acceptBattleId = searchParams.get("accept_battle");
+  
 
-  const clearAcceptBattle = useCallback(() => {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.delete("accept_battle");
-      return next;
-    });
-  }, [setSearchParams]);
+
   const [selectedLocation, setSelectedLocation] = useState<{
     lat: number;
     lon: number;
@@ -573,14 +564,6 @@ export default function WeatherPage() {
         )}
 
         <div className="container mx-auto px-4 py-4 sm:py-6 max-w-7xl relative z-10">
-          {/* Inline battle accept card when navigated via accept_battle param */}
-          {acceptBattleId && (
-            <BattleAcceptCard
-              battleId={acceptBattleId}
-              isImperial={isImperial}
-              onComplete={clearAcceptBattle}
-            />
-          )}
 
           {/* Product Hunt Launch Banner */}
           <ProductHuntLaunchBanner />
@@ -657,11 +640,14 @@ export default function WeatherPage() {
               )}
 
               <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-start">
-                <div className="space-y-2">
+              <div className="min-w-0 space-y-2">
+                <div className="min-w-0">
                   <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
-                  {/* Saved locations */}
-                  {savedLocations.length > 0 && (
-                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1 snap-x snap-mandatory" style={{ WebkitOverflowScrolling: 'touch' }}>
+                </div>
+                {/* Saved locations */}
+                {savedLocations.length > 0 && (
+                  <div className="min-w-0 overflow-hidden">
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory" style={{ WebkitOverflowScrolling: 'touch' }}>
                       {savedLocations.map((loc: any) => {
                         const isActive = selectedLocation &&
                           Math.abs(loc.latitude - selectedLocation.lat) < 0.01 &&
@@ -695,19 +681,20 @@ export default function WeatherPage() {
                         );
                       })}
                     </div>
-                  )}
-                  {weatherData?.aggregated?.stationInfo && (
-                    <WeatherStationInfo stationInfo={weatherData.aggregated.stationInfo} />
-                  )}
-                </div>
-                {weatherData && (
-                  <WeatherReportForm
-                    location={actualStationName}
-                    currentCondition={weatherData.mostAccurate.currentWeather.condition}
-                    locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }}
-                  />
+                  </div>
+                )}
+                {weatherData?.aggregated?.stationInfo && (
+                  <WeatherStationInfo stationInfo={weatherData.aggregated.stationInfo} />
                 )}
               </div>
+              {weatherData && (
+                <WeatherReportForm
+                  location={actualStationName}
+                  currentCondition={weatherData.mostAccurate.currentWeather.condition}
+                  locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }}
+                />
+              )}
+            </div>
 
             </CardContent>
           </Card>
@@ -772,8 +759,8 @@ export default function WeatherPage() {
                 </div>
               )}
 
-              {/* Weekly Recap Card */}
-              <WeeklyRecapCard />
+
+
 
 
               <AnimatedCard index={0}>

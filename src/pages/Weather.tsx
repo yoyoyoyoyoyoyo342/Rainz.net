@@ -39,7 +39,7 @@ import { HeaderInfoBar } from "@/components/weather/header-info-bar";
 import { SettingsDialog } from "@/components/weather/settings-dialog";
 import { WeatherStationInfo } from "@/components/weather/weather-station-info";
 import { WinterAlerts } from "@/components/weather/winter-alerts";
-import { LockedPredictionButton } from "@/components/weather/locked-prediction-button";
+
 const GuidedHelpBanner = lazy(() => import("@/components/weather/guided-help-banner").then(m => ({ default: m.GuidedHelpBanner })));
 
 // Below-the-fold components — lazy loaded for faster initial render
@@ -51,24 +51,17 @@ const AIChatButton = lazy(() => import("@/components/weather/ai-chat-button").th
 const MorningWeatherReview = lazy(() => import("@/components/weather/morning-weather-review").then(m => ({ default: m.MorningWeatherReview })));
 const SocialWeatherCard = lazy(() => import("@/components/weather/social-weather-card").then(m => ({ default: m.SocialWeatherCard })));
 const ARWeatherOverlay = lazy(() => import("@/components/weather/ar-weather-overlay").then(m => ({ default: m.ARWeatherOverlay })));
-const PredictionDialog = lazy(() => import("@/components/weather/prediction-dialog").then(m => ({ default: m.PredictionDialog })));
 const AQICard = lazy(() => import("@/components/weather/aqi-card").then(m => ({ default: m.AQICard })));
 const BarometerCard = lazy(() => import("@/components/weather/barometer-card").then(m => ({ default: m.BarometerCard })));
-const SocialTab = lazy(() => import("@/components/weather/social-tab").then(m => ({ default: m.SocialTab })));
-const BottomTabBar = lazy(() => import("@/components/weather/bottom-tab-bar").then(m => ({ default: m.BottomTabBar })));
 const RainMapCard = lazy(() => import("@/components/weather/rain-map-card"));
 const DryRoute = lazy(() => import("@/components/weather/dry-route").then(m => ({ default: m.DryRoute })));
 const AffiliateCard = lazy(() => import("@/components/weather/affiliate-card").then(m => ({ default: m.AffiliateCard })));
 const ChristmasCalendar = lazy(() => import("@/components/weather/christmas-calendar").then(m => ({ default: m.ChristmasCalendar })));
 const RamadanCalendar = lazy(() => import("@/components/weather/ramadan-calendar").then(m => ({ default: m.RamadanCalendar })));
-const ExploreSheet = lazy(() => import("@/components/weather/explore-sheet").then(m => ({ default: m.ExploreSheet })));
-const ExploreButton = lazy(() => import("@/components/weather/explore-sheet").then(m => ({ default: m.ExploreButton })));
-const FeatureIdeasCard = lazy(() => import("@/components/weather/feature-ideas-card").then(m => ({ default: m.FeatureIdeasCard })));
 const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-card").then(m => ({ default: m.BattleAcceptCard })));
-
 const WeeklyRecapCard = lazy(() => import("@/components/weather/weekly-recap-card").then(m => ({ default: m.WeeklyRecapCard })));
 
-const ReferralProgram = lazy(() => import("@/components/weather/referral-program").then(m => ({ default: m.ReferralProgram })));
+import { BottomTabBar } from "@/components/weather/bottom-tab-bar";
 
 export default function WeatherPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -102,10 +95,7 @@ export default function WeatherPage() {
   const mountTimeRef = useRef(performance.now());
   const hasLoggedTimingRef = useRef(false);
   const currentHoliday = getCurrentHoliday();
-  const [exploreOpen, setExploreOpen] = useState(false);
-  const [socialOpen, setSocialOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("home");
-  const predictionSectionRef = useRef<HTMLDivElement>(null);
+  
   const { isEnabled: isFeatureEnabled } = useFeatureFlags();
   const pageLoadedAtRef = useRef(Date.now());
 
@@ -705,22 +695,6 @@ export default function WeatherPage() {
                 )}
               </div>
 
-              {selectedLocation && (
-                <div ref={predictionSectionRef} className="pt-3 border-t border-border/20">
-                  {user ? (
-                    <PredictionDialog
-                      location={selectedLocation?.name || "Unknown"}
-                      latitude={selectedLocation?.lat || 0}
-                      longitude={selectedLocation?.lon || 0}
-                      isImperial={isImperial}
-                      onPredictionMade={() => {}}
-                      currentWeatherCondition={weatherData?.mostAccurate?.currentWeather?.condition}
-                    />
-                  ) : (
-                    <LockedPredictionButton />
-                  )}
-                </div>
-              )}
             </CardContent>
           </Card>
           {selectedLocation && isLoading && !weatherData ? (
@@ -925,34 +899,6 @@ export default function WeatherPage() {
                 </Card>
               </AnimatedCard>
 
-              {/* Referral Program */}
-              <AnimatedCard index={10} data-amplitude-card="referral-program">
-                <ReferralProgram />
-              </AnimatedCard>
-
-              {/* Feature Ideas Card */}
-              <AnimatedCard index={11} data-amplitude-card="feature-ideas">
-                <FeatureIdeasCard />
-              </AnimatedCard>
-
-              {/* Explore More button */}
-              {isFeatureEnabled('explore_enabled') && (
-                <ExploreButton onClick={() => setExploreOpen(true)} />
-              )}
-
-              {/* Explore Bottom Sheet */}
-              <ExploreSheet
-                open={exploreOpen}
-                onOpenChange={setExploreOpen}
-                latitude={selectedLocation.lat}
-                longitude={selectedLocation.lon}
-                locationName={actualStationName}
-                currentWeather={weatherData.mostAccurate.currentWeather}
-                isImperial={isImperial}
-                userId={user?.id}
-                dailyForecast={weatherData.mostAccurate.dailyForecast}
-                hourlyForecast={weatherData.mostAccurate.hourlyForecast}
-              />
 
               {/* Holiday Calendars - only shown in season */}
               {new Date().getMonth() === 11 && (
@@ -1014,19 +960,7 @@ export default function WeatherPage() {
               isImperial={isImperial}
             />
           )}
-          <BottomTabBar
-            activeTab={activeTab}
-            onTabChange={(tab) => {
-              setActiveTab(tab);
-              if (tab === "home") window.scrollTo({ top: 0, behavior: "smooth" });
-              if (tab === "predict" && predictionSectionRef.current) {
-                predictionSectionRef.current.scrollIntoView({ behavior: "smooth" });
-              }
-              if (tab === "social") setSocialOpen(true);
-              if (tab === "explore") setExploreOpen(true);
-            }}
-          />
-          <SocialTab open={socialOpen} onOpenChange={(open) => { setSocialOpen(open); if (!open) setActiveTab("home"); }} />
+          <BottomTabBar />
         </Suspense>
         <OnboardingTour />
       </div>

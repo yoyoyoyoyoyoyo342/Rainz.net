@@ -657,11 +657,14 @@ export default function WeatherPage() {
               )}
 
               <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-start">
-                <div className="space-y-2">
+              <div className="min-w-0 space-y-2">
+                <div className="min-w-0">
                   <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
-                  {/* Saved locations */}
-                  {savedLocations.length > 0 && (
-                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1 snap-x snap-mandatory" style={{ WebkitOverflowScrolling: 'touch' }}>
+                </div>
+                {/* Saved locations */}
+                {savedLocations.length > 0 && (
+                  <div className="min-w-0 overflow-hidden">
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory" style={{ WebkitOverflowScrolling: 'touch' }}>
                       {savedLocations.map((loc: any) => {
                         const isActive = selectedLocation &&
                           Math.abs(loc.latitude - selectedLocation.lat) < 0.01 &&

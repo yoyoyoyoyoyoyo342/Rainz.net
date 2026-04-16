@@ -491,6 +491,13 @@ export default function SocialPage() {
                   <p className="text-[10px] text-muted-foreground/60 mt-1">
                     {new Date(n.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                   </p>
+                  {n.type === "battle_challenge" && n.metadata?.battle_id && (
+                    <NotificationBattleActions
+                      battleId={n.metadata.battle_id}
+                      metadata={n.metadata}
+                      onActionComplete={() => queryClient.invalidateQueries({ queryKey: ["user-notifications"] })}
+                    />
+                  )}
                 </div>
               ))}
             </div>

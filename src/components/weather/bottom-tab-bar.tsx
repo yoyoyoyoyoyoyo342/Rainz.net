@@ -58,11 +58,12 @@ export function BottomTabBar() {
                       navigate(tab.path);
                     }
                   }}
-                  className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl transition-all active:scale-95 relative ${
+                  className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl transition-all active:scale-95 relative bg-transparent ${
                     isActive
                       ? "text-primary"
                       : "text-muted-foreground/60 hover:text-foreground"
                   }`}
+                  style={{ background: 'transparent' }}
                 >
                   <div className="relative">
                     <Icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />

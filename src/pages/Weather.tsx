@@ -54,7 +54,8 @@ const ARWeatherOverlay = lazy(() => import("@/components/weather/ar-weather-over
 const PredictionDialog = lazy(() => import("@/components/weather/prediction-dialog").then(m => ({ default: m.PredictionDialog })));
 const AQICard = lazy(() => import("@/components/weather/aqi-card").then(m => ({ default: m.AQICard })));
 const BarometerCard = lazy(() => import("@/components/weather/barometer-card").then(m => ({ default: m.BarometerCard })));
-const MobileLocationNav = lazy(() => import("@/components/weather/mobile-location-nav").then(m => ({ default: m.MobileLocationNav })));
+const SocialTab = lazy(() => import("@/components/weather/social-tab").then(m => ({ default: m.SocialTab })));
+const BottomTabBar = lazy(() => import("@/components/weather/bottom-tab-bar").then(m => ({ default: m.BottomTabBar })));
 const RainMapCard = lazy(() => import("@/components/weather/rain-map-card"));
 const DryRoute = lazy(() => import("@/components/weather/dry-route").then(m => ({ default: m.DryRoute })));
 const AffiliateCard = lazy(() => import("@/components/weather/affiliate-card").then(m => ({ default: m.AffiliateCard })));
@@ -66,7 +67,7 @@ const FeatureIdeasCard = lazy(() => import("@/components/weather/feature-ideas-c
 const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-card").then(m => ({ default: m.BattleAcceptCard })));
 
 const WeeklyRecapCard = lazy(() => import("@/components/weather/weekly-recap-card").then(m => ({ default: m.WeeklyRecapCard })));
-const SocialFeed = lazy(() => import("@/components/weather/social-feed").then(m => ({ default: m.SocialFeed })));
+
 const ReferralProgram = lazy(() => import("@/components/weather/referral-program").then(m => ({ default: m.ReferralProgram })));
 
 export default function WeatherPage() {
@@ -102,6 +103,9 @@ export default function WeatherPage() {
   const hasLoggedTimingRef = useRef(false);
   const currentHoliday = getCurrentHoliday();
   const [exploreOpen, setExploreOpen] = useState(false);
+  const [socialOpen, setSocialOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("home");
+  const predictionSectionRef = useRef<HTMLDivElement>(null);
   const { isEnabled: isFeatureEnabled } = useFeatureFlags();
   const pageLoadedAtRef = useRef(Date.now());
 
@@ -760,8 +764,6 @@ export default function WeatherPage() {
               {/* Weekly Recap Card */}
               <WeeklyRecapCard />
 
-              {/* Social Feed */}
-              <SocialFeed isImperial={isImperial} />
 
               <AnimatedCard index={0}>
                 <CurrentWeather

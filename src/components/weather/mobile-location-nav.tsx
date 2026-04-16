@@ -168,7 +168,8 @@ export function MobileLocationNav({ onLocationSelect, currentLocation, isImperia
           
           <div className="overflow-x-auto overflow-y-hidden scrollbar-hide">
             <div className="flex items-center gap-1 p-2 pt-0 min-w-max">
-              {/* Add Location Button */}
+              {/* Add Location Button — hidden at max */}
+              {savedLocations.length < 3 && (
               <Dialog open={isAddingLocation} onOpenChange={setIsAddingLocation}>
                 <button
                   onClick={handleAddClick}

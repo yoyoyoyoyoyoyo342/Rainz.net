@@ -997,6 +997,7 @@ export default function WeatherPage() {
             />
           )}
         </Suspense>
+        <OnboardingTour />
       </div>
     </>
   );

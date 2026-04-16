@@ -258,6 +258,42 @@ export const WeatherPredictionForm = ({
 
       if (error) throw error;
 
+      // === First Prediction Bonus (500 SP for new users within 24h) ===
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser?.created_at) {
+          const signupTime = new Date(authUser.created_at).getTime();
+          const hoursSinceSignup = (Date.now() - signupTime) / (1000 * 60 * 60);
+          if (hoursSinceSignup <= 24) {
+            const { count } = await supabase
+              .from("weather_predictions")
+              .select("id", { count: "exact", head: true })
+              .eq("user_id", user.id);
+            if (count === 1) {
+              const { data: profile } = await supabase
+                .from("profiles")
+                .select("first_prediction_bonus_claimed")
+                .eq("user_id", user.id)
+                .maybeSingle();
+              if (profile && !(profile as any).first_prediction_bonus_claimed) {
+                await supabase.rpc("increment_points_and_claim_bonus" as any, { p_user_id: user.id });
+                // Fallback: direct update if RPC doesn't exist
+                await supabase
+                  .from("profiles")
+                  .update({ 
+                    total_points: (profile as any).total_points + 500,
+                    first_prediction_bonus_claimed: true 
+                  } as any)
+                  .eq("user_id", user.id);
+                toast.success("🎉 Welcome bonus! +500 SP for your first prediction!");
+              }
+            }
+          }
+        }
+      } catch {
+        // Non-critical — don't block the flow
+      }
+
       // Create battle if enabled
       if (enableBattle && data?.id) {
         await createBattle(

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Bell, Send, MessageSquare, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { NotificationBattleActions } from "@/components/weather/notification-battle-actions";
 
 interface SocialTabProps {
   open: boolean;
@@ -168,6 +169,14 @@ export function SocialTab({ open, onOpenChange }: SocialTabProps) {
                   <p className="text-[10px] text-muted-foreground/60 mt-1">
                     {new Date(n.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </p>
+                  {n.type === "battle_challenge" && n.metadata?.battle_id && (
+                    <NotificationBattleActions
+                      battleId={n.metadata.battle_id}
+                      metadata={n.metadata}
+                      onActionComplete={() => queryClient.invalidateQueries({ queryKey: ["user-notifications"] })}
+                      onRequestCloseParent={() => onOpenChange(false)}
+                    />
+                  )}
                 </div>
               ))}
             </>

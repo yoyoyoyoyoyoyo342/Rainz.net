@@ -679,6 +679,69 @@ export function SettingsDialog({
               </div>
             </SettingsSection>
 
+            {/* Saved Locations */}
+            {user && savedLocations.length > 0 && (
+              <SettingsSection title="Saved Locations" icon={MapPin}>
+                <div className="space-y-2">
+                  {savedLocations.slice(0, MAX_SAVED_LOCATIONS).map((loc: any) => (
+                    <div key={loc.id} className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/40">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="text-sm shrink-0">{loc.is_primary ? "📍" : "🌍"}</span>
+                        {renamingLocation?.id === loc.id ? (
+                          <div className="flex items-center gap-2 flex-1">
+                            <Input
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              className="h-7 text-xs"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && renameValue.trim()) {
+                                  renameLocationMutation.mutate({ id: loc.id, name: renameValue.trim() });
+                                } else if (e.key === "Escape") {
+                                  setRenamingLocation(null);
+                                }
+                              }}
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-xs px-2"
+                              onClick={() => {
+                                if (renameValue.trim()) {
+                                  renameLocationMutation.mutate({ id: loc.id, name: renameValue.trim() });
+                                }
+                              }}
+                              disabled={renameLocationMutation.isPending}
+                            >
+                              Save
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-sm truncate">{loc.name}</span>
+                        )}
+                      </div>
+                      {renamingLocation?.id !== loc.id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 shrink-0"
+                          onClick={() => {
+                            setRenamingLocation({ id: loc.id, name: loc.name });
+                            setRenameValue(loc.name);
+                          }}
+                        >
+                          <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <p className="text-xs text-muted-foreground">
+                    {savedLocations.length}/{MAX_SAVED_LOCATIONS} locations saved
+                  </p>
+                </div>
+              </SettingsSection>
+            )}
+
             {/* Card Visibility - Only for authenticated users */}
             {user && (
               <SettingsSection title={t('settings.cardVisibility')} icon={Eye}>

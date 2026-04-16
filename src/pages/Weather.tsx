@@ -39,7 +39,7 @@ import { HeaderInfoBar } from "@/components/weather/header-info-bar";
 import { SettingsDialog } from "@/components/weather/settings-dialog";
 import { WeatherStationInfo } from "@/components/weather/weather-station-info";
 import { WinterAlerts } from "@/components/weather/winter-alerts";
-import { LockedPredictionButton } from "@/components/weather/locked-prediction-button";
+
 const GuidedHelpBanner = lazy(() => import("@/components/weather/guided-help-banner").then(m => ({ default: m.GuidedHelpBanner })));
 
 // Below-the-fold components — lazy loaded for faster initial render
@@ -95,7 +95,7 @@ export default function WeatherPage() {
   const mountTimeRef = useRef(performance.now());
   const hasLoggedTimingRef = useRef(false);
   const currentHoliday = getCurrentHoliday();
-  const [exploreOpen, setExploreOpen] = useState(false);
+  
   const { isEnabled: isFeatureEnabled } = useFeatureFlags();
   const pageLoadedAtRef = useRef(Date.now());
 

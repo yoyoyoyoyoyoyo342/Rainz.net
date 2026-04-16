@@ -704,13 +704,14 @@ export default function WeatherPage() {
                   <WeatherStationInfo stationInfo={weatherData.aggregated.stationInfo} />
                 )}
               </div>
-                  <WeatherReportForm
-                    location={actualStationName}
-                    currentCondition={weatherData.mostAccurate.currentWeather.condition}
-                    locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }}
-                  />
-                )}
-              </div>
+              {weatherData && (
+                <WeatherReportForm
+                  location={actualStationName}
+                  currentCondition={weatherData.mostAccurate.currentWeather.condition}
+                  locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }}
+                />
+              )}
+            </div>
 
             </CardContent>
           </Card>

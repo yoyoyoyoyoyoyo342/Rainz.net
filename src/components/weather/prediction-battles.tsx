@@ -219,14 +219,35 @@ const PredictionBattlesInner = ({
                         {battle.location_name} • {format(new Date(battle.battle_date), "MMM d, yyyy")}
                       </p>
                     </div>
-                    {battle.status === "completed" && battle.winner_id && (
-                      <div className="text-right">
-                        <Trophy className="w-5 h-5 text-yellow-500 mx-auto" />
-                        <p className="text-xs text-muted-foreground">
-                          +{battle.bonus_points} pts
-                        </p>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {battle.status === "pending" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0"
+                          onClick={() => {
+                            const url = `https://rainz.net/?accept_battle=${battle.id}`;
+                            const text = "I challenged you to a weather prediction battle on Rainz! 🌧️";
+                            if (navigator.share) {
+                              navigator.share({ title: "Rainz Battle Challenge", text, url }).catch(() => {});
+                            } else {
+                              navigator.clipboard.writeText(`${text} ${url}`);
+                              toast.success("Challenge link copied!");
+                            }
+                          }}
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {battle.status === "completed" && battle.winner_id && (
+                        <div className="text-right">
+                          <Trophy className="w-5 h-5 text-yellow-500 mx-auto" />
+                          <p className="text-xs text-muted-foreground">
+                            +{battle.bonus_points} pts
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

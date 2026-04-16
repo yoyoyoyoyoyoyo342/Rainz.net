@@ -191,6 +191,7 @@ export function MobileLocationNav({ onLocationSelect, currentLocation, isImperia
                   <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
                 </DialogContent>
               </Dialog>
+              )}
 
               {/* Saved Locations */}
               {savedLocations.map((location) => (

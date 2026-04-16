@@ -976,6 +976,7 @@ export type Database = {
           bio: string | null
           created_at: string
           display_name: string | null
+          first_prediction_bonus_claimed: boolean | null
           id: string
           notification_enabled: boolean | null
           notification_time: string | null
@@ -996,6 +997,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          first_prediction_bonus_claimed?: boolean | null
           id?: string
           notification_enabled?: boolean | null
           notification_time?: string | null
@@ -1016,6 +1018,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          first_prediction_bonus_claimed?: boolean | null
           id?: string
           notification_enabled?: boolean | null
           notification_time?: string | null

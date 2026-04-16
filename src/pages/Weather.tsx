@@ -25,6 +25,7 @@ import { useOfflineCache } from "@/hooks/use-offline-cache";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { useAmplitudeGuidedHelp } from "@/hooks/use-amplitude-guided-help";
 import { ProductHuntLaunchBanner } from "@/components/weather/producthunt-launch-banner";
+import { OnboardingTour } from "@/components/weather/onboarding-tour";
 
 // Critical above-the-fold components — loaded eagerly
 import { LocationSearch } from "@/components/weather/location-search";
@@ -996,6 +997,7 @@ export default function WeatherPage() {
             />
           )}
         </Suspense>
+        <OnboardingTour />
       </div>
     </>
   );

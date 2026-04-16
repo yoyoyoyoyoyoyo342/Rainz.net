@@ -659,24 +659,38 @@ export default function WeatherPage() {
               <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-start">
                 <div className="space-y-2">
                   <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
-                  {/* Saved location chips */}
+                  {/* Saved locations */}
                   {savedLocations.length > 0 && (
-                    <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
                       {savedLocations.map((loc: any) => {
                         const isActive = selectedLocation &&
                           Math.abs(loc.latitude - selectedLocation.lat) < 0.01 &&
                           Math.abs(loc.longitude - selectedLocation.lon) < 0.01;
+                        const cityName = loc.name.split(',')[0].trim();
+                        const countryOrState = loc.name.split(',').slice(1).join(',').trim();
                         return (
                           <button
                             key={loc.id}
                             onClick={() => handleLocationSelect(loc.latitude, loc.longitude, loc.name)}
-                            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                            className={`shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-left transition-all active:scale-95 ${
                               isActive
-                                ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
-                                : "bg-muted/50 text-foreground hover:bg-muted/80"
+                                ? "bg-primary/15 ring-1 ring-primary/40"
+                                : "bg-card/60 hover:bg-card/80 ring-1 ring-border/20"
                             }`}
                           >
-                            {loc.name.split(',')[0].trim()}
+                            <span className={`text-base ${isActive ? "" : "opacity-60"}`}>
+                              {loc.is_primary ? "📍" : "🌍"}
+                            </span>
+                            <div className="min-w-0">
+                              <p className={`text-xs font-semibold leading-tight truncate ${isActive ? "text-primary" : "text-foreground"}`}>
+                                {cityName}
+                              </p>
+                              {countryOrState && (
+                                <p className="text-[10px] text-muted-foreground leading-tight truncate max-w-[80px]">
+                                  {countryOrState}
+                                </p>
+                              )}
+                            </div>
                           </button>
                         );
                       })}

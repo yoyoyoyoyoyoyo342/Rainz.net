@@ -661,7 +661,7 @@ export default function WeatherPage() {
                   <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
                   {/* Saved locations */}
                   {savedLocations.length > 0 && (
-                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1 snap-x snap-mandatory" style={{ WebkitOverflowScrolling: 'touch' }}>
                       {savedLocations.map((loc: any) => {
                         const isActive = selectedLocation &&
                           Math.abs(loc.latitude - selectedLocation.lat) < 0.01 &&

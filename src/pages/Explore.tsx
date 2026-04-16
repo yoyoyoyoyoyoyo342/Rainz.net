@@ -68,6 +68,13 @@ export default function ExplorePage() {
             onLocationSelect={(lt, ln, name) => setSelectedLocation({ lat: lt, lon: ln, name })}
             isImperial={isImperial}
           />
+          {/* Location info */}
+          {selectedLocation && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Compass className="w-4 h-4" />
+              <span>{selectedLocation.name.split(',')[0].trim()}</span>
+            </div>
+          )}
 
           <Suspense fallback={null}>
             <div className="space-y-4">

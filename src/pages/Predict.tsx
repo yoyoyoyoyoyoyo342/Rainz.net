@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Target, LogIn, Medal, Flame, Zap, Trophy, History, ShoppingBag } from "lucide-react";
+import { Target, LogIn, Medal, Flame, Zap, Trophy, History, ShoppingBag, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { SEOHead } from "@/components/seo/seo-head";
 import { BottomTabBar } from "@/components/weather/bottom-tab-bar";
@@ -172,27 +172,11 @@ export default function PredictPage() {
             </div>
           )}
 
-          {/* Location chips */}
-          {savedLocations.length > 0 && (
-            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
-              {savedLocations.map((loc: any) => {
-                const isActive = selectedLocation &&
-                  Math.abs(Number(loc.latitude) - selectedLocation.lat) < 0.01 &&
-                  Math.abs(Number(loc.longitude) - selectedLocation.lon) < 0.01;
-                return (
-                  <button
-                    key={loc.id}
-                    onClick={() => setSelectedLocation({ lat: Number(loc.latitude), lon: Number(loc.longitude), name: loc.name })}
-                    className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                      isActive
-                        ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
-                        : "bg-muted/50 text-foreground hover:bg-muted/80"
-                    }`}
-                  >
-                    {loc.name.split(',')[0].trim()}
-                  </button>
-                );
-              })}
+          {/* Location info */}
+          {selectedLocation && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="w-4 h-4" />
+              <span>{selectedLocation.name}</span>
             </div>
           )}
 

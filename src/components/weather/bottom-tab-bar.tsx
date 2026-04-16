@@ -37,12 +37,7 @@ export function BottomTabBar() {
   return (
     <>
       <nav className="fixed bottom-0 left-0 right-0 z-50 pb-safe px-2">
-        <div className="rounded-2xl border border-border/40 mx-2 mb-2 shadow-lg"
-          style={{
-            background: 'hsl(var(--card) / 0.85)',
-            backdropFilter: 'blur(20px) saturate(140%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(140%)',
-          }}
+        <div className="rounded-2xl border border-border/40 mx-2 mb-2 shadow-lg bg-card"
         >
           <div className="grid grid-cols-4 py-2">
             {tabs.map((tab) => {

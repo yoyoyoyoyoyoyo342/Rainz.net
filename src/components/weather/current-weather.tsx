@@ -263,7 +263,7 @@ export function CurrentWeather({
             <div className="flex items-center gap-2">
               <MapPin className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} ${textMuted}`} />
               <span className={`${textColor} font-semibold ${isCompact ? 'text-base' : 'text-lg'}`}>{locationDisplay}</span>
-              {currentLocation && !isCompact && (
+              {currentLocation && !isCompact && (isLocationSaved || savedLocations.length < 3) && (
                 <button
                   onClick={() => isLocationSaved ? removeLocationMutation.mutate() : addLocationMutation.mutate()}
                   className={`w-6 h-6 rounded-full ${bgOverlayHover} flex items-center justify-center hover:opacity-80 transition-colors`}

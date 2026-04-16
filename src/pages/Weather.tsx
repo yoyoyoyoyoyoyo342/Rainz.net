@@ -695,22 +695,6 @@ export default function WeatherPage() {
                 )}
               </div>
 
-              {selectedLocation && (
-                <div ref={predictionSectionRef} className="pt-3 border-t border-border/20">
-                  {user ? (
-                    <PredictionDialog
-                      location={selectedLocation?.name || "Unknown"}
-                      latitude={selectedLocation?.lat || 0}
-                      longitude={selectedLocation?.lon || 0}
-                      isImperial={isImperial}
-                      onPredictionMade={() => {}}
-                      currentWeatherCondition={weatherData?.mostAccurate?.currentWeather?.condition}
-                    />
-                  ) : (
-                    <LockedPredictionButton />
-                  )}
-                </div>
-              )}
             </CardContent>
           </Card>
           {selectedLocation && isLoading && !weatherData ? (
@@ -915,34 +899,6 @@ export default function WeatherPage() {
                 </Card>
               </AnimatedCard>
 
-              {/* Referral Program */}
-              <AnimatedCard index={10} data-amplitude-card="referral-program">
-                <ReferralProgram />
-              </AnimatedCard>
-
-              {/* Feature Ideas Card */}
-              <AnimatedCard index={11} data-amplitude-card="feature-ideas">
-                <FeatureIdeasCard />
-              </AnimatedCard>
-
-              {/* Explore More button */}
-              {isFeatureEnabled('explore_enabled') && (
-                <ExploreButton onClick={() => setExploreOpen(true)} />
-              )}
-
-              {/* Explore Bottom Sheet */}
-              <ExploreSheet
-                open={exploreOpen}
-                onOpenChange={setExploreOpen}
-                latitude={selectedLocation.lat}
-                longitude={selectedLocation.lon}
-                locationName={actualStationName}
-                currentWeather={weatherData.mostAccurate.currentWeather}
-                isImperial={isImperial}
-                userId={user?.id}
-                dailyForecast={weatherData.mostAccurate.dailyForecast}
-                hourlyForecast={weatherData.mostAccurate.hourlyForecast}
-              />
 
               {/* Holiday Calendars - only shown in season */}
               {new Date().getMonth() === 11 && (
@@ -1004,19 +960,7 @@ export default function WeatherPage() {
               isImperial={isImperial}
             />
           )}
-          <BottomTabBar
-            activeTab={activeTab}
-            onTabChange={(tab) => {
-              setActiveTab(tab);
-              if (tab === "home") window.scrollTo({ top: 0, behavior: "smooth" });
-              if (tab === "predict" && predictionSectionRef.current) {
-                predictionSectionRef.current.scrollIntoView({ behavior: "smooth" });
-              }
-              if (tab === "social") setSocialOpen(true);
-              if (tab === "explore") setExploreOpen(true);
-            }}
-          />
-          <SocialTab open={socialOpen} onOpenChange={(open) => { setSocialOpen(open); if (!open) setActiveTab("home"); }} />
+          <BottomTabBar />
         </Suspense>
         <OnboardingTour />
       </div>

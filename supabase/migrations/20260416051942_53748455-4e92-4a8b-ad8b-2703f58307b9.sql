@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS first_prediction_bonus_claimed boolean DEFAULT false;

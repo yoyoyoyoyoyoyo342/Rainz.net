@@ -669,6 +669,29 @@ export default function WeatherPage() {
               <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-start">
                 <div className="space-y-2">
                   <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
+                  {/* Saved location chips */}
+                  {savedLocations.length > 0 && (
+                    <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+                      {savedLocations.map((loc: any) => {
+                        const isActive = selectedLocation &&
+                          Math.abs(loc.latitude - selectedLocation.lat) < 0.01 &&
+                          Math.abs(loc.longitude - selectedLocation.lon) < 0.01;
+                        return (
+                          <button
+                            key={loc.id}
+                            onClick={() => handleLocationSelect(loc.latitude, loc.longitude, loc.name)}
+                            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                              isActive
+                                ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+                                : "bg-muted/50 text-foreground hover:bg-muted/80"
+                            }`}
+                          >
+                            {loc.name.split(',')[0].trim()}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                   {weatherData?.aggregated?.stationInfo && (
                     <WeatherStationInfo stationInfo={weatherData.aggregated.stationInfo} />
                   )}
@@ -991,13 +1014,19 @@ export default function WeatherPage() {
               isImperial={isImperial}
             />
           )}
-          {user && (
-            <MobileLocationNav
-              onLocationSelect={handleLocationSelect}
-              currentLocation={selectedLocation}
-              isImperial={isImperial}
-            />
-          )}
+          <BottomTabBar
+            activeTab={activeTab}
+            onTabChange={(tab) => {
+              setActiveTab(tab);
+              if (tab === "home") window.scrollTo({ top: 0, behavior: "smooth" });
+              if (tab === "predict" && predictionSectionRef.current) {
+                predictionSectionRef.current.scrollIntoView({ behavior: "smooth" });
+              }
+              if (tab === "social") setSocialOpen(true);
+              if (tab === "explore") setExploreOpen(true);
+            }}
+          />
+          <SocialTab open={socialOpen} onOpenChange={(open) => { setSocialOpen(open); if (!open) setActiveTab("home"); }} />
         </Suspense>
         <OnboardingTour />
       </div>

@@ -151,6 +151,41 @@ export function SettingsDialog({
     ai_preview: true,
   });
   const [loadingNotifications, setLoadingNotifications] = useState(true);
+  const [renamingLocation, setRenamingLocation] = useState<{ id: string; name: string } | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const queryClient = useQueryClient();
+
+  const { data: savedLocations = [] } = useQuery({
+    queryKey: ["saved-locations"],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("saved_locations")
+        .select("*")
+        .order("is_primary", { ascending: false })
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const renameLocationMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase
+        .from("saved_locations")
+        .update({ name })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["saved-locations"] });
+      setRenamingLocation(null);
+      setRenameValue("");
+      toast({ title: "Location renamed" });
+    },
+    onError: () => toast({ title: "Failed to rename", variant: "destructive" }),
+  });
 
   useEffect(() => {
     if (user) {

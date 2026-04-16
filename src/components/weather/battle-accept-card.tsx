@@ -6,6 +6,7 @@ import { WeatherPredictionForm } from "@/components/weather/weather-prediction-f
 import { usePredictionBattles } from "@/hooks/use-prediction-battles";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 interface BattleAcceptCardProps {
   battleId: string;
@@ -15,8 +16,10 @@ interface BattleAcceptCardProps {
 
 export function BattleAcceptCard({ battleId, isImperial, onComplete }: BattleAcceptCardProps) {
   const { acceptBattle } = usePredictionBattles();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const [resolvedBattleId, setResolvedBattleId] = useState<string | null>(null);
   const [battleDetails, setBattleDetails] = useState<{
     locationName: string;
     latitude: number;
@@ -29,9 +32,9 @@ export function BattleAcceptCard({ battleId, isImperial, onComplete }: BattleAcc
       try {
         const { data: battle, error } = await supabase
           .from("prediction_battles")
-          .select("location_name, latitude, longitude, battle_date, status")
+          .select("id, challenger_id, opponent_id, location_name, latitude, longitude, battle_date, status, created_at")
           .eq("id", battleId)
-          .single();
+          .maybeSingle();
 
         if (error || !battle) {
           toast({ title: "Error", description: "Could not find this battle challenge.", variant: "destructive" });
@@ -39,17 +42,39 @@ export function BattleAcceptCard({ battleId, isImperial, onComplete }: BattleAcc
           return;
         }
 
-        if (battle.status !== "pending") {
+        let actionableBattle =
+          battle.status === "pending" && (!battle.opponent_id || battle.opponent_id === user?.id)
+            ? battle
+            : null;
+
+        if (!actionableBattle && user?.id) {
+          const { data: replacementBattle } = await supabase
+            .from("prediction_battles")
+            .select("id, opponent_id, location_name, latitude, longitude, battle_date, status")
+            .eq("status", "pending")
+            .eq("opponent_id", user.id)
+            .eq("challenger_id", battle.challenger_id)
+            .eq("location_name", battle.location_name)
+            .eq("battle_date", battle.battle_date)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          actionableBattle = replacementBattle ?? null;
+        }
+
+        if (!actionableBattle) {
           toast({ title: "Challenge Unavailable", description: "This challenge has already been accepted or expired.", variant: "destructive" });
           onComplete();
           return;
         }
 
+        setResolvedBattleId(actionableBattle.id);
         setBattleDetails({
-          locationName: battle.location_name,
-          latitude: battle.latitude,
-          longitude: battle.longitude,
-          battleDate: battle.battle_date,
+          locationName: actionableBattle.location_name,
+          latitude: actionableBattle.latitude,
+          longitude: actionableBattle.longitude,
+          battleDate: actionableBattle.battle_date,
         });
       } catch (err) {
         console.error("Error fetching battle:", err);
@@ -61,7 +86,7 @@ export function BattleAcceptCard({ battleId, isImperial, onComplete }: BattleAcc
     };
 
     fetchBattle();
-  }, [battleId, toast, onComplete]);
+  }, [battleId, onComplete, toast, user?.id]);
 
   const handlePredictionSubmit = async (predictionId?: string) => {
     if (!predictionId) {
@@ -69,7 +94,7 @@ export function BattleAcceptCard({ battleId, isImperial, onComplete }: BattleAcc
       return;
     }
 
-    const success = await acceptBattle(battleId, predictionId);
+    const success = await acceptBattle(resolvedBattleId ?? battleId, predictionId);
     if (success) {
       onComplete();
     }

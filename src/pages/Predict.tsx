@@ -121,7 +121,13 @@ export default function PredictPage() {
           )}
 
           <Suspense fallback={null}>
-            <PredictionBattles isImperial={isImperial} />
+            {selectedLocation && (
+              <PredictionBattles
+                location={selectedLocation.name}
+                latitude={selectedLocation.lat}
+                longitude={selectedLocation.lon}
+              />
+            )}
           </Suspense>
 
           <Suspense fallback={null}>

@@ -12,16 +12,12 @@ const WeatherReactionsFeed = lazy(() => import("@/components/weather/weather-rea
 const WeatherTrendsCard = lazy(() => import("@/components/weather/weather-trends-card").then(m => ({ default: m.WeatherTrendsCard })));
 const StreakChallenge = lazy(() => import("@/components/weather/streak-challenge").then(m => ({ default: m.StreakChallenge })));
 const WeatherPersonalityQuiz = lazy(() => import("@/components/weather/weather-personality-quiz").then(m => ({ default: m.WeatherPersonalityQuiz })));
-const WeatherFunFacts = lazy(() => import("@/components/weather/weather-fun-facts").then(m => ({ default: m.WeatherFunFacts })));
 const WeatherMoodJournal = lazy(() => import("@/components/weather/weather-mood-journal").then(m => ({ default: m.WeatherMoodJournal })));
-const OutfitRecommender = lazy(() => import("@/components/weather/outfit-recommender").then(m => ({ default: m.OutfitRecommender })));
 const WeatherTrivia = lazy(() => import("@/components/weather/weather-trivia").then(m => ({ default: m.WeatherTrivia })));
 const WeatherCompare = lazy(() => import("@/components/weather/weather-compare").then(m => ({ default: m.WeatherCompare })));
-const WeatherStoryteller = lazy(() => import("@/components/weather/weather-storyteller").then(m => ({ default: m.WeatherStoryteller })));
 const PhotoChallenge = lazy(() => import("@/components/weather/photo-challenge").then(m => ({ default: m.PhotoChallenge })));
 const WeatherDebateArena = lazy(() => import("@/components/weather/weather-debate-arena").then(m => ({ default: m.WeatherDebateArena })));
 const LiveWeatherMap = lazy(() => import("@/components/weather/live-weather-map").then(m => ({ default: m.LiveWeatherMap })));
-const WeatherDejaVu = lazy(() => import("@/components/weather/weather-deja-vu").then(m => ({ default: m.WeatherDejaVu })));
 const FeatureIdeasCard = lazy(() => import("@/components/weather/feature-ideas-card").then(m => ({ default: m.FeatureIdeasCard })));
 const ReferralProgram = lazy(() => import("@/components/weather/referral-program").then(m => ({ default: m.ReferralProgram })));
 
@@ -52,7 +48,6 @@ export default function ExplorePage() {
     }
   }, [savedLocations, selectedLocation]);
 
-  // Default location fallback
   const lat = selectedLocation?.lat || 59.91;
   const lon = selectedLocation?.lon || 10.75;
   const locationName = selectedLocation?.name || "Oslo";
@@ -76,20 +71,16 @@ export default function ExplorePage() {
 
           <Suspense fallback={null}>
             <div className="space-y-4">
-              <WeatherStoryteller latitude={lat} longitude={lon} locationName={locationName} />
-              <WeatherDejaVu latitude={lat} longitude={lon} locationName={locationName} />
-              <LiveWeatherMap latitude={lat} longitude={lon} />
+              <LiveWeatherMap latitude={lat} longitude={lon} locationName={locationName} userId={user?.id} />
               <WeatherTimeMachine latitude={lat} longitude={lon} locationName={locationName} isImperial={isImperial} />
               <WeatherReactionsFeed latitude={lat} longitude={lon} locationName={locationName} />
               <PhotoChallenge latitude={lat} longitude={lon} locationName={locationName} />
               <WeatherDebateArena latitude={lat} longitude={lon} locationName={locationName} />
-              <OutfitRecommender currentTemp={15} condition="cloudy" isImperial={isImperial} />
               <WeatherTrivia />
               <WeatherPersonalityQuiz />
-              <WeatherFunFacts />
               <WeatherMoodJournal />
               <WeatherCompare isImperial={isImperial} />
-              <WeatherTrendsCard latitude={lat} longitude={lon} locationName={locationName} isImperial={isImperial} />
+              <WeatherTrendsCard location={locationName} latitude={lat} longitude={lon} isImperial={isImperial} />
               {user && <StreakChallenge latitude={lat} longitude={lon} locationName={locationName} />}
               <ReferralProgram />
               <FeatureIdeasCard />

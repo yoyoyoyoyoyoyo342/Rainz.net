@@ -50,7 +50,7 @@ export function BattleAcceptCard({ battleId, isImperial, onComplete }: BattleAcc
         if (!actionableBattle && user?.id) {
           const { data: replacementBattle } = await supabase
             .from("prediction_battles")
-            .select("id, opponent_id, location_name, latitude, longitude, battle_date, status")
+            .select("id, challenger_id, opponent_id, location_name, latitude, longitude, battle_date, status, created_at")
             .eq("status", "pending")
             .eq("opponent_id", user.id)
             .eq("challenger_id", battle.challenger_id)

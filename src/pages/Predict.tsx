@@ -216,6 +216,15 @@ export default function PredictPage() {
             </TabsList>
 
             <TabsContent value="predict" className="mt-4 space-y-4">
+              {acceptBattleId && (
+                <Suspense fallback={null}>
+                  <BattleAcceptCard
+                    battleId={acceptBattleId}
+                    isImperial={isImperial}
+                    onComplete={clearAcceptBattle}
+                  />
+                </Suspense>
+              )}
               {/* Points Info */}
               <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
                 <CardContent className="p-3">

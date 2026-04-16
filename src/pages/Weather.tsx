@@ -698,12 +698,12 @@ export default function WeatherPage() {
                         );
                       })}
                     </div>
-                  )}
-                  {weatherData?.aggregated?.stationInfo && (
-                    <WeatherStationInfo stationInfo={weatherData.aggregated.stationInfo} />
-                  )}
-                </div>
-                {weatherData && (
+                  </div>
+                )}
+                {weatherData?.aggregated?.stationInfo && (
+                  <WeatherStationInfo stationInfo={weatherData.aggregated.stationInfo} />
+                )}
+              </div>
                   <WeatherReportForm
                     location={actualStationName}
                     currentCondition={weatherData.mostAccurate.currentWeather.condition}

@@ -64,15 +64,8 @@ import { BottomTabBar } from "@/components/weather/bottom-tab-bar";
 
 export default function WeatherPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const acceptBattleId = searchParams.get("accept_battle");
 
-  const clearAcceptBattle = useCallback(() => {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.delete("accept_battle");
-      return next;
-    });
-  }, [setSearchParams]);
+
   const [selectedLocation, setSelectedLocation] = useState<{
     lat: number;
     lon: number;
@@ -767,8 +760,8 @@ export default function WeatherPage() {
                 </div>
               )}
 
-              {/* Weekly Recap Card */}
-              <WeeklyRecapCard />
+
+
 
 
               <AnimatedCard index={0}>

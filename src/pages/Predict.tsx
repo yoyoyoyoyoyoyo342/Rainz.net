@@ -18,6 +18,7 @@ const Leaderboard = lazy(() => import("@/components/weather/leaderboard").then(m
 const PointsHistory = lazy(() => import("@/components/weather/points-history").then(m => ({ default: m.PointsHistory })));
 const PointsShop = lazy(() => import("@/components/weather/points-shop").then(m => ({ default: m.PointsShop })));
 const PredictionBattles = lazy(() => import("@/components/weather/prediction-battles").then(m => ({ default: m.PredictionBattles })));
+const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-card").then(m => ({ default: m.BattleAcceptCard })));
 
 export default function PredictPage() {
   const { user } = useAuth();

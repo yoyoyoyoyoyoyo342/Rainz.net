@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Target, LogIn, Medal, Flame, Zap, Trophy, History, ShoppingBag, MapPin } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { SEOHead } from "@/components/seo/seo-head";
 import { BottomTabBar } from "@/components/weather/bottom-tab-bar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,14 +18,28 @@ const Leaderboard = lazy(() => import("@/components/weather/leaderboard").then(m
 const PointsHistory = lazy(() => import("@/components/weather/points-history").then(m => ({ default: m.PointsHistory })));
 const PointsShop = lazy(() => import("@/components/weather/points-shop").then(m => ({ default: m.PointsShop })));
 const PredictionBattles = lazy(() => import("@/components/weather/prediction-battles").then(m => ({ default: m.PredictionBattles })));
+const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-card").then(m => ({ default: m.BattleAcceptCard })));
 
 export default function PredictPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("predict");
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lon: number; name: string } | null>(null);
   const [isImperial, setIsImperial] = useState(false);
+  const acceptBattleId = searchParams.get("accept_battle");
+
+  // If we land here with accept_battle, ensure we're on the predict tab
+  useEffect(() => {
+    if (acceptBattleId) setActiveTab("predict");
+  }, [acceptBattleId]);
+
+  const clearAcceptBattle = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("accept_battle");
+    setSearchParams(next, { replace: true });
+  };
 
   // Load user's primary saved location
   const { data: savedLocations = [] } = useQuery({
@@ -202,6 +216,15 @@ export default function PredictPage() {
             </TabsList>
 
             <TabsContent value="predict" className="mt-4 space-y-4">
+              {acceptBattleId && (
+                <Suspense fallback={null}>
+                  <BattleAcceptCard
+                    battleId={acceptBattleId}
+                    isImperial={isImperial}
+                    onComplete={clearAcceptBattle}
+                  />
+                </Suspense>
+              )}
               {/* Points Info */}
               <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
                 <CardContent className="p-3">

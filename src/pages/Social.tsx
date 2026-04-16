@@ -13,6 +13,7 @@ import { SEOHead } from "@/components/seo/seo-head";
 import { BottomTabBar } from "@/components/weather/bottom-tab-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NotificationBattleActions } from "@/components/weather/notification-battle-actions";
 
 export default function SocialPage() {
   const { user } = useAuth();

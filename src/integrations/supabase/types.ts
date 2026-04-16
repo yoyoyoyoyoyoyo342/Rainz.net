@@ -1332,29 +1332,99 @@ export type Database = {
         }
         Relationships: []
       }
-      social_posts: {
+      social_post_comments: {
         Row: {
           content: string
           created_at: string | null
           id: string
-          image_url: string | null
-          location_name: string | null
+          post_id: string
           user_id: string
         }
         Insert: {
           content: string
           created_at?: string | null
           id?: string
-          image_url?: string | null
-          location_name?: string | null
+          post_id: string
           user_id: string
         }
         Update: {
           content?: string
           created_at?: string | null
           id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_post_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_posts: {
+        Row: {
+          comment_count: number
+          content: string
+          created_at: string | null
+          id: string
+          image_url: string | null
+          like_count: number
+          location_name: string | null
+          post_type: string
+          user_id: string
+        }
+        Insert: {
+          comment_count?: number
+          content: string
+          created_at?: string | null
+          id?: string
           image_url?: string | null
+          like_count?: number
           location_name?: string | null
+          post_type?: string
+          user_id: string
+        }
+        Update: {
+          comment_count?: number
+          content?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          like_count?: number
+          location_name?: string | null
+          post_type?: string
           user_id?: string
         }
         Relationships: []

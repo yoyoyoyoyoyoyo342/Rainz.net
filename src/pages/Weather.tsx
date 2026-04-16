@@ -51,24 +51,17 @@ const AIChatButton = lazy(() => import("@/components/weather/ai-chat-button").th
 const MorningWeatherReview = lazy(() => import("@/components/weather/morning-weather-review").then(m => ({ default: m.MorningWeatherReview })));
 const SocialWeatherCard = lazy(() => import("@/components/weather/social-weather-card").then(m => ({ default: m.SocialWeatherCard })));
 const ARWeatherOverlay = lazy(() => import("@/components/weather/ar-weather-overlay").then(m => ({ default: m.ARWeatherOverlay })));
-const PredictionDialog = lazy(() => import("@/components/weather/prediction-dialog").then(m => ({ default: m.PredictionDialog })));
 const AQICard = lazy(() => import("@/components/weather/aqi-card").then(m => ({ default: m.AQICard })));
 const BarometerCard = lazy(() => import("@/components/weather/barometer-card").then(m => ({ default: m.BarometerCard })));
-const SocialTab = lazy(() => import("@/components/weather/social-tab").then(m => ({ default: m.SocialTab })));
-const BottomTabBar = lazy(() => import("@/components/weather/bottom-tab-bar").then(m => ({ default: m.BottomTabBar })));
 const RainMapCard = lazy(() => import("@/components/weather/rain-map-card"));
 const DryRoute = lazy(() => import("@/components/weather/dry-route").then(m => ({ default: m.DryRoute })));
 const AffiliateCard = lazy(() => import("@/components/weather/affiliate-card").then(m => ({ default: m.AffiliateCard })));
 const ChristmasCalendar = lazy(() => import("@/components/weather/christmas-calendar").then(m => ({ default: m.ChristmasCalendar })));
 const RamadanCalendar = lazy(() => import("@/components/weather/ramadan-calendar").then(m => ({ default: m.RamadanCalendar })));
-const ExploreSheet = lazy(() => import("@/components/weather/explore-sheet").then(m => ({ default: m.ExploreSheet })));
-const ExploreButton = lazy(() => import("@/components/weather/explore-sheet").then(m => ({ default: m.ExploreButton })));
-const FeatureIdeasCard = lazy(() => import("@/components/weather/feature-ideas-card").then(m => ({ default: m.FeatureIdeasCard })));
 const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-card").then(m => ({ default: m.BattleAcceptCard })));
-
 const WeeklyRecapCard = lazy(() => import("@/components/weather/weekly-recap-card").then(m => ({ default: m.WeeklyRecapCard })));
 
-const ReferralProgram = lazy(() => import("@/components/weather/referral-program").then(m => ({ default: m.ReferralProgram })));
+import { BottomTabBar } from "@/components/weather/bottom-tab-bar";
 
 export default function WeatherPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -103,9 +96,6 @@ export default function WeatherPage() {
   const hasLoggedTimingRef = useRef(false);
   const currentHoliday = getCurrentHoliday();
   const [exploreOpen, setExploreOpen] = useState(false);
-  const [socialOpen, setSocialOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("home");
-  const predictionSectionRef = useRef<HTMLDivElement>(null);
   const { isEnabled: isFeatureEnabled } = useFeatureFlags();
   const pageLoadedAtRef = useRef(Date.now());
 

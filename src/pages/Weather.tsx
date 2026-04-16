@@ -572,14 +572,6 @@ export default function WeatherPage() {
         )}
 
         <div className="container mx-auto px-4 py-4 sm:py-6 max-w-7xl relative z-10">
-          {/* Inline battle accept card when navigated via accept_battle param */}
-          {acceptBattleId && (
-            <BattleAcceptCard
-              battleId={acceptBattleId}
-              isImperial={isImperial}
-              onComplete={clearAcceptBattle}
-            />
-          )}
 
           {/* Product Hunt Launch Banner */}
           <ProductHuntLaunchBanner />

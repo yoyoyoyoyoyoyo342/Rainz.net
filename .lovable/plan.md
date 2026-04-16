@@ -1,71 +1,96 @@
 
 
-## Plan: Product Hunt Launch Readiness — 4 Features
+## Plan: Bottom Navigation Bar Overhaul + Saved Locations in Main Card
 
-### 1. Onboarding Tooltip Tour (new users)
+### Summary
+Replace the current scrollable location-based bottom navbar with a fixed 4-tab navigation bar (Home, Predict, Social, Explore). Move saved locations into the main weather card as a horizontal chip selector. Remove the Social Feed card from the homepage and remove followers' predictions from the social feed.
 
-**What**: A 3-step floating tooltip tour for first-time visitors (no account required) highlighting Predictions, DryRoutes, and the Social Feed. Shows once per device.
+---
 
-**Implementation**:
-- Create `src/components/weather/onboarding-tour.tsx` — a lightweight tooltip overlay using absolute positioning and Framer Motion. Steps:
-  1. "Make weather predictions and compete" → points at the Predict button area
-  2. "Plan dry walking routes" → points at the DryRoutes card
-  3. "See what others are posting" → points at the Social Feed
-- Uses `localStorage('rainz-tour-complete')` to show only once
-- Renders inside `Weather.tsx` after weather data loads, only if tour not completed
-- Each step has "Next" / "Skip" / "Done" buttons
-- Semi-transparent backdrop with a cutout highlight effect (CSS box-shadow trick)
+### 1. New Bottom Tab Bar Component
 
-### 2. "Challenge a Friend" Deeplink
+**Create `src/components/weather/bottom-tab-bar.tsx`**
 
-**What**: A shareable URL (`rainz.net/?accept_battle=<id>`) that works in WhatsApp/iMessage. The existing `accept_battle` param already handles battle acceptance — we just need a **share button** that generates and copies this link.
+A fixed 4-tab navigation bar — no scrolling, all icons + labels visible at once on 375px:
 
-**Implementation**:
-- In `src/components/weather/prediction-battles.tsx`, add a "Share Challenge" button next to each pending battle the user created
-- Uses `navigator.share()` with fallback to `navigator.clipboard.writeText()`
-- Share text: "I challenged you to a weather prediction battle on Rainz! 🌧️" + URL
-- The URL is `https://rainz.net/?accept_battle=<battle_id>`
-- Also add share button in `weather-prediction-form.tsx` after a battle is created (the `createBattle` flow)
+| Tab | Icon | Action |
+|-----|------|--------|
+| Home | `CloudSun` (cloud + house hybrid) | Scrolls to top / default view |
+| Predict | `Target` | Opens PredictionDialog |
+| Social | `Bell` | Opens Social tab (notifications + posts) |
+| Explore | `Compass` | Opens Explore sheet |
 
-### 3. First Prediction Bonus (500 SP)
+- Fixed to bottom, full-width grid of 4 equal columns
+- Glass card styling, no horizontal scroll
+- Active tab highlighted with primary color
+- No "Add" button, no location pills
 
-**What**: New users who make their first prediction within 24h of signup get 500 bonus SP.
+### 2. Saved Locations in Main Card
 
-**Implementation**:
-- **DB migration**: Add column `first_prediction_bonus_claimed boolean DEFAULT false` to `profiles` table
-- In `weather-prediction-form.tsx`, after a successful prediction insert, check:
-  1. User's `created_at` from auth is within 24h of now
-  2. This is their first prediction (count = 1)
-  3. `first_prediction_bonus_claimed` is false
-- If all true: update profiles `total_points += 500` and set `first_prediction_bonus_claimed = true`, insert a notification, show a celebratory toast
-- Add a small badge/banner in the prediction dialog: "🎁 Make your first prediction within 24h for 500 bonus points!"
+**Edit `src/pages/Weather.tsx`**
 
-### 4. Performance Audit & LCP Optimization
+Add a horizontal scrollable chip row inside the main card (below the location search, ~line 667) showing saved locations as tappable pills. Clicking one switches to that location. Current location gets a highlighted ring.
 
-**What**: Ensure LCP < 2s on mobile for PH judges.
+### 3. Remove Social Feed from Homepage
 
-**Implementation**:
-- **Preload critical fonts**: Add `<link rel="preload">` for Inter in `index.html`
-- **Defer non-critical JS**: Verify all below-fold components use `lazy()` (already done for most)
-- **Image optimization**: Add `loading="lazy"` and explicit `width`/`height` to the PH badge in footer
-- **Reduce main bundle**: Check if any heavy imports (date-fns, framer-motion) can be tree-shaken or lazy-loaded more aggressively
-- **DNS prefetch**: Add `<link rel="dns-prefetch">` for `ohwtbkudpkfbakynikyj.supabase.co` and `api.open-meteo.com` in `index.html`
-- **Service worker**: Verify `sw.js` network-first strategy doesn't block initial paint
+**Edit `src/pages/Weather.tsx`**
+- Remove `<SocialFeed isImperial={isImperial} />` (line 764)
+- The Social Feed content moves into the Social tab view
+
+### 4. Social Tab Content
+
+**Create `src/components/weather/social-tab.tsx`**
+
+A full-screen overlay/sheet triggered by the Social tab containing:
+- **Notifications** — user's inbox (existing notification queries from `user_notifications`)
+- **Post creation** — text + optional image posts (new `social_posts` table)
+- **Feed** — posts from followed users only (no predictions shown)
+
+### 5. Remove Followers' Predictions from Social Feed
+
+**Edit `src/components/weather/social-feed.tsx`**
+- This component currently shows followed users' predictions — it will be repurposed or removed since the Social tab replaces it with text/image posts instead
+
+### 6. Replace MobileLocationNav Usage
+
+**Edit `src/pages/Weather.tsx`**
+- Replace `<MobileLocationNav>` render (~line 993) with the new `<BottomTabBar>`
+- Pass callbacks for each tab action (predict dialog open, social open, explore open)
+
+### 7. Database Migration
+
+**New table `social_posts`** for text/image posts:
+```sql
+CREATE TABLE public.social_posts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  content text NOT NULL,
+  image_url text,
+  created_at timestamptz DEFAULT now(),
+  location_name text
+);
+ALTER TABLE public.social_posts ENABLE ROW LEVEL SECURITY;
+-- Users can read posts from people they follow
+-- Users can insert their own posts
+```
 
 ---
 
 ### Technical Details
 
-| Feature | Files Created/Modified |
-|---|---|
-| Tooltip Tour | New: `onboarding-tour.tsx`. Modified: `Weather.tsx` |
-| Challenge Deeplink | Modified: `prediction-battles.tsx`, `weather-prediction-form.tsx` |
-| First Prediction Bonus | Migration: `profiles` table. Modified: `weather-prediction-form.tsx`, `prediction-dialog.tsx` |
-| Performance | Modified: `index.html`, `footer.tsx` |
+| Change | Files |
+|--------|-------|
+| Bottom tab bar | New: `bottom-tab-bar.tsx` |
+| Social tab | New: `social-tab.tsx` |
+| Saved location chips | Edit: `Weather.tsx` (add chips in main card) |
+| Remove social feed | Edit: `Weather.tsx` (remove `<SocialFeed>`) |
+| Replace mobile nav | Edit: `Weather.tsx` (swap `MobileLocationNav` → `BottomTabBar`) |
+| Social posts table | New migration |
 
 ### Execution Order
-1. Performance audit (quick wins, foundational)
-2. First prediction bonus (DB migration first)
-3. Challenge a friend deeplink (small, high-impact)
-4. Onboarding tooltip tour (largest, most visible)
+1. Create `bottom-tab-bar.tsx` (4-tab fixed nav)
+2. Create `social-tab.tsx` (notifications + posts feed)
+3. DB migration for `social_posts`
+4. Edit `Weather.tsx` — add saved location chips, remove SocialFeed, swap navbar
+5. Verify build
 

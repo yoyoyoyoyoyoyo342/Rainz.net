@@ -13,6 +13,7 @@ import { SEOHead } from "@/components/seo/seo-head";
 import { BottomTabBar } from "@/components/weather/bottom-tab-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationBattleActions } from "@/components/weather/notification-battle-actions";
 
 export default function SocialPage() {
@@ -115,14 +116,15 @@ export default function SocialPage() {
       const userIds = [...new Set(comments.map((c: any) => c.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, display_name")
+        .select("user_id, display_name, avatar_url")
         .in("user_id", userIds);
-      const nameMap = new Map(profiles?.map((p: any) => [p.user_id, p.display_name]) || []);
+      const profileMap = new Map(profiles?.map((p: any) => [p.user_id, p]) || []);
 
       const map: Record<string, any[]> = {};
       comments.forEach((c: any) => {
         if (!map[c.post_id]) map[c.post_id] = [];
-        map[c.post_id].push({ ...c, display_name: nameMap.get(c.user_id) || "User" });
+        const prof = profileMap.get(c.user_id) as any;
+        map[c.post_id].push({ ...c, display_name: prof?.display_name || "User", avatar_url: prof?.avatar_url || null });
       });
       return map;
     },

@@ -166,73 +166,126 @@ export const DailySpinWheel = () => {
     return SPIN_REWARDS[SPIN_REWARDS.length - 1];
   };
 
-  const applyReward = async (reward: SpinReward) => {
-    if (!user || reward.type === "nothing") return;
+  const applyReward = async (reward: SpinReward): Promise<boolean> => {
+    if (!user) return false;
+    if (reward.type === "nothing") return true;
 
-    try {
-      if (reward.type === "shop_points") {
-        const { data: profile } = await supabase
+    if (reward.type === "shop_points") {
+      const { data: profile, error: selErr } = await supabase
+        .from("profiles")
+        .select("shop_points")
+        .eq("user_id", user.id)
+        .single();
+      if (selErr) throw selErr;
+
+      const before = profile?.shop_points || 0;
+      const target = before + (reward.amount || 0);
+
+      const { error: updErr } = await supabase
+        .from("profiles")
+        .update({ shop_points: target })
+        .eq("user_id", user.id);
+      if (updErr) throw updErr;
+
+      // Verify
+      const { data: verify } = await supabase
+        .from("profiles")
+        .select("shop_points")
+        .eq("user_id", user.id)
+        .single();
+      if ((verify?.shop_points || 0) < target) {
+        // Retry once
+        await supabase
+          .from("profiles")
+          .update({ shop_points: target })
+          .eq("user_id", user.id);
+        const { data: verify2 } = await supabase
           .from("profiles")
           .select("shop_points")
           .eq("user_id", user.id)
           .single();
-        
+        if ((verify2?.shop_points || 0) < target) return false;
+      }
+      return true;
+    }
+
+    if (reward.type === "prediction_points") {
+      const { data: profile, error: selErr } = await supabase
+        .from("profiles")
+        .select("total_points")
+        .eq("user_id", user.id)
+        .single();
+      if (selErr) throw selErr;
+
+      const before = profile?.total_points || 0;
+      const target = before + (reward.amount || 0);
+
+      const { error: updErr } = await supabase
+        .from("profiles")
+        .update({ total_points: target })
+        .eq("user_id", user.id);
+      if (updErr) throw updErr;
+
+      const { data: verify } = await supabase
+        .from("profiles")
+        .select("total_points")
+        .eq("user_id", user.id)
+        .single();
+      if ((verify?.total_points || 0) < target) {
         await supabase
           .from("profiles")
-          .update({ shop_points: (profile?.shop_points || 0) + (reward.amount || 0) })
+          .update({ total_points: target })
           .eq("user_id", user.id);
-          
-      } else if (reward.type === "prediction_points") {
-        const { data: profile } = await supabase
+        const { data: verify2 } = await supabase
           .from("profiles")
           .select("total_points")
           .eq("user_id", user.id)
           .single();
-        
-        await supabase
-          .from("profiles")
-          .update({ total_points: (profile?.total_points || 0) + (reward.amount || 0) })
-          .eq("user_id", user.id);
-          
-      } else if (reward.type === "streak_freeze") {
-        // Check if inventory exists first
-        const { data: inventory } = await supabase
+        if ((verify2?.total_points || 0) < target) return false;
+      }
+      return true;
+    }
+
+    if (reward.type === "streak_freeze") {
+      const { data: inventory } = await supabase
+        .from("user_inventory")
+        .select("id, quantity")
+        .eq("user_id", user.id)
+        .eq("item_type", "streak_freeze")
+        .maybeSingle();
+
+      if (inventory) {
+        const { error } = await supabase
           .from("user_inventory")
-          .select("id, quantity")
-          .eq("user_id", user.id)
-          .eq("item_type", "streak_freeze")
-          .maybeSingle();
-        
-        if (inventory) {
-          // Update existing
-          await supabase
-            .from("user_inventory")
-            .update({ quantity: inventory.quantity + 1 })
-            .eq("id", inventory.id);
-        } else {
-          // Insert new
-          await supabase
-            .from("user_inventory")
-            .insert({
-              user_id: user.id,
-              item_type: "streak_freeze",
-              quantity: 1,
-            });
-        }
-          
-      } else if (reward.type === "double_points") {
-        // Use-based double points instead of time-based
-        await supabase
-          .from("active_powerups")
+          .update({ quantity: inventory.quantity + 1 })
+          .eq("id", inventory.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("user_inventory")
           .insert({
             user_id: user.id,
-            powerup_type: "double_points",
-            uses_remaining: 1,
+            item_type: "streak_freeze",
+            quantity: 1,
           });
+        if (error) throw error;
       }
-    } catch (error) {
-      console.error("Error applying reward:", error);
+      return true;
     }
+
+    if (reward.type === "double_points") {
+      const { error } = await supabase
+        .from("active_powerups")
+        .insert({
+          user_id: user.id,
+          powerup_type: "double_points",
+          uses_remaining: 1,
+        });
+      if (error) throw error;
+      return true;
+    }
+
+    return false;
   };
 
   const spin = async () => {
@@ -251,30 +304,46 @@ export const DailySpinWheel = () => {
     
     setRotation(newRotation);
 
-    // Record the spin
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      await supabase.from("daily_spins").insert({
-        user_id: user.id,
-        spin_date: today,
-        reward_type: reward.type,
-        reward_amount: reward.amount || 0,
-      });
-    } catch (error) {
-      console.error("Error recording spin:", error);
-    }
-
-    // Wait for spin animation to complete
+    // Wait for spin animation to complete, THEN apply reward, THEN record spin
     setTimeout(async () => {
       setIsSpinning(false);
-      setHasSpunToday(true);
-      
-      // Apply the reward
-      await applyReward(reward);
-      
-      // Show result and confetti
+
+      // 1. Apply the reward FIRST
+      let rewardApplied = false;
+      try {
+        rewardApplied = await applyReward(reward);
+      } catch (error: any) {
+        console.error("Error applying reward:", error);
+        toast.error(`Reward failed to apply: ${error?.message || "unknown error"} — contact support`);
+        setShowResult(true);
+        return;
+      }
+
+      if (!rewardApplied && reward.type !== "nothing") {
+        toast.error("Reward verification failed — please contact support");
+        setShowResult(true);
+        return;
+      }
+
+      // 2. Record the spin only after reward is confirmed applied
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const { error: spinErr } = await supabase.from("daily_spins").insert({
+          user_id: user.id,
+          spin_date: today,
+          reward_type: reward.type,
+          reward_amount: reward.amount || 0,
+        });
+        if (spinErr) throw spinErr;
+        setHasSpunToday(true);
+      } catch (error) {
+        console.error("Error recording spin:", error);
+        // Reward already applied — don't block UI
+      }
+
+      // 3. Show result and confetti
       setShowResult(true);
-      
+
       if (reward.type !== "nothing") {
         confetti({
           particleCount: 80,

@@ -30,6 +30,7 @@ interface WeatherPredictionFormProps {
 }
 
 const weatherConditions = [
+  { value: "clear", label: "Clear", icon: Sun, color: "text-yellow-500" },
   { value: "sunny", label: "Sunny", icon: Sun, color: "text-yellow-500" },
   { value: "partly-cloudy", label: "Partly Cloudy", icon: Cloud, color: "text-blue-300" },
   { value: "cloudy", label: "Cloudy", icon: Cloud, color: "text-gray-400" },
@@ -88,12 +89,15 @@ function RainzPredictionCard({ latitude, longitude, isImperial }: { latitude: nu
 
   if (!prediction) return null;
 
+  const condLower = prediction.condition.toLowerCase();
   const matchedCondition = weatherConditions.find(c =>
-    prediction.condition.toLowerCase().includes(c.value.replace("-", " ")) ||
-    prediction.condition.toLowerCase().includes(c.label.toLowerCase())
+    condLower.includes(c.value.replace("-", " ")) ||
+    condLower.includes(c.label.toLowerCase())
   );
-  const CondIcon = matchedCondition?.icon || Cloud;
-  const condColor = matchedCondition?.color || "text-muted-foreground";
+  // Explicit fallback: "clear" or "sun" → Sun icon
+  const isClearLike = !matchedCondition && (condLower.includes("clear") || condLower.includes("sun"));
+  const CondIcon = matchedCondition?.icon || (isClearLike ? Sun : Cloud);
+  const condColor = matchedCondition?.color || (isClearLike ? "text-yellow-500" : "text-muted-foreground");
 
   return (
     <div className="p-3 rounded-xl bg-gradient-to-br from-sky-500/10 to-primary/10 border border-sky-500/20">

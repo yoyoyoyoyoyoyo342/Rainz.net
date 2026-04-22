@@ -355,12 +355,15 @@ export default function SocialPage() {
               {posts.map((post: any) => (
                 <div key={post.id} className="p-4 rounded-2xl glass-card border border-border/10 space-y-2">
                   <div className="flex items-center gap-2">
-                    <div
-                      className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary cursor-pointer"
+                    <Avatar
+                      className="h-9 w-9 cursor-pointer"
                       onClick={() => navigate(`/profile/${post.user_id}`)}
                     >
-                      {(post.display_name || "U")[0].toUpperCase()}
-                    </div>
+                      <AvatarImage src={post.avatar_url || undefined} alt={post.display_name} />
+                      <AvatarFallback className="text-xs font-bold bg-primary/15 text-primary">
+                        {(post.display_name || "U")[0].toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="flex-1 min-w-0">
                       <span
                         className="font-medium text-sm cursor-pointer hover:underline"
@@ -425,9 +428,12 @@ export default function SocialPage() {
                     <div className="space-y-2 pt-2 border-t border-border/10">
                       {(commentsMap[post.id] || []).map((comment: any) => (
                         <div key={comment.id} className="flex gap-2">
-                          <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">
-                            {(comment.display_name || "U")[0].toUpperCase()}
-                          </div>
+                          <Avatar className="h-6 w-6 shrink-0 mt-0.5">
+                            <AvatarImage src={comment.avatar_url || undefined} alt={comment.display_name} />
+                            <AvatarFallback className="text-[9px] font-bold bg-muted">
+                              {(comment.display_name || "U")[0].toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="min-w-0">
                             <span className="font-medium text-xs">{comment.display_name}</span>
                             <p className="text-xs text-foreground/80">{comment.content}</p>

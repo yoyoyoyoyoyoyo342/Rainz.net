@@ -1,31 +1,19 @@
 
 
-## Plan: Fix Search Overflow, Saved Locations Scroll, and Remove Inbox
+## Fix 4 Bugs: Spin Wheel, Social Feed, Clear Icon, Predict Options
 
-### Issues
-1. **Search bar dropdown overflows** the card container on mobile because `LocationSearch` uses `overflow-hidden` on its wrapper but the dropdown expands inline, pushing the card height and breaking layout.
-2. **Saved locations don't scroll** — the `overflow-x-auto` is there but the container is inside a grid cell that constrains width. Needs explicit `max-w` or `overflow-hidden` on the parent.
-3. **Inbox remnants on homepage** — `WeeklyRecapCard` and `BattleAcceptCard` are notification-like elements still on the homepage that should move to Social.
+### 1. Daily Spin Wheel — rewards not actually granted
+**Problem:** In `daily-spin-wheel.tsx`, the spin record is inserted into `daily_spins` BEFORE `applyReward()` runs. The current `applyReward` does a select-then-update on `profiles.shop_points` / `total_points` — if either query fails silently (RLS, race, network), the user sees the win toast but no points are added. There's also no error feedback to the user.
 
-### Changes
+**Fix:**
+- Move `applyReward()` to run BEFORE recording the spin, and only insert into `daily_spins` after the reward is successfully applied.
+- Replace the silent `console.error` with a `toast.error("Reward failed to apply — contact support")` so failures are visible.
+- Wrap the profile update in proper error handling that throws on Supabase errors (currently `error` from `.update()` is discarded).
+- Add a verification step: after updating, re-fetch the profile to confirm points changed; if not, retry once.
 
-**1. Fix LocationSearch dropdown (location-search.tsx)**
-- Change the dropdown from inline expansion to an **absolute-positioned overlay** so it floats over content instead of pushing the card layout. Add `relative` to the wrapper, make the results dropdown `absolute top-full left-0 right-0 z-50` with a max-height and scroll.
-- Remove `overflow-hidden` from the root wrapper so the absolute dropdown can escape.
-
-**2. Fix saved locations scrollability (Weather.tsx ~line 659-698)**
-- Wrap the saved locations + search in a container with `overflow-hidden` to constrain width.
-- Add `min-w-0` to the flex/grid child so `overflow-x-auto` actually triggers.
-- Add explicit `max-w-full` to the scroll container.
-
-**3. Remove inbox/notification elements from homepage (Weather.tsx)**
-- Remove `WeeklyRecapCard` (line 776) from homepage — it belongs in Social.
-- Remove `BattleAcceptCard` import and usage (lines 61, 576-588) from homepage — battles belong in Predict/Social.
-- Remove associated imports and state (`acceptBattleId`, `clearAcceptBattle`).
-
-### Files Modified
-| Change | File |
-|--------|------|
-| Absolute dropdown positioning | `src/components/weather/location-search.tsx` |
-| Scroll fix + remove inbox cards | `src/pages/Weather.tsx` |
-
+### 2. Social Feed — posts only visible to poster
+**Problem:** The RLS SELECT policy on `public.social_posts` is:
+```
+user_id IN (followed users) OR user_id = auth.uid()
+```
+This is

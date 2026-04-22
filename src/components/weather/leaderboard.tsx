@@ -9,11 +9,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface LeaderboardEntry {
   rank: number;
   user_id: string;
   display_name: string;
+  avatar_url?: string | null;
   total_points: number;
   current_streak: number;
   longest_streak: number;

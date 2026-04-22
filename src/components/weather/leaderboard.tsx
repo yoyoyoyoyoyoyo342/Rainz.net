@@ -9,11 +9,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface LeaderboardEntry {
   rank: number;
   user_id: string;
   display_name: string;
+  avatar_url?: string | null;
   total_points: number;
   current_streak: number;
   longest_streak: number;
@@ -78,6 +80,7 @@ export const Leaderboard = () => {
         rank: row.rank,
         user_id: row.user_id,
         display_name: row.display_name,
+        avatar_url: row.avatar_url,
         total_points: row.total_points,
         current_streak: row.current_streak,
         longest_streak: row.longest_streak,
@@ -104,6 +107,7 @@ export const Leaderboard = () => {
         rank: row.rank || index + 1,
         user_id: row.user_id,
         display_name: row.display_name,
+        avatar_url: row.avatar_url,
         total_points: row.total_points,
         current_streak: row.current_streak,
         longest_streak: row.longest_streak,
@@ -222,6 +226,12 @@ export const Leaderboard = () => {
                 className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${getRankStyle(index)} ${isCurrentUser ? "ring-2 ring-primary" : ""}`}
               >
                 <div className="flex items-center justify-center w-8">{getRankIcon(index)}</div>
+                <Avatar className="h-9 w-9 flex-shrink-0">
+                  <AvatarImage src={entry.avatar_url || undefined} alt={entry.display_name} />
+                  <AvatarFallback className="text-xs font-bold bg-primary/15 text-primary">
+                    {(entry.display_name || "U").charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     {entry.user_id === "00000000-0000-0000-0000-000000000001" ? (

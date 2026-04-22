@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Target, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Users, CheckCircle, XCircle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +12,7 @@ interface FeedPrediction {
   id: string;
   user_id: string;
   display_name: string;
+  avatar_url: string | null;
   predicted_condition: string;
   predicted_high: number;
   predicted_low: number;
@@ -20,6 +22,8 @@ interface FeedPrediction {
   is_correct: boolean | null;
   points_earned: number | null;
   created_at: string;
+  score: number;
+  is_followed: boolean;
 }
 
 export function SocialFeed({ isImperial }: { isImperial: boolean }) {
@@ -27,43 +31,68 @@ export function SocialFeed({ isImperial }: { isImperial: boolean }) {
   const navigate = useNavigate();
 
   const { data: feed = [], isLoading } = useQuery({
-    queryKey: ["social-feed", user?.id],
+    queryKey: ["social-feed-ranked", user?.id],
     queryFn: async () => {
       if (!user) return [];
 
-      // Get followed user IDs
+      // Followed user IDs (for boost)
       const { data: follows } = await supabase
         .from("user_follows")
         .select("following_id")
         .eq("follower_id", user.id);
+      const followingSet = new Set((follows || []).map((f) => f.following_id));
 
-      if (!follows || follows.length === 0) return [];
-
-      const followingIds = follows.map((f) => f.following_id);
-
-      // Get recent predictions from followed users
+      // Pull recent predictions pool (last 200)
       const { data: predictions } = await supabase
         .from("weather_predictions")
         .select("id, user_id, predicted_condition, predicted_high, predicted_low, prediction_date, location_name, is_verified, is_correct, points_earned, created_at")
-        .in("user_id", followingIds)
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(200);
 
       if (!predictions || predictions.length === 0) return [];
 
-      // Get display names
       const userIds = [...new Set(predictions.map((p) => p.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, display_name")
+        .select("user_id, display_name, avatar_url")
         .in("user_id", userIds);
+      const profileMap = new Map(profiles?.map((p) => [p.user_id, p]) || []);
 
-      const nameMap = new Map(profiles?.map((p) => [p.user_id, p.display_name]) || []);
+      const now = Date.now();
+      const ranked = predictions
+        .filter((p) => p.user_id !== user.id)
+        .map((p) => {
+          const prof = profileMap.get(p.user_id) as any;
+          const isFollowed = followingSet.has(p.user_id);
+          const hoursSincePost = (now - new Date(p.created_at).getTime()) / 3_600_000;
+          const recencyBoost = Math.max(0, 100 - hoursSincePost * 2);
+          const correctBoost = p.is_correct ? 30 : 0;
+          const score = (isFollowed ? 50 : 0) + recencyBoost + correctBoost;
+          return {
+            ...p,
+            display_name: prof?.display_name || "Unknown",
+            avatar_url: prof?.avatar_url || null,
+            is_followed: isFollowed,
+            score,
+          } as FeedPrediction;
+        })
+        .sort((a, b) => b.score - a.score);
 
-      return predictions.map((p) => ({
-        ...p,
-        display_name: nameMap.get(p.user_id) || "Unknown",
-      })) as FeedPrediction[];
+      // Discovery slot: every 5 posts inject a non-followed post if available
+      const followedSorted = ranked.filter((p) => p.is_followed);
+      const discoverySorted = ranked.filter((p) => !p.is_followed);
+      const blended: FeedPrediction[] = [];
+      let fIdx = 0, dIdx = 0;
+      while (blended.length < 50 && (fIdx < followedSorted.length || dIdx < discoverySorted.length)) {
+        if (blended.length > 0 && blended.length % 5 === 0 && dIdx < discoverySorted.length) {
+          blended.push(discoverySorted[dIdx++]);
+        } else if (fIdx < followedSorted.length) {
+          blended.push(followedSorted[fIdx++]);
+        } else if (dIdx < discoverySorted.length) {
+          blended.push(discoverySorted[dIdx++]);
+        }
+      }
+      return blended;
     },
     enabled: !!user,
     refetchInterval: 60_000,
@@ -107,9 +136,15 @@ export function SocialFeed({ isImperial }: { isImperial: boolean }) {
         {feed.slice(0, 5).map((item) => (
           <div
             key={item.id}
-            className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors"
+            className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors"
             onClick={() => navigate(`/profile/${item.user_id}`)}
           >
+            <Avatar className="h-9 w-9 flex-shrink-0">
+              <AvatarImage src={item.avatar_url || undefined} alt={item.display_name} />
+              <AvatarFallback className="text-xs font-bold bg-primary/15 text-primary">
+                {item.display_name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-medium text-sm truncate">{item.display_name}</span>

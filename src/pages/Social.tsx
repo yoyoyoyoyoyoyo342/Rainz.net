@@ -13,6 +13,7 @@ import { SEOHead } from "@/components/seo/seo-head";
 import { BottomTabBar } from "@/components/weather/bottom-tab-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationBattleActions } from "@/components/weather/notification-battle-actions";
 
 export default function SocialPage() {
@@ -115,14 +116,15 @@ export default function SocialPage() {
       const userIds = [...new Set(comments.map((c: any) => c.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, display_name")
+        .select("user_id, display_name, avatar_url")
         .in("user_id", userIds);
-      const nameMap = new Map(profiles?.map((p: any) => [p.user_id, p.display_name]) || []);
+      const profileMap = new Map(profiles?.map((p: any) => [p.user_id, p]) || []);
 
       const map: Record<string, any[]> = {};
       comments.forEach((c: any) => {
         if (!map[c.post_id]) map[c.post_id] = [];
-        map[c.post_id].push({ ...c, display_name: nameMap.get(c.user_id) || "User" });
+        const prof = profileMap.get(c.user_id) as any;
+        map[c.post_id].push({ ...c, display_name: prof?.display_name || "User", avatar_url: prof?.avatar_url || null });
       });
       return map;
     },
@@ -353,12 +355,15 @@ export default function SocialPage() {
               {posts.map((post: any) => (
                 <div key={post.id} className="p-4 rounded-2xl glass-card border border-border/10 space-y-2">
                   <div className="flex items-center gap-2">
-                    <div
-                      className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary cursor-pointer"
+                    <Avatar
+                      className="h-9 w-9 cursor-pointer"
                       onClick={() => navigate(`/profile/${post.user_id}`)}
                     >
-                      {(post.display_name || "U")[0].toUpperCase()}
-                    </div>
+                      <AvatarImage src={post.avatar_url || undefined} alt={post.display_name} />
+                      <AvatarFallback className="text-xs font-bold bg-primary/15 text-primary">
+                        {(post.display_name || "U")[0].toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="flex-1 min-w-0">
                       <span
                         className="font-medium text-sm cursor-pointer hover:underline"
@@ -423,9 +428,12 @@ export default function SocialPage() {
                     <div className="space-y-2 pt-2 border-t border-border/10">
                       {(commentsMap[post.id] || []).map((comment: any) => (
                         <div key={comment.id} className="flex gap-2">
-                          <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">
-                            {(comment.display_name || "U")[0].toUpperCase()}
-                          </div>
+                          <Avatar className="h-6 w-6 shrink-0 mt-0.5">
+                            <AvatarImage src={comment.avatar_url || undefined} alt={comment.display_name} />
+                            <AvatarFallback className="text-[9px] font-bold bg-muted">
+                              {(comment.display_name || "U")[0].toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="min-w-0">
                             <span className="font-medium text-xs">{comment.display_name}</span>
                             <p className="text-xs text-foreground/80">{comment.content}</p>

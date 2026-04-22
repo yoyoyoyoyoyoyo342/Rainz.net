@@ -2335,6 +2335,7 @@ export type Database = {
       get_leaderboard: {
         Args: never
         Returns: {
+          avatar_url: string
           correct_predictions: number
           current_streak: number
           display_name: string
@@ -2349,6 +2350,7 @@ export type Database = {
       get_monthly_leaderboard: {
         Args: never
         Returns: {
+          avatar_url: string
           correct_predictions: number
           current_streak: number
           display_name: string

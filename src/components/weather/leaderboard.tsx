@@ -226,6 +226,12 @@ export const Leaderboard = () => {
                 className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${getRankStyle(index)} ${isCurrentUser ? "ring-2 ring-primary" : ""}`}
               >
                 <div className="flex items-center justify-center w-8">{getRankIcon(index)}</div>
+                <Avatar className="h-9 w-9 flex-shrink-0">
+                  <AvatarImage src={entry.avatar_url || undefined} alt={entry.display_name} />
+                  <AvatarFallback className="text-xs font-bold bg-primary/15 text-primary">
+                    {(entry.display_name || "U").charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     {entry.user_id === "00000000-0000-0000-0000-000000000001" ? (

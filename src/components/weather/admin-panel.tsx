@@ -24,6 +24,8 @@ import { AdminUserManagement } from './admin-user-management';
 import { AdminFeatureFlags } from './admin-feature-flags';
 import { AdminContentModeration } from './admin-content-moderation';
 import { AdminEmergencyAlert } from './admin-emergency-alert';
+import { AdminDownloadInstructions } from './admin-download-instructions';
+import { Download } from 'lucide-react';
 
 interface WeatherReport {
   id: string;
@@ -64,9 +66,15 @@ function VersionEditor() {
   const handleSave = async () => {
     if (!version.trim() || version === current) return;
     setSaving(true);
-    const ok = await setValue('app_version', version.trim());
+    const v = version.trim();
+    const [ok1, ok2, ok3] = await Promise.all([
+      setValue('app_version', v),
+      setValue('download_mac_version', v),
+      setValue('download_win_version', v),
+    ]);
+    const ok = ok1 && ok2 && ok3;
     setSaving(false);
-    toast({ title: ok ? 'Version updated' : 'Error', description: ok ? `Set to V${version.trim()}` : 'Failed to update', variant: ok ? 'default' : 'destructive' });
+    toast({ title: ok ? 'Version updated' : 'Error', description: ok ? `Set all versions to V${v}` : 'Failed to update', variant: ok ? 'default' : 'destructive' });
   };
 
   return (
@@ -159,6 +167,7 @@ export function AdminPanel() {
     { value: 'api-data', label: 'API Data', icon: <Database className="w-3.5 h-3.5" /> },
     { value: 'api-token', label: 'API Token', icon: <Key className="w-3.5 h-3.5" /> },
     { value: 'shop-offers', label: 'Shop', icon: <Tag className="w-3.5 h-3.5" /> },
+    { value: 'downloads', label: 'Downloads', icon: <Download className="w-3.5 h-3.5" /> },
   ];
 
   return (
@@ -292,6 +301,12 @@ export function AdminPanel() {
 
         <TabsContent value="shop-offers">
           <AdminSection title="Shop Offers"><AdminShopOffers /></AdminSection>
+        </TabsContent>
+
+        <TabsContent value="downloads">
+          <AdminSection title="Download Instructions 📥" description="Update desktop app download URLs, versions, and macOS bypass instructions.">
+            <AdminDownloadInstructions />
+          </AdminSection>
         </TabsContent>
       </Tabs>
     </div>

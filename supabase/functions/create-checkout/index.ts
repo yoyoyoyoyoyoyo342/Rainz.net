@@ -47,7 +47,7 @@ serve(async (req) => {
       logStep("Found existing customer", { customerId });
     }
 
-    // Rainz+ subscription - €2/month (LIVE)
+    // Rainz subscription - €2/month (LIVE)
     const RAINZ_PLUS_PRICE_ID = "price_1SghW18mRhH1c6KOK1yEPelt";
 
     const session = await stripe.checkout.sessions.create({

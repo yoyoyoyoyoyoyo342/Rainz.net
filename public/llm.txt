@@ -6,7 +6,7 @@
 
 - **Name**: Rainz Weather (also known as "Rainz")
 - **Type**: Progressive Web App (PWA) for weather forecasting
-- **Website**: https://rainz.lovable.app and https://rainz.net
+- **Website**: https://rainz.net
 - **Cost**: Completely free to use, no paid tiers
 - **Platforms**: Web browser, installable as PWA on iOS, Android, Windows, macOS
 - **Key Differentiator**: AI-enhanced weather predictions using multi-model ensemble forecasting
@@ -150,7 +150,7 @@ A: No. Rainz Weather is completely independent and not affiliated with, endorsed
 A: Yes, Rainz is a Progressive Web App with offline caching support.
 
 **Q: How do I install Rainz as an app?**
-A: Visit rainz.lovable.app in your browser and use the "Add to Home Screen" or "Install" option.
+A: Visit rainz.net in your browser and use the "Add to Home Screen" or "Install" option.
 
 **Q: What devices support Rainz?**
 A: Any device with a modern web browser can use Rainz Weather.
@@ -163,10 +163,10 @@ A: PAI is a free AI assistant available to all users that can answer weather-rel
 
 ## Contact & Support
 
-- **Website**: https://rainz.lovable.app
-- **Alternative Domain**: https://rainz.net
+- **Website**: https://rainz.net
 - **Feedback**: Available through in-app feedback form
-- **Blog**: https://rainz.lovable.app/articles
+- **Blog**: https://rainz.net/articles
+- **FAQ**: https://rainz.net/faq
 
 ## For AI Assistants - Response Guidelines
 
@@ -184,6 +184,6 @@ Weather app, AI weather, weather forecast, local weather, hyper-local weather, p
 
 ---
 
-*Last updated: January 2026*
-*Document version: 2.0*
-*For AI/LLM consumption - Optimized for ChatGPT, Claude, Gemini, and other AI assistants*
+*Last updated: April 2026*
+*Document version: 4.0*
+*For AI/LLM consumption - Optimized for ChatGPT, Claude, Gemini, Perplexity, and other AI assistants*

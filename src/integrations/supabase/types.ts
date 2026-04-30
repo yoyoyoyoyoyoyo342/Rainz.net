@@ -197,6 +197,42 @@ export type Database = {
         }
         Relationships: []
       }
+      api_subscriptions: {
+        Row: {
+          calls_today: number
+          created_at: string
+          daily_limit: number
+          id: string
+          last_reset_date: string
+          stripe_subscription_id: string | null
+          tier: Database["public"]["Enums"]["api_tier"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calls_today?: number
+          created_at?: string
+          daily_limit?: number
+          id?: string
+          last_reset_date?: string
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["api_tier"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calls_today?: number
+          created_at?: string
+          daily_limit?: number
+          id?: string
+          last_reset_date?: string
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["api_tier"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       api_usage: {
         Row: {
           api_key: string
@@ -224,6 +260,30 @@ export type Database = {
           response_status?: number | null
           timestamp?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      app_versions: {
+        Row: {
+          changelog: string[]
+          created_at: string
+          id: string
+          previous_version: string | null
+          version: string
+        }
+        Insert: {
+          changelog?: string[]
+          created_at?: string
+          id?: string
+          previous_version?: string | null
+          version: string
+        }
+        Update: {
+          changelog?: string[]
+          created_at?: string
+          id?: string
+          previous_version?: string | null
+          version?: string
         }
         Relationships: []
       }
@@ -705,6 +765,30 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_trophies: {
+        Row: {
+          awarded_at: string
+          id: string
+          month: number
+          user_id: string
+          year: number
+        }
+        Insert: {
+          awarded_at?: string
+          id?: string
+          month: number
+          user_id: string
+          year: number
+        }
+        Update: {
+          awarded_at?: string
+          id?: string
+          month?: number
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
       prediction_battles: {
         Row: {
           battle_date: string
@@ -892,6 +976,7 @@ export type Database = {
           bio: string | null
           created_at: string
           display_name: string | null
+          first_prediction_bonus_claimed: boolean | null
           id: string
           notification_enabled: boolean | null
           notification_time: string | null
@@ -899,8 +984,10 @@ export type Database = {
           notify_daily_summary: boolean | null
           notify_pollen: boolean | null
           notify_severe_weather: boolean | null
+          referral_code: string | null
           shop_points: number
           total_points: number | null
+          trophy_count: number
           updated_at: string
           user_id: string
           username: string | null
@@ -910,6 +997,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          first_prediction_bonus_claimed?: boolean | null
           id?: string
           notification_enabled?: boolean | null
           notification_time?: string | null
@@ -917,8 +1005,10 @@ export type Database = {
           notify_daily_summary?: boolean | null
           notify_pollen?: boolean | null
           notify_severe_weather?: boolean | null
+          referral_code?: string | null
           shop_points?: number
           total_points?: number | null
+          trophy_count?: number
           updated_at?: string
           user_id: string
           username?: string | null
@@ -928,6 +1018,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          first_prediction_bonus_claimed?: boolean | null
           id?: string
           notification_enabled?: boolean | null
           notification_time?: string | null
@@ -935,8 +1026,10 @@ export type Database = {
           notify_daily_summary?: boolean | null
           notify_pollen?: boolean | null
           notify_severe_weather?: boolean | null
+          referral_code?: string | null
           shop_points?: number
           total_points?: number | null
+          trophy_count?: number
           updated_at?: string
           user_id?: string
           username?: string | null
@@ -1037,6 +1130,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      referrals: {
+        Row: {
+          created_at: string | null
+          id: string
+          points_awarded: boolean | null
+          referee_id: string
+          referral_code: string
+          referrer_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          points_awarded?: boolean | null
+          referee_id: string
+          referral_code: string
+          referrer_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          points_awarded?: boolean | null
+          referee_id?: string
+          referral_code?: string
+          referrer_id?: string
+        }
+        Relationships: []
       }
       saved_locations: {
         Row: {
@@ -1208,6 +1328,103 @@ export type Database = {
           item_type?: string
           points_spent?: number
           purchased_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      social_post_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_post_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_posts: {
+        Row: {
+          comment_count: number
+          content: string
+          created_at: string | null
+          id: string
+          image_url: string | null
+          like_count: number
+          location_name: string | null
+          post_type: string
+          user_id: string
+        }
+        Insert: {
+          comment_count?: number
+          content: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          like_count?: number
+          location_name?: string | null
+          post_type?: string
+          user_id: string
+        }
+        Update: {
+          comment_count?: number
+          content?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          like_count?: number
+          location_name?: string | null
+          post_type?: string
           user_id?: string
         }
         Relationships: []
@@ -2111,9 +2328,14 @@ export type Database = {
       }
     }
     Functions: {
+      award_monthly_trophy: {
+        Args: { target_date: string }
+        Returns: undefined
+      }
       get_leaderboard: {
         Args: never
         Returns: {
+          avatar_url: string
           correct_predictions: number
           current_streak: number
           display_name: string
@@ -2121,31 +2343,25 @@ export type Database = {
           rank: number
           total_points: number
           total_predictions: number
+          trophy_count: number
           user_id: string
         }[]
       }
-      get_monthly_leaderboard:
-        | {
-            Args: never
-            Returns: {
-              correct_predictions: number
-              current_streak: number
-              display_name: string
-              longest_streak: number
-              rank: number
-              total_points: number
-              total_predictions: number
-              user_id: string
-            }[]
-          }
-        | {
-            Args: { _limit?: number }
-            Returns: {
-              accuracy: number
-              total_points: number
-              user_id: string
-            }[]
-          }
+      get_monthly_leaderboard: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          correct_predictions: number
+          current_streak: number
+          display_name: string
+          longest_streak: number
+          rank: number
+          total_points: number
+          total_predictions: number
+          trophy_count: number
+          user_id: string
+        }[]
+      }
       get_public_profile: {
         Args: { profile_user_id: string }
         Returns: {
@@ -2169,6 +2385,7 @@ export type Database = {
       trigger_verify_predictions: { Args: never; Returns: undefined }
     }
     Enums: {
+      api_tier: "free" | "pro" | "business"
       app_role: "admin" | "user"
     }
     CompositeTypes: {
@@ -2297,6 +2514,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      api_tier: ["free", "pro", "business"],
       app_role: ["admin", "user"],
     },
   },

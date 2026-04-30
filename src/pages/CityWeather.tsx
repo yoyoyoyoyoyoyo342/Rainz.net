@@ -1,4 +1,5 @@
 import { useParams, Link, Navigate } from "react-router-dom";
+import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Cloud, CloudRain, Droplets, Wind, Thermometer, MapPin, Navigation, ArrowRight, Umbrella } from "lucide-react";
@@ -157,11 +158,15 @@ export default function CityWeather() {
         )}
 
         <div className="relative z-10 max-w-2xl mx-auto px-4 py-6 md:py-10">
+          {/* Breadcrumb */}
+          <Breadcrumbs items={[
+            { label: 'Home', href: '/' },
+            { label: 'Weather' },
+            { label: city.name },
+          ]} />
+
           {/* Header */}
-          <div className="mb-6">
-            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1 mb-3">
-              <MapPin className="h-3 w-3" /> Rainz.net
-            </Link>
+          <div className="mb-6 mt-2">
             <h1 className="text-2xl md:text-4xl font-bold text-foreground leading-tight">
               Weather & Rain Forecast in {city.name}
             </h1>

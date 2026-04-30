@@ -61,6 +61,7 @@ function markMessageAsRead(messageId: string) {
 
 interface HeaderInfoBarProps {
   user: any;
+  showInbox?: boolean;
 }
 
 function isMessageForUser(message: BroadcastMessage, isSubscribed: boolean) {
@@ -71,7 +72,7 @@ function isMessageForUser(message: BroadcastMessage, isSubscribed: boolean) {
   return true;
 }
 
-export function HeaderInfoBar({ user }: HeaderInfoBarProps) {
+export function HeaderInfoBar({ user, showInbox = true }: HeaderInfoBarProps) {
   const { streakData, loading: streakLoading } = useUserStreaks();
   const { isSubscribed } = useSubscription();
   const [messages, setMessages] = useState<BroadcastMessage[]>([]);
@@ -234,104 +235,47 @@ export function HeaderInfoBar({ user }: HeaderInfoBarProps) {
         </div>
       )}
 
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <Button variant="ghost" size="sm" className="relative h-8 w-8 p-0">
-            <Inbox className="h-4 w-4" />
-            {totalUnread > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-destructive rounded-full animate-pulse" />
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-80 p-0 bg-popover border border-border shadow-lg z-[9999]" align="end">
-          <div className="flex items-center justify-between p-3 border-b border-border bg-muted/30">
-            <h4 className="font-semibold text-sm">Notifications</h4>
-            {totalUnread > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                {totalUnread} new
-              </Badge>
-            )}
-          </div>
-          <div className="max-h-80 overflow-y-auto overscroll-contain">
-            {visibleMessages.length === 0 && userNotifications.length === 0 ? (
-              <div className="p-6 text-center text-muted-foreground">
-                <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No notifications</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {userNotifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`p-3 transition-colors ${!notification.is_read ? "bg-primary/5" : "bg-background"}`}
-                  >
-                    <div className="flex items-start gap-2">
-                      {!notification.is_read && (
-                        <Circle className="h-2 w-2 mt-1.5 fill-primary text-primary shrink-0" />
-                      )}
-                      <div className="shrink-0 mt-0.5">{getNotificationIcon(notification.type)}</div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-primary mb-1">{notification.title}</p>
-                        <p className="text-sm text-foreground break-words whitespace-pre-wrap">
-                          {notification.message.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
-                            part.match(/^https?:\/\//) ? (
-                              <a
-                                key={i}
-                                href={part}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary underline hover:text-primary/80"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {part}
-                              </a>
-                            ) : (
-                              <span key={i}>{part}</span>
-                            )
-                          )}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(notification.created_at).toLocaleDateString()}
-                        </p>
-                        
-                        {/* Battle challenge actions */}
-                        {notification.type === "battle_challenge" && notification.metadata?.battle_id && (
-                          <NotificationBattleActions
-                            battleId={notification.metadata.battle_id}
-                            metadata={notification.metadata}
-                             onRequestCloseParent={() => setIsOpen(false)}
-                            onActionComplete={() => {
-                               // Remove permanently so it doesn't reappear on next load.
-                               handleDismissUserNotification(notification.id);
-                            }}
-                          />
-                        )}
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 shrink-0 hover:bg-destructive/10"
-                        onClick={() => handleDismissUserNotification(notification.id)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-
-                {visibleMessages.map((message) => {
-                  const isUnread = !readIds.has(message.id);
-                  return (
+      {showInbox && (
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="sm" className="relative h-8 w-8 p-0">
+              <Inbox className="h-4 w-4" />
+              {totalUnread > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-destructive rounded-full animate-pulse" />
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-0 bg-popover border border-border shadow-lg z-[9999]" align="end">
+            <div className="flex items-center justify-between p-3 border-b border-border bg-muted/30">
+              <h4 className="font-semibold text-sm">Notifications</h4>
+              {totalUnread > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {totalUnread} new
+                </Badge>
+              )}
+            </div>
+            <div className="max-h-80 overflow-y-auto overscroll-contain">
+              {visibleMessages.length === 0 && userNotifications.length === 0 ? (
+                <div className="p-6 text-center text-muted-foreground">
+                  <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No notifications</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {userNotifications.map((notification) => (
                     <div
-                      key={message.id}
-                      className={`p-3 transition-colors ${isUnread ? "bg-primary/5" : "bg-background"}`}
+                      key={notification.id}
+                      className={`p-3 transition-colors ${!notification.is_read ? "bg-primary/5" : "bg-background"}`}
                     >
                       <div className="flex items-start gap-2">
-                        {isUnread && <Circle className="h-2 w-2 mt-1.5 fill-primary text-primary shrink-0" />}
+                        {!notification.is_read && (
+                          <Circle className="h-2 w-2 mt-1.5 fill-primary text-primary shrink-0" />
+                        )}
+                        <div className="shrink-0 mt-0.5">{getNotificationIcon(notification.type)}</div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-primary mb-1">Admin Announcement</p>
+                          <p className="text-xs font-medium text-primary mb-1">{notification.title}</p>
                           <p className="text-sm text-foreground break-words whitespace-pre-wrap">
-                            {message.message.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+                            {notification.message.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
                               part.match(/^https?:\/\//) ? (
                                 <a
                                   key={i}
@@ -349,26 +293,82 @@ export function HeaderInfoBar({ user }: HeaderInfoBarProps) {
                             )}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(message.created_at).toLocaleDateString()}
+                            {new Date(notification.created_at).toLocaleDateString()}
                           </p>
+                          {notification.type === "battle_challenge" && notification.metadata?.battle_id && (
+                            <NotificationBattleActions
+                              battleId={notification.metadata.battle_id}
+                              metadata={notification.metadata}
+                              onRequestCloseParent={() => setIsOpen(false)}
+                              onActionComplete={() => {
+                                handleDismissUserNotification(notification.id);
+                              }}
+                            />
+                          )}
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-6 w-6 p-0 shrink-0 hover:bg-destructive/10"
-                          onClick={() => handleDismiss(message.id)}
+                          onClick={() => handleDismissUserNotification(notification.id)}
                         >
                           <X className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </PopoverContent>
-      </Popover>
+                  ))}
+
+                  {visibleMessages.map((message) => {
+                    const isUnread = !readIds.has(message.id);
+                    return (
+                      <div
+                        key={message.id}
+                        className={`p-3 transition-colors ${isUnread ? "bg-primary/5" : "bg-background"}`}
+                      >
+                        <div className="flex items-start gap-2">
+                          {isUnread && <Circle className="h-2 w-2 mt-1.5 fill-primary text-primary shrink-0" />}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-primary mb-1">Admin Announcement</p>
+                            <p className="text-sm text-foreground break-words whitespace-pre-wrap">
+                              {message.message.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+                                part.match(/^https?:\/\//) ? (
+                                  <a
+                                    key={i}
+                                    href={part}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary underline hover:text-primary/80"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    {part}
+                                  </a>
+                                ) : (
+                                  <span key={i}>{part}</span>
+                                )
+                              )}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(message.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 shrink-0 hover:bg-destructive/10"
+                            onClick={() => handleDismiss(message.id)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   );
 }

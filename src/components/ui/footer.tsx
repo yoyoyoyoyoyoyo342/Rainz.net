@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ReferralProgram } from "@/components/weather/referral-program";
 
 export function Footer() {
   const { getValue } = useFeatureFlags();
   const version = getValue('app_version', '1.2.82');
+  const [referralOpen, setReferralOpen] = useState(false);
 
   return (
     <footer className="w-full border-t border-border bg-background/80 backdrop-blur-sm mt-auto">
@@ -16,8 +20,14 @@ export function Footer() {
             <Link to="/articles" className="hover:text-foreground transition-colors">
               Blog
             </Link>
+            <Link to="/faq" className="hover:text-foreground transition-colors">
+              FAQ
+            </Link>
             <Link to="/download" className="hover:text-foreground transition-colors">
               Download
+            </Link>
+            <Link to="/dryroutes" className="hover:text-foreground transition-colors">
+              DryRoutes
             </Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">
               Privacy Policy
@@ -28,8 +38,25 @@ export function Footer() {
             <Link to="/data-settings" className="hover:text-foreground transition-colors">
               Data & Privacy Settings
             </Link>
+            <Link to="/mcp" className="hover:text-foreground transition-colors">
+              MCP
+            </Link>
+            <Link to="/airport" className="hover:text-foreground transition-colors">
+              Landing page
+            </Link>
+            <button onClick={() => setReferralOpen(true)} className="hover:text-foreground transition-colors text-primary font-medium">
+              Refer a Friend 🎁
+            </button>
+            <Dialog open={referralOpen} onOpenChange={setReferralOpen}>
+              <DialogContent className="max-w-md">
+                <ReferralProgram />
+              </DialogContent>
+            </Dialog>
           </div>
-          <div className="text-center md:text-right space-y-1">
+          <div className="text-center md:text-right space-y-3">
+            <a href="https://www.producthunt.com/products/rainz-weather?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-rainz-weather" target="_blank" rel="noopener noreferrer">
+              <img alt="Rainz Weather - Weather but smarter. | Product Hunt" width="250" height="54" loading="lazy" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1063846&theme=light&t=1776278577169" />
+            </a>
             <p>© 2025-{new Date().getFullYear()} Rainz. All rights reserved.</p>
             <p className="text-xs text-muted-foreground/70">V{version}</p>
           </div>

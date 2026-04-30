@@ -419,7 +419,7 @@ export function LocationSearch({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl glass-card flex-1 max-w-md z-[9999]">
+    <div className="relative rounded-2xl glass-card flex-1 z-[9999]">
       {/* Search Input */}
       <div className="p-4">
         <div className="relative">
@@ -453,9 +453,9 @@ export function LocationSearch({
         </div>
       </div>
 
-      {/* Search Results Dropdown */}
+      {/* Search Results Dropdown — absolute overlay */}
       {(searchQuery.length > 2 || isLoading || loadingAddresses || (isFocused && searchQuery.length === 0)) && (
-        <div className="border-t border-border/20 animate-fade-in origin-top">
+        <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-xl border border-border/30 bg-popover/95 backdrop-blur-xl shadow-xl animate-fade-in origin-top overflow-hidden">
           {searchQuery.length === 0 && isFocused ? (
             <div className="max-h-60 overflow-y-auto">
               {searchHistory.length > 0 ? (

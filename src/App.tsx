@@ -18,13 +18,13 @@ import { AppleGlassProvider } from "@/hooks/use-apple-device";
 import { CookieConsentProvider } from "@/hooks/use-cookie-consent";
 import { CookieConsentBanner } from "@/components/ui/cookie-consent-banner";
 import { Footer } from "@/components/ui/footer";
-import { LoadingOverlay } from "@/components/ui/loading-overlay";
+import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
 import { PWAInstallPopup } from "@/components/ui/pwa-install-popup";
+import { RuntimeErrorBoundary } from "@/components/ui/runtime-error-boundary";
 import { useAnalytics } from "@/hooks/use-analytics";
+import { useAmplitudeInstrumentation } from "@/hooks/use-amplitude-instrumentation";
+import { useAmplitudeFunnels } from "@/hooks/use-amplitude-funnels";
 import { useBroadcastListener } from "@/hooks/use-broadcast-listener";
-import { useFeatureFlags } from "@/hooks/use-feature-flags";
-import { useIsAdmin } from "@/hooks/use-is-admin";
-import { AppLockdownScreen } from "@/components/ui/app-lockdown-screen";
 import { toast as sonnerToast } from "sonner";
 
 
@@ -49,16 +49,31 @@ const SubscriptionCancel = lazy(() => import("./pages/SubscriptionCancel"));
 const Affiliate = lazy(() => import("./pages/Affiliate"));
 const AffiliatePolicy = lazy(() => import("./pages/AffiliatePolicy"));
 const Download = lazy(() => import("./pages/Download"));
+const PwaDownload = lazy(() => import("./pages/PwaDownload"));
+const AppDownload = lazy(() => import("./pages/AppDownload"));
 const Widgets = lazy(() => import("./pages/Widgets"));
 const Widget = lazy(() => import("./pages/Widget"));
 const Embed = lazy(() => import("./pages/Embed"));
 const Info = lazy(() => import("./pages/Info"));
 const DryRoutes = lazy(() => import("./pages/DryRoutes"));
 const CityWeather = lazy(() => import("./pages/CityWeather"));
-
+const MCP = lazy(() => import("./pages/MCP"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const MarketReport = lazy(() => import("./pages/MarketReport"));
+const AirportLayout = lazy(() => import("./pages/airport/AirportLayout"));
+const AirportLanding = lazy(() => import("./pages/airport/AirportLanding"));
+const AirportFeatures = lazy(() => import("./pages/airport/AirportFeatures"));
+const AirportProduct = lazy(() => import("./pages/airport/AirportProduct"));
+const AirportContact = lazy(() => import("./pages/airport/AirportContact"));
+const ApiPricing = lazy(() => import("./pages/ApiPricing"));
+const Predict = lazy(() => import("./pages/Predict"));
+const Social = lazy(() => import("./pages/Social"));
+const Explore = lazy(() => import("./pages/Explore"));
 
 function AnalyticsTracker() {
   useAnalytics();
+  useAmplitudeInstrumentation();
+  useAmplitudeFunnels();
   useBroadcastListener();
   return null;
 }
@@ -127,7 +142,7 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
   const location = useLocation();
 
   return (
-    <Suspense fallback={<LoadingOverlay isOpen={true} />}>
+    <Suspense fallback={<div className="min-h-screen bg-background p-4"><WeatherPageSkeleton /></div>}>
       <AnimatePresence mode="wait">
         <PageTransition key={location.pathname}>
           {isApiSubdomain ? (
@@ -146,6 +161,9 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
           ) : (
             <Routes location={location}>
               <Route path="/" element={<Weather />} />
+              <Route path="/predict" element={<Predict />} />
+              <Route path="/social" element={<Social />} />
+              <Route path="/explore" element={<Explore />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<AdminPanel />} />
               <Route path="/articles" element={<Articles />} />
@@ -162,6 +180,8 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
               <Route path="/affiliate" element={<Affiliate />} />
               <Route path="/affiliate-policy" element={<AffiliatePolicy />} />
               <Route path="/download" element={<Download />} />
+              <Route path="/pwadownload" element={<PwaDownload />} />
+              <Route path="/appdownload" element={<AppDownload />} />
               <Route path="/widgets" element={<Widgets />} />
               <Route path="/widget" element={<Widget />} />
               <Route path="/embed" element={<Embed />} />
@@ -169,6 +189,16 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
               <Route path="/dryroutes" element={<DryRoutes />} />
               <Route path="/weather/:citySlug" element={<CityWeather />} />
               <Route path="/weather" element={<Navigate to="/" replace />} />
+              <Route path="/mcp" element={<MCP />} />
+              <Route path="/api" element={<ApiPricing />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/market-report" element={<MarketReport />} />
+              <Route path="/airport" element={<AirportLayout />}>
+                <Route index element={<AirportLanding />} />
+                <Route path="features" element={<AirportFeatures />} />
+                <Route path="product" element={<AirportProduct />} />
+                <Route path="contact" element={<AirportContact />} />
+              </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
           )}
@@ -176,30 +206,6 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
       </AnimatePresence>
     </Suspense>
   );
-}
-
-function LockdownGuard({ children }: { children: React.ReactNode }) {
-  const { isEnabled, isLoading } = useFeatureFlags();
-  const { isAdmin, loading: adminLoading } = useIsAdmin();
-  const location = useLocation();
-  const isLocked = isEnabled('app_lockdown', false);
-
-  // Always let /admin and /auth through for admins to manage lockdown
-  if (location.pathname === '/admin' || location.pathname === '/auth') {
-    return <>{children}</>;
-  }
-
-  // While checking lockdown status, show loading
-  if (isLoading) {
-    return <LoadingOverlay isOpen={true} />;
-  }
-
-  // If locked and user is not admin (or still checking), show lockdown
-  if (isLocked && !isAdmin) {
-    return <AppLockdownScreen />;
-  }
-
-  return <>{children}</>;
 }
 
 function AppContent() {
@@ -218,7 +224,7 @@ function AppContent() {
         <LanguageProvider>
           <TooltipProvider>
             <BrowserRouter>
-              <Suspense fallback={<LoadingOverlay isOpen={true} />}>
+              <Suspense fallback={<div className="min-h-screen bg-background p-4"><WeatherPageSkeleton /></div>}>
                 <Routes>
                   <Route path="/embed" element={<Embed />} />
                 </Routes>
@@ -244,20 +250,18 @@ function AppContent() {
                     <CookieConsentBanner />
                     <PWAInstallPopup />
                      <BrowserRouter>
-                       <LockdownGuard>
-                         <div className="flex flex-col min-h-screen">
-                           <div className="flex-1">
-                             <AnalyticsTracker />
-                             <AnimatedRoutes
-                               isApiSubdomain={isApiSubdomain}
-                               isBlogSubdomain={isBlogSubdomain}
-                             />
-                           </div>
-                           {window.location.pathname !== '/dryroutes' && (
-                          <Footer />
-                           )}
-                        </div>
-                      </LockdownGuard>
+                        <div className="flex flex-col min-h-screen">
+                          <div className="flex-1">
+                            <AnalyticsTracker />
+                            <AnimatedRoutes
+                              isApiSubdomain={isApiSubdomain}
+                              isBlogSubdomain={isBlogSubdomain}
+                            />
+                          </div>
+                          {window.location.pathname !== '/dryroutes' && (
+                         <Footer />
+                          )}
+                       </div>
                     </BrowserRouter>
                   </TooltipProvider>
                    </CookieConsentProvider>
@@ -275,7 +279,9 @@ const App = () => (
   <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: queryPersister, maxAge: 1000 * 60 * 60 * 24 }}>
     <AppleGlassProvider>
       <TimeOfDayProvider>
-        <AppContent />
+        <RuntimeErrorBoundary>
+          <AppContent />
+        </RuntimeErrorBoundary>
       </TimeOfDayProvider>
     </AppleGlassProvider>
   </PersistQueryClientProvider>

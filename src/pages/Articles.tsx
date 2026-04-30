@@ -57,9 +57,10 @@ export default function Articles() {
   return (
     <>
       <SEOHead 
-        title="Rainz Weather Blog - Weather News & Tips"
-        description="Read the latest weather news, tips, and updates from the Rainz Weather team. Stay informed about weather forecasting and features."
-        keywords="Rainz blog, weather articles, weather news, weather tips, forecast updates"
+        title="Weather Articles & AI Forecast Blog | Rainz Weather"
+        description="Read expert weather articles, AI forecasting tips, seasonal guides, and climate insights from the Rainz Weather team. Updated every Tuesday and Thursday."
+        keywords="weather blog, weather articles, AI weather forecast blog, weather science, seasonal weather guide, Rainz blog, weather tips, ensemble forecasting explained"
+        canonicalUrl="https://rainz.net/articles"
       />
       <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8 px-4 max-w-6xl">

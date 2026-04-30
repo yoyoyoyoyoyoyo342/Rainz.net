@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@supabase/supabase-js';
 import { Eye, EyeOff, CloudRain, Mail, Lock, ArrowLeft, Sparkles, Shield, Zap } from 'lucide-react';
+import { SignupSurvey } from '@/components/weather/signup-survey';
+import { useReferral } from '@/hooks/use-referral';
 import { Separator } from '@/components/ui/separator';
 import rainzLogo from '@/assets/rainz-logo-new.png';
 
@@ -20,10 +22,13 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [showSurvey, setShowSurvey] = useState(false);
+  const [newUserId, setNewUserId] = useState<string | undefined>();
   const [resetMode, setResetMode] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const { processReferral } = useReferral();
 
   useEffect(() => {
     const isReset = searchParams.get('reset') === 'true';
@@ -207,6 +212,15 @@ export default function Auth() {
         } catch (profileErr) {
           console.log('Profile upsert skipped:', profileErr);
         }
+        setNewUserId(data.user.id);
+        setShowSurvey(true);
+        
+        // Process referral if ref param exists
+        const refCode = searchParams.get('ref');
+        if (refCode) {
+          processReferral(refCode, data.user.id);
+        }
+        
         toast({ title: "Account Created!", description: "Please check your email to verify your account." });
       }
     } catch (error: any) {
@@ -501,6 +515,15 @@ export default function Auth() {
                 </TabsContent>
                 
                 <TabsContent value="signup" className="mt-0">
+                  {showSurvey ? (
+                    <SignupSurvey
+                      userId={newUserId}
+                      onComplete={() => {
+                        setShowSurvey(false);
+                        // User already got the "check email" toast
+                      }}
+                    />
+                  ) : (
                   <form onSubmit={handleSignUp} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="signup-email" className="text-sm font-medium">Email</Label>
@@ -554,6 +577,7 @@ export default function Auth() {
                       {loading ? "Creating account..." : "Create Account"}
                     </Button>
                   </form>
+                  )}
                   
                   <div className="relative my-6">
                     <Separator />

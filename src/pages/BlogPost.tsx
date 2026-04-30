@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import rainzLogo from '@/assets/rainz-logo-new.png';
 import { SEOHead } from '@/components/seo/seo-head';
+import { Breadcrumbs } from '@/components/seo/breadcrumbs';
 import ReactMarkdown from 'react-markdown';
 
-interface BlogPost {
+interface BlogPostType {
   id: string;
   title: string;
   slug: string;
@@ -17,12 +18,21 @@ interface BlogPost {
   is_published: boolean;
   published_at: string | null;
   created_at: string;
+  updated_at: string;
+}
+
+interface RelatedPost {
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  published_at: string | null;
 }
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const [post, setPost] = useState<BlogPost | null>(null);
+  const [post, setPost] = useState<BlogPostType | null>(null);
+  const [relatedPosts, setRelatedPosts] = useState<RelatedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +59,15 @@ export default function BlogPost() {
         }
       } else {
         setPost(data);
+        // Fetch related posts
+        const { data: related } = await supabase
+          .from('blog_posts')
+          .select('title, slug, excerpt, published_at')
+          .eq('is_published', true)
+          .neq('slug', slug)
+          .order('published_at', { ascending: false })
+          .limit(3);
+        setRelatedPosts(related || []);
       }
     } catch (error) {
       console.error('Error loading post:', error);
@@ -58,7 +77,37 @@ export default function BlogPost() {
     }
   };
 
-  // Removed old custom renderer - using ReactMarkdown now
+  // Inject Article schema with dateModified
+  useEffect(() => {
+    if (!post) return;
+    const id = 'article-schema-ld';
+    let el = document.getElementById(id);
+    if (!el) {
+      el = document.createElement('script');
+      el.id = id;
+      el.setAttribute('type', 'application/ld+json');
+      document.head.appendChild(el);
+    }
+    const schema = {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: post.title,
+      description: post.excerpt || `Read "${post.title}" on the Rainz Weather blog.`,
+      image: post.cover_image_url || undefined,
+      datePublished: post.published_at || post.created_at,
+      dateModified: post.updated_at || post.published_at || post.created_at,
+      url: `https://rainz.net/articles/${post.slug}`,
+      author: { '@type': 'Organization', name: 'Rainz Weather', url: 'https://rainz.net' },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Rainz Weather',
+        logo: { '@type': 'ImageObject', url: 'https://rainz.net/logo-icon.png' },
+      },
+      mainEntityOfPage: { '@type': 'WebPage', '@id': `https://rainz.net/articles/${post.slug}` },
+    };
+    el.textContent = JSON.stringify(schema);
+    return () => { el?.remove(); };
+  }, [post]);
 
   if (loading) {
     return (
@@ -88,7 +137,7 @@ export default function BlogPost() {
         ogType="article"
         articlePublishedTime={post.published_at || post.created_at}
         ogImage={post.cover_image_url || undefined}
-        canonicalUrl={`https://rainz.net/article/${post.slug}`}
+        canonicalUrl={`https://rainz.net/articles/${post.slug}`}
       />
       <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
@@ -103,12 +152,19 @@ export default function BlogPost() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-12 max-w-3xl">
+      <main className="container mx-auto px-4 py-4 max-w-3xl">
+        <Breadcrumbs items={[
+          { label: 'Home', href: '/' },
+          { label: 'Blog', href: '/articles' },
+          { label: post.title },
+        ]} />
+
         {post.cover_image_url && (
           <img
             src={post.cover_image_url}
             alt={post.title}
-            className="w-full h-64 object-cover rounded-lg mb-8"
+            className="w-full h-64 object-cover rounded-lg mb-8 mt-4"
+            fetchPriority="high"
           />
         )}
 
@@ -129,6 +185,27 @@ export default function BlogPost() {
             <ReactMarkdown>{post.content}</ReactMarkdown>
           </div>
         </article>
+
+        {/* Related Articles */}
+        {relatedPosts.length > 0 && (
+          <section className="mt-12 pt-8 border-t border-border">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Related Articles</h2>
+            <div className="grid gap-4">
+              {relatedPosts.map((rp) => (
+                <Link
+                  key={rp.slug}
+                  to={`/articles/${rp.slug}`}
+                  className="block p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors"
+                >
+                  <h3 className="font-medium text-foreground mb-1">{rp.title}</h3>
+                  {rp.excerpt && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">{rp.excerpt}</p>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
 
       <footer className="border-t border-border py-8 mt-12">

@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense, lazy, useTransition } from "react";
+import React, { useState, useEffect, useMemo, useRef, Suspense, lazy, useTransition } from "react";
 import { queryClient } from "@/lib/queryClient";
-import { useSearchParams } from "react-router-dom";
 import { CloudSun, LogIn, WifiOff } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +22,9 @@ import { trackWeatherView } from "@/lib/track-event";
 import { useAccountStorage } from "@/hooks/use-account-storage";
 import { useOfflineCache } from "@/hooks/use-offline-cache";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
+import { useAmplitudeGuidedHelp } from "@/hooks/use-amplitude-guided-help";
+import { ProductHuntLaunchBanner } from "@/components/weather/producthunt-launch-banner";
+import { OnboardingTour } from "@/components/weather/onboarding-tour";
 
 // Critical above-the-fold components — loaded eagerly
 import { LocationSearch } from "@/components/weather/location-search";
@@ -36,7 +38,8 @@ import { HeaderInfoBar } from "@/components/weather/header-info-bar";
 import { SettingsDialog } from "@/components/weather/settings-dialog";
 import { WeatherStationInfo } from "@/components/weather/weather-station-info";
 import { WinterAlerts } from "@/components/weather/winter-alerts";
-import { LockedPredictionButton } from "@/components/weather/locked-prediction-button";
+
+const GuidedHelpBanner = lazy(() => import("@/components/weather/guided-help-banner").then(m => ({ default: m.GuidedHelpBanner })));
 
 // Below-the-fold components — lazy loaded for faster initial render
 const TenDayForecast = lazy(() => import("@/components/weather/ten-day-forecast").then(m => ({ default: m.TenDayForecast })));
@@ -47,35 +50,21 @@ const AIChatButton = lazy(() => import("@/components/weather/ai-chat-button").th
 const MorningWeatherReview = lazy(() => import("@/components/weather/morning-weather-review").then(m => ({ default: m.MorningWeatherReview })));
 const SocialWeatherCard = lazy(() => import("@/components/weather/social-weather-card").then(m => ({ default: m.SocialWeatherCard })));
 const ARWeatherOverlay = lazy(() => import("@/components/weather/ar-weather-overlay").then(m => ({ default: m.ARWeatherOverlay })));
-const PredictionDialog = lazy(() => import("@/components/weather/prediction-dialog").then(m => ({ default: m.PredictionDialog })));
 const AQICard = lazy(() => import("@/components/weather/aqi-card").then(m => ({ default: m.AQICard })));
 const BarometerCard = lazy(() => import("@/components/weather/barometer-card").then(m => ({ default: m.BarometerCard })));
-const MobileLocationNav = lazy(() => import("@/components/weather/mobile-location-nav").then(m => ({ default: m.MobileLocationNav })));
 const RainMapCard = lazy(() => import("@/components/weather/rain-map-card"));
 const DryRoute = lazy(() => import("@/components/weather/dry-route").then(m => ({ default: m.DryRoute })));
 const AffiliateCard = lazy(() => import("@/components/weather/affiliate-card").then(m => ({ default: m.AffiliateCard })));
 const ChristmasCalendar = lazy(() => import("@/components/weather/christmas-calendar").then(m => ({ default: m.ChristmasCalendar })));
 const RamadanCalendar = lazy(() => import("@/components/weather/ramadan-calendar").then(m => ({ default: m.RamadanCalendar })));
-const OnboardingFlow = lazy(() => import("@/components/weather/onboarding-flow").then(m => ({ default: m.OnboardingFlow })));
-const ExploreSheet = lazy(() => import("@/components/weather/explore-sheet").then(m => ({ default: m.ExploreSheet })));
-const ExploreButton = lazy(() => import("@/components/weather/explore-sheet").then(m => ({ default: m.ExploreButton })));
-const FeatureIdeasCard = lazy(() => import("@/components/weather/feature-ideas-card").then(m => ({ default: m.FeatureIdeasCard })));
-const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-card").then(m => ({ default: m.BattleAcceptCard })));
 
-const WeeklyRecapCard = lazy(() => import("@/components/weather/weekly-recap-card").then(m => ({ default: m.WeeklyRecapCard })));
-const SocialFeed = lazy(() => import("@/components/weather/social-feed").then(m => ({ default: m.SocialFeed })));
+
+import { BottomTabBar } from "@/components/weather/bottom-tab-bar";
 
 export default function WeatherPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const acceptBattleId = searchParams.get("accept_battle");
+  
 
-  const clearAcceptBattle = useCallback(() => {
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.delete("accept_battle");
-      return next;
-    });
-  }, [setSearchParams]);
+
   const [selectedLocation, setSelectedLocation] = useState<{
     lat: number;
     lon: number;
@@ -97,19 +86,9 @@ export default function WeatherPage() {
   const mountTimeRef = useRef(performance.now());
   const hasLoggedTimingRef = useRef(false);
   const currentHoliday = getCurrentHoliday();
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [exploreOpen, setExploreOpen] = useState(false);
+  
   const { isEnabled: isFeatureEnabled } = useFeatureFlags();
-
-  // Show onboarding for new users
-  useEffect(() => {
-    if (user && !accountLoading) {
-      const onboardingDone = localStorage.getItem("rainz-onboarding-complete");
-      if (!onboardingDone && !profile?.display_name) {
-        setShowOnboarding(true);
-      }
-    }
-  }, [user, accountLoading, profile]);
+  const pageLoadedAtRef = useRef(Date.now());
 
   const { data: savedLocations = [] } = useQuery({
     queryKey: ["saved-locations"],
@@ -127,6 +106,13 @@ export default function WeatherPage() {
       return data;
     },
     staleTime: 1000 * 60 * 5,
+  });
+
+  const { activeTip, dismiss: dismissTip } = useAmplitudeGuidedHelp({
+    hasLocation: !!selectedLocation,
+    hasSavedLocations: savedLocations.length > 0,
+    isNewUser: !user,
+    pageLoadedAt: pageLoadedAtRef.current,
   });
 
   const customDisplayName = useMemo(() => {
@@ -578,14 +564,9 @@ export default function WeatherPage() {
         )}
 
         <div className="container mx-auto px-4 py-4 sm:py-6 max-w-7xl relative z-10">
-          {/* Inline battle accept card when navigated via accept_battle param */}
-          {acceptBattleId && (
-            <BattleAcceptCard
-              battleId={acceptBattleId}
-              isImperial={isImperial}
-              onComplete={clearAcceptBattle}
-            />
-          )}
+
+          {/* Product Hunt Launch Banner */}
+          <ProductHuntLaunchBanner />
 
           {/* Maintenance Mode Banner */}
           {isFeatureEnabled('maintenance_mode', false) && (
@@ -609,7 +590,7 @@ export default function WeatherPage() {
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                  <HeaderInfoBar user={user} />
+                  <HeaderInfoBar user={user} showInbox={false} />
                   <SettingsDialog
                     isImperial={isImperial}
                     onUnitsChange={setIsImperial}
@@ -636,6 +617,10 @@ export default function WeatherPage() {
             </div>
 
             <CardContent className="p-4 sm:p-6 bg-card space-y-4">
+              {/* Guided help banner */}
+              <Suspense fallback={null}>
+                <GuidedHelpBanner tip={activeTip} onDismiss={dismissTip} />
+              </Suspense>
               {/* Offline cache indicator for premium users */}
               {isUsingCachedData && (
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300">
@@ -655,36 +640,50 @@ export default function WeatherPage() {
               )}
 
               <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-start">
-                <div className="space-y-2">
-                  <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
-                  {weatherData?.aggregated?.stationInfo && (
-                    <WeatherStationInfo stationInfo={weatherData.aggregated.stationInfo} />
-                  )}
-                </div>
-                {weatherData && (
-                  <WeatherReportForm
-                    location={actualStationName}
-                    currentCondition={weatherData.mostAccurate.currentWeather.condition}
-                    locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }}
-                  />
+              <div className="min-w-0 space-y-3">
+                <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
+                {/* Saved locations — fixed 3-up grid, no scroll */}
+                {savedLocations.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {savedLocations.slice(0, 3).map((loc: any) => {
+                      const isActive = selectedLocation &&
+                        Math.abs(loc.latitude - selectedLocation.lat) < 0.01 &&
+                        Math.abs(loc.longitude - selectedLocation.lon) < 0.01;
+                      const cityName = loc.name.split(',')[0].trim();
+                      return (
+                        <button
+                          key={loc.id}
+                          onClick={() => handleLocationSelect(loc.latitude, loc.longitude, loc.name)}
+                          className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-left transition-all active:scale-95 truncate ${
+                            isActive
+                              ? "bg-primary/15 ring-1 ring-primary/40"
+                              : "bg-card/60 hover:bg-card/80 ring-1 ring-border/20"
+                          }`}
+                        >
+                          <span className={`text-sm shrink-0 ${isActive ? "" : "opacity-60"}`}>
+                            {loc.is_primary ? "📍" : "🌍"}
+                          </span>
+                          <span className={`text-xs font-semibold truncate ${isActive ? "text-primary" : "text-foreground"}`}>
+                            {cityName}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {weatherData?.aggregated?.stationInfo && (
+                  <WeatherStationInfo stationInfo={weatherData.aggregated.stationInfo} />
                 )}
               </div>
-
-              {selectedLocation && (
-                <div className="pt-3 border-t border-border/20">
-                  {user ? (
-                    <PredictionDialog
-                      location={selectedLocation?.name || "Unknown"}
-                      latitude={selectedLocation?.lat || 0}
-                      longitude={selectedLocation?.lon || 0}
-                      isImperial={isImperial}
-                      onPredictionMade={() => {}}
-                    />
-                  ) : (
-                    <LockedPredictionButton />
-                  )}
-                </div>
+              {weatherData && (
+                <WeatherReportForm
+                  location={actualStationName}
+                  currentCondition={weatherData.mostAccurate.currentWeather.condition}
+                  locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }}
+                />
               )}
+            </div>
+
             </CardContent>
           </Card>
           {selectedLocation && isLoading && !weatherData ? (
@@ -715,8 +714,14 @@ export default function WeatherPage() {
               </CardContent>
             </Card>
           ) : weatherData ? (
-            <Suspense fallback={null}>
-              <div className="animate-fade-in">
+            <Suspense
+              fallback={
+                <div className="transition-opacity duration-200 ease-out">
+                  <WeatherPageSkeleton />
+                </div>
+              }
+            >
+              <div>
               {weatherData.demo && (
                 <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-xl">
                   <div className="flex items-center gap-3">
@@ -742,11 +747,9 @@ export default function WeatherPage() {
                 </div>
               )}
 
-              {/* Weekly Recap Card */}
-              <WeeklyRecapCard />
 
-              {/* Social Feed */}
-              <SocialFeed isImperial={isImperial} />
+
+
 
               <AnimatedCard index={0}>
                 <CurrentWeather
@@ -885,29 +888,6 @@ export default function WeatherPage() {
                 </Card>
               </AnimatedCard>
 
-              {/* Feature Ideas Card */}
-              <AnimatedCard index={10}>
-                <FeatureIdeasCard />
-              </AnimatedCard>
-
-              {/* Explore More button */}
-              {isFeatureEnabled('explore_enabled') && (
-                <ExploreButton onClick={() => setExploreOpen(true)} />
-              )}
-
-              {/* Explore Bottom Sheet */}
-              <ExploreSheet
-                open={exploreOpen}
-                onOpenChange={setExploreOpen}
-                latitude={selectedLocation.lat}
-                longitude={selectedLocation.lon}
-                locationName={actualStationName}
-                currentWeather={weatherData.mostAccurate.currentWeather}
-                isImperial={isImperial}
-                userId={user?.id}
-                dailyForecast={weatherData.mostAccurate.dailyForecast}
-                hourlyForecast={weatherData.mostAccurate.hourlyForecast}
-              />
 
               {/* Holiday Calendars - only shown in season */}
               {new Date().getMonth() === 11 && (
@@ -954,37 +934,24 @@ export default function WeatherPage() {
               </footer>
               </div>
             </Suspense>
-          ) : null}
+          ) : (
+            <div className="transition-opacity duration-200 ease-out">
+              <WeatherPageSkeleton />
+            </div>
+          )}
         </div>
 
         <Suspense fallback={null}>
           {weatherData && (
             <AIChatButton
               weatherData={weatherData.mostAccurate}
-              location={selectedLocation.name}
+              location={selectedLocation?.name ?? ""}
               isImperial={isImperial}
             />
           )}
-          {user && (
-            <MobileLocationNav
-              onLocationSelect={handleLocationSelect}
-              currentLocation={selectedLocation}
-              isImperial={isImperial}
-            />
-          )}
-          {user && showOnboarding && (
-            <OnboardingFlow
-              open={showOnboarding}
-              userId={user.id}
-              onComplete={(loc) => {
-                setShowOnboarding(false);
-                if (loc) {
-                  handleLocationSelect(loc.lat, loc.lon, loc.name);
-                }
-              }}
-            />
-          )}
+          <BottomTabBar />
         </Suspense>
+        <OnboardingTour />
       </div>
     </>
   );

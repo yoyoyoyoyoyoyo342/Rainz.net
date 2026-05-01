@@ -20,6 +20,7 @@ import { CookieConsentBanner } from "@/components/ui/cookie-consent-banner";
 import { Footer } from "@/components/ui/footer";
 import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
 import { PWAInstallPopup } from "@/components/ui/pwa-install-popup";
+import { AppSplashScreen } from "@/components/ui/app-splash-screen";
 import { RuntimeErrorBoundary } from "@/components/ui/runtime-error-boundary";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { useAmplitudeInstrumentation } from "@/hooks/use-amplitude-instrumentation";

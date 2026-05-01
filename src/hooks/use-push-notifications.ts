@@ -32,7 +32,7 @@ export function usePushNotifications() {
     setPushSupported(isPushSupported());
 
     // Register service worker for push notifications
-    if ('serviceWorker' in navigator) {
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && navigator.serviceWorker) {
       navigator.serviceWorker.register('/sw.js')
         .then((reg) => {
           setRegistration(reg);

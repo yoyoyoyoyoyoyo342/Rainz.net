@@ -43,6 +43,7 @@ export function DetailedMetrics({
               <UVIndexGraph
                 currentUV={currentWeather.uvIndex}
                 hourlyForecast={hourlyForecast}
+                is24Hour={is24Hour}
               />
             </div>
           </div>

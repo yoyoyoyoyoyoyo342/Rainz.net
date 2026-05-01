@@ -1,17 +1,20 @@
 import { Sun, Sunrise, Sunset, Moon } from "lucide-react";
-import { CurrentWeather } from "@/types/weather";
+import { CurrentWeather, HourlyForecast } from "@/types/weather";
 import { formatTime } from "@/lib/time-format";
 import { PremiumSettings } from "@/hooks/use-premium-settings";
 import { useLanguage } from "@/contexts/language-context";
+import { UVIndexGraph } from "./uv-index-graph";
 
 interface DetailedMetricsProps {
   currentWeather: CurrentWeather;
+  hourlyForecast?: HourlyForecast[];
   is24Hour?: boolean;
   premiumSettings?: PremiumSettings;
 }
 
 export function DetailedMetrics({
   currentWeather,
+  hourlyForecast = [],
   is24Hour = true,
   premiumSettings
 }: DetailedMetricsProps) {

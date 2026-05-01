@@ -180,13 +180,15 @@ export function UVIndexGraph({ currentUV, hourlyForecast, is24Hour = true }: UVI
       </div>
 
       {/* Graph */}
-      <div className="relative touch-none">
+      <div className="relative touch-none overscroll-contain">
         <svg
           ref={svgRef}
           viewBox={`0 0 ${W} ${H + 22}`}
-          className="w-full h-44 cursor-grab active:cursor-grabbing"
+          className="w-full h-44 cursor-grab active:cursor-grabbing touch-none"
           preserveAspectRatio="none"
+          style={{ touchAction: "none" }}
           onPointerDown={onPointerDown}
+          onPointerMove={onPointerMoveSvg}
         >
           <defs>
             <linearGradient id="uv-area" x1="0" y1="0" x2="0" y2="1">

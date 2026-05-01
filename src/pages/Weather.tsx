@@ -853,6 +853,7 @@ export default function WeatherPage() {
               <AnimatedCard index={7}>
                 <DetailedMetrics
                   currentWeather={weatherData.mostAccurate.currentWeather}
+                  hourlyForecast={weatherData.mostAccurate.hourlyForecast}
                   is24Hour={is24Hour}
                   premiumSettings={premiumSettings}
                 />

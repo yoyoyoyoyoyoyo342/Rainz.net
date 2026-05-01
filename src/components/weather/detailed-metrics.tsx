@@ -1,17 +1,20 @@
 import { Sun, Sunrise, Sunset, Moon } from "lucide-react";
-import { CurrentWeather } from "@/types/weather";
+import { CurrentWeather, HourlyForecast } from "@/types/weather";
 import { formatTime } from "@/lib/time-format";
 import { PremiumSettings } from "@/hooks/use-premium-settings";
 import { useLanguage } from "@/contexts/language-context";
+import { UVIndexGraph } from "./uv-index-graph";
 
 interface DetailedMetricsProps {
   currentWeather: CurrentWeather;
+  hourlyForecast?: HourlyForecast[];
   is24Hour?: boolean;
   premiumSettings?: PremiumSettings;
 }
 
 export function DetailedMetrics({
   currentWeather,
+  hourlyForecast = [],
   is24Hour = true,
   premiumSettings
 }: DetailedMetricsProps) {
@@ -37,24 +40,10 @@ export function DetailedMetrics({
               </div>
             </div>
             <div className="p-4">
-              <div className="text-4xl font-bold text-foreground mb-2">
-                {currentWeather.uvIndex}
-              </div>
-              <div className="text-sm text-muted-foreground mb-3">
-                {currentWeather.uvIndex <= 2 ? t('uv.low') : 
-                 currentWeather.uvIndex <= 5 ? t('uv.moderate') : 
-                 currentWeather.uvIndex <= 7 ? t('uv.high') : 
-                 currentWeather.uvIndex <= 10 ? t('uv.veryHigh') : 
-                 t('uv.extreme')}
-              </div>
-              <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-green-400 via-yellow-400 via-orange-500 to-red-500 rounded-full transition-all"
-                  style={{
-                    width: `${Math.min(currentWeather.uvIndex / 11 * 100, 100)}%`
-                  }}
-                />
-              </div>
+              <UVIndexGraph
+                currentUV={currentWeather.uvIndex}
+                hourlyForecast={hourlyForecast}
+              />
             </div>
           </div>
         )}

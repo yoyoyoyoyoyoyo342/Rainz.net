@@ -66,6 +66,7 @@ export function AppSplashScreen() {
               className="mt-6 max-w-xs text-center"
             >
               <p className="text-sm text-neutral-700 leading-snug">
+                <span className="font-semibold">Did you know: </span>
                 {fact}
               </p>
             </motion.div>

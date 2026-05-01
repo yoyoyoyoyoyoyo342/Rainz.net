@@ -1,16 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { isPWAInstalled } from "@/lib/pwa-utils";
+import { getRandomWeatherFact } from "@/lib/weather-facts";
 
 const SESSION_KEY = "rainz-splash-shown";
+const SPLASH_DURATION_MS = 3000;
 
 /**
- * Splash screen shown once per session when the app boots.
- * Always shown for PWA / native (Capacitor) launches.
- * On the website, shown once per browser session.
+ * Splash screen shown when the app boots.
+ * - Always shown for PWA / native (Capacitor) launches.
+ * - On the website, shown once per browser session.
+ * - Renders as an overlay so the app loads behind it during the 3s display.
  */
 export function AppSplashScreen() {
   const [visible, setVisible] = useState(false);
+  const fact = useMemo(() => getRandomWeatherFact(), []);
 
   useEffect(() => {
     // Skip on embed routes / iframes
@@ -20,7 +24,6 @@ export function AppSplashScreen() {
     const isNative =
       typeof (window as any).Capacitor !== "undefined" &&
       (window as any).Capacitor?.isNativePlatform?.();
-    const isStandalone = isPWAInstalled();
     const alreadyShown = sessionStorage.getItem(SESSION_KEY) === "1";
 
     // Show on native or PWA every launch; on web only once per session
@@ -29,8 +32,7 @@ export function AppSplashScreen() {
     setVisible(true);
     sessionStorage.setItem(SESSION_KEY, "1");
 
-    const duration = isNative || isStandalone ? 1400 : 900;
-    const timer = setTimeout(() => setVisible(false), duration);
+    const timer = setTimeout(() => setVisible(false), SPLASH_DURATION_MS);
     return () => clearTimeout(timer);
   }, []);
 
@@ -40,8 +42,8 @@ export function AppSplashScreen() {
         <motion.div
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.45, ease: "easeOut" }}
-          className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-gradient-to-br from-background via-background to-primary/10"
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-gradient-to-br from-background via-background to-primary/10 px-6"
           aria-hidden="true"
         >
           <motion.div
@@ -68,6 +70,21 @@ export function AppSplashScreen() {
               </h1>
               <p className="text-sm text-muted-foreground">Weather, reimagined</p>
             </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+              className="mt-2 max-w-xs text-center"
+            >
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground/70 mb-1">
+                Did you know?
+              </p>
+              <p className="text-sm text-foreground/90 leading-snug">
+                {fact}
+              </p>
+            </motion.div>
+
             <motion.div
               className="mt-4 h-1 w-32 overflow-hidden rounded-full bg-muted"
               initial={{ opacity: 0 }}

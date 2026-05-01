@@ -43,7 +43,7 @@ export function AppSplashScreen() {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-gradient-to-br from-background via-background to-primary/10 px-6"
+          className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-white px-6"
           aria-hidden="true"
         >
           <motion.div
@@ -52,51 +52,22 @@ export function AppSplashScreen() {
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
             className="flex flex-col items-center gap-5"
           >
-            <div className="relative">
-              <motion.div
-                className="absolute inset-0 rounded-full bg-primary/30 blur-2xl"
-                animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.8, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              />
-              <img
-                src="/logo.png"
-                alt="Rainz"
-                className="relative w-28 h-28 object-contain drop-shadow-lg"
-              />
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                Rainz
-              </h1>
-              <p className="text-sm text-muted-foreground">Weather, reimagined</p>
-            </div>
+            <img
+              src="/logo.png"
+              alt="Rainz"
+              className="w-28 h-28 object-contain"
+            />
+            <p className="text-base text-neutral-600">Be prepared</p>
 
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.5 }}
-              className="mt-2 max-w-xs text-center"
+              className="mt-6 max-w-xs text-center"
             >
-              <p className="text-[11px] uppercase tracking-widest text-muted-foreground/70 mb-1">
-                Did you know?
-              </p>
-              <p className="text-sm text-foreground/90 leading-snug">
+              <p className="text-sm text-neutral-700 leading-snug">
                 {fact}
               </p>
-            </motion.div>
-
-            <motion.div
-              className="mt-4 h-1 w-32 overflow-hidden rounded-full bg-muted"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <motion.div
-                className="h-full bg-primary"
-                initial={{ x: "-100%" }}
-                animate={{ x: "100%" }}
-                transition={{ duration: 1.1, ease: "easeInOut", repeat: Infinity }}
-              />
             </motion.div>
           </motion.div>
         </motion.div>

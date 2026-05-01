@@ -93,12 +93,15 @@ export function UVIndexGraph({ currentUV, hourlyForecast, is24Hour = true }: UVI
     setSelectedHour(Math.max(0, Math.min(23, hour)));
   }, [innerW]);
 
-  // Pointer events on window while dragging
+  // Pointer events on window while dragging (mouse + pen)
   useEffect(() => {
     if (!dragging) return;
-    const onMove = (e: PointerEvent) => updateFromClientX(e.clientX);
+    const onMove = (e: PointerEvent) => {
+      e.preventDefault();
+      updateFromClientX(e.clientX);
+    };
     const onUp = () => setDragging(false);
-    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointermove", onMove, { passive: false });
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
     return () => {
@@ -110,8 +113,50 @@ export function UVIndexGraph({ currentUV, hourlyForecast, is24Hour = true }: UVI
 
   const onPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
     setDragging(true);
+    // Capture pointer so we keep getting events even if finger leaves SVG bounds
+    try {
+      (e.target as Element).setPointerCapture?.(e.pointerId);
+    } catch {}
     updateFromClientX(e.clientX);
   };
+
+  const onPointerMoveSvg = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (!dragging) return;
+    e.preventDefault();
+    updateFromClientX(e.clientX);
+  };
+
+  // Native touch handlers — needed because some mobile browsers swallow
+  // pointer events for scrolling. We attach with passive:false so we can
+  // preventDefault() and stop the page from scrolling while scrubbing.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 0) return;
+      e.preventDefault();
+      setDragging(true);
+      updateFromClientX(e.touches[0].clientX);
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 0) return;
+      e.preventDefault();
+      updateFromClientX(e.touches[0].clientX);
+    };
+    const onTouchEnd = () => setDragging(false);
+
+    svg.addEventListener("touchstart", onTouchStart, { passive: false });
+    svg.addEventListener("touchmove", onTouchMove, { passive: false });
+    svg.addEventListener("touchend", onTouchEnd);
+    svg.addEventListener("touchcancel", onTouchEnd);
+    return () => {
+      svg.removeEventListener("touchstart", onTouchStart);
+      svg.removeEventListener("touchmove", onTouchMove);
+      svg.removeEventListener("touchend", onTouchEnd);
+      svg.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, [updateFromClientX]);
 
   const tickHours = [0, 6, 12, 18];
   const yTicks = [0, 3, 6, 8, 11];

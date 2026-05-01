@@ -70,6 +70,7 @@ const ApiPricing = lazy(() => import("./pages/ApiPricing"));
 const Predict = lazy(() => import("./pages/Predict"));
 const Social = lazy(() => import("./pages/Social"));
 const Explore = lazy(() => import("./pages/Explore"));
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 
 function AnalyticsTracker() {
   useAnalytics();
@@ -194,6 +195,7 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
               <Route path="/api" element={<ApiPricing />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/market-report" element={<MarketReport />} />
+              <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/airport" element={<AirportLayout />}>
                 <Route index element={<AirportLanding />} />
                 <Route path="features" element={<AirportFeatures />} />

@@ -62,7 +62,14 @@ const RamadanCalendar = lazy(() => import("@/components/weather/ramadan-calendar
 import { BottomTabBar } from "@/components/weather/bottom-tab-bar";
 
 export default function WeatherPage() {
-  
+  // Legacy redirect: old battle share links pointed to "/?accept_battle=..." — forward to /predict
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const battleId = params.get("accept_battle");
+    if (battleId) {
+      window.location.replace(`/predict?accept_battle=${battleId}`);
+    }
+  }, []);
 
 
   const [selectedLocation, setSelectedLocation] = useState<{

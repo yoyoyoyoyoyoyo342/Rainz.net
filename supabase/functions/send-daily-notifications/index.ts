@@ -79,7 +79,10 @@ serve(async (req) => {
         const pref = prefMap.get(userId);
         const loc = locMap.get(userId);
         const prof = profMap.get(userId);
-        const language = (pref?.language as string) || "en";
+        // Normalize language code (e.g., "en-GB" -> "en", "nb-NO" -> "no", "nb" -> "no")
+        const rawLang = ((pref?.language as string) || "en").toLowerCase();
+        const baseLang = rawLang.split("-")[0];
+        const language = baseLang === "nb" || baseLang === "nn" ? "no" : baseLang;
         const premiumSettings = (pref?.premium_settings as Record<string, unknown>) || {};
         const useCelsius = premiumSettings?.temperatureUnit !== "fahrenheit";
         const unit = useCelsius ? "°C" : "°F";

@@ -1230,7 +1230,7 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
                     <Button size="sm" variant="outline" onClick={() => setShowAR(true)}><Camera className="w-4 h-4" /></Button>
                     <Button size="sm" variant="outline" onClick={() => {
                       const route = routes[bestRouteIdx];
-                      const text = `🌂 DryRoute: ${fromQuery} → ${toQuery}\n☔ Rain: ${route.rainScore}%\n⏱ ${formatDuration(route.duration)} | 📏 ${formatDistance(route.distance)}\nPlan at rainz.net/dryroutes`;
+                      const text = `🌂 DryRoute: ${fromQuery} → ${toQuery}\n☔ Rain: ${route.rainScore}%\n⏱ ${formatDuration(route.duration)} | 📏 ${formatDistance(route.distance)}\nPlan at dryroutes.rainz.net`;
                       navigator.share?.({ title: 'DryRoute', text }).catch(() => navigator.clipboard.writeText(text).then(() => toast.success('Copied!')));
                     }}><Share2 className="w-4 h-4" /></Button>
                   </div>

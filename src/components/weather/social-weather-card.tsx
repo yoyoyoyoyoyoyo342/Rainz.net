@@ -157,7 +157,7 @@ export function SocialWeatherCard({
 
   const handleShareToTwitter = () => {
     const text = encodeURIComponent(`Weather in ${location}: ${Math.round(temperature)}° ${condition} 🌤️ Check it out on Rainz.net!`);
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent("https://rainz.net")}`, "_blank");
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(typeof window !== "undefined" ? window.location.origin : "https://rainz.net")}`, "_blank");
     amplitude.track("weather_card_shared", { platform: "twitter", location });
   };
 

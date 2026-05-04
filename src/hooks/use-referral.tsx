@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './use-auth';
 import * as amplitude from '@amplitude/unified';
+import { subdomainHref } from '@/lib/subdomain-routing';
 
 const REFERRAL_POINTS = 50; // Points for both referrer and referee
 
@@ -63,7 +64,8 @@ export function useReferral() {
 
   const getReferralLink = useCallback(() => {
     if (!referralCode) return '';
-    return `https://rainz.net/?ref=${referralCode}`;
+    // Referral lands on the apex (Weather page) with ?ref=...
+    return `${subdomainHref('/')}?ref=${referralCode}`;
   }, [referralCode]);
 
   const shareReferralLink = useCallback(async () => {

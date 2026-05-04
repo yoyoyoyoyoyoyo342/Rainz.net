@@ -8,6 +8,7 @@ import { usePredictionBattles } from "@/hooks/use-prediction-battles";
 import { format, differenceInHours, differenceInMinutes } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppOnlyGate } from "./app-only-gate";
+import { subdomainHref } from "@/lib/subdomain-routing";
 
 interface PredictionBattlesProps {
   location: string;
@@ -226,7 +227,7 @@ const PredictionBattlesInner = ({
                           variant="ghost"
                           className="h-8 w-8 p-0"
                           onClick={() => {
-                            const url = `https://rainz.net/predict?accept_battle=${battle.id}`;
+                            const url = `${subdomainHref('/predict')}?accept_battle=${battle.id}`;
                             const text = "I challenged you to a weather prediction battle on Rainz! 🌧️";
                             if (navigator.share) {
                               navigator.share({ title: "Rainz Battle Challenge", text, url }).catch(() => {});

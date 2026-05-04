@@ -1086,7 +1086,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
   const shareRoute = async () => {
     const route = routes[bestRouteIdx];
     if (!route) return;
-    const text = `🌂 DryRoute: ${fromQuery} → ${toQuery}\n☔ Rain: ${route.rainScore}% | ⏱ ${formatDuration(route.duration)} | 📏 ${formatDistance(route.distance)}\n\nPlan your dry route at rainz.net`;
+    const text = `🌂 DryRoute: ${fromQuery} → ${toQuery}\n☔ Rain: ${route.rainScore}% | ⏱ ${formatDuration(route.duration)} | 📏 ${formatDistance(route.distance)}\n\nPlan your dry route at dryroutes.rainz.net`;
     try {
       if (navigator.share) {
         await navigator.share({ title: 'DryRoute', text });

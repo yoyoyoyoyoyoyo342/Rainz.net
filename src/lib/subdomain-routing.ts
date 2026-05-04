@@ -21,6 +21,7 @@ export const SUBDOMAIN_TO_PATH: Record<string, string> = {
   auth: "/auth",
   admin: "/admin",
   mcp: "/mcp",
+  docs: "/docs",
   // api & blog are handled separately (existing logic)
 };
 

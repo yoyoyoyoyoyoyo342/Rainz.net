@@ -27,6 +27,7 @@ import { useAmplitudeInstrumentation } from "@/hooks/use-amplitude-instrumentati
 import { useAmplitudeFunnels } from "@/hooks/use-amplitude-funnels";
 import { useBroadcastListener } from "@/hooks/use-broadcast-listener";
 import { toast as sonnerToast } from "sonner";
+import { resolveHost, maybeRedirectPathToSubdomain } from "@/lib/subdomain-routing";
 
 
 // Critical components - load immediately

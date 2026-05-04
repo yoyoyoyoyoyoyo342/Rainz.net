@@ -22,6 +22,7 @@ const SUBDOMAIN_FOR_PATH: Record<string, string> = {
   "/auth": "auth",
   "/admin": "admin",
   "/mcp": "mcp",
+  "/docs": "docs",
 };
 
 function urlForRoute(path: string): string {

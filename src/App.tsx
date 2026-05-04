@@ -232,8 +232,25 @@ function AppContent() {
   usePrefetchSavedLocations();
   useOAuthErrorToast();
 
-  const isBlogSubdomain = window.location.hostname === "blog.rainz.net";
-  const isApiSubdomain = window.location.hostname === "api.rainz.net";
+  // Resolve which subdomain we're on (apex/api/blog/curated/city/generic)
+  const hostResolution = resolveHost();
+
+  // On apex/www: redirect well-known paths to their subdomain (acts like a 301).
+  useEffect(() => {
+    if (hostResolution.kind === "apex") {
+      maybeRedirectPathToSubdomain();
+    }
+  }, [hostResolution.kind]);
+
+  const isApiSubdomain = hostResolution.kind === "api";
+  const isBlogSubdomain = hostResolution.kind === "blog";
+
+  // For curated/city/generic subdomains, rewrite the SPA's "/" to the matching path.
+  let rewrittenPath: string | null = null;
+  if (hostResolution.kind === "curated") rewrittenPath = hostResolution.path;
+  else if (hostResolution.kind === "city") rewrittenPath = `/weather/${hostResolution.slug}`;
+  else if (hostResolution.kind === "generic") rewrittenPath = hostResolution.path;
+
   const isEmbedRoute = window.location.pathname === "/embed";
 
   // Embed route renders without app chrome

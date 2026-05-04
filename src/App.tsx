@@ -293,6 +293,7 @@ function AppContent() {
                             <AnimatedRoutes
                               isApiSubdomain={isApiSubdomain}
                               isBlogSubdomain={isBlogSubdomain}
+                              rewrittenPath={rewrittenPath}
                             />
                           </div>
                           {window.location.pathname !== '/dryroutes' && (

@@ -141,20 +141,35 @@ function usePrefetchSavedLocations() {
   }, []);
 }
 
-function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: boolean; isBlogSubdomain: boolean }) {
+function AnimatedRoutes({
+  isApiSubdomain,
+  isBlogSubdomain,
+  rewrittenPath,
+}: {
+  isApiSubdomain: boolean;
+  isBlogSubdomain: boolean;
+  rewrittenPath: string | null;
+}) {
   const location = useLocation();
+
+  // For subdomain routing: only rewrite when the user is on the subdomain root.
+  // Once they navigate inside the SPA, respect the actual location.
+  const effectiveLocation =
+    rewrittenPath && location.pathname === "/"
+      ? { ...location, pathname: rewrittenPath }
+      : location;
 
   return (
     <Suspense fallback={<div className="min-h-screen bg-background p-4"><WeatherPageSkeleton /></div>}>
       <AnimatePresence mode="wait">
-        <PageTransition key={location.pathname}>
+        <PageTransition key={effectiveLocation.pathname}>
           {isApiSubdomain ? (
-            <Routes location={location}>
+            <Routes location={effectiveLocation}>
               <Route path="/" element={<Navigate to="https://rainz.net" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           ) : isBlogSubdomain ? (
-            <Routes location={location}>
+            <Routes location={effectiveLocation}>
               <Route path="/" element={<Articles />} />
               <Route path="/articles" element={<Articles />} />
               <Route path="/articles/:slug" element={<BlogPost />} />
@@ -162,7 +177,7 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           ) : (
-            <Routes location={location}>
+            <Routes location={effectiveLocation}>
               <Route path="/" element={<Weather />} />
               <Route path="/predict" element={<Predict />} />
               <Route path="/social" element={<Social />} />

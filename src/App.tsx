@@ -72,6 +72,7 @@ const Predict = lazy(() => import("./pages/Predict"));
 const Social = lazy(() => import("./pages/Social"));
 const Explore = lazy(() => import("./pages/Explore"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
+const Docs = lazy(() => import("./pages/Docs"));
 
 function AnalyticsTracker() {
   useAnalytics();
@@ -212,6 +213,7 @@ function AnimatedRoutes({
               <Route path="/faq" element={<FAQ />} />
               <Route path="/market-report" element={<MarketReport />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
+              <Route path="/docs" element={<Docs />} />
               <Route path="/airport" element={<AirportLayout />}>
                 <Route index element={<AirportLanding />} />
                 <Route path="features" element={<AirportFeatures />} />

@@ -8,9 +8,63 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+// Cross-subdomain auth: when running on *.rainz.net, persist the Supabase
+// session in a cookie scoped to .rainz.net so users stay signed in when they
+// move between predict.rainz.net, social.rainz.net, etc. Falls back to
+// localStorage on preview/native hosts.
+function getAuthStorage(): Storage | undefined {
+  if (typeof window === "undefined") return undefined;
+  const host = window.location.hostname;
+  const isRainzApex = host === "rainz.net" || host.endsWith(".rainz.net");
+  if (!isRainzApex) return localStorage;
+
+  const COOKIE_DOMAIN = ".rainz.net";
+  const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+
+  // localStorage-shaped adapter backed by document.cookie
+  const cookieStorage: Storage = {
+    get length() {
+      return document.cookie ? document.cookie.split("; ").length : 0;
+    },
+    clear() {
+      // Best-effort: only clear sb-* cookies on this domain
+      document.cookie.split("; ").forEach((c) => {
+        const name = c.split("=")[0];
+        if (name.startsWith("sb-")) {
+          document.cookie = `${name}=; Max-Age=0; Path=/; Domain=${COOKIE_DOMAIN}; Secure; SameSite=Lax`;
+        }
+      });
+    },
+    key(index: number) {
+      const parts = document.cookie ? document.cookie.split("; ") : [];
+      return parts[index]?.split("=")[0] ?? null;
+    },
+    getItem(key: string) {
+      const match = document.cookie
+        .split("; ")
+        .find((c) => c.startsWith(encodeURIComponent(key) + "="));
+      if (!match) return null;
+      try {
+        return decodeURIComponent(match.split("=").slice(1).join("="));
+      } catch {
+        return null;
+      }
+    },
+    setItem(key: string, value: string) {
+      const v = encodeURIComponent(value);
+      document.cookie = `${encodeURIComponent(key)}=${v}; Max-Age=${MAX_AGE}; Path=/; Domain=${COOKIE_DOMAIN}; Secure; SameSite=Lax`;
+    },
+    removeItem(key: string) {
+      document.cookie = `${encodeURIComponent(key)}=; Max-Age=0; Path=/; Domain=${COOKIE_DOMAIN}; Secure; SameSite=Lax`;
+    },
+  };
+
+  return cookieStorage;
+}
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
+    storage: getAuthStorage(),
     persistSession: true,
     autoRefreshToken: true,
   }

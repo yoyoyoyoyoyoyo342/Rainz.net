@@ -13,7 +13,7 @@ Allow: /llm.txt
 Allow: /openapi.yaml
 Allow: /.well-known/
 
-# Sitemaps
+# Sitemaps (covers apex + all *.rainz.net subdomains)
 Sitemap: https://rainz.net/sitemap.xml
 
 # ===============================================================

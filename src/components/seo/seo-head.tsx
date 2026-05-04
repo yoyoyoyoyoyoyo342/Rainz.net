@@ -56,20 +56,25 @@ export function SEOHead({
       setMeta('meta[name="robots"]', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
     }
 
-    // Canonical URL
+    // Canonical URL — use current origin so each subdomain self-canonicalizes
+    const origin =
+      typeof window !== 'undefined' && window.location.origin
+        ? window.location.origin
+        : BASE_URL;
+    const computedUrl = canonicalUrl || `${origin}${window.location.pathname}`;
     let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
     if (!canonical) {
       canonical = document.createElement('link');
       canonical.rel = 'canonical';
       document.head.appendChild(canonical);
     }
-    canonical.href = canonicalUrl || `${BASE_URL}${window.location.pathname}`;
+    canonical.href = computedUrl;
 
     // Open Graph tags
     setMeta('meta[property="og:title"]', title, true);
     setMeta('meta[property="og:description"]', description, true);
     setMeta('meta[property="og:type"]', ogType, true);
-    setMeta('meta[property="og:url"]', canonicalUrl || `${BASE_URL}${window.location.pathname}`, true);
+    setMeta('meta[property="og:url"]', computedUrl, true);
     setMeta('meta[property="og:image"]', ogImage, true);
 
     // Twitter tags

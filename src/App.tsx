@@ -27,6 +27,7 @@ import { useAmplitudeInstrumentation } from "@/hooks/use-amplitude-instrumentati
 import { useAmplitudeFunnels } from "@/hooks/use-amplitude-funnels";
 import { useBroadcastListener } from "@/hooks/use-broadcast-listener";
 import { toast as sonnerToast } from "sonner";
+import { resolveHost, maybeRedirectPathToSubdomain } from "@/lib/subdomain-routing";
 
 
 // Critical components - load immediately
@@ -140,20 +141,35 @@ function usePrefetchSavedLocations() {
   }, []);
 }
 
-function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: boolean; isBlogSubdomain: boolean }) {
+function AnimatedRoutes({
+  isApiSubdomain,
+  isBlogSubdomain,
+  rewrittenPath,
+}: {
+  isApiSubdomain: boolean;
+  isBlogSubdomain: boolean;
+  rewrittenPath: string | null;
+}) {
   const location = useLocation();
+
+  // For subdomain routing: only rewrite when the user is on the subdomain root.
+  // Once they navigate inside the SPA, respect the actual location.
+  const effectiveLocation =
+    rewrittenPath && location.pathname === "/"
+      ? { ...location, pathname: rewrittenPath }
+      : location;
 
   return (
     <Suspense fallback={<div className="min-h-screen bg-background p-4"><WeatherPageSkeleton /></div>}>
       <AnimatePresence mode="wait">
-        <PageTransition key={location.pathname}>
+        <PageTransition key={effectiveLocation.pathname}>
           {isApiSubdomain ? (
-            <Routes location={location}>
+            <Routes location={effectiveLocation}>
               <Route path="/" element={<Navigate to="https://rainz.net" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           ) : isBlogSubdomain ? (
-            <Routes location={location}>
+            <Routes location={effectiveLocation}>
               <Route path="/" element={<Articles />} />
               <Route path="/articles" element={<Articles />} />
               <Route path="/articles/:slug" element={<BlogPost />} />
@@ -161,7 +177,7 @@ function AnimatedRoutes({ isApiSubdomain, isBlogSubdomain }: { isApiSubdomain: b
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           ) : (
-            <Routes location={location}>
+            <Routes location={effectiveLocation}>
               <Route path="/" element={<Weather />} />
               <Route path="/predict" element={<Predict />} />
               <Route path="/social" element={<Social />} />
@@ -216,8 +232,25 @@ function AppContent() {
   usePrefetchSavedLocations();
   useOAuthErrorToast();
 
-  const isBlogSubdomain = window.location.hostname === "blog.rainz.net";
-  const isApiSubdomain = window.location.hostname === "api.rainz.net";
+  // Resolve which subdomain we're on (apex/api/blog/curated/city/generic)
+  const hostResolution = resolveHost();
+
+  // On apex/www: redirect well-known paths to their subdomain (acts like a 301).
+  useEffect(() => {
+    if (hostResolution.kind === "apex") {
+      maybeRedirectPathToSubdomain();
+    }
+  }, [hostResolution.kind]);
+
+  const isApiSubdomain = hostResolution.kind === "api";
+  const isBlogSubdomain = hostResolution.kind === "blog";
+
+  // For curated/city/generic subdomains, rewrite the SPA's "/" to the matching path.
+  let rewrittenPath: string | null = null;
+  if (hostResolution.kind === "curated") rewrittenPath = hostResolution.path;
+  else if (hostResolution.kind === "city") rewrittenPath = `/weather/${hostResolution.slug}`;
+  else if (hostResolution.kind === "generic") rewrittenPath = hostResolution.path;
+
   const isEmbedRoute = window.location.pathname === "/embed";
 
   // Embed route renders without app chrome
@@ -260,6 +293,7 @@ function AppContent() {
                             <AnimatedRoutes
                               isApiSubdomain={isApiSubdomain}
                               isBlogSubdomain={isBlogSubdomain}
+                              rewrittenPath={rewrittenPath}
                             />
                           </div>
                           {window.location.pathname !== '/dryroutes' && (

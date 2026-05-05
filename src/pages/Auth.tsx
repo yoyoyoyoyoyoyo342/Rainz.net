@@ -241,7 +241,9 @@ export default function Auth() {
       } catch (err) {}
 
       // Use origin as redirect - Supabase handles the OAuth callback internally
-      const redirectTo = `${window.location.origin}/`;
+      const host = window.location.hostname;
+      const onRainz = host === 'rainz.net' || host.endsWith('.rainz.net');
+      const redirectTo = onRainz ? 'https://www.rainz.net/' : `${window.location.origin}/`;
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

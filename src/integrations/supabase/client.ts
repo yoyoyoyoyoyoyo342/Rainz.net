@@ -20,42 +20,93 @@ function getAuthStorage(): Storage | undefined {
 
   const COOKIE_DOMAIN = ".rainz.net";
   const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+  const CHUNK_SIZE = 3000; // stay safely under the 4KB per-cookie limit
 
-  // localStorage-shaped adapter backed by document.cookie
+  const writeCookie = (name: string, value: string) => {
+    document.cookie = `${name}=${value}; Max-Age=${MAX_AGE}; Path=/; Domain=${COOKIE_DOMAIN}; Secure; SameSite=Lax`;
+  };
+  const deleteCookie = (name: string) => {
+    document.cookie = `${name}=; Max-Age=0; Path=/; Domain=${COOKIE_DOMAIN}; Secure; SameSite=Lax`;
+    // Also clear host-only fallback
+    document.cookie = `${name}=; Max-Age=0; Path=/; Secure; SameSite=Lax`;
+  };
+  const readCookie = (name: string): string | null => {
+    const match = document.cookie
+      .split("; ")
+      .find((c) => c.startsWith(name + "="));
+    return match ? match.substring(name.length + 1) : null;
+  };
+
+  // Mirror to localStorage as a safety net so reloads still work even if
+  // the cookie write was silently rejected by the browser.
   const cookieStorage: Storage = {
     get length() {
-      return document.cookie ? document.cookie.split("; ").length : 0;
+      return localStorage.length;
     },
     clear() {
-      // Best-effort: only clear sb-* cookies on this domain
+      // Clear sb-* cookies (and their chunks) on this domain
       document.cookie.split("; ").forEach((c) => {
         const name = c.split("=")[0];
-        if (name.startsWith("sb-")) {
-          document.cookie = `${name}=; Max-Age=0; Path=/; Domain=${COOKIE_DOMAIN}; Secure; SameSite=Lax`;
-        }
+        if (name.startsWith("sb-")) deleteCookie(name);
       });
+      localStorage.clear();
     },
     key(index: number) {
-      const parts = document.cookie ? document.cookie.split("; ") : [];
-      return parts[index]?.split("=")[0] ?? null;
+      return localStorage.key(index);
     },
     getItem(key: string) {
-      const match = document.cookie
-        .split("; ")
-        .find((c) => c.startsWith(encodeURIComponent(key) + "="));
-      if (!match) return null;
-      try {
-        return decodeURIComponent(match.split("=").slice(1).join("="));
-      } catch {
-        return null;
+      const encKey = encodeURIComponent(key);
+      // Try chunked cookies first
+      const meta = readCookie(encKey + ".0");
+      if (meta) {
+        const chunks: string[] = [];
+        let i = 1;
+        while (true) {
+          const c = readCookie(`${encKey}.${i}`);
+          if (c == null) break;
+          chunks.push(c);
+          i++;
+        }
+        try {
+          return decodeURIComponent(chunks.join(""));
+        } catch {
+          return null;
+        }
       }
+      // Single-cookie legacy
+      const single = readCookie(encKey);
+      if (single != null) {
+        try {
+          return decodeURIComponent(single);
+        } catch {
+          return null;
+        }
+      }
+      // Fallback to localStorage
+      return localStorage.getItem(key);
     },
     setItem(key: string, value: string) {
-      const v = encodeURIComponent(value);
-      document.cookie = `${encodeURIComponent(key)}=${v}; Max-Age=${MAX_AGE}; Path=/; Domain=${COOKIE_DOMAIN}; Secure; SameSite=Lax`;
+      const encKey = encodeURIComponent(key);
+      const encVal = encodeURIComponent(value);
+      // Always mirror to localStorage so we never lose the session
+      try { localStorage.setItem(key, value); } catch {}
+      // Clear any prior single-cookie value
+      deleteCookie(encKey);
+      // Chunk and write
+      const totalChunks = Math.ceil(encVal.length / CHUNK_SIZE) || 1;
+      // Sentinel cookie marks chunked storage exists
+      writeCookie(`${encKey}.0`, String(totalChunks));
+      for (let i = 0; i < totalChunks; i++) {
+        writeCookie(`${encKey}.${i + 1}`, encVal.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE));
+      }
     },
     removeItem(key: string) {
-      document.cookie = `${encodeURIComponent(key)}=; Max-Age=0; Path=/; Domain=${COOKIE_DOMAIN}; Secure; SameSite=Lax`;
+      const encKey = encodeURIComponent(key);
+      try { localStorage.removeItem(key); } catch {}
+      deleteCookie(encKey);
+      deleteCookie(`${encKey}.0`);
+      // Remove up to a generous number of chunks
+      for (let i = 1; i < 32; i++) deleteCookie(`${encKey}.${i}`);
     },
   };
 

@@ -7,6 +7,8 @@ const corsHeaders = {
 };
 
 const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const FROM_EMAIL = "Rainz <noreply@notify.rainz.net>";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });

@@ -128,33 +128,48 @@ serve(async (req) => {
         const dateStr = formatDate(language);
         const idempotencyKey = `morning-review-${userId}-${nowUtc.toISOString().slice(0, 10)}`;
 
-        const { error: emailErr } = await supabase.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "morning-review",
-            recipientEmail,
-            idempotencyKey,
-            templateData: {
-              name: prof?.display_name ?? null,
-              language,
-              locationName: loc?.name ?? "",
-              temperature: weather?.temperature ?? "",
-              high: weather?.high ?? "",
-              low: weather?.low ?? "",
-              condition: weather?.condition ?? "",
-              summary: ai.summary,
-              tip: ai.tip,
-              unit,
-              date: dateStr,
-              appUrl: "https://rainz.net",
-            },
-          },
+        const subject = language === "no"
+          ? `God morgen${prof?.display_name ? ", " + prof.display_name : ""} — ${loc?.name ?? "dagens vær"}`
+          : `Good morning${prof?.display_name ? ", " + prof.display_name : ""} — ${loc?.name ?? "today's weather"}`;
+        const html = renderMorningHtml({
+          name: prof?.display_name ?? undefined,
+          language,
+          locationName: loc?.name,
+          temperature: weather?.temperature,
+          high: weather?.high,
+          low: weather?.low,
+          condition: weather?.condition,
+          summary: ai.summary,
+          tip: ai.tip,
+          unit,
+          date: dateStr,
         });
 
-        if (emailErr) {
-          console.warn(`Email failed for ${userId}:`, emailErr.message);
+        if (!RESEND_API_KEY) {
+          console.warn("RESEND_API_KEY missing — cannot send email");
           failed++;
         } else {
-          emailSent++;
+          const r = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${RESEND_API_KEY}`,
+              "Content-Type": "application/json",
+              "Idempotency-Key": idempotencyKey,
+            },
+            body: JSON.stringify({
+              from: FROM_EMAIL,
+              to: [recipientEmail],
+              subject,
+              html,
+            }),
+          });
+          if (!r.ok) {
+            const errTxt = await r.text();
+            console.warn(`Email failed for ${userId} (${r.status}): ${errTxt}`);
+            failed++;
+          } else {
+            emailSent++;
+          }
         }
       } catch (userErr) {
         console.error(`Error processing user ${userId}:`, userErr);

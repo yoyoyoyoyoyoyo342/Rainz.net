@@ -34,13 +34,19 @@ export default function Auth() {
     const isReset = searchParams.get('reset') === 'true';
     setResetMode(isReset);
 
+    const postAuthRedirect = () => {
+      const host = window.location.hostname;
+      const onRainz = host === 'rainz.net' || host.endsWith('.rainz.net');
+      window.location.href = onRainz ? 'https://www.rainz.net/' : '/';
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const currentIsReset = new URLSearchParams(window.location.search).get('reset') === 'true';
       
       if (session?.user) {
         setUser(session.user);
         if (!currentIsReset) {
-          window.location.href = '/';
+          postAuthRedirect();
         }
       } else {
         setUser(null);
@@ -51,7 +57,7 @@ export default function Auth() {
       if (session?.user) {
         setUser(session.user);
         if (!isReset) {
-          window.location.href = '/';
+          postAuthRedirect();
         }
       }
     });
@@ -88,7 +94,9 @@ export default function Auth() {
       }
       if (data.user) {
         toast({ title: "Welcome back!", description: "You've been signed in successfully." });
-        window.location.href = '/';
+        const host = window.location.hostname;
+        const onRainz = host === 'rainz.net' || host.endsWith('.rainz.net');
+        window.location.href = onRainz ? 'https://www.rainz.net/' : '/';
       }
     } catch (error: any) {
       toast({ variant: "destructive", title: "Sign In Failed", description: error.message || "An unexpected error occurred" });
@@ -239,7 +247,9 @@ export default function Auth() {
       } catch (err) {}
 
       // Use origin as redirect - Supabase handles the OAuth callback internally
-      const redirectTo = `${window.location.origin}/`;
+      const host = window.location.hostname;
+      const onRainz = host === 'rainz.net' || host.endsWith('.rainz.net');
+      const redirectTo = onRainz ? 'https://www.rainz.net/' : `${window.location.origin}/`;
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

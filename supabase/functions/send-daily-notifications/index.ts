@@ -7,6 +7,8 @@ const corsHeaders = {
 };
 
 const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const FROM_EMAIL = "Rainz <noreply@notify.rainz.net>";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -126,33 +128,48 @@ serve(async (req) => {
         const dateStr = formatDate(language);
         const idempotencyKey = `morning-review-${userId}-${nowUtc.toISOString().slice(0, 10)}`;
 
-        const { error: emailErr } = await supabase.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "morning-review",
-            recipientEmail,
-            idempotencyKey,
-            templateData: {
-              name: prof?.display_name ?? null,
-              language,
-              locationName: loc?.name ?? "",
-              temperature: weather?.temperature ?? "",
-              high: weather?.high ?? "",
-              low: weather?.low ?? "",
-              condition: weather?.condition ?? "",
-              summary: ai.summary,
-              tip: ai.tip,
-              unit,
-              date: dateStr,
-              appUrl: "https://rainz.net",
-            },
-          },
+        const subject = language === "no"
+          ? `God morgen${prof?.display_name ? ", " + prof.display_name : ""} — ${loc?.name ?? "dagens vær"}`
+          : `Good morning${prof?.display_name ? ", " + prof.display_name : ""} — ${loc?.name ?? "today's weather"}`;
+        const html = renderMorningHtml({
+          name: prof?.display_name ?? undefined,
+          language,
+          locationName: loc?.name,
+          temperature: weather?.temperature,
+          high: weather?.high,
+          low: weather?.low,
+          condition: weather?.condition,
+          summary: ai.summary,
+          tip: ai.tip,
+          unit,
+          date: dateStr,
         });
 
-        if (emailErr) {
-          console.warn(`Email failed for ${userId}:`, emailErr.message);
+        if (!RESEND_API_KEY) {
+          console.warn("RESEND_API_KEY missing — cannot send email");
           failed++;
         } else {
-          emailSent++;
+          const r = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${RESEND_API_KEY}`,
+              "Content-Type": "application/json",
+              "Idempotency-Key": idempotencyKey,
+            },
+            body: JSON.stringify({
+              from: FROM_EMAIL,
+              to: [recipientEmail],
+              subject,
+              html,
+            }),
+          });
+          if (!r.ok) {
+            const errTxt = await r.text();
+            console.warn(`Email failed for ${userId} (${r.status}): ${errTxt}`);
+            failed++;
+          } else {
+            emailSent++;
+          }
         }
       } catch (userErr) {
         console.error(`Error processing user ${userId}:`, userErr);
@@ -393,4 +410,47 @@ function getConditionText(code: number, lang: string): string {
   };
   const entry = c[code] ?? c[0];
   return entry[lang] ?? entry.en;
+}
+
+function escapeHtml(s: string | undefined): string {
+  if (!s) return "";
+  return String(s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function renderMorningHtml(p: {
+  name?: string; language: string; locationName?: string;
+  temperature?: string; high?: string; low?: string; condition?: string;
+  summary: string; tip: string; unit: string; date: string;
+}): string {
+  const isNo = p.language === "no";
+  const greet = isNo ? `God morgen${p.name ? ", " + escapeHtml(p.name) : ""}` : `Good morning${p.name ? ", " + escapeHtml(p.name) : ""}`;
+  const tipLabel = isNo ? "Dagens tips" : "Today's tip";
+  const openLabel = isNo ? "Åpne Rainz" : "Open Rainz";
+  const tempBlock = p.temperature
+    ? `<div style="font-size:42px;font-weight:700;color:#0f172a;margin:8px 0">${escapeHtml(p.temperature)}${escapeHtml(p.unit)}</div>
+       <div style="color:#475569;font-size:15px">${escapeHtml(p.condition)} · H ${escapeHtml(p.high)}${escapeHtml(p.unit)} / L ${escapeHtml(p.low)}${escapeHtml(p.unit)}</div>`
+    : "";
+  return `<!doctype html><html><body style="margin:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+    <div style="max-width:560px;margin:0 auto;padding:32px 24px">
+      <div style="background:#fff;border-radius:16px;padding:32px;box-shadow:0 4px 14px rgba(15,23,42,0.06)">
+        <div style="color:#64748b;font-size:13px;text-transform:uppercase;letter-spacing:.08em">${escapeHtml(p.date)}</div>
+        <h1 style="margin:8px 0 4px;font-size:24px;color:#0f172a">${greet}</h1>
+        ${p.locationName ? `<div style="color:#475569;font-size:15px">${escapeHtml(p.locationName)}</div>` : ""}
+        ${tempBlock}
+        <p style="color:#1e293b;font-size:16px;line-height:1.6;margin:20px 0 0">${escapeHtml(p.summary)}</p>
+        <div style="margin-top:24px;padding:16px;background:#eff6ff;border-radius:12px">
+          <div style="font-size:12px;color:#1d4ed8;font-weight:600;text-transform:uppercase;letter-spacing:.06em">${tipLabel}</div>
+          <div style="color:#1e3a8a;margin-top:6px;font-size:15px;line-height:1.5">${escapeHtml(p.tip)}</div>
+        </div>
+        <div style="margin-top:28px;text-align:center">
+          <a href="https://rainz.net" style="display:inline-block;background:#1d4ed8;color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-weight:600">${openLabel}</a>
+        </div>
+      </div>
+      <div style="text-align:center;color:#94a3b8;font-size:12px;margin-top:16px">
+        Rainz Weather · <a href="https://rainz.net" style="color:#94a3b8">rainz.net</a>
+      </div>
+    </div>
+  </body></html>`;
 }

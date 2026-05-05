@@ -34,13 +34,19 @@ export default function Auth() {
     const isReset = searchParams.get('reset') === 'true';
     setResetMode(isReset);
 
+    const postAuthRedirect = () => {
+      const host = window.location.hostname;
+      const onRainz = host === 'rainz.net' || host.endsWith('.rainz.net');
+      window.location.href = onRainz ? 'https://www.rainz.net/' : '/';
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const currentIsReset = new URLSearchParams(window.location.search).get('reset') === 'true';
       
       if (session?.user) {
         setUser(session.user);
         if (!currentIsReset) {
-          window.location.href = '/';
+          postAuthRedirect();
         }
       } else {
         setUser(null);
@@ -51,7 +57,7 @@ export default function Auth() {
       if (session?.user) {
         setUser(session.user);
         if (!isReset) {
-          window.location.href = '/';
+          postAuthRedirect();
         }
       }
     });

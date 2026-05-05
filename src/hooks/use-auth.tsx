@@ -90,18 +90,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      // Clean up auth state
+      // Clean up auth state from localStorage
       Object.keys(localStorage).forEach((key) => {
         if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
           localStorage.removeItem(key);
         }
       });
 
+      // Clean up cross-subdomain auth cookies on .rainz.net (chunked or single)
+      const host = window.location.hostname;
+      const onRainz = host === 'rainz.net' || host.endsWith('.rainz.net');
+      if (onRainz) {
+        document.cookie.split('; ').forEach((c) => {
+          const name = c.split('=')[0];
+          if (name.startsWith('sb-') || name.includes('sb-') || name.startsWith('supabase.auth')) {
+            document.cookie = `${name}=; Max-Age=0; Path=/; Domain=.rainz.net; Secure; SameSite=Lax`;
+            document.cookie = `${name}=; Max-Age=0; Path=/`;
+          }
+        });
+      }
+
       // Attempt global sign out
       await supabase.auth.signOut({ scope: 'global' });
       
-      // Force page reload for clean state
-      window.location.href = '/auth';
+      // Redirect to www.rainz.net/auth on production, /auth elsewhere
+      window.location.href = onRainz ? 'https://www.rainz.net/auth' : '/auth';
     } catch (error) {
       console.error('Error signing out:', error);
       // Force reload even if sign out fails

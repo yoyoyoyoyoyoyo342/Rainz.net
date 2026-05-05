@@ -117,8 +117,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.location.href = onRainz ? 'https://www.rainz.net/auth' : '/auth';
     } catch (error) {
       console.error('Error signing out:', error);
-      // Force reload even if sign out fails
-      window.location.href = '/auth';
+      const host = window.location.hostname;
+      const onRainz = host === 'rainz.net' || host.endsWith('.rainz.net');
+      window.location.href = onRainz ? 'https://www.rainz.net/auth' : '/auth';
     }
   };
 

@@ -88,7 +88,9 @@ export default function Auth() {
       }
       if (data.user) {
         toast({ title: "Welcome back!", description: "You've been signed in successfully." });
-        window.location.href = '/';
+        const host = window.location.hostname;
+        const onRainz = host === 'rainz.net' || host.endsWith('.rainz.net');
+        window.location.href = onRainz ? 'https://www.rainz.net/' : '/';
       }
     } catch (error: any) {
       toast({ variant: "destructive", title: "Sign In Failed", description: error.message || "An unexpected error occurred" });

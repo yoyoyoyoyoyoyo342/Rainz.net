@@ -6,7 +6,7 @@ import { ReferralProgram } from "@/components/weather/referral-program";
 
 export function Footer() {
   const { getValue } = useFeatureFlags();
-  const version = getValue('app_version', '1.2.82');
+  const version = getValue("app_version", "1.2.82");
   const [referralOpen, setReferralOpen] = useState(false);
 
   return (
@@ -44,7 +44,10 @@ export function Footer() {
             <Link to="/airport" className="hover:text-foreground transition-colors">
               Landing page
             </Link>
-            <button onClick={() => setReferralOpen(true)} className="hover:text-foreground transition-colors text-primary font-medium">
+            <button
+              onClick={() => setReferralOpen(true)}
+              className="hover:text-foreground transition-colors text-primary font-medium"
+            >
               Refer a Friend 🎁
             </button>
             <Dialog open={referralOpen} onOpenChange={setReferralOpen}>
@@ -54,10 +57,20 @@ export function Footer() {
             </Dialog>
           </div>
           <div className="text-center md:text-right space-y-3">
-            <a href="https://www.producthunt.com/products/rainz-weather?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-rainz-weather" target="_blank" rel="noopener noreferrer">
-              <img alt="Rainz Weather - Weather but smarter. | Product Hunt" width="250" height="54" loading="lazy" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1063846&theme=light&t=1776278577169" />
+            <a
+              href="https://www.producthunt.com/products/rainz-weather?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-rainz-weather"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                alt="Rainz Weather - Weather but smarter. | Product Hunt"
+                width="250"
+                height="54"
+                loading="lazy"
+                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1063846&theme=light&t=1776278577169"
+              />
             </a>
-            <p>© 2025-{new Date().getFullYear()} Rainz. All rights reserved.</p>
+            <p>© 2025-{new Date().getFullYear()} Locali labs. All rights reserved.</p>
             <p className="text-xs text-muted-foreground/70">V{version}</p>
           </div>
         </div>

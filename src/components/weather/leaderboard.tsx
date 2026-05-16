@@ -150,11 +150,11 @@ export const Leaderboard = () => {
           {podium.length >= 1 && (
             <div className="grid grid-cols-3 gap-2 items-end">
               {/* Silver */}
-              <PodiumSpot entry={podium[1]} rank={2} heightClass="h-24" gradientClass="from-gray-300/30 to-gray-400/10 border-gray-300/40" navigate={navigate} />
+              <PodiumSpot entry={podium[1]} rank={2} heightClass="h-24" gradientClass="from-gray-300/30 to-gray-400/10 border-gray-300/40" navigate={navigate} showTrophies={activeTab === "alltime"} />
               {/* Gold */}
-              <PodiumSpot entry={podium[0]} rank={1} heightClass="h-32" gradientClass="from-yellow-400/40 to-yellow-500/10 border-yellow-400/50" navigate={navigate} crown />
+              <PodiumSpot entry={podium[0]} rank={1} heightClass="h-32" gradientClass="from-yellow-400/40 to-yellow-500/10 border-yellow-400/50" navigate={navigate} crown showTrophies={activeTab === "alltime"} />
               {/* Bronze */}
-              <PodiumSpot entry={podium[2]} rank={3} heightClass="h-20" gradientClass="from-amber-600/30 to-amber-700/10 border-amber-600/40" navigate={navigate} />
+              <PodiumSpot entry={podium[2]} rank={3} heightClass="h-20" gradientClass="from-amber-600/30 to-amber-700/10 border-amber-600/40" navigate={navigate} showTrophies={activeTab === "alltime"} />
             </div>
           )}
 

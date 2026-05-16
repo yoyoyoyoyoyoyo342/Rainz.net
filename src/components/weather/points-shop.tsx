@@ -15,6 +15,8 @@ import { useSubscription } from "@/hooks/use-subscription";
 import { MysteryBoxReveal } from "./mystery-box-reveal";
 import { DailySpinWheel } from "./daily-spin-wheel";
 import { TipJar } from "./tip-jar";
+import { PredictHero } from "@/components/predict/predict-hero";
+import { StatPill } from "@/components/predict/stat-pill";
 
 interface MysteryBoxReward {
   type: "shop_points" | "streak_freeze" | "double_points";

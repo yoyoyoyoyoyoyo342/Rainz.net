@@ -57,17 +57,28 @@ const PredictionBattlesInner = ({
 
   const tomorrow = format(new Date(Date.now() + 86400000), "yyyy-MM-dd");
 
+  const refetchOpen = async () => {
+    setLoadingOpen(true);
+    const open = await getOpenBattles(location, tomorrow);
+    setOpenBattles(open);
+    setLoadingOpen(false);
+  };
+
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      setLoadingOpen(true);
-      const open = await getOpenBattles(location, tomorrow);
-      if (mounted) {
-        setOpenBattles(open);
-        setLoadingOpen(false);
-      }
-    })();
-    return () => { mounted = false; };
+    refetchOpen();
+  }, [location]);
+
+  // Realtime: refresh open battles list when any new battle is created/changed in this location
+  useEffect(() => {
+    const channel = supabase
+      .channel(`open-battles-${location}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "prediction_battles" },
+        () => { refetchOpen(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [location]);
 
   useEffect(() => {

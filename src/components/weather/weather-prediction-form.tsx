@@ -262,9 +262,9 @@ export const WeatherPredictionForm = ({
           predicted_high: predictedHighC,
           predicted_low: predictedLowC,
           predicted_condition: predictedCondition,
-          location_name: location,
-          latitude,
-          longitude,
+          location_name: activeLocation.name,
+          latitude: activeLocation.latitude,
+          longitude: activeLocation.longitude,
           powerup_flags: powerupFlags,
           confidence_multiplier: confidenceMultiplier,
         } as any)

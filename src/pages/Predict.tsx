@@ -272,10 +272,6 @@ export default function PredictPage() {
                 <DailySpinWheel />
               </Suspense>
 
-              <Suspense fallback={null}>
-                <PublicPredictionsFeed />
-              </Suspense>
-
               {selectedLocation && (
                 <Suspense fallback={null}>
                   <PredictionBattles

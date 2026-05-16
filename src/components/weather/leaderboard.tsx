@@ -242,6 +242,7 @@ function PodiumSpot({
   gradientClass,
   navigate,
   crown,
+  showTrophies,
 }: {
   entry?: LeaderboardEntry;
   rank: number;
@@ -249,6 +250,7 @@ function PodiumSpot({
   gradientClass: string;
   navigate: ReturnType<typeof useNavigate>;
   crown?: boolean;
+  showTrophies?: boolean;
 }) {
   if (!entry) {
     return (
@@ -260,6 +262,7 @@ function PodiumSpot({
     );
   }
   const isBot = entry.user_id === "00000000-0000-0000-0000-000000000001";
+  const value = showTrophies ? entry.trophy_count : entry.total_points;
   return (
     <button
       onClick={isBot ? undefined : () => navigate(`/profile/${entry.user_id}`)}
@@ -276,7 +279,10 @@ function PodiumSpot({
       </div>
       <div className="text-center w-full">
         <p className="text-xs font-bold truncate px-1 group-hover:text-primary transition-colors">{entry.display_name}</p>
-        <p className="text-[11px] font-bold text-primary">{entry.total_points.toLocaleString()}</p>
+        <p className="text-[11px] font-bold text-primary flex items-center justify-center gap-1">
+          {showTrophies && <Trophy className="w-3 h-3 text-amber-400" />}
+          {value.toLocaleString()}
+        </p>
       </div>
       <div className={`w-full rounded-t-xl border-t border-x bg-gradient-to-b ${gradientClass} ${heightClass} flex items-start justify-center pt-1`}>
         <span className="text-xl font-bold text-foreground/80">#{rank}</span>

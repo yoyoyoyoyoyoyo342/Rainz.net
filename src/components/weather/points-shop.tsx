@@ -549,10 +549,13 @@ export const PointsShop = () => {
         }
         footer={
           <p className="text-[11px] text-muted-foreground">
-            Earn SP by spinning the daily wheel on the Predict tab, or convert PP below.
+            One spin per day — shared with the wheel on the Predict tab. Convert PP to SP below.
           </p>
         }
       />
+
+      {/* Daily Spin Wheel — same instance/state as Predict tab (one spin per day) */}
+      <DailySpinWheel />
 
       {/* Inventory Quick View */}
       {(inventory.streak_freeze > 0 || activeTrial || activePowerups.length > 0) && (

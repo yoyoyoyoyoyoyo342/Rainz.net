@@ -12,6 +12,7 @@ import { format, differenceInHours, differenceInMinutes } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppOnlyGate } from "./app-only-gate";
 import { subdomainHref } from "@/lib/subdomain-routing";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { PredictHero } from "@/components/predict/predict-hero";
 import { PillChips } from "@/components/predict/pill-chips";
@@ -57,17 +58,28 @@ const PredictionBattlesInner = ({
 
   const tomorrow = format(new Date(Date.now() + 86400000), "yyyy-MM-dd");
 
+  const refetchOpen = async () => {
+    setLoadingOpen(true);
+    const open = await getOpenBattles(location, tomorrow);
+    setOpenBattles(open);
+    setLoadingOpen(false);
+  };
+
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      setLoadingOpen(true);
-      const open = await getOpenBattles(location, tomorrow);
-      if (mounted) {
-        setOpenBattles(open);
-        setLoadingOpen(false);
-      }
-    })();
-    return () => { mounted = false; };
+    refetchOpen();
+  }, [location]);
+
+  // Realtime: refresh open battles list when any new battle is created/changed in this location
+  useEffect(() => {
+    const channel = supabase
+      .channel(`open-battles-${location}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "prediction_battles" },
+        () => { refetchOpen(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [location]);
 
   useEffect(() => {

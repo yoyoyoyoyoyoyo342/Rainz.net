@@ -95,6 +95,45 @@ export const usePredictionBattles = () => {
     fetchBattles();
   }, [user]);
 
+  // Realtime: refetch when any battle the user is part of changes
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`prediction-battles-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "prediction_battles",
+          filter: `challenger_id=eq.${user.id}`,
+        },
+        () => { fetchBattles(); }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "prediction_battles",
+          filter: `opponent_id=eq.${user.id}`,
+        },
+        () => { fetchBattles(); }
+      )
+      .on(
+        "postgres_changes",
+        {
+          // Open battles (no opponent yet) targeted at no one — pick up new opens
+          event: "INSERT",
+          schema: "public",
+          table: "prediction_battles",
+        },
+        () => { fetchBattles(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
   const createBattle = async (
     locationName: string,
     latitude: number,

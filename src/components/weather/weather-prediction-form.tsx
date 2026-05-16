@@ -19,6 +19,7 @@ import { usePredictionBattles } from "@/hooks/use-prediction-battles";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { weatherApi } from "@/lib/weather-api";
+import { PredictionLocationPicker, PickedLocation } from "./prediction-location-picker";
 
 interface WeatherPredictionFormProps {
   location: string;

@@ -253,6 +253,10 @@ export default function PredictPage() {
                   />
                 </Suspense>
               )}
+              {(userStats?.streak ?? 0) > 0 && (
+                <StreakMultiplierMeter streak={userStats?.streak || 0} />
+              )}
+
               {selectedLocation && (
                 <Suspense fallback={null}>
                   <WeatherPredictionForm
@@ -264,6 +268,14 @@ export default function PredictPage() {
                   />
                 </Suspense>
               )}
+
+              <Suspense fallback={null}>
+                <DailySpinWheel />
+              </Suspense>
+
+              <Suspense fallback={null}>
+                <PublicPredictionsFeed />
+              </Suspense>
 
               {selectedLocation && (
                 <Suspense fallback={null}>

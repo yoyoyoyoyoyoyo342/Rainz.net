@@ -19,6 +19,7 @@ import { usePredictionBattles } from "@/hooks/use-prediction-battles";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { weatherApi } from "@/lib/weather-api";
+import { PredictionLocationPicker, PickedLocation } from "./prediction-location-picker";
 
 interface WeatherPredictionFormProps {
   location: string;
@@ -138,6 +139,16 @@ export const WeatherPredictionForm = ({
   const [enableBattle, setEnableBattle] = useState(false);
   const [selectedOpponent, setSelectedOpponent] = useState<{ id: string; name: string } | null>(null);
   const [confidenceMultiplier, setConfidenceMultiplier] = useState<number>(1);
+  const [activeLocation, setActiveLocation] = useState<PickedLocation>({
+    name: location,
+    latitude,
+    longitude,
+  });
+
+  // Sync if parent props change (e.g. user switches saved location from outside)
+  useEffect(() => {
+    setActiveLocation({ name: location, latitude, longitude });
+  }, [location, latitude, longitude]);
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -251,9 +262,9 @@ export const WeatherPredictionForm = ({
           predicted_high: predictedHighC,
           predicted_low: predictedLowC,
           predicted_condition: predictedCondition,
-          location_name: location,
-          latitude,
-          longitude,
+          location_name: activeLocation.name,
+          latitude: activeLocation.latitude,
+          longitude: activeLocation.longitude,
           powerup_flags: powerupFlags,
           confidence_multiplier: confidenceMultiplier,
         } as any)
@@ -301,9 +312,9 @@ export const WeatherPredictionForm = ({
       // Create battle if enabled
       if (enableBattle && data?.id) {
         await createBattle(
-          location,
-          latitude,
-          longitude,
+          activeLocation.name,
+          activeLocation.latitude,
+          activeLocation.longitude,
           predictionDate,
           data.id,
           selectedOpponent?.id
@@ -322,7 +333,7 @@ export const WeatherPredictionForm = ({
         high: predictedHigh,
         low: predictedLow,
         condition: conditionLabel,
-        location,
+        location: activeLocation.name,
       };
       
       // Clear form
@@ -360,21 +371,23 @@ export const WeatherPredictionForm = ({
   const selectedCondition = weatherConditions.find(c => c.value === predictedCondition);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 mb-2">
-          <Target className="w-8 h-8 text-primary" />
+      <div className="text-center space-y-1">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 mb-1">
+          <Target className="w-7 h-7 text-primary" />
         </div>
         <h3 className="text-xl font-bold">Predict Tomorrow's Weather</h3>
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <MapPin className="w-4 h-4" />
-          <span>{location}</span>
-        </div>
         <p className="text-xs text-muted-foreground">{tomorrowFormatted}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Location Picker */}
+        <PredictionLocationPicker
+          active={activeLocation}
+          onChange={setActiveLocation}
+        />
+
         {/* Temperature Inputs */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -477,7 +490,7 @@ export const WeatherPredictionForm = ({
         )}
 
         {/* Rainz Prediction Card */}
-        <RainzPredictionCard latitude={latitude} longitude={longitude} isImperial={isImperial} />
+        <RainzPredictionCard latitude={activeLocation.latitude} longitude={activeLocation.longitude} isImperial={isImperial} />
 
         {/* Confidence Betting */}
         <div className="space-y-2">

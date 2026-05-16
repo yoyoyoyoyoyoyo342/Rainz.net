@@ -1,95 +1,77 @@
-## Wildcard subdomain routing for *.rainz.net
+# Predict Redesign + Location Picker
 
-Goal: every page lives on its own subdomain. Visiting `predict.rainz.net` shows the Predict page, `copenhagen.rainz.net` shows Copenhagen weather, and any unknown subdomain auto-maps to the matching path. Old `rainz.net/predict` URLs 301 to `predict.rainz.net`.
+## Problem
+- Prediction form always uses the first saved location with no way to switch.
+- The Predict page is a wall of stat cards + an info box + a long form — informative but flat and joyless.
 
-### 1. Curated app-route subdomains
+## Goals
+1. Let the user pick **one** location to predict for (current GPS or any saved location), switch instantly.
+2. Make the predict screen feel like a **game** — punchier, more visual, more rewarding.
 
-Mapped at the client (App.tsx) by inspecting `window.location.hostname`. The router serves the right page while the URL bar stays on the subdomain root (`/`).
+---
 
-| Subdomain | Page |
-|---|---|
-| predict.rainz.net | Predict |
-| social.rainz.net | Social |
-| explore.rainz.net | Explore |
-| dryroutes.rainz.net | DryRoutes |
-| widgets.rainz.net | Widgets |
-| info.rainz.net | Info |
-| download.rainz.net | Download |
-| airport.rainz.net | Airport landing (sub-routes still work as paths) |
-| faq.rainz.net | FAQ |
-| about.rainz.net | About |
-| auth.rainz.net | Auth |
-| admin.rainz.net | AdminPanel |
-| mcp.rainz.net | MCP |
-| api.rainz.net | already handled (redirects to rainz.net) |
-| blog.rainz.net | already handled (Articles) |
+## 1. Location Picker (the fix)
 
-### 2. City subdomains
+A single pill-style selector lives at the top of the prediction form (and replaces the static "📍 Oslo" line on the Predict page).
 
-`<city>.rainz.net` → renders `CityWeather` with that slug, when the slug exists in `src/data/cities.ts` (or matches a `city_pages` row). Examples: `copenhagen.rainz.net`, `oslo.rainz.net`, `london.rainz.net`.
+```text
+┌──────────────────────────────────────────┐
+│ 📍 Predicting for                        │
+│ [ 📡 Current ] [ 🏠 Oslo ] [ ✈ Paris ]  │
+└──────────────────────────────────────────┘
+```
 
-### 3. Generic fallback (auto-map)
+- Horizontally scrollable chips: **Current Location** (uses `navigator.geolocation`, reverse-geocoded to a name) + every row from `saved_locations`.
+- Tapping a chip instantly swaps the active location — no submit, no reload. Form state (temps, condition) is preserved; the Rainz Prediction card and submission target re-fetch for the new coords.
+- Internal `activeLocation` state defaults to the prop value, then takes over.
+- Only **one** location is ever submitted per day — the chip just chooses *which* one.
+- Current Location permission uses the existing persistence helper so we don't re-prompt.
+- If geolocation is denied/unavailable, the Current chip is shown disabled with a tiny "Enable location" hint.
 
-For any other subdomain `<x>.rainz.net` that isn't `www`, `blog`, `api`, or one of the curated app/city ones, render the same component the path `/x` would render. Implemented by injecting the subdomain as the path into React Router on mount. Unknown → NotFound.
+The Predict page passes the same `selectedLocation` as today; the picker inside the form is the source of truth from that point on.
 
-Reserved (never auto-mapped): `www`, `mail`, `notify`, `mx`, `smtp`, `ftp`, `cdn`, `static`, `assets`, `id-preview*`, `*.lovable.app`.
+---
 
-### 4. 301 redirects: paths → subdomains
+## 2. Predict Page Redesign
 
-A small client-side redirect runs on `rainz.net` and `www.rainz.net` only. If the pathname matches a known subdomain mapping (e.g. `/predict`, `/weather/copenhagen`, `/dryroutes`), it does `window.location.replace("https://predict.rainz.net" + searchAndHash)`.
+Replace the current "stats grid + info card + form" layout with a single focused hero flow.
 
-We use a client redirect (not a Vercel rewrite) because Lovable hosting / Vercel for this project doesn't process custom rewrites for SPA fallback — and a 301 from the static layer would require platform config we don't have. Search engines will still pick up the redirect, and a `<link rel="canonical">` pointing at the subdomain is added for safety.
+### A. Hero card — "Tomorrow's Forecast Challenge"
+- Big gradient card at the top with tomorrow's date, a countdown to the 21:00 UTC verification ("Locks in 4h 12m"), and the active location.
+- Inline streak flame + current rank pill in the top-right (the 4 stat cards collapse into this).
+- Subtle animated weather backdrop matching the current Rainz API prediction.
 
-### 5. SEO
+### B. Streamlined Prediction Form
+- Location picker chips (section 1).
+- **Condition picker** becomes a 2-row icon grid (tap to select, big icons, animated highlight) instead of a dropdown.
+- **Temperature** uses two large stepper inputs (−/+ buttons + number) side-by-side with a tiny "Rainz thinks: 18°/24°" hint underneath each — one tap to copy Rainz's value.
+- **Confidence Betting** kept but visually upgraded: 3 cards become a slider-style segmented control with live "+X / −Y pts" preview.
+- **Live Prediction Preview** card stays but moves directly under the inputs and shows side-by-side vs Rainz Bot ("You vs Rainz").
+- **Battle toggle** stays, collapsed by default.
 
-- `seo-head.tsx`: derive canonical from current hostname, so `predict.rainz.net/` is canonical (not `rainz.net/predict`).
-- `generate-sitemap` edge function + `public/sitemap.xml`: rewrite curated routes and city routes to subdomain URLs. Root `rainz.net/` stays as the homepage entry.
-- `public/robots.txt`: add `Sitemap:` line, allow all subdomains.
-- `index.html` meta `og:url` becomes dynamic via the seo-head component (already does this for path; switch to host+path).
+### C. Submit
+- Sticky bottom CTA on mobile ("🎯 Lock in prediction") with the potential points reward shown on the button itself, e.g. "Submit · up to +750 pts".
 
-### 6. Auth & cookies
+### D. What gets removed / collapsed
+- The 4-card stats strip → folded into hero pill.
+- The "How Points Work" card → moved behind a small "ⓘ How scoring works" link that opens a sheet.
+- Static "📍 Oslo" location line → replaced by the picker.
 
-Supabase auth is per-origin by default, which would log users out when navigating between subdomains. Two options — recommend (a):
+### E. What stays untouched
+- Tabs (Predict / Leaders / History / Shop).
+- Battle creation logic, power-ups, first-prediction bonus, share dialog, accept-battle card.
+- DB schema, edge functions, verification cron.
 
-a) Set Supabase auth storage to a cookie on `.rainz.net` (leading dot) so the session is shared across all subdomains. Implemented by passing a custom `storage` adapter to `createClient` that reads/writes `document.cookie` with `domain=.rainz.net; secure; samesite=lax`.
+---
 
-b) Keep per-subdomain sessions (users sign in again on each). Worse UX, not recommended.
+## Technical Notes
+- All changes are frontend-only: `src/components/weather/weather-prediction-form.tsx` and `src/pages/Predict.tsx`.
+- New small components: `LocationPicker` (chips), `PredictHero` (gradient card), `ConditionGrid`, `TempStepper`.
+- Reuse existing `weatherApi.getWeatherData` for the "Rainz thinks" hint (already fetched by `RainzPredictionCard`).
+- Geolocation uses the existing `mem://features/location-permission-persistence` pattern.
+- Design tokens only — no hardcoded colors; matches the blue-217 primary + glass-card system.
 
-Same change for any other localStorage that should follow the user (theme, language, saved-locations cache): keep these in localStorage per-subdomain — they're cheap to recreate. Only the auth session needs cross-subdomain sharing.
-
-### 7. Internal links
-
-App-wide `<Link to="/predict">` etc. should keep working on a subdomain (they navigate within the SPA), but to actually move the user to the subdomain we update the navigation helpers:
-
-- A new helper `subdomainHref(path)` returns `https://predict.rainz.net/...` if the path maps to a subdomain, else the relative path.
-- Used in: navbar, footer, mobile bottom-nav, hero CTAs, share-link generators (battles, social cards), email templates (`morning-review.tsx`).
-
-### 8. Vercel / DNS
-
-User has already added `*.rainz.net` to Vercel — no DNS work needed from us. We add a note in the README confirming the wildcard SSL covers all generated subdomains.
-
-### Technical details
-
-**Files to add**
-- `src/lib/subdomain-routing.ts` — single source of truth: `SUBDOMAIN_TO_PATH`, `PATH_TO_SUBDOMAIN`, `RESERVED_SUBDOMAINS`, `getSubdomain()`, `subdomainHref(path)`, `resolveRouteFromHost()`.
-
-**Files to edit**
-- `src/App.tsx` — replace the two hardcoded subdomain checks with `resolveRouteFromHost()`. On `rainz.net`/`www`, run `pathRedirectToSubdomain()` once on mount. On a curated subdomain, render its page directly at `/`. On a city subdomain, render `<CityWeather citySlug={...} />`. On a generic subdomain, push `/<sub>` into the router and render the normal route tree.
-- `src/integrations/supabase/client.ts` — add cookie storage adapter scoped to `.rainz.net` (only when hostname ends with `rainz.net`); fall back to localStorage on preview/lovable.app.
-- `src/components/seo/seo-head.tsx` — canonical = `${origin}${pathname}`.
-- `supabase/functions/generate-sitemap/index.ts` — emit subdomain URLs for curated + city routes.
-- `public/sitemap.xml` — same rewrites for the static fallback.
-- `public/robots.txt` — add Sitemap line, allow `*`.
-- Navigation components (navbar, mobile-nav, footer, hero CTAs, share helpers, `morning-review.tsx` email) — switch absolute links through `subdomainHref()`.
-
-**Edge cases handled**
-- Preview hosts (`*.lovable.app`, `id-preview-*`) — skip subdomain logic entirely, behave like today.
-- `www.rainz.net` — treated identical to apex, redirects paths to subdomains.
-- Subdomain + non-root path (e.g. `predict.rainz.net/social`) — treated as cross-section navigation; redirected to `social.rainz.net/`.
-- Capacitor native app (no real hostname) — skip subdomain logic; everything stays path-based.
-- Service worker (`public/sw.js`) — scope is per-origin, so each subdomain registers its own. No change needed but cache versioning bumped to avoid stale chunks.
-
-### Out of scope
-- Server-side 301s (would require Vercel config we don't manage from Lovable). Client redirect is the workable substitute.
-- Per-subdomain custom themes / branding.
-- Renaming existing routes.
+## Out of Scope
+- Changing how predictions are scored or verified.
+- Multiple-location-per-day predictions (explicitly rejected per user).
+- Backend / schema changes.

@@ -1,77 +1,106 @@
-# Predict Redesign + Location Picker
+# Predict v2 — New Features + Unified Tab Redesign
 
-## Problem
-- Prediction form always uses the first saved location with no way to switch.
-- The Predict page is a wall of stat cards + an info box + a long form — informative but flat and joyless.
-
-## Goals
-1. Let the user pick **one** location to predict for (current GPS or any saved location), switch instantly.
-2. Make the predict screen feel like a **game** — punchier, more visual, more rewarding.
+Two parallel tracks: (1) ship new "fun & game" mechanics on top of the predict flow, and (2) restyle every tab (Leaderboard, History, Shop, Battles) to match the new gradient‑hero language we just built on the Predict tab.
 
 ---
 
-## 1. Location Picker (the fix)
+## Track 1 — New Fun Prediction Features
 
-A single pill-style selector lives at the top of the prediction form (and replaces the static "📍 Oslo" line on the Predict page).
+### 1. Daily Spin / Bonus Wheel 🎡
+After submitting the day's prediction, a confetti modal opens with a 1‑tap "spin" that grants a random reward: +25 pts, double‑points token, streak shield, or a rare "All‑In refund" (gets back stake if All‑In fails). Once per day, server‑validated via a row in a new `daily_spins` table.
+
+### 2. Prediction Streak Multiplier 🔥
+Visible above the submit button: a meter that fills as your daily streak grows. Streak of 3 → +10% pts, 7 → +25%, 14 → +50%, 30 → +100%. Applied at verification time (server side) and previewed live on the submit button.
+
+### 3. "Hot Streak" Power Card 🃏
+A collectable card system using existing `active_powerups`. Earned via the Spin Wheel or 5‑in‑a‑row correct predictions. Three new cards:
+- **Snowball** — next correct prediction's points double if previous was also correct.
+- **Insurance** — if wrong, lose 50% less.
+- **Underdog** — if you predict against the Rainz Bot and beat it, +150 bonus.
+
+Cards displayed as a horizontal scroll above the form; tap to "equip" before submitting.
+
+### 4. Public Predictions Feed 🌍
+A new "Live" sub‑section under the hero showing the last 10 predictions made by anyone in the world (city, condition icon, confidence chip). Reuses `weather_predictions` + a Supabase realtime channel. Creates the FOMO loop the Predict tab is missing right now.
+
+### 5. Mystery Location of the Day 🎲
+Optional toggle on the form: "Predict for Today's Mystery City" (a deterministic daily pick across world capitals). Correct = +500 pts. Wrong = 0 (no penalty). Surfaces on a small marquee chip next to the location picker.
+
+### 6. Confidence Meter Sound + Haptics
+When user selects "All‑In", a deep haptic pulse fires (mobile) and the submit button briefly pulses red. Pure delight, no backend.
+
+### 7. Achievement Pop‑Ups (already exist) → Resurfaced
+Use the existing 32+ achievement system but trigger an inline toast‑style ribbon on the Predict hero when one unlocks, instead of relying on the profile page.
+
+> **Notes:** All these features ship on the Predict tab inside the same hero/glass‑card style. Backend additions are minimal: one new `daily_spins` table + a `streak_bonus_pct` computed column on `weather_predictions` for transparency. No paid integrations.
+
+---
+
+## Track 2 — Tab Redesigns (visual language unified with new Predict hero)
+
+The new visual language we just shipped on Predict:
+- Gradient hero card with blur orb
+- Pill chips for filters
+- Rounded glass cards
+- Sheet for "info" overlays
+- Streak/rank pills in top‑right
+
+Apply that everywhere:
+
+### A. Leaderboard tab (`leaderboard.tsx`)
+- **Hero:** "This Month's Champions" gradient card with the current month name, days remaining, and the user's own rank pill in the corner.
+- **Monthly/All‑Time toggle:** turns into pill chips matching the location picker style (replaces the current shadcn Tabs).
+- **Podium:** Top 3 displayed as a visual podium (gold/silver/bronze pedestals with avatars + trophy counts) above the list.
+- **List rows:** glass cards with rank gradient bar on the left edge; tap → user profile. Highlight the signed‑in user with a primary‑colored ring.
+- **You row:** sticky at the bottom of the viewport (like Duolingo) showing "Your rank: #42 — 12 to go to top 10".
+
+### B. History tab (`points-history.tsx`)
+- **Hero:** "Your Journey" — totals card with lifetime points, best month, win rate, longest streak as the 4 small stats inside the hero (same layout as the Predict hero).
+- **Filter chips:** All / Predictions / Battles / Wins / Losses (pill chips).
+- **Timeline:** vertical timeline with date headers; each event is a glass card showing condition icon, location, ±points badge, confidence multiplier. Win/loss color accent on the left edge.
+- **Empty state:** illustrated cloud + "Make your first prediction" CTA → jumps back to Predict tab.
+
+### C. Shop tab (`points-shop.tsx`)
+- **Hero:** "Power‑Up Shop" — your SP balance huge, sparkline of recent earnings, "Earn more" button.
+- **Category chips:** Power‑Ups / Streak Tools / Cosmetics / Bundles (replaces the existing tabs).
+- **Item cards:** larger, with bold icon, name, short tagline, price, and an "Owned: x" badge. Featured item gets a gradient ribbon ("Best value").
+- **Confirm dialog:** unified sheet with item recap + balance after purchase.
+
+### D. Battles (`prediction-battles.tsx`)
+- **Hero:** "Battle Arena" with active battles count + win rate pill.
+- **Section chips:** Active / Open / History.
+- **Battle cards:** opponent avatar vs your avatar with a versus glyph between, location, stakes, accept/view buttons; gradient based on status (open=blue, active=primary, won=green, lost=red).
+
+### E. Bottom tab bar (Predict / Leaders / History / Shop)
+- Same icons/labels; just add a tiny notification dot when something is unread (e.g. unread battle, achievement unlocked).
+
+---
+
+## Shared Components to Extract
+
+To keep this DRY and ensure visual consistency, build these reusable bits up front:
 
 ```text
-┌──────────────────────────────────────────┐
-│ 📍 Predicting for                        │
-│ [ 📡 Current ] [ 🏠 Oslo ] [ ✈ Paris ]  │
-└──────────────────────────────────────────┘
+src/components/predict/
+├── predict-hero.tsx        // gradient card + orb + slot for content
+├── pill-chips.tsx          // horizontal scrollable pill selector
+├── stat-pill.tsx           // streak/rank/info pills
+└── glass-row.tsx           // list-row card with optional left accent bar
 ```
 
-- Horizontally scrollable chips: **Current Location** (uses `navigator.geolocation`, reverse-geocoded to a name) + every row from `saved_locations`.
-- Tapping a chip instantly swaps the active location — no submit, no reload. Form state (temps, condition) is preserved; the Rainz Prediction card and submission target re-fetch for the new coords.
-- Internal `activeLocation` state defaults to the prop value, then takes over.
-- Only **one** location is ever submitted per day — the chip just chooses *which* one.
-- Current Location permission uses the existing persistence helper so we don't re-prompt.
-- If geolocation is denied/unavailable, the Current chip is shown disabled with a tiny "Enable location" hint.
-
-The Predict page passes the same `selectedLocation` as today; the picker inside the form is the source of truth from that point on.
+Both tracks consume these, guaranteeing the redesigned tabs and the new features feel like one product.
 
 ---
-
-## 2. Predict Page Redesign
-
-Replace the current "stats grid + info card + form" layout with a single focused hero flow.
-
-### A. Hero card — "Tomorrow's Forecast Challenge"
-- Big gradient card at the top with tomorrow's date, a countdown to the 21:00 UTC verification ("Locks in 4h 12m"), and the active location.
-- Inline streak flame + current rank pill in the top-right (the 4 stat cards collapse into this).
-- Subtle animated weather backdrop matching the current Rainz API prediction.
-
-### B. Streamlined Prediction Form
-- Location picker chips (section 1).
-- **Condition picker** becomes a 2-row icon grid (tap to select, big icons, animated highlight) instead of a dropdown.
-- **Temperature** uses two large stepper inputs (−/+ buttons + number) side-by-side with a tiny "Rainz thinks: 18°/24°" hint underneath each — one tap to copy Rainz's value.
-- **Confidence Betting** kept but visually upgraded: 3 cards become a slider-style segmented control with live "+X / −Y pts" preview.
-- **Live Prediction Preview** card stays but moves directly under the inputs and shows side-by-side vs Rainz Bot ("You vs Rainz").
-- **Battle toggle** stays, collapsed by default.
-
-### C. Submit
-- Sticky bottom CTA on mobile ("🎯 Lock in prediction") with the potential points reward shown on the button itself, e.g. "Submit · up to +750 pts".
-
-### D. What gets removed / collapsed
-- The 4-card stats strip → folded into hero pill.
-- The "How Points Work" card → moved behind a small "ⓘ How scoring works" link that opens a sheet.
-- Static "📍 Oslo" location line → replaced by the picker.
-
-### E. What stays untouched
-- Tabs (Predict / Leaders / History / Shop).
-- Battle creation logic, power-ups, first-prediction bonus, share dialog, accept-battle card.
-- DB schema, edge functions, verification cron.
-
----
-
-## Technical Notes
-- All changes are frontend-only: `src/components/weather/weather-prediction-form.tsx` and `src/pages/Predict.tsx`.
-- New small components: `LocationPicker` (chips), `PredictHero` (gradient card), `ConditionGrid`, `TempStepper`.
-- Reuse existing `weatherApi.getWeatherData` for the "Rainz thinks" hint (already fetched by `RainzPredictionCard`).
-- Geolocation uses the existing `mem://features/location-permission-persistence` pattern.
-- Design tokens only — no hardcoded colors; matches the blue-217 primary + glass-card system.
 
 ## Out of Scope
-- Changing how predictions are scored or verified.
-- Multiple-location-per-day predictions (explicitly rejected per user).
-- Backend / schema changes.
+- Stripe/payment changes — Shop redesign is visual only, all packages stay.
+- New languages/translations — strings stay English.
+- DB schema beyond `daily_spins` table.
+- Battle resolution logic — unchanged.
+
+## Implementation Order
+1. Extract shared components (predict-hero, pill-chips, stat-pill, glass-row).
+2. Redesign Leaderboard, History, Shop, Battles using them (Track 2).
+3. Ship Spin Wheel + Streak Multiplier (highest delight, lowest risk).
+4. Ship Hot Streak Cards + Public Feed.
+5. Ship Mystery Location + haptics/sound polish.

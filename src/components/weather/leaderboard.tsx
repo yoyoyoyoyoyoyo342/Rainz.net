@@ -107,10 +107,10 @@ export const Leaderboard = () => {
   return (
     <div className="space-y-4">
       <PredictHero
-        eyebrow={activeTab === "monthly" ? "This Month's Champions" : "All-Time Trophy Board"}
+        eyebrow={activeTab === "monthly" ? "This Month's Champions" : "All-Time Trophy Leaderboard"}
         eyebrowIcon={activeTab === "monthly" ? Sparkles : Crown}
-        title={activeTab === "monthly" ? monthName : "Hall of Fame"}
-        subtitle={activeTab === "monthly" ? `${daysLeft} day${daysLeft === 1 ? "" : "s"} left to climb` : "Trophies earned across all months"}
+        title={activeTab === "monthly" ? monthName : "Trophy Leaderboard"}
+        subtitle={activeTab === "monthly" ? `${daysLeft} day${daysLeft === 1 ? "" : "s"} left to climb` : "Monthly winners ranked by trophies earned"}
         gradient={activeTab === "monthly" ? "primary" : "amber"}
         pills={
           <>
@@ -150,11 +150,11 @@ export const Leaderboard = () => {
           {podium.length >= 1 && (
             <div className="grid grid-cols-3 gap-2 items-end">
               {/* Silver */}
-              <PodiumSpot entry={podium[1]} rank={2} heightClass="h-24" gradientClass="from-gray-300/30 to-gray-400/10 border-gray-300/40" navigate={navigate} />
+              <PodiumSpot entry={podium[1]} rank={2} heightClass="h-24" gradientClass="from-gray-300/30 to-gray-400/10 border-gray-300/40" navigate={navigate} showTrophies={activeTab === "alltime"} />
               {/* Gold */}
-              <PodiumSpot entry={podium[0]} rank={1} heightClass="h-32" gradientClass="from-yellow-400/40 to-yellow-500/10 border-yellow-400/50" navigate={navigate} crown />
+              <PodiumSpot entry={podium[0]} rank={1} heightClass="h-32" gradientClass="from-yellow-400/40 to-yellow-500/10 border-yellow-400/50" navigate={navigate} crown showTrophies={activeTab === "alltime"} />
               {/* Bronze */}
-              <PodiumSpot entry={podium[2]} rank={3} heightClass="h-20" gradientClass="from-amber-600/30 to-amber-700/10 border-amber-600/40" navigate={navigate} />
+              <PodiumSpot entry={podium[2]} rank={3} heightClass="h-20" gradientClass="from-amber-600/30 to-amber-700/10 border-amber-600/40" navigate={navigate} showTrophies={activeTab === "alltime"} />
             </div>
           )}
 
@@ -194,8 +194,11 @@ export const Leaderboard = () => {
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-lg font-bold text-primary leading-none">{entry.total_points.toLocaleString()}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">points</p>
+                      <p className="text-lg font-bold text-primary leading-none flex items-center gap-1 justify-end">
+                        {activeTab === "alltime" && <Trophy className="w-4 h-4 text-amber-400" />}
+                        {(activeTab === "alltime" ? entry.trophy_count : entry.total_points).toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{activeTab === "alltime" ? "trophies" : "points"}</p>
                     </div>
                   </GlassRow>
                 );
@@ -221,8 +224,11 @@ export const Leaderboard = () => {
                 <p className="text-[11px] text-muted-foreground mt-0.5">Keep predicting to climb higher</p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-lg font-bold text-primary leading-none">{currentUserRank.total_points.toLocaleString()}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">points</p>
+                <p className="text-lg font-bold text-primary leading-none flex items-center gap-1 justify-end">
+                  {activeTab === "alltime" && <Trophy className="w-4 h-4 text-amber-400" />}
+                  {(activeTab === "alltime" ? currentUserRank.trophy_count : currentUserRank.total_points).toLocaleString()}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{activeTab === "alltime" ? "trophies" : "points"}</p>
               </div>
             </GlassRow>
           )}
@@ -239,6 +245,7 @@ function PodiumSpot({
   gradientClass,
   navigate,
   crown,
+  showTrophies,
 }: {
   entry?: LeaderboardEntry;
   rank: number;
@@ -246,6 +253,7 @@ function PodiumSpot({
   gradientClass: string;
   navigate: ReturnType<typeof useNavigate>;
   crown?: boolean;
+  showTrophies?: boolean;
 }) {
   if (!entry) {
     return (
@@ -257,6 +265,7 @@ function PodiumSpot({
     );
   }
   const isBot = entry.user_id === "00000000-0000-0000-0000-000000000001";
+  const value = showTrophies ? entry.trophy_count : entry.total_points;
   return (
     <button
       onClick={isBot ? undefined : () => navigate(`/profile/${entry.user_id}`)}
@@ -273,7 +282,10 @@ function PodiumSpot({
       </div>
       <div className="text-center w-full">
         <p className="text-xs font-bold truncate px-1 group-hover:text-primary transition-colors">{entry.display_name}</p>
-        <p className="text-[11px] font-bold text-primary">{entry.total_points.toLocaleString()}</p>
+        <p className="text-[11px] font-bold text-primary flex items-center justify-center gap-1">
+          {showTrophies && <Trophy className="w-3 h-3 text-amber-400" />}
+          {value.toLocaleString()}
+        </p>
       </div>
       <div className={`w-full rounded-t-xl border-t border-x bg-gradient-to-b ${gradientClass} ${heightClass} flex items-start justify-center pt-1`}>
         <span className="text-xl font-bold text-foreground/80">#{rank}</span>

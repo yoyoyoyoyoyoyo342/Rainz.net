@@ -490,7 +490,7 @@ export const WeatherPredictionForm = ({
         )}
 
         {/* Rainz Prediction Card */}
-        <RainzPredictionCard latitude={latitude} longitude={longitude} isImperial={isImperial} />
+        <RainzPredictionCard latitude={activeLocation.latitude} longitude={activeLocation.longitude} isImperial={isImperial} />
 
         {/* Confidence Betting */}
         <div className="space-y-2">

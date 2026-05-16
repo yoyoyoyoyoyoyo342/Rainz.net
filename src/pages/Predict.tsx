@@ -20,6 +20,9 @@ const PointsHistory = lazy(() => import("@/components/weather/points-history").t
 const PointsShop = lazy(() => import("@/components/weather/points-shop").then(m => ({ default: m.PointsShop })));
 const PredictionBattles = lazy(() => import("@/components/weather/prediction-battles").then(m => ({ default: m.PredictionBattles })));
 const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-card").then(m => ({ default: m.BattleAcceptCard })));
+const PublicPredictionsFeed = lazy(() => import("@/components/predict/public-predictions-feed").then(m => ({ default: m.PublicPredictionsFeed })));
+const DailySpinWheel = lazy(() => import("@/components/weather/daily-spin-wheel").then(m => ({ default: m.DailySpinWheel })));
+import { StreakMultiplierMeter } from "@/components/predict/streak-multiplier-meter";
 
 export default function PredictPage() {
   const { user } = useAuth();
@@ -250,6 +253,10 @@ export default function PredictPage() {
                   />
                 </Suspense>
               )}
+              {(userStats?.streak ?? 0) > 0 && (
+                <StreakMultiplierMeter streak={userStats?.streak || 0} />
+              )}
+
               {selectedLocation && (
                 <Suspense fallback={null}>
                   <WeatherPredictionForm
@@ -261,6 +268,14 @@ export default function PredictPage() {
                   />
                 </Suspense>
               )}
+
+              <Suspense fallback={null}>
+                <DailySpinWheel />
+              </Suspense>
+
+              <Suspense fallback={null}>
+                <PublicPredictionsFeed />
+              </Suspense>
 
               {selectedLocation && (
                 <Suspense fallback={null}>

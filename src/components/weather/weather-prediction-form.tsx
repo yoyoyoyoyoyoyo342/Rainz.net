@@ -312,9 +312,9 @@ export const WeatherPredictionForm = ({
       // Create battle if enabled
       if (enableBattle && data?.id) {
         await createBattle(
-          location,
-          latitude,
-          longitude,
+          activeLocation.name,
+          activeLocation.latitude,
+          activeLocation.longitude,
           predictionDate,
           data.id,
           selectedOpponent?.id
@@ -333,7 +333,7 @@ export const WeatherPredictionForm = ({
         high: predictedHigh,
         low: predictedLow,
         condition: conditionLabel,
-        location,
+        location: activeLocation.name,
       };
       
       // Clear form

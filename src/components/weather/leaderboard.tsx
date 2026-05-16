@@ -224,8 +224,11 @@ export const Leaderboard = () => {
                 <p className="text-[11px] text-muted-foreground mt-0.5">Keep predicting to climb higher</p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-lg font-bold text-primary leading-none">{currentUserRank.total_points.toLocaleString()}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">points</p>
+                <p className="text-lg font-bold text-primary leading-none flex items-center gap-1 justify-end">
+                  {activeTab === "alltime" && <Trophy className="w-4 h-4 text-amber-400" />}
+                  {(activeTab === "alltime" ? currentUserRank.trophy_count : currentUserRank.total_points).toLocaleString()}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{activeTab === "alltime" ? "trophies" : "points"}</p>
               </div>
             </GlassRow>
           )}

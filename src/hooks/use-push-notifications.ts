@@ -31,16 +31,25 @@ export function usePushNotifications() {
     
     setPushSupported(isPushSupported());
 
-    // Register service worker for push notifications
-    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && navigator.serviceWorker) {
-      navigator.serviceWorker.register('/sw.js')
-        .then((reg) => {
-          setRegistration(reg);
-          console.log('Service Worker registered:', reg);
-        })
-        .catch((error) => {
-          console.error('Service Worker registration failed:', error);
-        });
+    // Register service worker for push notifications (guarded for sandboxed previews)
+    try {
+      if (
+        typeof navigator !== 'undefined' &&
+        'serviceWorker' in navigator &&
+        navigator.serviceWorker &&
+        typeof navigator.serviceWorker.register === 'function'
+      ) {
+        navigator.serviceWorker.register('/sw.js')
+          .then((reg) => {
+            setRegistration(reg);
+            console.log('Service Worker registered:', reg);
+          })
+          .catch((error) => {
+            console.warn('Service Worker registration failed:', error);
+          });
+      }
+    } catch (err) {
+      console.warn('Service Worker unavailable:', err);
     }
   }, []);
 

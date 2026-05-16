@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Target, LogIn, Medal, Flame, Zap, Trophy, History, ShoppingBag, MapPin, Info, Sparkles } from "lucide-react";
+import { Target, LogIn, Medal, Flame, Trophy, History, ShoppingBag, MapPin, Info, Sparkles } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { SEOHead } from "@/components/seo/seo-head";

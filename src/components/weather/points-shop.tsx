@@ -531,33 +531,26 @@ export const PointsShop = () => {
   const spFromConversion = convertAmount ? Math.floor(parseInt(convertAmount) / CONVERSION_RATE) || 0 : 0;
 
   return (
-    <div className="space-y-6">
-      {/* Daily Spin Wheel */}
-      <DailySpinWheel />
-
-      {/* Balances */}
-      <div className="grid grid-cols-2 gap-3">
-        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Coins className="w-4 h-4 text-blue-400" />
-              <span className="text-xs text-muted-foreground">Prediction Points</span>
-            </div>
-            <p className="text-2xl font-bold">{predictionPoints.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground">PP</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 border-amber-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span className="text-xs text-muted-foreground">Shop Points</span>
-            </div>
-            <p className="text-2xl font-bold">{shopPoints.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground">SP</p>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="space-y-4">
+      {/* Hero — Shop Balance */}
+      <PredictHero
+        eyebrow="Power-Up Shop"
+        eyebrowIcon={ShoppingBag}
+        title={`${shopPoints.toLocaleString()} SP`}
+        subtitle={`${predictionPoints.toLocaleString()} prediction points available to convert`}
+        gradient="amber"
+        pills={
+          <>
+            <StatPill icon={Sparkles} value={shopPoints.toLocaleString()} tone="yellow" />
+            <StatPill icon={Coins} value={predictionPoints.toLocaleString()} tone="primary" />
+          </>
+        }
+        footer={
+          <p className="text-[11px] text-muted-foreground">
+            Earn SP by spinning the daily wheel on the Predict tab, or convert PP below.
+          </p>
+        }
+      />
 
       {/* Inventory Quick View */}
       {(inventory.streak_freeze > 0 || activeTrial || activePowerups.length > 0) && (

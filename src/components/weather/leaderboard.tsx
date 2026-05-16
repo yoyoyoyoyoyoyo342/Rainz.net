@@ -107,10 +107,10 @@ export const Leaderboard = () => {
   return (
     <div className="space-y-4">
       <PredictHero
-        eyebrow={activeTab === "monthly" ? "This Month's Champions" : "All-Time Trophy Board"}
+        eyebrow={activeTab === "monthly" ? "This Month's Champions" : "All-Time Trophy Leaderboard"}
         eyebrowIcon={activeTab === "monthly" ? Sparkles : Crown}
-        title={activeTab === "monthly" ? monthName : "Hall of Fame"}
-        subtitle={activeTab === "monthly" ? `${daysLeft} day${daysLeft === 1 ? "" : "s"} left to climb` : "Trophies earned across all months"}
+        title={activeTab === "monthly" ? monthName : "Trophy Leaderboard"}
+        subtitle={activeTab === "monthly" ? `${daysLeft} day${daysLeft === 1 ? "" : "s"} left to climb` : "Monthly winners ranked by trophies earned"}
         gradient={activeTab === "monthly" ? "primary" : "amber"}
         pills={
           <>

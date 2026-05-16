@@ -250,37 +250,6 @@ export default function PredictPage() {
                   />
                 </Suspense>
               )}
-              {/* Points Info */}
-              <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
-                <CardContent className="p-3">
-                  <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-                    <Trophy className="w-4 h-4 text-primary" />
-                    How Points Work
-                  </h4>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="bg-green-500/20 text-green-700 text-[10px]">+300</Badge>
-                      <span>All 3 correct (1x)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="bg-blue-500/20 text-blue-700 text-[10px]">+200</Badge>
-                      <span>2 correct (1x)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="bg-amber-500/20 text-amber-700 text-[10px]">+100</Badge>
-                      <span>1 correct (1x)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="bg-red-500/20 text-red-700 text-[10px]">-100</Badge>
-                      <span>All wrong (1x)</span>
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground mt-2">
-                    🔥 Use Confidence Betting to multiply your rewards (and risks)! Up to 2.5x with All-In.
-                  </p>
-                </CardContent>
-              </Card>
-
               {selectedLocation && (
                 <Suspense fallback={null}>
                   <WeatherPredictionForm

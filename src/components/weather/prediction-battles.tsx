@@ -12,6 +12,7 @@ import { format, differenceInHours, differenceInMinutes } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppOnlyGate } from "./app-only-gate";
 import { subdomainHref } from "@/lib/subdomain-routing";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { PredictHero } from "@/components/predict/predict-hero";
 import { PillChips } from "@/components/predict/pill-chips";

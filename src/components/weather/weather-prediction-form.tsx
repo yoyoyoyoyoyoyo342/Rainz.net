@@ -139,6 +139,16 @@ export const WeatherPredictionForm = ({
   const [enableBattle, setEnableBattle] = useState(false);
   const [selectedOpponent, setSelectedOpponent] = useState<{ id: string; name: string } | null>(null);
   const [confidenceMultiplier, setConfidenceMultiplier] = useState<number>(1);
+  const [activeLocation, setActiveLocation] = useState<PickedLocation>({
+    name: location,
+    latitude,
+    longitude,
+  });
+
+  // Sync if parent props change (e.g. user switches saved location from outside)
+  useEffect(() => {
+    setActiveLocation({ name: location, latitude, longitude });
+  }, [location, latitude, longitude]);
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);

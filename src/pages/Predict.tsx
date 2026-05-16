@@ -21,7 +21,7 @@ const PointsShop = lazy(() => import("@/components/weather/points-shop").then(m 
 const PredictionBattles = lazy(() => import("@/components/weather/prediction-battles").then(m => ({ default: m.PredictionBattles })));
 const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-card").then(m => ({ default: m.BattleAcceptCard })));
 const PublicPredictionsFeed = lazy(() => import("@/components/predict/public-predictions-feed").then(m => ({ default: m.PublicPredictionsFeed })));
-const DailySpinWheel = lazy(() => import("@/components/weather/daily-spin-wheel").then(m => ({ default: m.default ?? (m as any).DailySpinWheel })));
+const DailySpinWheel = lazy(() => import("@/components/weather/daily-spin-wheel").then(m => ({ default: m.DailySpinWheel })));
 import { StreakMultiplierMeter } from "@/components/predict/streak-multiplier-meter";
 
 export default function PredictPage() {

@@ -55,9 +55,11 @@ function fToC(f) {
 }
 
 export default async function handler(req, res) {
+  // Always set CORS headers on every response
+  Object.keys(corsHeaders).forEach(k => res.setHeader(k, corsHeaders[k]));
+
   if (req.method === 'OPTIONS') {
-    res.writeHead(204, corsHeaders);
-    return res.end();
+    return res.status(204).end();
   }
 
   const { lat, lon } = req.query || {};

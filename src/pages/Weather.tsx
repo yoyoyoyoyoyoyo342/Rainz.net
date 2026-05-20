@@ -683,11 +683,22 @@ export default function WeatherPage() {
                 )}
               </div>
               {weatherData && (
-                <WeatherReportForm
-                  location={actualStationName}
-                  currentCondition={weatherData.mostAccurate.currentWeather.condition}
-                  locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }}
-                />
+                <div className="flex flex-wrap gap-2">
+                  <WeatherReportForm
+                    location={actualStationName}
+                    currentCondition={weatherData.mostAccurate.currentWeather.condition}
+                    locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }}
+                  />
+                  <SkyCamSubmissionDialog
+                    location={actualStationName}
+                    locationData={{
+                      latitude: selectedLocation?.lat || 0,
+                      longitude: selectedLocation?.lon || 0,
+                      city: selectedLocation?.name,
+                      country: selectedLocation?.country,
+                    }}
+                  />
+                </div>
               )}
             </div>
 

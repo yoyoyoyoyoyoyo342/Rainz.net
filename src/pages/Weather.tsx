@@ -696,7 +696,6 @@ export default function WeatherPage() {
                       latitude: selectedLocation?.lat || 0,
                       longitude: selectedLocation?.lon || 0,
                       city: selectedLocation?.name,
-                      country: selectedLocation?.country,
                     }}
                   />
                 </div>

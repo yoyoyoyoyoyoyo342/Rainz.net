@@ -1,0 +1,16 @@
+[Unit]
+Description=Rainz SkyCam uploader
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/rainz-skycam
+EnvironmentFile=/home/pi/rainz-skycam/.env
+ExecStart=/home/pi/rainz-skycam/venv/bin/python /home/pi/rainz-skycam/skycam-upload.py
+Restart=on-failure
+RestartSec=10
+User=pi
+
+[Install]
+WantedBy=multi-user.target

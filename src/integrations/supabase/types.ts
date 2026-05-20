@@ -1332,6 +1332,323 @@ export type Database = {
         }
         Relationships: []
       }
+      skycam_observations: {
+        Row: {
+          ai_checked: boolean
+          ai_confidence: number | null
+          captured_at: string
+          cloud_cover_percent: number | null
+          condition_label: string | null
+          dark_clouds_visible: boolean | null
+          fog_visible: boolean | null
+          id: string
+          image_path: string
+          image_quality_score: number | null
+          image_url: string | null
+          is_latest: boolean
+          rain_likely_reason: string | null
+          rain_likely_soon: boolean | null
+          rain_visible: boolean | null
+          raw_ai_result: Json | null
+          snow_visible: boolean | null
+          source_type: string
+          station_id: string
+          status: string
+          uploaded_at: string
+        }
+        Insert: {
+          ai_checked?: boolean
+          ai_confidence?: number | null
+          captured_at: string
+          cloud_cover_percent?: number | null
+          condition_label?: string | null
+          dark_clouds_visible?: boolean | null
+          fog_visible?: boolean | null
+          id?: string
+          image_path: string
+          image_quality_score?: number | null
+          image_url?: string | null
+          is_latest?: boolean
+          rain_likely_reason?: string | null
+          rain_likely_soon?: boolean | null
+          rain_visible?: boolean | null
+          raw_ai_result?: Json | null
+          snow_visible?: boolean | null
+          source_type?: string
+          station_id: string
+          status?: string
+          uploaded_at?: string
+        }
+        Update: {
+          ai_checked?: boolean
+          ai_confidence?: number | null
+          captured_at?: string
+          cloud_cover_percent?: number | null
+          condition_label?: string | null
+          dark_clouds_visible?: boolean | null
+          fog_visible?: boolean | null
+          id?: string
+          image_path?: string
+          image_quality_score?: number | null
+          image_url?: string | null
+          is_latest?: boolean
+          rain_likely_reason?: string | null
+          rain_likely_soon?: boolean | null
+          rain_visible?: boolean | null
+          raw_ai_result?: Json | null
+          snow_visible?: boolean | null
+          source_type?: string
+          station_id?: string
+          status?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skycam_observations_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "skycam_stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skycam_station_latest: {
+        Row: {
+          ai_checked: boolean
+          ai_confidence: number | null
+          captured_at: string | null
+          cloud_cover_percent: number | null
+          condition_label: string | null
+          dark_clouds_visible: boolean | null
+          fog_visible: boolean | null
+          image_path: string | null
+          image_quality_score: number | null
+          image_url: string | null
+          observation_id: string | null
+          rain_likely_reason: string | null
+          rain_likely_soon: boolean | null
+          rain_visible: boolean | null
+          raw_ai_result: Json | null
+          snow_visible: boolean | null
+          station_id: string
+          updated_at: string
+          uploaded_at: string
+        }
+        Insert: {
+          ai_checked?: boolean
+          ai_confidence?: number | null
+          captured_at?: string | null
+          cloud_cover_percent?: number | null
+          condition_label?: string | null
+          dark_clouds_visible?: boolean | null
+          fog_visible?: boolean | null
+          image_path?: string | null
+          image_quality_score?: number | null
+          image_url?: string | null
+          observation_id?: string | null
+          rain_likely_reason?: string | null
+          rain_likely_soon?: boolean | null
+          rain_visible?: boolean | null
+          raw_ai_result?: Json | null
+          snow_visible?: boolean | null
+          station_id: string
+          updated_at?: string
+          uploaded_at?: string
+        }
+        Update: {
+          ai_checked?: boolean
+          ai_confidence?: number | null
+          captured_at?: string | null
+          cloud_cover_percent?: number | null
+          condition_label?: string | null
+          dark_clouds_visible?: boolean | null
+          fog_visible?: boolean | null
+          image_path?: string | null
+          image_quality_score?: number | null
+          image_url?: string | null
+          observation_id?: string | null
+          rain_likely_reason?: string | null
+          rain_likely_soon?: boolean | null
+          rain_visible?: boolean | null
+          raw_ai_result?: Json | null
+          snow_visible?: boolean | null
+          station_id?: string
+          updated_at?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skycam_station_latest_observation_id_fkey"
+            columns: ["observation_id"]
+            isOneToOne: false
+            referencedRelation: "skycam_observations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skycam_station_latest_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: true
+            referencedRelation: "skycam_stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skycam_stations: {
+        Row: {
+          area: string | null
+          camera_direction: string | null
+          city: string
+          country: string
+          coverage_radius_km: number
+          created_at: string
+          display_for_city: boolean
+          id: string
+          is_active: boolean
+          is_public: boolean
+          latitude: number
+          longitude: number
+          name: string
+          owner_name: string | null
+          station_code: string
+          updated_at: string
+          upload_key_hash: string
+        }
+        Insert: {
+          area?: string | null
+          camera_direction?: string | null
+          city: string
+          country: string
+          coverage_radius_km?: number
+          created_at?: string
+          display_for_city?: boolean
+          id?: string
+          is_active?: boolean
+          is_public?: boolean
+          latitude: number
+          longitude: number
+          name: string
+          owner_name?: string | null
+          station_code: string
+          updated_at?: string
+          upload_key_hash: string
+        }
+        Update: {
+          area?: string | null
+          camera_direction?: string | null
+          city?: string
+          country?: string
+          coverage_radius_km?: number
+          created_at?: string
+          display_for_city?: boolean
+          id?: string
+          is_active?: boolean
+          is_public?: boolean
+          latitude?: number
+          longitude?: number
+          name?: string
+          owner_name?: string | null
+          station_code?: string
+          updated_at?: string
+          upload_key_hash?: string
+        }
+        Relationships: []
+      }
+      skycam_user_submissions: {
+        Row: {
+          ai_checked: boolean
+          ai_confidence: number | null
+          area: string | null
+          captured_at: string | null
+          city: string | null
+          cloud_cover_percent: number | null
+          condition_label: string | null
+          country: string | null
+          dark_clouds_visible: boolean | null
+          fog_visible: boolean | null
+          forecast_was_accurate: boolean | null
+          id: string
+          image_path: string
+          image_quality_score: number | null
+          image_url: string | null
+          is_approved: boolean
+          is_public: boolean
+          latitude: number | null
+          longitude: number | null
+          rain_likely_reason: string | null
+          rain_likely_soon: boolean | null
+          rain_visible: boolean | null
+          raw_ai_result: Json | null
+          snow_visible: boolean | null
+          status: string
+          submitted_at: string
+          user_condition_label: string | null
+          user_id: string | null
+          user_note: string | null
+        }
+        Insert: {
+          ai_checked?: boolean
+          ai_confidence?: number | null
+          area?: string | null
+          captured_at?: string | null
+          city?: string | null
+          cloud_cover_percent?: number | null
+          condition_label?: string | null
+          country?: string | null
+          dark_clouds_visible?: boolean | null
+          fog_visible?: boolean | null
+          forecast_was_accurate?: boolean | null
+          id?: string
+          image_path: string
+          image_quality_score?: number | null
+          image_url?: string | null
+          is_approved?: boolean
+          is_public?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          rain_likely_reason?: string | null
+          rain_likely_soon?: boolean | null
+          rain_visible?: boolean | null
+          raw_ai_result?: Json | null
+          snow_visible?: boolean | null
+          status?: string
+          submitted_at?: string
+          user_condition_label?: string | null
+          user_id?: string | null
+          user_note?: string | null
+        }
+        Update: {
+          ai_checked?: boolean
+          ai_confidence?: number | null
+          area?: string | null
+          captured_at?: string | null
+          city?: string | null
+          cloud_cover_percent?: number | null
+          condition_label?: string | null
+          country?: string | null
+          dark_clouds_visible?: boolean | null
+          fog_visible?: boolean | null
+          forecast_was_accurate?: boolean | null
+          id?: string
+          image_path?: string
+          image_quality_score?: number | null
+          image_url?: string | null
+          is_approved?: boolean
+          is_public?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          rain_likely_reason?: string | null
+          rain_likely_soon?: boolean | null
+          rain_visible?: boolean | null
+          raw_ai_result?: Json | null
+          snow_visible?: boolean | null
+          status?: string
+          submitted_at?: string
+          user_condition_label?: string | null
+          user_id?: string | null
+          user_note?: string | null
+        }
+        Relationships: []
+      }
       social_post_comments: {
         Row: {
           content: string

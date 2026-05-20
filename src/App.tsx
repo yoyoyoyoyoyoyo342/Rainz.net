@@ -73,6 +73,10 @@ const Social = lazy(() => import("./pages/Social"));
 const Explore = lazy(() => import("./pages/Explore"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const Docs = lazy(() => import("./pages/Docs"));
+const AdminSkyCam = lazy(() => import("./pages/skycam/AdminSkyCam"));
+const AdminSkyCamStation = lazy(() => import("./pages/skycam/AdminSkyCamStation"));
+const AdminSkyCamSubmissions = lazy(() => import("./pages/skycam/AdminSkyCamSubmissions"));
+const SkyCamStationView = lazy(() => import("./pages/skycam/SkyCamStationView"));
 
 function AnalyticsTracker() {
   useAnalytics();

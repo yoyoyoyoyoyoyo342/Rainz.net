@@ -46,6 +46,7 @@ const TenDayForecast = lazy(() => import("@/components/weather/ten-day-forecast"
 const DetailedMetrics = lazy(() => import("@/components/weather/detailed-metrics").then(m => ({ default: m.DetailedMetrics })));
 const PollenCard = lazy(() => import("@/components/weather/pollen-card").then(m => ({ default: m.PollenCard })));
 const WeatherReportForm = lazy(() => import("@/components/weather/weather-report-form").then(m => ({ default: m.WeatherReportForm })));
+const SkyCamSubmissionDialog = lazy(() => import("@/components/weather/skycam-submission-dialog").then(m => ({ default: m.SkyCamSubmissionDialog })));
 const AIChatButton = lazy(() => import("@/components/weather/ai-chat-button").then(m => ({ default: m.AIChatButton })));
 const MorningWeatherReview = lazy(() => import("@/components/weather/morning-weather-review").then(m => ({ default: m.MorningWeatherReview })));
 const SocialWeatherCard = lazy(() => import("@/components/weather/social-weather-card").then(m => ({ default: m.SocialWeatherCard })));
@@ -683,11 +684,21 @@ export default function WeatherPage() {
                 )}
               </div>
               {weatherData && (
-                <WeatherReportForm
-                  location={actualStationName}
-                  currentCondition={weatherData.mostAccurate.currentWeather.condition}
-                  locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }}
-                />
+                <div className="flex flex-wrap gap-2">
+                  <WeatherReportForm
+                    location={actualStationName}
+                    currentCondition={weatherData.mostAccurate.currentWeather.condition}
+                    locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }}
+                  />
+                  <SkyCamSubmissionDialog
+                    location={actualStationName}
+                    locationData={{
+                      latitude: selectedLocation?.lat || 0,
+                      longitude: selectedLocation?.lon || 0,
+                      city: selectedLocation?.name,
+                    }}
+                  />
+                </div>
               )}
             </div>
 

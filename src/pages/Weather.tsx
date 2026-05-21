@@ -29,6 +29,7 @@ import { OnboardingTour } from "@/components/weather/onboarding-tour";
 // Critical above-the-fold components — loaded eagerly
 import { LocationSearch } from "@/components/weather/location-search";
 import { CurrentWeather } from "@/components/weather/current-weather";
+import { SkyCamStationViewer } from "@/components/weather/skycam-station-viewer";
 import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
 import { AnimatedCard } from "@/components/ui/animated-card";
 import { SEOHead } from "@/components/seo/seo-head";
@@ -599,6 +600,16 @@ export default function WeatherPage() {
 
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                   <HeaderInfoBar user={user} showInbox={false} />
+                  <Suspense fallback={null}>
+                    <SkyCamSubmissionDialog
+                      location={actualStationName}
+                      locationData={{
+                        latitude: selectedLocation?.lat || 0,
+                        longitude: selectedLocation?.lon || 0,
+                        city: selectedLocation?.name,
+                      }}
+                    />
+                  </Suspense>
                   <SettingsDialog
                     isImperial={isImperial}
                     onUnitsChange={setIsImperial}
@@ -690,14 +701,6 @@ export default function WeatherPage() {
                     currentCondition={weatherData.mostAccurate.currentWeather.condition}
                     locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }}
                   />
-                  <SkyCamSubmissionDialog
-                    location={actualStationName}
-                    locationData={{
-                      latitude: selectedLocation?.lat || 0,
-                      longitude: selectedLocation?.lon || 0,
-                      city: selectedLocation?.name,
-                    }}
-                  />
                 </div>
               )}
             </div>
@@ -770,22 +773,28 @@ export default function WeatherPage() {
 
 
               <AnimatedCard index={0}>
-                <CurrentWeather
-                  weatherData={weatherData.sources}
-                  mostAccurate={weatherData.mostAccurate}
-                  onRefresh={handleRefresh}
-                  isLoading={isFetching}
-                  lastUpdated={lastUpdated}
-                  isImperial={isImperial}
-                  isAutoDetected={isAutoDetected}
-                  currentLocation={selectedLocation}
-                  onLocationSelect={handleLocationSelect}
-                  displayName={customDisplayName}
-                  actualStationName={actualStationName}
-                  premiumSettings={premiumSettings}
-                  hourlyData={weatherData.mostAccurate.hourlyForecast}
-                  is24Hour={is24Hour}
-                />
+                <div className="relative">
+                  <CurrentWeather
+                    weatherData={weatherData.sources}
+                    mostAccurate={weatherData.mostAccurate}
+                    onRefresh={handleRefresh}
+                    isLoading={isFetching}
+                    lastUpdated={lastUpdated}
+                    isImperial={isImperial}
+                    isAutoDetected={isAutoDetected}
+                    currentLocation={selectedLocation}
+                    onLocationSelect={handleLocationSelect}
+                    displayName={customDisplayName}
+                    actualStationName={actualStationName}
+                    premiumSettings={premiumSettings}
+                    hourlyData={weatherData.mostAccurate.hourlyForecast}
+                    is24Hour={is24Hour}
+                  />
+                  <SkyCamStationViewer
+                    latitude={selectedLocation?.lat}
+                    longitude={selectedLocation?.lon}
+                  />
+                </div>
               </AnimatedCard>
 
               {/* Share & AR Buttons */}

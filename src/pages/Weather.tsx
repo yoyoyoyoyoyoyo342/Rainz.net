@@ -599,6 +599,16 @@ export default function WeatherPage() {
 
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                   <HeaderInfoBar user={user} showInbox={false} />
+                  <Suspense fallback={null}>
+                    <SkyCamSubmissionDialog
+                      location={actualStationName}
+                      locationData={{
+                        latitude: selectedLocation?.lat || 0,
+                        longitude: selectedLocation?.lon || 0,
+                        city: selectedLocation?.name,
+                      }}
+                    />
+                  </Suspense>
                   <SettingsDialog
                     isImperial={isImperial}
                     onUnitsChange={setIsImperial}
@@ -689,14 +699,6 @@ export default function WeatherPage() {
                     location={actualStationName}
                     currentCondition={weatherData.mostAccurate.currentWeather.condition}
                     locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }}
-                  />
-                  <SkyCamSubmissionDialog
-                    location={actualStationName}
-                    locationData={{
-                      latitude: selectedLocation?.lat || 0,
-                      longitude: selectedLocation?.lon || 0,
-                      city: selectedLocation?.name,
-                    }}
                   />
                 </div>
               )}

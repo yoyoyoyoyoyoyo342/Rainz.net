@@ -218,6 +218,10 @@ function AnimatedRoutes({
               <Route path="/market-report" element={<MarketReport />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/docs" element={<Docs />} />
+              <Route path="/admin/skycam" element={<AdminSkyCam />} />
+              <Route path="/admin/skycam/stations/:stationCode" element={<AdminSkyCamStation />} />
+              <Route path="/admin/skycam/submissions" element={<AdminSkyCamSubmissions />} />
+              <Route path="/skycam/:stationCode" element={<SkyCamStationView />} />
               <Route path="/airport" element={<AirportLayout />}>
                 <Route index element={<AirportLanding />} />
                 <Route path="features" element={<AirportFeatures />} />

@@ -143,3 +143,9 @@ verify_jwt = false
 
 [functions.handle-email-suppression]
 verify_jwt = false
+
+[functions.upload-skycam-observation]
+verify_jwt = false
+
+[functions.submit-skycam-photo]
+verify_jwt = false

@@ -149,3 +149,6 @@ verify_jwt = false
 
 [functions.submit-skycam-photo]
 verify_jwt = false
+
+[functions.register-skycam-station]
+verify_jwt = true

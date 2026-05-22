@@ -179,19 +179,22 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // API key arrives in Authorization: Bearer <key> header
+    const authHeader = req.headers.get('authorization') ?? req.headers.get('Authorization') ?? '';
+    const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+    const apiKey = bearerMatch ? bearerMatch[1].trim() : '';
+
     const form = await req.formData();
     const image = form.get('image');
-    const stationCode = String(form.get('station_code') ?? '').trim();
     const capturedAtRaw = String(form.get('captured_at') ?? '').trim();
-    const uploadKey = String(form.get('upload_key') ?? '');
     const firmwareVersion = String(form.get('firmware_version') ?? '').slice(0, 64);
 
+    if (!apiKey) {
+      return new Response(JSON.stringify({ success: false, error: 'missing_api_key' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
     if (!(image instanceof File) || image.size === 0) {
       return new Response(JSON.stringify({ success: false, error: 'missing_image' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-    if (!stationCode || !uploadKey) {
-      return new Response(JSON.stringify({ success: false, error: 'missing_credentials' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     if (image.size > 15 * 1024 * 1024) {
@@ -207,27 +210,21 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
+    const apiKeyHash = await sha256Hex(apiKey);
     const { data: station, error: stationErr } = await admin
       .from('skycam_stations')
-      .select('id,station_code,upload_key_hash,is_active')
-      .eq('station_code', stationCode)
+      .select('id,station_code,is_active')
+      .eq('api_key_hash', apiKeyHash)
       .maybeSingle();
     if (stationErr || !station) {
-      return new Response(JSON.stringify({ success: false, error: 'station_not_found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ success: false, error: 'invalid_api_key' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     if (!station.is_active) {
       return new Response(JSON.stringify({ success: false, error: 'station_inactive' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const pepper = Deno.env.get('SKYCAM_UPLOAD_SECRET_PEPPER') ?? '';
-    const candidateHash = await sha256Hex(`${uploadKey}:${pepper}`);
-    const ok = await timingSafeEqual(candidateHash, station.upload_key_hash ?? '');
-    if (!ok) {
-      return new Response(JSON.stringify({ success: false, error: 'invalid_upload_key' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
 
     // Build storage path
     const now = new Date();

@@ -77,6 +77,7 @@ const AdminSkyCam = lazy(() => import("./pages/skycam/AdminSkyCam"));
 const AdminSkyCamStation = lazy(() => import("./pages/skycam/AdminSkyCamStation"));
 const AdminSkyCamSubmissions = lazy(() => import("./pages/skycam/AdminSkyCamSubmissions"));
 const SkyCamStationView = lazy(() => import("./pages/skycam/SkyCamStationView"));
+const SkyCamStations = lazy(() => import("./pages/skycam/SkyCamStations"));
 
 function AnalyticsTracker() {
   useAnalytics();

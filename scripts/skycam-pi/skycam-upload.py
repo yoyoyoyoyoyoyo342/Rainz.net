@@ -65,7 +65,7 @@ def upload_photo(path: Path) -> dict:
 
 
 def run_once() -> int:
-    if not (UPLOAD_URL and STATION_CODE and UPLOAD_KEY):
+    if not (UPLOAD_URL and API_KEY):
         print("ERROR: missing env vars. See .env.example", file=sys.stderr)
         return 2
     if not capture_photo(TMP_PATH):

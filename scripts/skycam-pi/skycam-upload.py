@@ -25,10 +25,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 UPLOAD_URL = os.environ.get("RAINZ_SKYCAM_UPLOAD_URL", "").strip()
-STATION_CODE = os.environ.get("RAINZ_SKYCAM_STATION_CODE", "").strip()
-UPLOAD_KEY = os.environ.get("RAINZ_SKYCAM_UPLOAD_KEY", "").strip()
+API_KEY = os.environ.get("RAINZ_SKYCAM_API_KEY", "").strip()
 INTERVAL_MINUTES = int(os.environ.get("RAINZ_SKYCAM_INTERVAL_MINUTES", "5"))
-FIRMWARE_VERSION = os.environ.get("RAINZ_SKYCAM_FIRMWARE", "rainz-skycam-pi/1.0.0")
+FIRMWARE_VERSION = os.environ.get("RAINZ_SKYCAM_FIRMWARE", "rainz-skycam-pi/1.1.0")
 
 TMP_PATH = Path("/tmp/rainz-skycam.jpg")
 

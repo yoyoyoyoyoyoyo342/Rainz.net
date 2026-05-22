@@ -1495,61 +1495,70 @@ export type Database = {
       }
       skycam_stations: {
         Row: {
+          api_key_hash: string | null
           area: string | null
           camera_direction: string | null
-          city: string
-          country: string
+          camera_type: string
+          city: string | null
+          country: string | null
           coverage_radius_km: number
           created_at: string
           display_for_city: boolean
           id: string
           is_active: boolean
           is_public: boolean
+          last_upload_at: string | null
           latitude: number
           longitude: number
           name: string
           owner_name: string | null
+          owner_user_id: string | null
           station_code: string
           updated_at: string
-          upload_key_hash: string
         }
         Insert: {
+          api_key_hash?: string | null
           area?: string | null
           camera_direction?: string | null
-          city: string
-          country: string
+          camera_type?: string
+          city?: string | null
+          country?: string | null
           coverage_radius_km?: number
           created_at?: string
           display_for_city?: boolean
           id?: string
           is_active?: boolean
           is_public?: boolean
+          last_upload_at?: string | null
           latitude: number
           longitude: number
           name: string
           owner_name?: string | null
+          owner_user_id?: string | null
           station_code: string
           updated_at?: string
-          upload_key_hash: string
         }
         Update: {
+          api_key_hash?: string | null
           area?: string | null
           camera_direction?: string | null
-          city?: string
-          country?: string
+          camera_type?: string
+          city?: string | null
+          country?: string | null
           coverage_radius_km?: number
           created_at?: string
           display_for_city?: boolean
           id?: string
           is_active?: boolean
           is_public?: boolean
+          last_upload_at?: string | null
           latitude?: number
           longitude?: number
           name?: string
           owner_name?: string | null
+          owner_user_id?: string | null
           station_code?: string
           updated_at?: string
-          upload_key_hash?: string
         }
         Relationships: []
       }

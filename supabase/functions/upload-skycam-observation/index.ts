@@ -331,6 +331,13 @@ Deno.serve(async (req) => {
       updated_at: new Date().toISOString(),
     }, { onConflict: 'station_id' });
 
+    // Stamp last_upload_at on the station
+    await admin.from('skycam_stations')
+      .update({ last_upload_at: inserted.uploaded_at })
+      .eq('id', station.id);
+
+
+
     return new Response(JSON.stringify({
       success: true,
       observation_id: inserted.id,

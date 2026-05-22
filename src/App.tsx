@@ -223,6 +223,7 @@ function AnimatedRoutes({
               <Route path="/admin/skycam/stations/:stationCode" element={<AdminSkyCamStation />} />
               <Route path="/admin/skycam/submissions" element={<AdminSkyCamSubmissions />} />
               <Route path="/skycam/:stationCode" element={<SkyCamStationView />} />
+              <Route path="/skycam-stations" element={<SkyCamStations />} />
               <Route path="/airport" element={<AirportLayout />}>
                 <Route index element={<AirportLanding />} />
                 <Route path="features" element={<AirportFeatures />} />

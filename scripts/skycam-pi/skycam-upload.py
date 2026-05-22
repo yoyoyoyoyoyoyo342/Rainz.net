@@ -53,12 +53,11 @@ def capture_photo(path: Path) -> bool:
 def upload_photo(path: Path) -> dict:
     files = {"image": ("skycam.jpg", path.read_bytes(), "image/jpeg")}
     data = {
-        "station_code": STATION_CODE,
-        "upload_key": UPLOAD_KEY,
         "captured_at": datetime.now(timezone.utc).isoformat(),
         "firmware_version": FIRMWARE_VERSION,
     }
-    resp = requests.post(UPLOAD_URL, files=files, data=data, timeout=60)
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+    resp = requests.post(UPLOAD_URL, files=files, data=data, headers=headers, timeout=60)
     try:
         return {"status": resp.status_code, "body": resp.json()}
     except ValueError:

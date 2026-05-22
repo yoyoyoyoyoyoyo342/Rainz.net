@@ -25,10 +25,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 UPLOAD_URL = os.environ.get("RAINZ_SKYCAM_UPLOAD_URL", "").strip()
-STATION_CODE = os.environ.get("RAINZ_SKYCAM_STATION_CODE", "").strip()
-UPLOAD_KEY = os.environ.get("RAINZ_SKYCAM_UPLOAD_KEY", "").strip()
+API_KEY = os.environ.get("RAINZ_SKYCAM_API_KEY", "").strip()
 INTERVAL_MINUTES = int(os.environ.get("RAINZ_SKYCAM_INTERVAL_MINUTES", "5"))
-FIRMWARE_VERSION = os.environ.get("RAINZ_SKYCAM_FIRMWARE", "rainz-skycam-pi/1.0.0")
+FIRMWARE_VERSION = os.environ.get("RAINZ_SKYCAM_FIRMWARE", "rainz-skycam-pi/1.1.0")
 
 TMP_PATH = Path("/tmp/rainz-skycam.jpg")
 
@@ -54,12 +53,11 @@ def capture_photo(path: Path) -> bool:
 def upload_photo(path: Path) -> dict:
     files = {"image": ("skycam.jpg", path.read_bytes(), "image/jpeg")}
     data = {
-        "station_code": STATION_CODE,
-        "upload_key": UPLOAD_KEY,
         "captured_at": datetime.now(timezone.utc).isoformat(),
         "firmware_version": FIRMWARE_VERSION,
     }
-    resp = requests.post(UPLOAD_URL, files=files, data=data, timeout=60)
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+    resp = requests.post(UPLOAD_URL, files=files, data=data, headers=headers, timeout=60)
     try:
         return {"status": resp.status_code, "body": resp.json()}
     except ValueError:
@@ -67,7 +65,7 @@ def upload_photo(path: Path) -> dict:
 
 
 def run_once() -> int:
-    if not (UPLOAD_URL and STATION_CODE and UPLOAD_KEY):
+    if not (UPLOAD_URL and API_KEY):
         print("ERROR: missing env vars. See .env.example", file=sys.stderr)
         return 2
     if not capture_photo(TMP_PATH):

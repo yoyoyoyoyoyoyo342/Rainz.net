@@ -419,38 +419,36 @@ export function LocationSearch({
   }
 
   return (
-    <div className="relative rounded-2xl glass-card flex-1 z-[9999]">
-      {/* Search Input */}
-      <div className="p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
-          <input
-            type="text"
-            placeholder={placeholder}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-            className="w-full pl-10 pr-12 py-3 bg-transparent text-foreground border border-border/30 hover:border-border/50 hover:bg-muted/10 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-muted-foreground rounded-xl"
-          />
-          <Button
-            onMouseDown={(e) => {
-              e.preventDefault();
-            }}
-            onClick={handleLocationDetection}
-            disabled={isDetecting || loadingStations}
-            variant="ghost"
-            size="sm"
-            aria-label="Use my current location"
-            className="absolute right-1 top-1/2 z-10 -translate-y-1/2 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors p-2 rounded-lg"
-          >
-            {isDetecting || loadingStations ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <MapPin className="w-4 h-4" />
-            )}
-          </Button>
-        </div>
+    <div className="relative rounded-2xl glass-card flex-1 z-50 overflow-hidden">
+      {/* Search Input — integrated flush with glass card */}
+      <div className="relative flex items-center">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground/60 pointer-events-none z-10" />
+        <input
+          type="text"
+          placeholder={placeholder}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+          className="w-full pl-11 pr-14 py-[14px] bg-transparent text-foreground text-[15px] placeholder:text-muted-foreground/50 outline-none transition-colors"
+        />
+        <Button
+          onMouseDown={(e) => {
+            e.preventDefault();
+          }}
+          onClick={handleLocationDetection}
+          disabled={isDetecting || loadingStations}
+          variant="ghost"
+          size="sm"
+          aria-label="Use my current location"
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-primary hover:bg-primary/10 transition-colors p-2.5 rounded-xl h-9 w-9"
+        >
+          {isDetecting || loadingStations ? (
+            <Loader2 className="w-[18px] h-[18px] animate-spin" />
+          ) : (
+            <MapPin className="w-[18px] h-[18px]" />
+          )}
+        </Button>
       </div>
 
       {/* Search Results Dropdown — absolute overlay */}

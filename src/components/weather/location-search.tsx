@@ -453,7 +453,7 @@ export function LocationSearch({
 
       {/* Search Results Dropdown — absolute overlay */}
       {(searchQuery.length > 2 || isLoading || loadingAddresses || (isFocused && searchQuery.length === 0)) && (
-        <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-xl border border-border/30 bg-popover/95 backdrop-blur-xl shadow-xl animate-fade-in origin-top overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl border border-border/20 glass-card-strong shadow-2xl animate-fade-in origin-top overflow-hidden">
           {searchQuery.length === 0 && isFocused ? (
             <div className="max-h-60 overflow-y-auto">
               {searchHistory.length > 0 ? (

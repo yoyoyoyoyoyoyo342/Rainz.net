@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, createContext, useContext, ReactNode } from "react";
+import { useEffect, useState, useCallback, createContext, useContext, ReactNode, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./use-auth";
 import { useToast } from "./use-toast";
@@ -33,6 +33,27 @@ const DEFAULT_PREMIUM_SETTINGS: PremiumSettings = {
   showMoonPhase: true,
 };
 
+const LOCAL_STORAGE_KEY = "rainz-premium-settings";
+
+function loadFromLocalStorage(): PremiumSettings {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!raw) return DEFAULT_PREMIUM_SETTINGS;
+    const parsed = JSON.parse(raw) as Partial<PremiumSettings>;
+    return { ...DEFAULT_PREMIUM_SETTINGS, ...parsed };
+  } catch {
+    return DEFAULT_PREMIUM_SETTINGS;
+  }
+}
+
+function saveToLocalStorage(settings: PremiumSettings) {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(settings));
+  } catch {
+    // ignore
+  }
+}
+
 type PremiumSettingsContextValue = {
   settings: PremiumSettings;
   loading: boolean;
@@ -49,11 +70,16 @@ function usePremiumSettingsState(): PremiumSettingsContextValue {
   const { toast } = useToast();
   const [settings, setSettings] = useState<PremiumSettings>(DEFAULT_PREMIUM_SETTINGS);
   const [loading, setLoading] = useState(true);
+  const settingsRef = useRef(settings);
 
-  // Fetch settings from cloud
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
+  // Load settings: cloud for logged-in users, localStorage for guests
   useEffect(() => {
     if (!user) {
-      setSettings(DEFAULT_PREMIUM_SETTINGS);
+      setSettings(loadFromLocalStorage());
       setLoading(false);
       return;
     }
@@ -72,10 +98,24 @@ function usePremiumSettingsState(): PremiumSettingsContextValue {
         }
 
         if (data?.premium_settings) {
-          setSettings({
+          const merged = {
             ...DEFAULT_PREMIUM_SETTINGS,
             ...(data.premium_settings as Partial<PremiumSettings>),
-          });
+          };
+          setSettings(merged);
+        } else {
+          // No cloud settings yet — migrate localStorage if any
+          const local = loadFromLocalStorage();
+          if (JSON.stringify(local) !== JSON.stringify(DEFAULT_PREMIUM_SETTINGS)) {
+            setSettings(local);
+            // Seed cloud with local values
+            await supabase
+              .from("user_preferences")
+              .upsert(
+                { user_id: user.id, premium_settings: JSON.parse(JSON.stringify(local)) },
+                { onConflict: "user_id" }
+              );
+          }
         }
       } catch (error) {
         console.error("Error in fetchSettings:", error);
@@ -87,14 +127,17 @@ function usePremiumSettingsState(): PremiumSettingsContextValue {
     fetchSettings();
   }, [user]);
 
-  // Update a single setting - now available to all users
+  // Update a single setting
   const updateSetting = useCallback(
     async <K extends keyof PremiumSettings>(key: K, value: PremiumSettings[K]) => {
-      if (!user) return;
-
-      const prevSettings = settings;
-      const newSettings = { ...settings, [key]: value };
+      const prevSettings = settingsRef.current;
+      const newSettings = { ...prevSettings, [key]: value };
       setSettings(newSettings);
+
+      if (!user) {
+        saveToLocalStorage(newSettings);
+        return;
+      }
 
       try {
         const { error } = await supabase
@@ -118,17 +161,20 @@ function usePremiumSettingsState(): PremiumSettingsContextValue {
         setSettings(prevSettings);
       }
     },
-    [user, settings, toast]
+    [user, toast]
   );
 
   // Update multiple settings at once
   const updateSettings = useCallback(
     async (newSettings: Partial<PremiumSettings>) => {
-      if (!user) return;
-
-      const prevSettings = settings;
-      const mergedSettings = { ...settings, ...newSettings };
+      const prevSettings = settingsRef.current;
+      const mergedSettings = { ...prevSettings, ...newSettings };
       setSettings(mergedSettings);
+
+      if (!user) {
+        saveToLocalStorage(mergedSettings);
+        return;
+      }
 
       try {
         const { error } = await supabase
@@ -152,14 +198,17 @@ function usePremiumSettingsState(): PremiumSettingsContextValue {
         setSettings(prevSettings);
       }
     },
-    [user, settings, toast]
+    [user, toast]
   );
 
   // Reset to defaults
   const resetToDefaults = useCallback(async () => {
-    if (!user) return;
-
     setSettings(DEFAULT_PREMIUM_SETTINGS);
+
+    if (!user) {
+      saveToLocalStorage(DEFAULT_PREMIUM_SETTINGS);
+      return;
+    }
 
     try {
       const { error } = await supabase

@@ -9,6 +9,9 @@ verify_jwt = false
 [functions.ai-weather-insights]
 verify_jwt = false
 
+[functions.ai-briefing]
+verify_jwt = false
+
 [functions.fetch-hyperlocal-weather]
 verify_jwt = false
 

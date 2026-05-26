@@ -33,7 +33,8 @@ import { SkyCamStationViewer } from "@/components/weather/skycam-station-viewer"
 import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
 import { AnimatedCard } from "@/components/ui/animated-card";
 import { SEOHead } from "@/components/seo/seo-head";
-import { AnimatedWeatherBackground } from "@/components/weather/animated-weather-background";
+import { SkyRenderer } from "@/components/rainz/sky-renderer";
+import { AIBriefingHero } from "@/components/rainz/ai-briefing-hero";
 import { HolidayBackground, getCurrentHoliday } from "@/components/weather/holiday-backgrounds";
 import { HeaderInfoBar } from "@/components/weather/header-info-bar";
 import { SettingsDialog } from "@/components/weather/settings-dialog";
@@ -562,11 +563,12 @@ export default function WeatherPage() {
                 sunset={weatherData?.mostAccurate?.currentWeather?.sunset}
               />
             ) : (
-              <AnimatedWeatherBackground
+              <SkyRenderer
                 condition={weatherData?.mostAccurate?.currentWeather?.condition}
                 sunrise={weatherData?.mostAccurate?.currentWeather?.sunrise}
                 sunset={weatherData?.mostAccurate?.currentWeather?.sunset}
-                moonPhase={weatherData?.mostAccurate?.currentWeather?.moonPhase}
+                windSpeedMps={weatherData?.mostAccurate?.currentWeather?.windSpeed}
+                windDirectionDeg={(weatherData?.mostAccurate?.currentWeather as any)?.windDirection}
               />
             )}
           </>
@@ -771,6 +773,18 @@ export default function WeatherPage() {
 
 
 
+
+              {/* Rainz 2.0 — AI Briefing Hero */}
+              <AnimatedCard index={0}>
+                <AIBriefingHero
+                  location={customDisplayName || actualStationName || selectedLocation?.name || "your location"}
+                  currentTemp={weatherData.mostAccurate.currentWeather.temperature}
+                  feelsLike={weatherData.mostAccurate.currentWeather.feelsLike}
+                  condition={weatherData.mostAccurate.currentWeather.condition}
+                  hourly={weatherData.mostAccurate.hourlyForecast}
+                  isImperial={isImperial}
+                />
+              </AnimatedCard>
 
               <AnimatedCard index={0}>
                 <div className="relative">

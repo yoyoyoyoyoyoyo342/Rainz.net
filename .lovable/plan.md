@@ -1,106 +1,149 @@
-# Predict v2 — New Features + Unified Tab Redesign
 
-Two parallel tracks: (1) ship new "fun & game" mechanics on top of the predict flow, and (2) restyle every tab (Leaderboard, History, Shop, Battles) to match the new gradient‑hero language we just built on the Predict tab.
+# Rainz 2.0 — Full Overhaul Plan
 
----
-
-## Track 1 — New Fun Prediction Features
-
-### 1. Daily Spin / Bonus Wheel 🎡
-After submitting the day's prediction, a confetti modal opens with a 1‑tap "spin" that grants a random reward: +25 pts, double‑points token, streak shield, or a rare "All‑In refund" (gets back stake if All‑In fails). Once per day, server‑validated via a row in a new `daily_spins` table.
-
-### 2. Prediction Streak Multiplier 🔥
-Visible above the submit button: a meter that fills as your daily streak grows. Streak of 3 → +10% pts, 7 → +25%, 14 → +50%, 30 → +100%. Applied at verification time (server side) and previewed live on the submit button.
-
-### 3. "Hot Streak" Power Card 🃏
-A collectable card system using existing `active_powerups`. Earned via the Spin Wheel or 5‑in‑a‑row correct predictions. Three new cards:
-- **Snowball** — next correct prediction's points double if previous was also correct.
-- **Insurance** — if wrong, lose 50% less.
-- **Underdog** — if you predict against the Rainz Bot and beat it, +150 bonus.
-
-Cards displayed as a horizontal scroll above the form; tap to "equip" before submitting.
-
-### 4. Public Predictions Feed 🌍
-A new "Live" sub‑section under the hero showing the last 10 predictions made by anyone in the world (city, condition icon, confidence chip). Reuses `weather_predictions` + a Supabase realtime channel. Creates the FOMO loop the Predict tab is missing right now.
-
-### 5. Mystery Location of the Day 🎲
-Optional toggle on the form: "Predict for Today's Mystery City" (a deterministic daily pick across world capitals). Correct = +500 pts. Wrong = 0 (no penalty). Surfaces on a small marquee chip next to the location picker.
-
-### 6. Confidence Meter Sound + Haptics
-When user selects "All‑In", a deep haptic pulse fires (mobile) and the submit button briefly pulses red. Pure delight, no backend.
-
-### 7. Achievement Pop‑Ups (already exist) → Resurfaced
-Use the existing 32+ achievement system but trigger an inline toast‑style ribbon on the Predict hero when one unlocks, instead of relying on the profile page.
-
-> **Notes:** All these features ship on the Predict tab inside the same hero/glass‑card style. Backend additions are minimal: one new `daily_spins` table + a `streak_bonus_pct` computed column on `weather_predictions` for transparency. No paid integrations.
+A single-release redesign that turns the homepage from a "weather dashboard with widgets" into a **premium AI-native weather product**. Three pillars ship together: cinematic backgrounds, a new card/UI system, and AI woven into the main flow (not hidden in Explore).
 
 ---
 
-## Track 2 — Tab Redesigns (visual language unified with new Predict hero)
+## Pillar 1 — Hybrid Photoreal + WebGL Backgrounds
 
-The new visual language we just shipped on Predict:
-- Gradient hero card with blur orb
-- Pill chips for filters
-- Rounded glass cards
-- Sheet for "info" overlays
-- Streak/rank pills in top‑right
+Replace `animated-weather-background.tsx` (current cartoon puffy clouds) with a layered renderer.
 
-Apply that everywhere:
+**Layer stack (bottom → top):**
+1. **Photoreal sky base** — curated time-of-day sky photographs/videos per condition (clear-dawn, clear-day, golden-hour, blue-hour, overcast, storm, fog, snow, aurora). Single 1080p WebM/JPG per state, lazy-loaded, cross-faded on condition change.
+2. **Parallax cloud plate** — 2–3 PNG layers drifting at different speeds based on real wind direction + speed.
+3. **WebGL FX canvas** (`@react-three/fiber` v8 + drei v9) — particle systems for rain, snow, lightning flash, aurora ribbons, dust, lens flare. Auto-pauses when tab hidden or `prefers-reduced-motion`.
+4. **Atmospheric color grade** — CSS blend layer tinted by sun elevation (uses existing `useTimeOfDay`).
 
-### A. Leaderboard tab (`leaderboard.tsx`)
-- **Hero:** "This Month's Champions" gradient card with the current month name, days remaining, and the user's own rank pill in the corner.
-- **Monthly/All‑Time toggle:** turns into pill chips matching the location picker style (replaces the current shadcn Tabs).
-- **Podium:** Top 3 displayed as a visual podium (gold/silver/bronze pedestals with avatars + trophy counts) above the list.
-- **List rows:** glass cards with rank gradient bar on the left edge; tap → user profile. Highlight the signed‑in user with a primary‑colored ring.
-- **You row:** sticky at the bottom of the viewport (like Duolingo) showing "Your rank: #42 — 12 to go to top 10".
+**Performance budget:** <2.5 MB initial, ≤60 fps on iPhone 12, hard fallback to a static gradient if WebGL unavailable or `navigator.gpu`-style adapter check fails. Battery saver mode disables WebGL FX entirely.
 
-### B. History tab (`points-history.tsx`)
-- **Hero:** "Your Journey" — totals card with lifetime points, best month, win rate, longest streak as the 4 small stats inside the hero (same layout as the Predict hero).
-- **Filter chips:** All / Predictions / Battles / Wins / Losses (pill chips).
-- **Timeline:** vertical timeline with date headers; each event is a glass card showing condition icon, location, ±points badge, confidence multiplier. Win/loss color accent on the left edge.
-- **Empty state:** illustrated cloud + "Make your first prediction" CTA → jumps back to Predict tab.
-
-### C. Shop tab (`points-shop.tsx`)
-- **Hero:** "Power‑Up Shop" — your SP balance huge, sparkline of recent earnings, "Earn more" button.
-- **Category chips:** Power‑Ups / Streak Tools / Cosmetics / Bundles (replaces the existing tabs).
-- **Item cards:** larger, with bold icon, name, short tagline, price, and an "Owned: x" badge. Featured item gets a gradient ribbon ("Best value").
-- **Confirm dialog:** unified sheet with item recap + balance after purchase.
-
-### D. Battles (`prediction-battles.tsx`)
-- **Hero:** "Battle Arena" with active battles count + win rate pill.
-- **Section chips:** Active / Open / History.
-- **Battle cards:** opponent avatar vs your avatar with a versus glyph between, location, stakes, accept/view buttons; gradient based on status (open=blue, active=primary, won=green, lost=red).
-
-### E. Bottom tab bar (Predict / Leaders / History / Shop)
-- Same icons/labels; just add a tiny notification dot when something is unread (e.g. unread battle, achievement unlocked).
-
----
-
-## Shared Components to Extract
-
-To keep this DRY and ensure visual consistency, build these reusable bits up front:
-
-```text
-src/components/predict/
-├── predict-hero.tsx        // gradient card + orb + slot for content
-├── pill-chips.tsx          // horizontal scrollable pill selector
-├── stat-pill.tsx           // streak/rank/info pills
-└── glass-row.tsx           // list-row card with optional left accent bar
+**New files:**
+```
+src/components/backgrounds/
+├── sky-renderer.tsx          // orchestrator, picks layers from condition+time
+├── photo-sky-layer.tsx       // image/video crossfade base
+├── parallax-clouds.tsx       // CSS-transform cloud plates
+├── webgl-fx-canvas.tsx       // r3f canvas with conditional FX
+├── fx/rain-particles.tsx
+├── fx/snow-particles.tsx
+├── fx/lightning.tsx
+├── fx/aurora.tsx
+└── assets/skies/*.{jpg,webm}
 ```
 
-Both tracks consume these, guaranteeing the redesigned tabs and the new features feel like one product.
+---
+
+## Pillar 2 — New Card System & UI Language
+
+**Aesthetic:** Premium dark glass — deep navy base (`#0b1628 → #152340`), liquid-glass cards over the photoreal sky, blue accent (`#3b6fa0 → #7ba8d9`), confident shadows, generous spacing.
+
+**Card primitive overhaul** — one new `<RainzCard />` replacing the current ad-hoc `glass-card` classes:
+- Variants: `hero`, `metric`, `timeline`, `ai`, `compact`
+- Built-in title slot, optional AI shimmer border, optional accent glow per condition
+- Rounded `1.5rem`, blur `28px` saturate `170%`, 1px gradient border, subtle inner highlight
+- Removes the inconsistent glass treatments across `current-weather`, `aqi-card`, `pollen-card`, `barometer-card`, etc.
+
+**Typography refresh:** Display headline in a distinctive sans (Geist / Söhne-style) at 56–72 px for hero numbers; body stays Lato. Mono for data labels.
+
+**Homepage layout (mobile-first, since current viewport is 375):**
+```text
+┌─────────────────────────────┐
+│ ⛅  Location ▾    ⚙ 🛰     │  header chips (glass)
+├─────────────────────────────┤
+│  AI BRIEFING HERO           │  pillar 3 #1
+│  "Mild morning, rain by 4." │
+│  72°  feels 70  ↓ details   │
+├─────────────────────────────┤
+│  ASK RAINZ ▸                │  pillar 3 #2
+│  [chip] [chip] [chip]       │
+├─────────────────────────────┤
+│  PREDICTIVE TIMELINE        │  pillar 3 #3
+│  ───●──────●──────●──       │
+├─────────────────────────────┤
+│  SMART PLAN CARDS  →        │  pillar 3 #4
+│  [Outfit] [Run] [Commute]   │
+├─────────────────────────────┤
+│  Metrics grid (2×3)         │  AQI / UV / Wind / Pollen / Barometer / Rainz Score
+├─────────────────────────────┤
+│  10-day forecast            │
+└─────────────────────────────┘
+```
+
+**Removed from the homepage** (moved to Explore or settings): rain-map preview, social-weather-card, weather-fun-facts, deja-vu card, mood journal, debate arena, photo challenge, weekly-recap inline card. Homepage stops being a "feature dump".
+
+**Bottom tab bar:** restyled with the new glass primitive + a subtle AI status dot (pulses while the briefing streams).
 
 ---
 
-## Out of Scope
-- Stripe/payment changes — Shop redesign is visual only, all packages stay.
-- New languages/translations — strings stay English.
-- DB schema beyond `daily_spins` table.
-- Battle resolution logic — unchanged.
+## Pillar 3 — AI on the Homepage
 
-## Implementation Order
-1. Extract shared components (predict-hero, pill-chips, stat-pill, glass-row).
-2. Redesign Leaderboard, History, Shop, Battles using them (Track 2).
-3. Ship Spin Wheel + Streak Multiplier (highest delight, lowest risk).
-4. Ship Hot Streak Cards + Public Feed.
-5. Ship Mystery Location + haptics/sound polish.
+All four AI surfaces you picked, all on `/index`, all streaming via Groq through edge functions (per memory: never Lovable AI). Graceful fallback to raw API data if the LLM call fails.
+
+### 3.1 AI Briefing Hero
+Replaces the static current-weather block. A 2–4 sentence personalized briefing streams in (token-by-token, with cursor) using: location, current conditions, next 12 h forecast, time of day, and (if signed-in) saved locations as context. Voice playback button (Web Speech API). Refreshes on pull-to-refresh and every 30 min.
+
+**New edge function:** `supabase/functions/ai-briefing/index.ts` — Groq llama-3.3-70b, streams SSE, ≤120 tokens, system prompt enforces Scandinavian-friendly tone (target 13–35 yo).
+
+### 3.2 Ask Rainz Inline
+Persistent input bar under the hero: "Ask about today's weather…". Tapping opens an inline expanded chat panel (not a modal) with streaming markdown answers and 4 rotating suggestion chips ("Will it rain on my walk home?", "Wind for cycling?", "When's golden hour?", "Compare to yesterday"). History kept in-session only.
+
+**Reuses** existing `ai-weather-companion.tsx` logic but rewritten as inline component `<AskRainzInline />`.
+
+### 3.3 Predictive Timeline
+Replaces the hourly carousel. A horizontal scrubbable timeline shows the next 12 h with AI-detected key moments annotated: "☔ Rain at 15:40", "🌅 Sun returns 17:10", "💨 Gusts peak 19:00". Tap a moment to expand a detail bubble.
+
+**New edge function:** `ai-timeline-moments` — takes hourly array, returns array `{ time, icon, label, severity }`. Uses Groq with structured tool-call output.
+
+### 3.4 Smart Plan Cards
+Horizontal scroll of 3–5 personal cards generated server-side once per refresh:
+- **Outfit** — what to wear (image + text)
+- **Best window** — best 2 h block to go out today
+- **Activity score** — Run / Bike / Walk subscored 0–100 with one-line reason
+- **Commute** — if user has a saved location, AM/PM commute weather diff
+
+**New edge function:** `ai-smart-plans` — single call returning all cards as JSON via tool calling. Cached 30 min per location.
+
+---
+
+## Pillar 4 — UI System Cleanup (cross-cutting)
+
+- New `tailwind.config.ts` tokens: `rainz-ink` (deep navy), `rainz-glass`, `rainz-glow`, `rainz-ai` (animated gradient).
+- New `index.css` semantic tokens for the dark-glass system; light mode kept but re-tuned against photoreal skies (auto-darkens overlays).
+- New shared components in `src/components/rainz/`: `RainzCard`, `RainzChip`, `RainzMetric`, `StreamingText`, `AIShimmerBorder`, `SoftDivider`.
+- Settings dialog, location picker, header info bar restyled to the new primitives (no functional change).
+- Search bar (just redesigned) absorbs the new glass tokens for consistency.
+
+---
+
+## Technical Notes
+
+- **r3f versions pinned**: `@react-three/fiber@^8.18`, `@react-three/drei@^9.122.0`, `three@>=0.133` (React 18 constraint).
+- **LLM**: Groq primary, OpenAI fallback, raw API fallback (per existing memory). Never Lovable AI.
+- **Streaming**: SSE through edge functions, parsed with the line-by-line pattern (no `\n\n` splits).
+- **Caching**: Briefing 30 min, plans 30 min, timeline 1 h, all keyed by location+conditionHash.
+- **Reduced motion + battery saver**: disables WebGL FX, falls back to static photo + gradient.
+- **A11y**: AI streams have `aria-live="polite"`, voice control respects user setting, all glass cards keep AA contrast.
+- **Memory updates**: refresh "Animated Bgs" memory after Pillar 1, add a "Rainz 2.0 UI" memory after Pillar 2, add "Homepage AI surfaces" memory after Pillar 3.
+
+---
+
+## Implementation Order (single release branch)
+
+1. Design tokens + `RainzCard` primitives (no visual change yet).
+2. Background renderer (photoreal + WebGL FX) behind a feature flag.
+3. New homepage shell + relocate non-essential cards to Explore.
+4. AI Briefing hero + edge function.
+5. Predictive timeline + edge function.
+6. Smart plan cards + edge function.
+7. Ask Rainz inline.
+8. Restyle settings/header/tab bar to new system.
+9. Flip the flag, ship 2.0, update memories.
+
+---
+
+## Out of Scope (deliberately)
+
+- No changes to Predict, Battles, Shop, Leaderboard internals (only visual restyle later if time allows).
+- No new auth, payments, or backend schema beyond the 3 new edge functions.
+- No native app rebuild — Capacitor wrapper inherits the new UI automatically.
+- No new languages.

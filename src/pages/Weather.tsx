@@ -564,11 +564,12 @@ export default function WeatherPage() {
                 sunset={weatherData?.mostAccurate?.currentWeather?.sunset}
               />
             ) : (
-              <AnimatedWeatherBackground
+              <SkyRenderer
                 condition={weatherData?.mostAccurate?.currentWeather?.condition}
                 sunrise={weatherData?.mostAccurate?.currentWeather?.sunrise}
                 sunset={weatherData?.mostAccurate?.currentWeather?.sunset}
-                moonPhase={weatherData?.mostAccurate?.currentWeather?.moonPhase}
+                windSpeedMps={weatherData?.mostAccurate?.currentWeather?.windSpeed}
+                windDirectionDeg={(weatherData?.mostAccurate?.currentWeather as any)?.windDirection}
               />
             )}
           </>

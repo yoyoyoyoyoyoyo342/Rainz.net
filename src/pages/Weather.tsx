@@ -33,7 +33,6 @@ import { SkyCamStationViewer } from "@/components/weather/skycam-station-viewer"
 import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
 import { AnimatedCard } from "@/components/ui/animated-card";
 import { SEOHead } from "@/components/seo/seo-head";
-import { AnimatedWeatherBackground } from "@/components/weather/animated-weather-background";
 import { SkyRenderer } from "@/components/rainz/sky-renderer";
 import { AIBriefingHero } from "@/components/rainz/ai-briefing-hero";
 import { HolidayBackground, getCurrentHoliday } from "@/components/weather/holiday-backgrounds";

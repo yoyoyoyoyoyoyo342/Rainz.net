@@ -775,6 +775,18 @@ export default function WeatherPage() {
 
 
 
+              {/* Rainz 2.0 — AI Briefing Hero */}
+              <AnimatedCard index={0}>
+                <AIBriefingHero
+                  location={customDisplayName || actualStationName || selectedLocation?.name || "your location"}
+                  currentTemp={weatherData.mostAccurate.currentWeather.temperature}
+                  feelsLike={weatherData.mostAccurate.currentWeather.feelsLike}
+                  condition={weatherData.mostAccurate.currentWeather.condition}
+                  hourly={weatherData.mostAccurate.hourlyForecast}
+                  isImperial={isImperial}
+                />
+              </AnimatedCard>
+
               <AnimatedCard index={0}>
                 <div className="relative">
                   <CurrentWeather

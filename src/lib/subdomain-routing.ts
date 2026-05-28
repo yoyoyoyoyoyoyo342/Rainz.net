@@ -177,4 +177,16 @@ export function maybeRedirectPathToSubdomain(): boolean {
   return false;
 }
 
-export { ROOT_DOMAIN };
+// Redirect any rainz.net hostname to the equivalent path on rejn.app.
+// Preserves subdomain (e.g. predict.rainz.net → predict.rejn.app), path, search, hash.
+export function maybeRedirectLegacyDomain(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = getHostname();
+  if (!isLegacyRainzHost(host)) return false;
+  const newHost = host.slice(0, host.length - LEGACY_DOMAIN.length) + ROOT_DOMAIN;
+  const { pathname, search, hash } = window.location;
+  window.location.replace(`https://${newHost}${pathname}${search}${hash}`);
+  return true;
+}
+
+export { ROOT_DOMAIN, LEGACY_DOMAIN };

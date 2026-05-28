@@ -27,7 +27,7 @@ import { useAmplitudeInstrumentation } from "@/hooks/use-amplitude-instrumentati
 import { useAmplitudeFunnels } from "@/hooks/use-amplitude-funnels";
 import { useBroadcastListener } from "@/hooks/use-broadcast-listener";
 import { toast as sonnerToast } from "sonner";
-import { resolveHost, maybeRedirectPathToSubdomain } from "@/lib/subdomain-routing";
+import { resolveHost, maybeRedirectPathToSubdomain, maybeRedirectLegacyDomain } from "@/lib/subdomain-routing";
 
 
 // Critical components - load immediately
@@ -252,6 +252,12 @@ function AppContent() {
   const { isNightTime } = useTimeOfDayContext();
   usePrefetchSavedLocations();
   useOAuthErrorToast();
+
+  // Redirect rainz.net → rejn.app before anything else renders meaningfully.
+  if (typeof window !== "undefined" && maybeRedirectLegacyDomain()) {
+    // navigation in progress; render nothing to avoid flashing UI
+    return null;
+  }
 
   // Resolve which subdomain we're on (apex/api/blog/curated/city/generic)
   const hostResolution = resolveHost();

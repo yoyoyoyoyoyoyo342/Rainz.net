@@ -419,9 +419,9 @@ export function LocationSearch({
   }
 
   return (
-    <div className="relative rounded-2xl glass-card flex-1 z-50 overflow-hidden">
-      {/* Search Input — integrated flush with glass card */}
-      <div className="relative flex items-center">
+    <div className="relative flex-1 z-50">
+      {/* Search Input — glass wrapper around the row only, so dropdown can overflow */}
+      <div className="relative flex items-center rounded-2xl glass-card overflow-hidden">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground/60 pointer-events-none z-10" />
         <input
           type="text"

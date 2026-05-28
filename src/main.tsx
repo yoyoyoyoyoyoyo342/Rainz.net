@@ -8,9 +8,11 @@ amplitude.initAll('1134523e7129723aad004d4d744c184b', {
   sessionReplay: { sampleRate: 1 },
 });
 
-const SW_CLEANUP_FLAG = 'rainz-sw-cleanup-done';
-const CHUNK_RECOVERY_FLAG = 'rainz-chunk-recovery-attempted';
-const shouldRegisterServiceWorker = import.meta.env.PROD && window.location.protocol === 'https:';
+const SW_CLEANUP_FLAG = 'rejn-sw-cleanup-done';
+const CHUNK_RECOVERY_FLAG = 'rejn-chunk-recovery-attempted';
+const hasServiceWorker = typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
+const shouldRegisterServiceWorker =
+  hasServiceWorker && import.meta.env.PROD && window.location.protocol === 'https:';
 
 const isChunkLikeError = (message: string) => {
   const normalized = message.toLowerCase();
@@ -81,6 +83,8 @@ window.addEventListener('unhandledrejection', (event) => {
 });
 
 window.addEventListener('load', () => {
+  if (!hasServiceWorker) return;
+
   if (shouldRegisterServiceWorker) {
     navigator.serviceWorker
       .register('/sw.js')

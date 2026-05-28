@@ -171,8 +171,15 @@ function AnimatedRoutes({
         <PageTransition key={effectiveLocation.pathname}>
           {isApiSubdomain ? (
             <Routes location={effectiveLocation}>
-              <Route path="/" element={<Navigate to="https://rainz.net" replace />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route
+                path="*"
+                element={
+                  (() => {
+                    if (typeof window !== "undefined") window.location.replace("https://rejn.app");
+                    return null;
+                  })() as any
+                }
+              />
             </Routes>
           ) : isBlogSubdomain ? (
             <Routes location={effectiveLocation}>
@@ -185,6 +192,8 @@ function AnimatedRoutes({
           ) : (
             <Routes location={effectiveLocation}>
               <Route path="/" element={<Weather />} />
+              <Route path="/index" element={<Navigate to="/" replace />} />
+              <Route path="/index.html" element={<Navigate to="/" replace />} />
               <Route path="/predict" element={<Predict />} />
               <Route path="/social" element={<Social />} />
               <Route path="/explore" element={<Explore />} />

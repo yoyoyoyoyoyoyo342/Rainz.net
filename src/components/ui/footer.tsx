@@ -83,15 +83,9 @@ export function Footer() {
                 />
               </a>
             </div>
-            <p>© 2025-{new Date().getFullYear()} <a href="https://localilabs.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">Locali labs</a>. All rights reserved.</p>
-            <p className="text-xs text-muted-foreground/70">V{version}</p>
+            <p>© 2025-{new Date().getFullYear()} <a href="https://localilabs.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">Locali Labs</a>. All rights reserved.</p>
+            <p className="text-xs text-muted-foreground/70">Rejn V{version}</p>
           </div>
-        </div>
-        <div className="mt-4 pt-4 border-t border-border/50 text-center">
-          <p className="text-xs text-muted-foreground/70">
-            Disclaimer: Rainz is not affiliated with, endorsed by, or connected to Rains A/S or any of its subsidiaries
-            or affiliates. "Rains" is a registered trademark of Rains A/S.
-          </p>
         </div>
       </div>
     </footer>

@@ -4,7 +4,8 @@
 
 import { CITIES } from "@/data/cities";
 
-const ROOT_DOMAIN = "rainz.net";
+const ROOT_DOMAIN = "rejn.app";
+const LEGACY_DOMAIN = "rainz.net";
 
 // subdomain -> internal path the SPA should render
 export const SUBDOMAIN_TO_PATH: Record<string, string> = {

@@ -71,15 +71,19 @@ export function isPreviewHost(host: string = getHostname()): boolean {
   if (host.startsWith("id-preview--")) return true;
   // capacitor / native
   if (host === "" || host === "ionic" || host === "capacitor") return true;
-  return !host.endsWith(ROOT_DOMAIN);
+  return !host.endsWith(ROOT_DOMAIN) && !host.endsWith(LEGACY_DOMAIN);
+}
+
+export function isLegacyRainzHost(host: string = getHostname()): boolean {
+  return host === LEGACY_DOMAIN || host.endsWith("." + LEGACY_DOMAIN);
 }
 
 export function getSubdomain(host: string = getHostname()): string | null {
   if (isPreviewHost(host)) return null;
-  if (host === ROOT_DOMAIN) return null;
-  if (!host.endsWith("." + ROOT_DOMAIN)) return null;
-  const sub = host.slice(0, host.length - ROOT_DOMAIN.length - 1);
-  // ignore deep subdomains like a.b.rainz.net for now — treat as apex
+  const base = isLegacyRainzHost(host) ? LEGACY_DOMAIN : ROOT_DOMAIN;
+  if (host === base) return null;
+  if (!host.endsWith("." + base)) return null;
+  const sub = host.slice(0, host.length - base.length - 1);
   if (sub.includes(".")) return null;
   return sub.toLowerCase();
 }

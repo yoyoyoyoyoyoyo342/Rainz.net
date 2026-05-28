@@ -4,7 +4,8 @@
 
 import { CITIES } from "@/data/cities";
 
-const ROOT_DOMAIN = "rainz.net";
+const ROOT_DOMAIN = "rejn.app";
+const LEGACY_DOMAIN = "rainz.net";
 
 // subdomain -> internal path the SPA should render
 export const SUBDOMAIN_TO_PATH: Record<string, string> = {
@@ -70,15 +71,19 @@ export function isPreviewHost(host: string = getHostname()): boolean {
   if (host.startsWith("id-preview--")) return true;
   // capacitor / native
   if (host === "" || host === "ionic" || host === "capacitor") return true;
-  return !host.endsWith(ROOT_DOMAIN);
+  return !host.endsWith(ROOT_DOMAIN) && !host.endsWith(LEGACY_DOMAIN);
+}
+
+export function isLegacyRainzHost(host: string = getHostname()): boolean {
+  return host === LEGACY_DOMAIN || host.endsWith("." + LEGACY_DOMAIN);
 }
 
 export function getSubdomain(host: string = getHostname()): string | null {
   if (isPreviewHost(host)) return null;
-  if (host === ROOT_DOMAIN) return null;
-  if (!host.endsWith("." + ROOT_DOMAIN)) return null;
-  const sub = host.slice(0, host.length - ROOT_DOMAIN.length - 1);
-  // ignore deep subdomains like a.b.rainz.net for now — treat as apex
+  const base = isLegacyRainzHost(host) ? LEGACY_DOMAIN : ROOT_DOMAIN;
+  if (host === base) return null;
+  if (!host.endsWith("." + base)) return null;
+  const sub = host.slice(0, host.length - base.length - 1);
   if (sub.includes(".")) return null;
   return sub.toLowerCase();
 }
@@ -172,4 +177,16 @@ export function maybeRedirectPathToSubdomain(): boolean {
   return false;
 }
 
-export { ROOT_DOMAIN };
+// Redirect any rainz.net hostname to the equivalent path on rejn.app.
+// Preserves subdomain (e.g. predict.rainz.net → predict.rejn.app), path, search, hash.
+export function maybeRedirectLegacyDomain(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = getHostname();
+  if (!isLegacyRainzHost(host)) return false;
+  const newHost = host.slice(0, host.length - LEGACY_DOMAIN.length) + ROOT_DOMAIN;
+  const { pathname, search, hash } = window.location;
+  window.location.replace(`https://${newHost}${pathname}${search}${hash}`);
+  return true;
+}
+
+export { ROOT_DOMAIN, LEGACY_DOMAIN };

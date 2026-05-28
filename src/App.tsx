@@ -27,7 +27,7 @@ import { useAmplitudeInstrumentation } from "@/hooks/use-amplitude-instrumentati
 import { useAmplitudeFunnels } from "@/hooks/use-amplitude-funnels";
 import { useBroadcastListener } from "@/hooks/use-broadcast-listener";
 import { toast as sonnerToast } from "sonner";
-import { resolveHost, maybeRedirectPathToSubdomain } from "@/lib/subdomain-routing";
+import { resolveHost, maybeRedirectPathToSubdomain, maybeRedirectLegacyDomain } from "@/lib/subdomain-routing";
 
 
 // Critical components - load immediately
@@ -171,8 +171,15 @@ function AnimatedRoutes({
         <PageTransition key={effectiveLocation.pathname}>
           {isApiSubdomain ? (
             <Routes location={effectiveLocation}>
-              <Route path="/" element={<Navigate to="https://rainz.net" replace />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route
+                path="*"
+                element={
+                  (() => {
+                    if (typeof window !== "undefined") window.location.replace("https://rejn.app");
+                    return null;
+                  })() as any
+                }
+              />
             </Routes>
           ) : isBlogSubdomain ? (
             <Routes location={effectiveLocation}>
@@ -185,6 +192,8 @@ function AnimatedRoutes({
           ) : (
             <Routes location={effectiveLocation}>
               <Route path="/" element={<Weather />} />
+              <Route path="/index" element={<Navigate to="/" replace />} />
+              <Route path="/index.html" element={<Navigate to="/" replace />} />
               <Route path="/predict" element={<Predict />} />
               <Route path="/social" element={<Social />} />
               <Route path="/explore" element={<Explore />} />
@@ -243,6 +252,12 @@ function AppContent() {
   const { isNightTime } = useTimeOfDayContext();
   usePrefetchSavedLocations();
   useOAuthErrorToast();
+
+  // Redirect rainz.net → rejn.app before anything else renders meaningfully.
+  if (typeof window !== "undefined" && maybeRedirectLegacyDomain()) {
+    // navigation in progress; render nothing to avoid flashing UI
+    return null;
+  }
 
   // Resolve which subdomain we're on (apex/api/blog/curated/city/generic)
   const hostResolution = resolveHost();

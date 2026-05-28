@@ -1,13 +1,13 @@
 {
-  "name": "Rainz Weather",
-  "short_name": "Rainz",
+  "name": "Rejn",
+  "short_name": "Rejn",
   "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3B82F6",
-  "description": "Rainz - AI-powered weather predictions with hyper-local forecasts, pollen tracking, and weather station data",
+  "description": "Rejn — AI-powered weather predictions with hyper-local forecasts, pollen tracking, and weather station data",
   "categories": ["weather", "utilities", "lifestyle"],
   "icons": [
     {

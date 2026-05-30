@@ -79,11 +79,13 @@ export interface HourlyForecast {
 
 export interface DailyForecast {
   day: string;
+  dateLabel?: string;
   condition: string;
   description: string;
   highTemp: number;
   lowTemp: number;
   precipitation: number;
+  aiCertainty?: number;
   icon?: string;
 }
 

@@ -80,30 +80,36 @@ export function TenDayForecast({ dailyForecast, weatherSources, hourlyForecast, 
         <div className={`${cardPadding} border-b border-border/50`}>
           <h2 className={`${isCompact ? 'text-sm' : 'text-lg'} font-semibold text-foreground flex items-center gap-2`}>
             <CalendarDays className={`${isCompact ? 'w-4 h-4' : 'w-5 h-5'} text-primary`} />
-            {t('card.tenDay')}
+            15-Day Forecast
           </h2>
         </div>
 
         {/* Content */}
         <div className={cardPadding}>
           <div className={`${isCompact ? 'space-y-1' : 'space-y-2'}`}>
-            {dailyForecast.slice(1, showAllDays ? 11 : 4).map((day, index) => (
+            {dailyForecast.slice(1, showAllDays ? 15 : 5).map((day, index) => (
               <Collapsible
                 key={index}
                 open={expandedDay === index}
                 onOpenChange={() => toggleDay(index)}
               >
                 <CollapsibleTrigger className="w-full">
-                  <div className={`flex items-center justify-between ${itemPadding} rounded-xl bg-muted/30 border border-border/30 cursor-pointer hover:bg-muted/50 transition-all`}>
-                    <div className="flex items-center gap-3">
-                      <span className={`${textSize} font-medium text-muted-foreground w-12`}>{day.day}</span>
-                      <div className={`${iconSize} rounded-full bg-primary/10 flex items-center justify-center`}>
+                  <div className={`flex items-center justify-between ${itemPadding} rounded-xl bg-muted/30 border border-border/30 cursor-pointer hover:bg-muted/50 transition-all gap-3`}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={`${textSize} font-medium text-muted-foreground w-14 shrink-0`}>
+                        {day.day}
+                        {day.dateLabel ? <span className="block text-[10px] opacity-70">{day.dateLabel}</span> : null}
+                      </span>
+                      <div className={`${iconSize} rounded-full bg-primary/10 flex items-center justify-center shrink-0`}>
                         {getConditionIcon(day.condition, isCompact ? 'w-4 h-4' : 'w-5 h-5')}
                       </div>
                       <span className={`${textSize} font-medium text-foreground truncate max-w-[100px]`}>{day.condition}</span>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                      <div className="hidden sm:flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-1 text-[10px] font-semibold text-primary">
+                        AI {day.aiCertainty ?? 78}%
+                      </div>
                       <span className="text-xs text-muted-foreground">{day.precipitation}%</span>
                       <div className="text-right">
                         <span className={`${tempSize} font-bold text-foreground`}>
@@ -152,7 +158,7 @@ export function TenDayForecast({ dailyForecast, weatherSources, hourlyForecast, 
             ))}
           </div>
 
-          {dailyForecast.length > 4 && (
+          {dailyForecast.length > 5 && (
             <button
               onClick={() => setShowAllDays(!showAllDays)}
               className={`w-full ${isCompact ? 'mt-2 py-1' : 'mt-3 py-2'} px-4 rounded-xl bg-muted/30 hover:bg-muted/50 border border-border/30 ${textSize} font-medium text-foreground transition-all flex items-center justify-center gap-2`}

@@ -25,18 +25,20 @@ function buildDemoWeatherResponse(lat: number, lon: number): WeatherResponse {
     });
 
   const makeDaily = (): DailyForecast[] =>
-    Array.from({ length: 10 }).map((_, i) => {
+    Array.from({ length: 15 }).map((_, i) => {
       const d = new Date(now.getTime() + i * 86400000);
       const day = d.toLocaleDateString([], { weekday: "short" });
       const high = 78 + (i % 3) * 2;
       const low = high - 10;
       return {
         day,
+        dateLabel: d.toLocaleDateString([], { month: "short", day: "numeric" }),
         condition: "Partly Cloudy",
         description: "Mix of sun and clouds",
         highTemp: high,
         lowTemp: low,
         precipitation: (i % 3) * 10,
+        aiCertainty: Math.max(58, 91 - i * 2),
         icon: "",
       };
     });
@@ -485,7 +487,7 @@ export const weatherApi = {
       };
     });
 
-    const daily: DailyForecast[] = (data?.daily?.time || []).slice(0, 11).map((d: string, i: number) => {
+    const daily: DailyForecast[] = (data?.daily?.time || []).slice(0, 15).map((d: string, i: number) => {
       const precipProb = data?.daily?.precipitation_probability_max?.[i] ?? 0;
       const precipSum = data?.daily?.precipitation_sum?.[i] ?? 0;
       const rainSum = data?.daily?.rain_sum?.[i] ?? 0;
@@ -496,14 +498,19 @@ export const weatherApi = {
       const dayLowTemp = Math.round(data?.daily?.temperature_2m_min?.[i] ?? 0);
       const dayAvgTemp = Math.round((dayHighTemp + dayLowTemp) / 2);
       const daySnow = Math.round((snowSum / 2.54) * 10) / 10;
-      
+      const cloudPenalty = Math.min(18, Math.round((data?.hourly?.cloud_cover?.[Math.min(i * 24, (data?.hourly?.cloud_cover?.length || 1) - 1)] ?? 0) / 8));
+      const precipPenalty = Math.min(20, Math.round(precipProb / 5));
+      const certainty = Math.max(52, Math.min(96, 94 - precipPenalty - cloudPenalty + (i === 0 ? 2 : 0) - i));
+
       return {
         day: new Date(d).toLocaleDateString([], { weekday: "short" }),
+        dateLabel: new Date(d).toLocaleDateString([], { month: "short", day: "numeric" }),
         condition: weatherCodeToText(data?.daily?.weathercode?.[i], dayAvgTemp, daySnow),
         description: weatherCodeToText(data?.daily?.weathercode?.[i], dayAvgTemp, daySnow),
         highTemp: dayHighTemp,
         lowTemp: dayLowTemp,
         precipitation: Math.max(precipProb, totalPrecip > 0 ? Math.min(100, totalPrecip * 5) : 0),
+        aiCertainty: certainty,
         icon: "",
       };
     });

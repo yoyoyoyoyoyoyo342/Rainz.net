@@ -11,8 +11,15 @@ amplitude.initAll('1134523e7129723aad004d4d744c184b', {
 const SW_CLEANUP_FLAG = 'rejn-sw-cleanup-done';
 const CHUNK_RECOVERY_FLAG = 'rejn-chunk-recovery-attempted';
 const hasServiceWorker = typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
+const host = typeof window !== 'undefined' ? window.location.hostname : '';
+const isPreviewHost =
+  host === 'localhost' ||
+  host.endsWith('.localhost') ||
+  host.endsWith('.lovable.app') ||
+  host.endsWith('.lovableproject.com') ||
+  host.startsWith('id-preview--');
 const shouldRegisterServiceWorker =
-  hasServiceWorker && import.meta.env.PROD && window.location.protocol === 'https:';
+  hasServiceWorker && import.meta.env.PROD && window.location.protocol === 'https:' && !isPreviewHost;
 
 const isChunkLikeError = (message: string) => {
   const normalized = message.toLowerCase();

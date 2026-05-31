@@ -22,7 +22,7 @@ const translations: Record<Language, Record<string, string>> = {
     'search.noResults': 'No locations found',
     
     // Weather
-    'weather.welcome': 'Welcome to Rainz',
+    'weather.welcome': 'Welcome to Rejn',
     'weather.searchLocation': 'Search for a location above or allow location access',
     'weather.failed': 'Failed to load weather data',
     'weather.tryAgain': 'Try Again',
@@ -131,7 +131,7 @@ const translations: Record<Language, Record<string, string>> = {
     'footer.privacy': 'Privacy Policy',
     'footer.terms': 'Terms of Service',
     'footer.dataPrivacy': 'Data & Privacy Settings',
-    'footer.copyright': '© 2025-{year} Rainz. All rights reserved.',
+    'footer.copyright': '© 2025-{year} Rejn. All rights reserved.',
     
     // Cards & UI
     'card.tenDay': '10-Day Forecast',
@@ -291,7 +291,7 @@ const translations: Record<Language, Record<string, string>> = {
     'search.noResults': 'No locations found',
     
     // Weather
-    'weather.welcome': 'Welcome to Rainz',
+    'weather.welcome': 'Welcome to Rejn',
     'weather.searchLocation': 'Search for a location above or allow location access',
     'weather.failed': 'Failed to load weather data',
     'weather.tryAgain': 'Try Again',
@@ -400,7 +400,7 @@ const translations: Record<Language, Record<string, string>> = {
     'footer.privacy': 'Privacy Policy',
     'footer.terms': 'Terms of Service',
     'footer.dataPrivacy': 'Data & Privacy Settings',
-    'footer.copyright': '© 2025-{year} Rainz. All rights reserved.',
+    'footer.copyright': '© 2025-{year} Rejn. All rights reserved.',
     'card.tenDay': '10-Day Forecast',
     'card.hourly': '24-Hour Forecast',
     'card.hourlyTap': 'Tap any hour for details',
@@ -498,7 +498,7 @@ const translations: Record<Language, Record<string, string>> = {
     'search.noResults': 'Ingen placeringer fundet',
     
     // Weather
-    'weather.welcome': 'Velkommen til Rainz',
+    'weather.welcome': 'Velkommen til Rejn',
     'weather.searchLocation': 'Søg efter en placering ovenfor eller tillad adgang til placering',
     'weather.failed': 'Kunne ikke indlæse vejrdata',
     'weather.tryAgain': 'Prøv Igen',
@@ -607,7 +607,7 @@ const translations: Record<Language, Record<string, string>> = {
     'footer.privacy': 'Privatlivspolitik',
     'footer.terms': 'Servicevilkår',
     'footer.dataPrivacy': 'Data & Privatlivsindstillinger',
-    'footer.copyright': '© 2025-{year} Rainz. Alle rettigheder forbeholdes.',
+    'footer.copyright': '© 2025-{year} Rejn. Alle rettigheder forbeholdes.',
     'card.tenDay': '10-Dages Prognose',
     'card.hourly': '24-Timers Prognose',
     'card.hourlyTap': 'Tryk på en time for detaljer',
@@ -661,7 +661,7 @@ const translations: Record<Language, Record<string, string>> = {
     'search.noResults': 'Inga platser hittades',
     
     // Weather
-    'weather.welcome': 'Välkommen till Rainz',
+    'weather.welcome': 'Välkommen till Rejn',
     'weather.searchLocation': 'Sök efter en plats ovan eller tillåt platstillgång',
     'weather.failed': 'Kunde inte ladda väderdata',
     'weather.tryAgain': 'Försök Igen',
@@ -770,7 +770,7 @@ const translations: Record<Language, Record<string, string>> = {
     'footer.privacy': 'Integritetspolicy',
     'footer.terms': 'Användarvillkor',
     'footer.dataPrivacy': 'Data & Integritetsinställningar',
-    'footer.copyright': '© 2025-{year} Rainz. Alla rättigheter förbehållna.',
+    'footer.copyright': '© 2025-{year} Rejn. Alla rättigheter förbehållna.',
     'card.tenDay': '10-Dagars Prognos',
     'card.hourly': '24-Timmars Prognos',
     'card.hourlyTap': 'Tryck på en timme för detaljer',
@@ -822,7 +822,7 @@ const translations: Record<Language, Record<string, string>> = {
     'search.noResults': 'Ingen plasseringer funnet',
     
     // Weather
-    'weather.welcome': 'Velkommen til Rainz',
+    'weather.welcome': 'Velkommen til Rejn',
     'weather.searchLocation': 'Søk etter en plassering ovenfor eller tillat plasseringstilgang',
     'weather.failed': 'Kunne ikke laste værdata',
     'weather.tryAgain': 'Prøv Igjen',
@@ -931,7 +931,7 @@ const translations: Record<Language, Record<string, string>> = {
     'footer.privacy': 'Personvernerklæring',
     'footer.terms': 'Tjenestevilkår',
     'footer.dataPrivacy': 'Data & Personverninnstillinger',
-    'footer.copyright': '© 2025-{year} Rainz. Alle rettigheter forbeholdt.',
+    'footer.copyright': '© 2025-{year} Rejn. Alle rettigheter forbeholdt.',
     'card.tenDay': '10-Dagers Varsel',
     'card.hourly': '24-Timers Varsel',
     'card.hourlyTap': 'Trykk på en time for detaljer',
@@ -983,7 +983,7 @@ const translations: Record<Language, Record<string, string>> = {
     'search.noResults': 'Aucun lieu trouvé',
     
     // Weather
-    'weather.welcome': 'Bienvenue sur Rainz',
+    'weather.welcome': 'Bienvenue sur Rejn',
     'weather.searchLocation': 'Recherchez un lieu ci-dessus ou autorisez l\'accès à la localisation',
     'weather.failed': 'Échec du chargement des données météo',
     'weather.tryAgain': 'Réessayer',
@@ -1092,7 +1092,7 @@ const translations: Record<Language, Record<string, string>> = {
     'footer.privacy': 'Politique de confidentialité',
     'footer.terms': 'Conditions d\'utilisation',
     'footer.dataPrivacy': 'Données & Paramètres de confidentialité',
-    'footer.copyright': '© 2025-{year} Rainz. Tous droits réservés.',
+    'footer.copyright': '© 2025-{year} Rejn. Tous droits réservés.',
     'card.tenDay': 'Prévisions 10 Jours',
     'card.hourly': 'Prévisions 24 Heures',
     'card.hourlyTap': 'Appuyez sur une heure pour les détails',
@@ -1144,7 +1144,7 @@ const translations: Record<Language, Record<string, string>> = {
     'search.noResults': 'Nessuna località trovata',
     
     // Weather
-    'weather.welcome': 'Benvenuto su Rainz',
+    'weather.welcome': 'Benvenuto su Rejn',
     'weather.searchLocation': 'Cerca una località sopra o consenti l\'accesso alla posizione',
     'weather.failed': 'Impossibile caricare i dati meteo',
     'weather.tryAgain': 'Riprova',
@@ -1253,7 +1253,7 @@ const translations: Record<Language, Record<string, string>> = {
     'footer.privacy': 'Politica sulla Privacy',
     'footer.terms': 'Termini di Servizio',
     'footer.dataPrivacy': 'Dati & Impostazioni Privacy',
-    'footer.copyright': '© 2025-{year} Rainz. Tutti i diritti riservati.',
+    'footer.copyright': '© 2025-{year} Rejn. Tutti i diritti riservati.',
     'card.tenDay': 'Previsioni 10 Giorni',
     'card.hourly': 'Previsioni 24 Ore',
     'card.hourlyTap': 'Tocca un\'ora per i dettagli',
@@ -1414,7 +1414,7 @@ const translations: Record<Language, Record<string, string>> = {
     'footer.privacy': 'Privacy Mumbo Jumbo',
     'footer.terms': 'The Fine Print',
     'footer.dataPrivacy': 'Data Thingamajig Settings',
-    'footer.copyright': '© 2025-{year} Rainz. Don\'t copy our stuff.',
+    'footer.copyright': '© 2025-{year} Rejn. Don\'t copy our stuff.',
     'card.tenDay': 'The Next 10 Days (Probably Wrong)',
     'card.hourly': 'Hour By Hour (For The Impatient)',
     'card.hourlyTap': 'Poke any hour to see more',

@@ -1414,7 +1414,7 @@ const translations: Record<Language, Record<string, string>> = {
     'footer.privacy': 'Privacy Mumbo Jumbo',
     'footer.terms': 'The Fine Print',
     'footer.dataPrivacy': 'Data Thingamajig Settings',
-    'footer.copyright': '© 2025-{year} Rainz. Don\'t copy our stuff.',
+    'footer.copyright': '© 2025-{year} Rejn. Don\'t copy our stuff.',
     'card.tenDay': 'The Next 10 Days (Probably Wrong)',
     'card.hourly': 'Hour By Hour (For The Impatient)',
     'card.hourlyTap': 'Poke any hour to see more',

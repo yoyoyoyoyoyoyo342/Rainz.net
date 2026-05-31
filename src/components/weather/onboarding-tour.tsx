@@ -8,8 +8,8 @@ const TOUR_KEY = "rainz-tour-complete";
 const steps = [
   {
     icon: Target,
-    title: "Predict Tomorrow's Weather",
-    description: "Make daily predictions, earn points, and climb the leaderboard. Challenge friends to prediction battles!",
+    title: "See what's new in Rejn 2.0",
+    description: "Check the upgraded 15-day forecast, AI certainty scores, and the latest improvements across the app.",
     color: "text-primary",
     bg: "from-primary/20 to-primary/5",
   },

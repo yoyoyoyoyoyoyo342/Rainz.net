@@ -31,9 +31,18 @@ export function usePushNotifications() {
     
     setPushSupported(isPushSupported());
 
-    // Register service worker for push notifications (guarded for sandboxed previews)
+    const host = typeof window !== 'undefined' ? window.location.hostname : '';
+    const isPreviewHost =
+      host === 'localhost' ||
+      host.endsWith('.localhost') ||
+      host.endsWith('.lovable.app') ||
+      host.endsWith('.lovableproject.com') ||
+      host.startsWith('id-preview--');
+
+    // Register service worker for push notifications outside sandboxed previews only
     try {
       if (
+        !isPreviewHost &&
         typeof navigator !== 'undefined' &&
         'serviceWorker' in navigator &&
         navigator.serviceWorker &&

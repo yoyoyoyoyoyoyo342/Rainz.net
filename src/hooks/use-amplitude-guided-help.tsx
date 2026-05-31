@@ -20,7 +20,7 @@ const TIPS: Record<string, GuidedHelpTip> = {
   no_location_set: {
     id: 'no_location_set',
     title: 'Set your home location 📍',
-    message: 'Save a location to get personalised weather updates every time you open Rainz.',
+    message: 'Save a location to get personalised weather updates every time you open Rejn.',
     actionLabel: 'Got it',
   },
   explore_features: {
@@ -31,7 +31,7 @@ const TIPS: Record<string, GuidedHelpTip> = {
   },
   first_visit_guide: {
     id: 'first_visit_guide',
-    title: 'Welcome to Rainz! 🌧️',
+    title: 'Welcome to Rejn 2.0 🌧️',
     message: 'Scroll down to see detailed forecasts, air quality, pollen data and more. Tap Explore to discover all features.',
     actionLabel: 'Let\'s go',
   },

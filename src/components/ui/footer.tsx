@@ -6,7 +6,7 @@ import { ReferralProgram } from "@/components/weather/referral-program";
 
 export function Footer() {
   const { getValue } = useFeatureFlags();
-  const version = getValue("app_version", "1.2.82");
+  const version = getValue("app_version", "2.0.0");
   const [referralOpen, setReferralOpen] = useState(false);
 
   return (
@@ -64,7 +64,7 @@ export function Footer() {
                 rel="noopener noreferrer"
               >
                 <img
-                  alt="Rainz Weather - Weather but smarter. | Product Hunt"
+                  alt="Rejn on Product Hunt"
                   width="250"
                   height="54"
                   loading="lazy"
@@ -78,13 +78,13 @@ export function Footer() {
               >
                 <img
                   src="https://peerpush.net/p/rainz-weather/badge.png"
-                  alt="Rainz Weather on PeerPush"
+                  alt="Rejn on PeerPush"
                   style={{ width: 230 }}
                 />
               </a>
             </div>
             <p>© 2025-{new Date().getFullYear()} <a href="https://localilabs.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">Locali Labs</a>. All rights reserved.</p>
-            <p className="text-xs text-muted-foreground/70">Rejn V{version}</p>
+            <p className="text-xs text-muted-foreground/70">Rejn 2.0 · v{version}</p>
           </div>
         </div>
       </div>

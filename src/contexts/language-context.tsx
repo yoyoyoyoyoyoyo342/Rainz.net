@@ -22,7 +22,7 @@ const translations: Record<Language, Record<string, string>> = {
     'search.noResults': 'No locations found',
     
     // Weather
-    'weather.welcome': 'Welcome to Rainz',
+    'weather.welcome': 'Welcome to Rejn',
     'weather.searchLocation': 'Search for a location above or allow location access',
     'weather.failed': 'Failed to load weather data',
     'weather.tryAgain': 'Try Again',
@@ -291,7 +291,7 @@ const translations: Record<Language, Record<string, string>> = {
     'search.noResults': 'No locations found',
     
     // Weather
-    'weather.welcome': 'Welcome to Rainz',
+    'weather.welcome': 'Welcome to Rejn',
     'weather.searchLocation': 'Search for a location above or allow location access',
     'weather.failed': 'Failed to load weather data',
     'weather.tryAgain': 'Try Again',

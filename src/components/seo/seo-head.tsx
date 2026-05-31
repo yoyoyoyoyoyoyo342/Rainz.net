@@ -12,13 +12,13 @@ interface SEOHeadProps {
   noIndex?: boolean;
 }
 
-const BASE_URL = 'https://rainz.net';
+const BASE_URL = 'https://rejn.app';
 const DEFAULT_IMAGE = 'https://storage.googleapis.com/gpt-engineer-file-uploads/3vP1NRSCrcNqqRJF2S1MsuHkUdh2/social-images/social-1766508867596-IMG_0173.jpeg';
 
 export function SEOHead({
-  title = 'Rainz Weather - AI-Powered Hyper-Local Weather Forecasts',
-  description = 'Get accurate, AI-enhanced weather forecasts with Rainz Weather. Hyper-local predictions, pollen tracking, weather alerts, and gamified weather predictions. Free weather app.',
-  keywords = 'Rainz, Rainz Weather, weather app, AI weather, weather forecast, local weather, pollen tracker, weather predictions, free weather app, accurate weather, ChatGPT weather, AI forecast',
+  title = 'Rejn 2.0 - AI-Powered Hyper-Local Weather Forecasts',
+  description = 'Get accurate, AI-enhanced weather forecasts with Rejn 2.0. Hyper-local predictions, pollen tracking, weather alerts, AI certainty, and a 15-day forecast. Free weather app.',
+  keywords = 'Rejn, Rejn 2.0, weather app, AI weather, weather forecast, local weather, pollen tracker, weather predictions, free weather app, accurate weather, ChatGPT weather, AI forecast',
   canonicalUrl,
   ogImage = DEFAULT_IMAGE,
   ogType = 'website',

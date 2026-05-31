@@ -541,15 +541,15 @@ export default function WeatherPage() {
       <SEOHead
         title={
           selectedLocation
-            ? `${selectedLocation.name} Weather - Rainz Weather`
-            : "Rainz Weather - AI-Powered Hyper-Local Weather Forecasts"
+            ? `${selectedLocation.name} Weather - Rejn`
+            : "Rejn 2.0 - AI-Powered Hyper-Local Weather Forecasts"
         }
         description={
           selectedLocation
             ? `Get accurate AI-enhanced weather forecast for ${selectedLocation.name}. Current conditions, hourly forecast, 10-day outlook, pollen levels, and severe weather alerts.`
-            : "Get accurate AI-powered weather forecasts with Rainz Weather. Hyper-local predictions, pollen tracking, weather alerts, and gamified weather predictions. Free weather app."
+            : "Get accurate AI-powered weather forecasts with Rejn 2.0. Hyper-local predictions, pollen tracking, weather alerts, AI certainty, and a 15-day forecast. Free weather app."
         }
-        keywords={`Rainz Weather, ${selectedLocation?.name || "local"} weather, weather forecast, AI weather, pollen tracker, weather alerts, accurate weather`}
+        keywords={`Rejn, Rejn 2.0, ${selectedLocation?.name || "local"} weather, weather forecast, AI weather, pollen tracker, weather alerts, accurate weather`}
       />
       <div className="min-h-screen overflow-x-hidden relative">
         {/* Animated backgrounds - always render both to avoid hook count issues */}
@@ -596,7 +596,7 @@ export default function WeatherPage() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex flex-col">
                   <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight leading-tight">
-                    Rainz Weather
+                    Rejn 2.0
                   </h1>
                   <p className="text-sm text-muted-foreground">Be prepared.</p>
                 </div>

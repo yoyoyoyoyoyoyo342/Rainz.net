@@ -775,19 +775,34 @@ export default function WeatherPage() {
 
 
 
-              {/* Rainz 2.0 — AI Briefing Hero */}
+              {/* Rejn 2.0 — AI Briefing Hero (temps normalized to user's unit; raw API is always °F) */}
               <AnimatedCard index={0}>
-                <AIBriefingHero
-                  location={customDisplayName || actualStationName || selectedLocation?.name || "your location"}
-                  currentTemp={weatherData.mostAccurate.currentWeather.temperature}
-                  feelsLike={weatherData.mostAccurate.currentWeather.feelsLike}
-                  condition={weatherData.mostAccurate.currentWeather.condition}
-                  hourly={weatherData.mostAccurate.hourlyForecast}
-                  isImperial={isImperial}
-                />
+                {(() => {
+                  const raw = weatherData.mostAccurate.currentWeather;
+                  const toUserUnit = (f?: number) =>
+                    f === undefined || f === null
+                      ? undefined
+                      : isImperial
+                        ? Math.round(f)
+                        : Math.round(((f - 32) * 5) / 9);
+                  const normalizedHourly = (weatherData.mostAccurate.hourlyForecast || []).map((h: any) => ({
+                    time: h.time,
+                    temperature: toUserUnit(h.temperature) ?? 0,
+                    condition: h.condition,
+                    precipitation: h.precipitation ?? 0,
+                  }));
+                  return (
+                    <AIBriefingHero
+                      location={customDisplayName || actualStationName || selectedLocation?.name || "your location"}
+                      currentTemp={toUserUnit(raw.temperature)}
+                      feelsLike={toUserUnit(raw.feelsLike)}
+                      condition={raw.condition}
+                      hourly={normalizedHourly}
+                      isImperial={isImperial}
+                    />
+                  );
+                })()}
               </AnimatedCard>
-
-              <WhatsNewSection />
 
               <AnimatedCard index={0}>
                 <div className="relative">

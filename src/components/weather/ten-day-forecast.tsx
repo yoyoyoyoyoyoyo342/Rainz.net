@@ -5,6 +5,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { DailyForecast, WeatherSource, HourlyForecast } from "@/types/weather";
 import { formatTime } from "@/lib/time-format";
 import { PremiumSettings } from "@/hooks/use-premium-settings";
+import { DaySummary } from "@/components/weather/day-summary";
 
 interface TenDayForecastProps {
   dailyForecast: DailyForecast[];
@@ -130,6 +131,15 @@ export function TenDayForecast({ dailyForecast, weatherSources, hourlyForecast, 
                 
                 <CollapsibleContent className="mt-2">
                   <div className={`rounded-xl ${isCompact ? 'p-2' : 'p-3'} bg-muted/20 border border-border/30`}>
+                    <DaySummary
+                      day={day.day}
+                      highTemp={day.highTemp}
+                      lowTemp={day.lowTemp}
+                      condition={day.condition}
+                      precipitation={day.precipitation}
+                      certainty={day.aiCertainty}
+                      isImperial={isImperial}
+                    />
                     <div className={`flex items-center gap-2 ${isCompact ? 'mb-2' : 'mb-3'}`}>
                       <Clock className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} text-primary`} />
                       <span className={`${textSize} font-medium`}>{t('card.hourlyBreakdown')}</span>

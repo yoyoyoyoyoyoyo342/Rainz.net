@@ -35,7 +35,7 @@ import { AnimatedCard } from "@/components/ui/animated-card";
 import { SEOHead } from "@/components/seo/seo-head";
 import { SkyRenderer } from "@/components/rainz/sky-renderer";
 import { AIBriefingHero } from "@/components/rainz/ai-briefing-hero";
-import { WhatsNewSection } from "@/components/rejn/whats-new-section";
+import { WhatsNewDialog } from "@/components/rejn/whats-new-dialog";
 import { HolidayBackground, getCurrentHoliday } from "@/components/weather/holiday-backgrounds";
 import { HeaderInfoBar } from "@/components/weather/header-info-bar";
 import { SettingsDialog } from "@/components/weather/settings-dialog";
@@ -530,6 +530,10 @@ export default function WeatherPage() {
     setIsAutoDetected(false);
     // Save to account for logged-in users, localStorage for guests
     saveLocationToAccount(newLocation);
+    // Amplitude: explicit domain event for location selection
+    import("@amplitude/unified")
+      .then((amp) => amp.track("location_selected", { lat, lon, name: locationName }))
+      .catch(() => {});
   };
 
   const handleRefresh = () => {
@@ -538,6 +542,7 @@ export default function WeatherPage() {
 
   return (
     <>
+      <WhatsNewDialog />
       <SEOHead
         title={
           selectedLocation
@@ -591,7 +596,7 @@ export default function WeatherPage() {
             </div>
           )}
 
-          <Card className="mb-6 relative z-[1000] overflow-hidden rounded-2xl glass-card-strong">
+          <Card className="mb-6 relative z-[1000] overflow-visible rounded-2xl glass-card-strong">
             <div className="p-4 sm:p-6 border-b border-border/50">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex flex-col">
@@ -631,14 +636,22 @@ export default function WeatherPage() {
                   )}
                   <div className="flex items-center gap-2 px-3 py-2 bg-muted/40 rounded-lg border border-border/60">
                     <span className="text-sm font-medium text-foreground">°F</span>
-                    <Switch checked={!isImperial} onCheckedChange={(checked) => setIsImperial(!checked)} />
+                    <Switch
+                      checked={!isImperial}
+                      onCheckedChange={(checked) => {
+                        setIsImperial(!checked);
+                        import("@amplitude/unified")
+                          .then((amp) => amp.track("unit_toggled", { unit: checked ? "celsius" : "fahrenheit" }))
+                          .catch(() => {});
+                      }}
+                    />
                     <span className="text-sm font-medium text-foreground">°C</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <CardContent className="p-4 sm:p-6 bg-card space-y-4">
+            <CardContent className="p-4 sm:p-6 bg-card space-y-4 overflow-visible">
               {/* Guided help banner */}
               <Suspense fallback={null}>
                 <GuidedHelpBanner tip={activeTip} onDismiss={dismissTip} />
@@ -775,19 +788,34 @@ export default function WeatherPage() {
 
 
 
-              {/* Rainz 2.0 — AI Briefing Hero */}
+              {/* Rejn 2.0 — AI Briefing Hero (temps normalized to user's unit; raw API is always °F) */}
               <AnimatedCard index={0}>
-                <AIBriefingHero
-                  location={customDisplayName || actualStationName || selectedLocation?.name || "your location"}
-                  currentTemp={weatherData.mostAccurate.currentWeather.temperature}
-                  feelsLike={weatherData.mostAccurate.currentWeather.feelsLike}
-                  condition={weatherData.mostAccurate.currentWeather.condition}
-                  hourly={weatherData.mostAccurate.hourlyForecast}
-                  isImperial={isImperial}
-                />
+                {(() => {
+                  const raw = weatherData.mostAccurate.currentWeather;
+                  const toUserUnit = (f?: number) =>
+                    f === undefined || f === null
+                      ? undefined
+                      : isImperial
+                        ? Math.round(f)
+                        : Math.round(((f - 32) * 5) / 9);
+                  const normalizedHourly = (weatherData.mostAccurate.hourlyForecast || []).map((h: any) => ({
+                    time: h.time,
+                    temperature: toUserUnit(h.temperature) ?? 0,
+                    condition: h.condition,
+                    precipitation: h.precipitation ?? 0,
+                  }));
+                  return (
+                    <AIBriefingHero
+                      location={customDisplayName || actualStationName || selectedLocation?.name || "your location"}
+                      currentTemp={toUserUnit(raw.temperature)}
+                      feelsLike={toUserUnit(raw.feelsLike)}
+                      condition={raw.condition}
+                      hourly={normalizedHourly}
+                      isImperial={isImperial}
+                    />
+                  );
+                })()}
               </AnimatedCard>
-
-              <WhatsNewSection />
 
               <AnimatedCard index={0}>
                 <div className="relative">

@@ -1,149 +1,97 @@
 
-# Rainz 2.0 — Full Overhaul Plan
+# Rejn 2.0 — Polish & Feature Pass
 
-A single-release redesign that turns the homepage from a "weather dashboard with widgets" into a **premium AI-native weather product**. Three pillars ship together: cinematic backgrounds, a new card/UI system, and AI woven into the main flow (not hidden in Explore).
+A grouped plan covering data correctness, UX polish, new features, and tracking fixes.
 
----
+## 1. AI Briefing real data (top hero)
+- Audit `src/components/rainz/ai-briefing-hero.tsx` — the "60°C" bug comes from passing `current.temperature` without checking unit conversion (the imperial→metric path is sending °F values as °C).
+- Pass the canonical Celsius value plus the user's `isImperial` flag to the edge function and let the function convert once.
+- Update `supabase/functions/ai-briefing/index.ts` to log/echo inputs and guard against out-of-range temps (clamp + revalidate via raw API fallback if `|t| > 60`).
+- Ensure briefing uses the same `weather-api.ts` ensemble source the rest of the page uses (no stale prop).
 
-## Pillar 1 — Hybrid Photoreal + WebGL Backgrounds
+## 2. Mascot images — remove backgrounds
+- The 9 `rejn-*.png` files in `src/assets/` have visible coloured/white backgrounds.
+- Re-generate (or run background-removal) on each so they're transparent PNGs on a clean background, then re-upload via `lovable-assets`.
+- Replace local imports in `src/components/rejn/rejn-mascot.tsx` with the new asset pointers.
 
-Replace `animated-weather-background.tsx` (current cartoon puffy clouds) with a layered renderer.
+## 3. Mascot placements
+Add `<RejnMascot/>` in:
+- Empty state of the 15-day forecast (pose: `sit`)
+- Predict page hero (pose: `pounce`)
+- Social page header (pose: `wave`)
+- Loading / skeleton overlay (pose: `sleep`)
+- Footer corner sticker (pose: `dance`)
 
-**Layer stack (bottom → top):**
-1. **Photoreal sky base** — curated time-of-day sky photographs/videos per condition (clear-dawn, clear-day, golden-hour, blue-hour, overcast, storm, fog, snow, aurora). Single 1080p WebM/JPG per state, lazy-loaded, cross-faded on condition change.
-2. **Parallax cloud plate** — 2–3 PNG layers drifting at different speeds based on real wind direction + speed.
-3. **WebGL FX canvas** (`@react-three/fiber` v8 + drei v9) — particle systems for rain, snow, lightning flash, aurora ribbons, dust, lens flare. Auto-pauses when tab hidden or `prefers-reduced-motion`.
-4. **Atmospheric color grade** — CSS blend layer tinted by sun elevation (uses existing `useTimeOfDay`).
+## 4. "What's New in Rejn 2.0" → first-visit popup
+- Remove `<WhatsNewSection/>` from `src/pages/Weather.tsx`.
+- Create `src/components/rejn/whats-new-dialog.tsx` (Dialog using existing `dialog.tsx`, full-bleed mobile sheet on small screens).
+- Trigger logic in `Weather.tsx`:
+  - Only between 2026-06-21 → 2026-06-28 (inclusive).
+  - For signed-out users: check `localStorage.getItem('rejn_whatsnew_2_seen')`.
+  - For signed-in users: new `user_preferences` boolean `seen_whatsnew_2` (migration). Fall back to localStorage if offline.
+  - Mark as seen on close.
+- Carry over the 6 feature cards from the current section, add the wave mascot, primary CTA "Got it".
 
-**Performance budget:** <2.5 MB initial, ≤60 fps on iPhone 12, hard fallback to a static gradient if WebGL unavailable or `navigator.gpu`-style adapter check fails. Battery saver mode disables WebGL FX entirely.
+## 5. Implement the 6 "What's New" features
+- **AI Sky Analyst** — wire `ai-chat` flow to a floating "Ask Rejn" button on the weather page (uses existing `llm-weather-forecast` infra). 
+- **Weather Calendar** — add `.ics` export endpoint + button on 15-day forecast (Apple/Google compatible).
+- **Predictive Timeline** — new `predictive-timeline.tsx` component showing next 3 inflection points (rain start, temp drop, wind shift) derived from `next12h`.
+- **Smart Outfit** — refresh `outfit` component with current+next-3h aware logic.
+- **Route Sense** — small banner on weather card linking to DryRoutes with "best window" sourced from hourly precip.
+- **AI Certainty** — confidence badge per day in 15-day forecast already typed; render the % chip using ensemble spread.
 
-**New files:**
-```
-src/components/backgrounds/
-├── sky-renderer.tsx          // orchestrator, picks layers from condition+time
-├── photo-sky-layer.tsx       // image/video crossfade base
-├── parallax-clouds.tsx       // CSS-transform cloud plates
-├── webgl-fx-canvas.tsx       // r3f canvas with conditional FX
-├── fx/rain-particles.tsx
-├── fx/snow-particles.tsx
-├── fx/lightning.tsx
-├── fx/aurora.tsx
-└── assets/skies/*.{jpg,webm}
-```
+## 6. 15-day forecast AI summaries
+- Extend `supabase/functions/ai-briefing/index.ts` (or new `ai-day-summary`) to accept a single day payload (high/low/condition/precip/wind/uv/certainty) and return one sentence.
+- Cache responses per `(lat,lng,date)` for 6h in Supabase `weather_ai_summaries` table.
+- Render under each day row in `ten-day-forecast.tsx` (lazy-load when day expanded to avoid burning Groq quota).
 
----
+## 7. Predictions revamp (`src/pages/Predict.tsx` + components)
+- Add hero with mascot + streak meter + multiplier ring.
+- Replace dry temp inputs with sliders that show emoji reactions and "feels like" preview.
+- Add quick-bet chips (Rain? Yes/No, Hotter than yesterday? +/-).
+- Show animated battle invitations and result reveal animation.
+- Tighten copy with Scandi/Gen-Z voice from language-context.
 
-## Pillar 2 — New Card System & UI Language
+## 8. Social page revamp (`src/pages/Social.tsx`)
+- New header with wave mascot + live count of nearby reactions.
+- Sticky emoji reaction bar with haptic ripple.
+- Card feed redesigned: avatar, distance chip, emoji burst, time-ago.
+- Trending emoji rail at top; map peek strip linking to fullscreen map.
 
-**Aesthetic:** Premium dark glass — deep navy base (`#0b1628 → #152340`), liquid-glass cards over the photoreal sky, blue accent (`#3b6fa0 → #7ba8d9`), confident shadows, generous spacing.
+## 9. Global UI polish
+- Tighten spacing scale, unify `RainzCard` paddings.
+- Promote glass-card variants (rename to `rejn-card` aliases; keep old export).
+- Refresh primary button states (hover glow, pressed haptic).
+- Audit color tokens for AA contrast; bump muted-foreground +5% L in light mode.
+- Skeletons: replace remaining solid shimmers with mascot-sleep placeholders on large cards.
 
-**Card primitive overhaul** — one new `<RainzCard />` replacing the current ad-hoc `glass-card` classes:
-- Variants: `hero`, `metric`, `timeline`, `ai`, `compact`
-- Built-in title slot, optional AI shimmer border, optional accent glow per condition
-- Rounded `1.5rem`, blur `28px` saturate `170%`, 1px gradient border, subtle inner highlight
-- Removes the inconsistent glass treatments across `current-weather`, `aqi-card`, `pollen-card`, `barometer-card`, etc.
+## 10. Search dropdown cutoff (image issue)
+- The location search results in `Weather.tsx` are clipped because their parent has `overflow-hidden` (the header glass container).
+- Move the search results `Popover/Listbox` into a portal (`Radix Popover` with `portal`) or render via `createPortal` to `document.body`, with `position: fixed` and computed anchor rect.
+- Add `z-50` and proper viewport padding so it never sits under the keyboard.
 
-**Typography refresh:** Display headline in a distinctive sans (Geist / Söhne-style) at 56–72 px for hero numbers; body stays Lato. Mono for data labels.
+## 11. Amplitude event tracking audit
+- `use-amplitude-instrumentation.tsx` only tracks page views, generic clicks, form submits, errors. Many domain events never fire.
+- Add explicit `amplitude.track()` calls at:
+  - Location search executed, location selected, geolocate used
+  - Prediction submitted (with multiplier, type)
+  - Battle created / accepted / resolved
+  - Weather refresh, unit toggle, theme toggle, language change
+  - Briefing rendered, briefing refresh, briefing audio toggle
+  - 15-day day expanded, calendar export clicked
+  - What's-new dialog shown / dismissed / CTA clicked
+  - Social reaction posted
+  - PWA install prompt shown / accepted
+- Standardize event naming `domain_action` and ensure `user_id` + `route` props attached via global enrichment middleware.
+- Verify Amplitude init runs once (`main.tsx`) and Session Replay still at 100%.
 
-**Homepage layout (mobile-first, since current viewport is 375):**
-```text
-┌─────────────────────────────┐
-│ ⛅  Location ▾    ⚙ 🛰     │  header chips (glass)
-├─────────────────────────────┤
-│  AI BRIEFING HERO           │  pillar 3 #1
-│  "Mild morning, rain by 4." │
-│  72°  feels 70  ↓ details   │
-├─────────────────────────────┤
-│  ASK RAINZ ▸                │  pillar 3 #2
-│  [chip] [chip] [chip]       │
-├─────────────────────────────┤
-│  PREDICTIVE TIMELINE        │  pillar 3 #3
-│  ───●──────●──────●──       │
-├─────────────────────────────┤
-│  SMART PLAN CARDS  →        │  pillar 3 #4
-│  [Outfit] [Run] [Commute]   │
-├─────────────────────────────┤
-│  Metrics grid (2×3)         │  AQI / UV / Wind / Pollen / Barometer / Rainz Score
-├─────────────────────────────┤
-│  10-day forecast            │
-└─────────────────────────────┘
-```
+## Technical notes
+- DB migration: `ALTER TABLE user_preferences ADD COLUMN seen_whatsnew_2 boolean DEFAULT false;` + new `weather_ai_summaries` table with `(lat, lng, date)` PK, `summary text`, `created_at`, RLS allowing service_role write + authenticated/anon read, with required GRANTs.
+- Briefing fix: temperature normalization centralized in `weather-api.ts` (`toCelsius()` helper).
+- Mascot transparency: regenerate via image-edit, re-upload through `lovable-assets create`.
+- All new components use existing semantic tokens — no raw colour classes.
+- Keep service-worker preview-host bypass already in place.
 
-**Removed from the homepage** (moved to Explore or settings): rain-map preview, social-weather-card, weather-fun-facts, deja-vu card, mood journal, debate arena, photo challenge, weekly-recap inline card. Homepage stops being a "feature dump".
-
-**Bottom tab bar:** restyled with the new glass primitive + a subtle AI status dot (pulses while the briefing streams).
-
----
-
-## Pillar 3 — AI on the Homepage
-
-All four AI surfaces you picked, all on `/index`, all streaming via Groq through edge functions (per memory: never Lovable AI). Graceful fallback to raw API data if the LLM call fails.
-
-### 3.1 AI Briefing Hero
-Replaces the static current-weather block. A 2–4 sentence personalized briefing streams in (token-by-token, with cursor) using: location, current conditions, next 12 h forecast, time of day, and (if signed-in) saved locations as context. Voice playback button (Web Speech API). Refreshes on pull-to-refresh and every 30 min.
-
-**New edge function:** `supabase/functions/ai-briefing/index.ts` — Groq llama-3.3-70b, streams SSE, ≤120 tokens, system prompt enforces Scandinavian-friendly tone (target 13–35 yo).
-
-### 3.2 Ask Rainz Inline
-Persistent input bar under the hero: "Ask about today's weather…". Tapping opens an inline expanded chat panel (not a modal) with streaming markdown answers and 4 rotating suggestion chips ("Will it rain on my walk home?", "Wind for cycling?", "When's golden hour?", "Compare to yesterday"). History kept in-session only.
-
-**Reuses** existing `ai-weather-companion.tsx` logic but rewritten as inline component `<AskRainzInline />`.
-
-### 3.3 Predictive Timeline
-Replaces the hourly carousel. A horizontal scrubbable timeline shows the next 12 h with AI-detected key moments annotated: "☔ Rain at 15:40", "🌅 Sun returns 17:10", "💨 Gusts peak 19:00". Tap a moment to expand a detail bubble.
-
-**New edge function:** `ai-timeline-moments` — takes hourly array, returns array `{ time, icon, label, severity }`. Uses Groq with structured tool-call output.
-
-### 3.4 Smart Plan Cards
-Horizontal scroll of 3–5 personal cards generated server-side once per refresh:
-- **Outfit** — what to wear (image + text)
-- **Best window** — best 2 h block to go out today
-- **Activity score** — Run / Bike / Walk subscored 0–100 with one-line reason
-- **Commute** — if user has a saved location, AM/PM commute weather diff
-
-**New edge function:** `ai-smart-plans` — single call returning all cards as JSON via tool calling. Cached 30 min per location.
-
----
-
-## Pillar 4 — UI System Cleanup (cross-cutting)
-
-- New `tailwind.config.ts` tokens: `rainz-ink` (deep navy), `rainz-glass`, `rainz-glow`, `rainz-ai` (animated gradient).
-- New `index.css` semantic tokens for the dark-glass system; light mode kept but re-tuned against photoreal skies (auto-darkens overlays).
-- New shared components in `src/components/rainz/`: `RainzCard`, `RainzChip`, `RainzMetric`, `StreamingText`, `AIShimmerBorder`, `SoftDivider`.
-- Settings dialog, location picker, header info bar restyled to the new primitives (no functional change).
-- Search bar (just redesigned) absorbs the new glass tokens for consistency.
-
----
-
-## Technical Notes
-
-- **r3f versions pinned**: `@react-three/fiber@^8.18`, `@react-three/drei@^9.122.0`, `three@>=0.133` (React 18 constraint).
-- **LLM**: Groq primary, OpenAI fallback, raw API fallback (per existing memory). Never Lovable AI.
-- **Streaming**: SSE through edge functions, parsed with the line-by-line pattern (no `\n\n` splits).
-- **Caching**: Briefing 30 min, plans 30 min, timeline 1 h, all keyed by location+conditionHash.
-- **Reduced motion + battery saver**: disables WebGL FX, falls back to static photo + gradient.
-- **A11y**: AI streams have `aria-live="polite"`, voice control respects user setting, all glass cards keep AA contrast.
-- **Memory updates**: refresh "Animated Bgs" memory after Pillar 1, add a "Rainz 2.0 UI" memory after Pillar 2, add "Homepage AI surfaces" memory after Pillar 3.
-
----
-
-## Implementation Order (single release branch)
-
-1. Design tokens + `RainzCard` primitives (no visual change yet).
-2. Background renderer (photoreal + WebGL FX) behind a feature flag.
-3. New homepage shell + relocate non-essential cards to Explore.
-4. AI Briefing hero + edge function.
-5. Predictive timeline + edge function.
-6. Smart plan cards + edge function.
-7. Ask Rainz inline.
-8. Restyle settings/header/tab bar to new system.
-9. Flip the flag, ship 2.0, update memories.
-
----
-
-## Out of Scope (deliberately)
-
-- No changes to Predict, Battles, Shop, Leaderboard internals (only visual restyle later if time allows).
-- No new auth, payments, or backend schema beyond the 3 new edge functions.
-- No native app rebuild — Capacitor wrapper inherits the new UI automatically.
-- No new languages.
+## Out of scope
+- No backend schema changes beyond the two above.
+- No new third-party libraries.

@@ -5,6 +5,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { DailyForecast, WeatherSource, HourlyForecast } from "@/types/weather";
 import { formatTime } from "@/lib/time-format";
 import { PremiumSettings } from "@/hooks/use-premium-settings";
+import { DaySummary } from "@/components/weather/day-summary";
 
 interface TenDayForecastProps {
   dailyForecast: DailyForecast[];

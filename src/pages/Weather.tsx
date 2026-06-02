@@ -591,7 +591,7 @@ export default function WeatherPage() {
             </div>
           )}
 
-          <Card className="mb-6 relative z-[1000] overflow-hidden rounded-2xl glass-card-strong">
+          <Card className="mb-6 relative z-[1000] overflow-visible rounded-2xl glass-card-strong">
             <div className="p-4 sm:p-6 border-b border-border/50">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex flex-col">

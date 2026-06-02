@@ -538,6 +538,7 @@ export default function WeatherPage() {
 
   return (
     <>
+      <WhatsNewDialog />
       <SEOHead
         title={
           selectedLocation

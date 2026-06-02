@@ -530,6 +530,10 @@ export default function WeatherPage() {
     setIsAutoDetected(false);
     // Save to account for logged-in users, localStorage for guests
     saveLocationToAccount(newLocation);
+    // Amplitude: explicit domain event for location selection
+    import("@amplitude/unified")
+      .then((amp) => amp.track("location_selected", { lat, lon, name: locationName }))
+      .catch(() => {});
   };
 
   const handleRefresh = () => {

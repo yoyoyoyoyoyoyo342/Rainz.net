@@ -36,6 +36,10 @@ export function AIBriefingHero({
     setStreaming(true);
     setText("");
     utteredRef.current = false;
+    // Amplitude: briefing requested
+    import("@amplitude/unified")
+      .then((amp) => amp.track("ai_briefing_requested", { location, unit }))
+      .catch(() => {});
 
     const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-briefing`;
     try {

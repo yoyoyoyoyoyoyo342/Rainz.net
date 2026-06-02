@@ -638,7 +638,7 @@ export default function WeatherPage() {
               </div>
             </div>
 
-            <CardContent className="p-4 sm:p-6 bg-card space-y-4">
+            <CardContent className="p-4 sm:p-6 bg-card space-y-4 overflow-visible">
               {/* Guided help banner */}
               <Suspense fallback={null}>
                 <GuidedHelpBanner tip={activeTip} onDismiss={dismissTip} />

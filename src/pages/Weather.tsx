@@ -636,7 +636,15 @@ export default function WeatherPage() {
                   )}
                   <div className="flex items-center gap-2 px-3 py-2 bg-muted/40 rounded-lg border border-border/60">
                     <span className="text-sm font-medium text-foreground">°F</span>
-                    <Switch checked={!isImperial} onCheckedChange={(checked) => setIsImperial(!checked)} />
+                    <Switch
+                      checked={!isImperial}
+                      onCheckedChange={(checked) => {
+                        setIsImperial(!checked);
+                        import("@amplitude/unified")
+                          .then((amp) => amp.track("unit_toggled", { unit: checked ? "celsius" : "fahrenheit" }))
+                          .catch(() => {});
+                      }}
+                    />
                     <span className="text-sm font-medium text-foreground">°C</span>
                   </div>
                 </div>

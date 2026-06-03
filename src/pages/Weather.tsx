@@ -36,6 +36,9 @@ import { SEOHead } from "@/components/seo/seo-head";
 import { SkyRenderer } from "@/components/rainz/sky-renderer";
 import { AIBriefingHero } from "@/components/rainz/ai-briefing-hero";
 import { WhatsNewDialog } from "@/components/rejn/whats-new-dialog";
+import { PredictiveTimeline } from "@/components/rejn/predictive-timeline";
+import { RouteSenseBanner } from "@/components/rejn/route-sense-banner";
+import { CalendarExportButton } from "@/components/rejn/calendar-export-button";
 import { HolidayBackground, getCurrentHoliday } from "@/components/weather/holiday-backgrounds";
 import { HeaderInfoBar } from "@/components/weather/header-info-bar";
 import { SettingsDialog } from "@/components/weather/settings-dialog";
@@ -874,6 +877,18 @@ export default function WeatherPage() {
                 <AffiliateCard />
               </AnimatedCard>
 
+              <AnimatedCard index={2}>
+                <RouteSenseBanner
+                  hourly={weatherData.mostAccurate.hourlyForecast}
+                  is24Hour={is24Hour}
+                />
+                <PredictiveTimeline
+                  hourly={weatherData.mostAccurate.hourlyForecast}
+                  isImperial={isImperial}
+                  is24Hour={is24Hour}
+                />
+              </AnimatedCard>
+
               <AnimatedCard index={3}>
                 <TenDayForecast
                   key="tenDay"
@@ -883,6 +898,7 @@ export default function WeatherPage() {
                   isImperial={isImperial}
                   is24Hour={is24Hour}
                   premiumSettings={premiumSettings}
+                  location={customDisplayName || selectedLocation?.name || "your location"}
                 />
               </AnimatedCard>
 

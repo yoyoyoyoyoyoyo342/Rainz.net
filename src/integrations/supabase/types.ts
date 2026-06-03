@@ -2059,6 +2059,7 @@ export type Database = {
           saved_address: string | null
           saved_latitude: number | null
           saved_longitude: number | null
+          seen_whatsnew_2: boolean
           updated_at: string
           user_id: string
           visible_cards: Json
@@ -2074,6 +2075,7 @@ export type Database = {
           saved_address?: string | null
           saved_latitude?: number | null
           saved_longitude?: number | null
+          seen_whatsnew_2?: boolean
           updated_at?: string
           user_id: string
           visible_cards?: Json
@@ -2089,6 +2091,7 @@ export type Database = {
           saved_address?: string | null
           saved_latitude?: number | null
           saved_longitude?: number | null
+          seen_whatsnew_2?: boolean
           updated_at?: string
           user_id?: string
           visible_cards?: Json
@@ -2188,6 +2191,33 @@ export type Database = {
           total_visits?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      weather_ai_summaries: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          lat: number
+          lng: number
+          summary: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          lat: number
+          lng: number
+          summary: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          lat?: number
+          lng?: number
+          summary?: string
         }
         Relationships: []
       }

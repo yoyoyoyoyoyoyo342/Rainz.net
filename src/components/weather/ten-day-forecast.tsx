@@ -6,6 +6,7 @@ import { DailyForecast, WeatherSource, HourlyForecast } from "@/types/weather";
 import { formatTime } from "@/lib/time-format";
 import { PremiumSettings } from "@/hooks/use-premium-settings";
 import { DaySummary } from "@/components/weather/day-summary";
+import { CalendarExportButton } from "@/components/rejn/calendar-export-button";
 
 interface TenDayForecastProps {
   dailyForecast: DailyForecast[];
@@ -14,9 +15,10 @@ interface TenDayForecastProps {
   isImperial?: boolean;
   is24Hour?: boolean;
   premiumSettings?: PremiumSettings;
+  location?: string;
 }
 
-export function TenDayForecast({ dailyForecast, weatherSources, hourlyForecast, isImperial = true, is24Hour = true, premiumSettings }: TenDayForecastProps) {
+export function TenDayForecast({ dailyForecast, weatherSources, hourlyForecast, isImperial = true, is24Hour = true, premiumSettings, location = "your location" }: TenDayForecastProps) {
   const { t } = useLanguage();
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [showAllDays, setShowAllDays] = useState(false);
@@ -79,10 +81,17 @@ export function TenDayForecast({ dailyForecast, weatherSources, hourlyForecast, 
       <div className="overflow-hidden rounded-2xl glass-card">
         {/* Header without gradient */}
         <div className={`${cardPadding} border-b border-border/50`}>
-          <h2 className={`${isCompact ? 'text-sm' : 'text-lg'} font-semibold text-foreground flex items-center gap-2`}>
-            <CalendarDays className={`${isCompact ? 'w-4 h-4' : 'w-5 h-5'} text-primary`} />
-            15-Day Forecast
-          </h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className={`${isCompact ? 'text-sm' : 'text-lg'} font-semibold text-foreground flex items-center gap-2`}>
+              <CalendarDays className={`${isCompact ? 'w-4 h-4' : 'w-5 h-5'} text-primary`} />
+              15-Day Forecast
+            </h2>
+            <CalendarExportButton
+              dailyForecast={dailyForecast}
+              location={location}
+              isImperial={isImperial}
+            />
+          </div>
         </div>
 
         {/* Content */}

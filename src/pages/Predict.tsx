@@ -22,6 +22,7 @@ const PredictionBattles = lazy(() => import("@/components/weather/prediction-bat
 const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-card").then(m => ({ default: m.BattleAcceptCard })));
 const DailySpinWheel = lazy(() => import("@/components/weather/daily-spin-wheel").then(m => ({ default: m.DailySpinWheel })));
 import { StreakMultiplierMeter } from "@/components/predict/streak-multiplier-meter";
+import { RejnMascot } from "@/components/rejn/rejn-mascot";
 
 export default function PredictPage() {
   const { user } = useAuth();
@@ -142,6 +143,7 @@ export default function PredictPage() {
           {/* Hero — Tomorrow's Challenge */}
           <Card className="relative overflow-hidden border-primary/30 bg-gradient-to-br from-primary/15 via-primary/5 to-background">
             <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
+            <RejnMascot pose="pounce" className="absolute -bottom-2 right-2 w-20 h-20 opacity-90 pointer-events-none" />
             <CardContent className="relative p-4 sm:p-5 space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div>

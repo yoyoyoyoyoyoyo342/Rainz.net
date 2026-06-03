@@ -10,7 +10,7 @@ amplitude.initAll('1134523e7129723aad004d4d744c184b', {
 
 const SW_CLEANUP_FLAG = 'rejn-sw-cleanup-done';
 const CHUNK_RECOVERY_FLAG = 'rejn-chunk-recovery-attempted';
-const hasServiceWorker = typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
+const hasServiceWorker = typeof navigator !== 'undefined' && 'serviceWorker' in navigator && !!navigator.serviceWorker && typeof navigator.serviceWorker.register === 'function';
 const host = typeof window !== 'undefined' ? window.location.hostname : '';
 const isPreviewHost =
   host === 'localhost' ||

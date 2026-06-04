@@ -164,6 +164,36 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_events_daily: {
+        Row: {
+          country: string
+          day: string
+          event_count: number
+          event_type: string
+          page_path: string
+          unique_sessions: number
+          unique_users: number
+        }
+        Insert: {
+          country?: string
+          day: string
+          event_count?: number
+          event_type: string
+          page_path?: string
+          unique_sessions?: number
+          unique_users?: number
+        }
+        Update: {
+          country?: string
+          day?: string
+          event_count?: number
+          event_type?: string
+          page_path?: string
+          unique_sessions?: number
+          unique_users?: number
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           api_key: string
@@ -2738,6 +2768,7 @@ export type Database = {
       }
       invoke_publish_scheduled_posts: { Args: never; Returns: undefined }
       manual_verify_predictions: { Args: never; Returns: Json }
+      prune_analytics_events: { Args: never; Returns: undefined }
       trigger_verify_predictions: { Args: never; Returns: undefined }
     }
     Enums: {

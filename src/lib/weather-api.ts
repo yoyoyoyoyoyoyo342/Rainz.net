@@ -101,7 +101,69 @@ export const weatherApi = {
     }));
   },
 
-  getWeatherData: async (lat: number, lon: number, locationName?: string): Promise<WeatherResponse> => {
+  // Phase 2: AI/aggregate enhancement — call separately so the UI can render Phase 1 first.
+  enhanceWeatherData: async (
+    base: WeatherResponse,
+    lat: number,
+    lon: number,
+    locationName?: string,
+    timeoutMs: number = 5000,
+  ): Promise<WeatherResponse> => {
+    const response: WeatherResponse = {
+      sources: [...base.sources],
+      mostAccurate: base.mostAccurate,
+      aggregated: base.aggregated,
+    };
+
+    const withTimeout = <T,>(p: Promise<T>): Promise<T | null> =>
+      new Promise((resolve) => {
+        const timer = setTimeout(() => resolve(null), timeoutMs);
+        p.then((v) => { clearTimeout(timer); resolve(v); }).catch(() => { clearTimeout(timer); resolve(null); });
+      });
+
+    try {
+      const agg = await withTimeout(
+        supabase.functions.invoke("aggregate-weather", { body: { lat, lon, locationName } })
+      );
+      if (agg && !(agg as any).error && (agg as any).data && Array.isArray((agg as any).data.sources)) {
+        const extraSources = (agg as any).data.sources as WeatherSource[];
+        response.sources = [...response.sources, ...extraSources];
+      }
+    } catch {}
+
+    if (response.sources.length > 1) {
+      try {
+        const llm = await withTimeout(
+          supabase.functions.invoke("llm-weather-forecast", {
+            body: { sources: response.sources, location: locationName },
+          })
+        );
+        const llmData: any = llm && !(llm as any).error ? (llm as any).data : null;
+        if (llmData && llmData.current) {
+          const enhancedSource: WeatherSource = {
+            ...response.mostAccurate,
+            currentWeather: {
+              ...response.mostAccurate.currentWeather,
+              condition: llmData.current.condition || response.mostAccurate.currentWeather.condition,
+              description: llmData.current.description || response.mostAccurate.currentWeather.description,
+            },
+            llmAnalysis: {
+              summary: llmData.summary,
+              modelAgreement: llmData.modelAgreement,
+              confidence: llmData.current.confidence,
+              insights: llmData.insights || [],
+            },
+          };
+          response.mostAccurate = enhancedSource;
+          response.aggregated = enhancedSource;
+        }
+      } catch {}
+    }
+
+    return response;
+  },
+
+  getWeatherData: async (lat: number, lon: number, locationName?: string, enhance: boolean = true): Promise<WeatherResponse> => {
     const params = new URLSearchParams({
       latitude: String(lat),
       longitude: String(lon),
@@ -532,45 +594,11 @@ export const weatherApi = {
       aggregated: source,
     };
 
-    try {
-      const { data, error } = await supabase.functions.invoke("aggregate-weather", {
-        body: { lat, lon, locationName }
-      });
-      if (!error && data && Array.isArray((data as any).sources)) {
-        const extraSources = (data as any).sources as WeatherSource[];
-        response.sources = [...response.sources, ...extraSources];
-      }
-    } catch {}
+    // Phase 1 only — return immediately so UI can paint.
+    if (!enhance) return response;
 
-    if (response.sources.length > 1) {
-      try {
-        const { data: llmData, error: llmError } = await supabase.functions.invoke("llm-weather-forecast", {
-          body: { sources: response.sources, location: locationName }
-        });
-        
-        if (!llmError && llmData && llmData.current) {
-          const enhancedSource: WeatherSource = {
-            ...response.mostAccurate,
-            currentWeather: {
-              ...response.mostAccurate.currentWeather,
-              condition: llmData.current.condition || response.mostAccurate.currentWeather.condition,
-              description: llmData.current.description || response.mostAccurate.currentWeather.description,
-            },
-            llmAnalysis: {
-              summary: llmData.summary,
-              modelAgreement: llmData.modelAgreement,
-              confidence: llmData.current.confidence,
-              insights: llmData.insights || [],
-            }
-          };
-          
-          response.mostAccurate = enhancedSource;
-          response.aggregated = enhancedSource;
-        }
-      } catch {}
-    }
-
-    return response;
+    // Phase 2 — aggregate + LLM enhancement, with silent fallback.
+    return weatherApi.enhanceWeatherData(response, lat, lon, locationName);
   },
 
   getCurrentLocation: (): Promise<GeolocationPosition> => {

@@ -148,13 +148,14 @@ export default function WeatherPage() {
 
   usePushNotifications();
 
+  // ── Phase 1: instant raw weather (Open-Meteo only, no AI/aggregate) ──
   const {
-    data: weatherData,
-    isLoading,
-    isFetching,
+    data: baseWeather,
+    isLoading: isBaseLoading,
+    isFetching: isBaseFetching,
     error,
   } = useQuery<WeatherResponse, Error>({
-    queryKey: ["/api/weather", selectedLocation?.lat, selectedLocation?.lon, selectedLocation?.name],
+    queryKey: ["/api/weather/base", selectedLocation?.lat, selectedLocation?.lon, selectedLocation?.name],
     enabled: !!selectedLocation,
     queryFn: async () => {
       // Special handling for World Average
@@ -162,10 +163,7 @@ export default function WeatherPage() {
         const { data, error } = await supabase.functions.invoke("world-weather-average", {
           body: { isImperial },
         });
-
         if (error) throw error;
-
-        // Transform world data to match WeatherResponse structure
         const worldData = data;
         const baseCurrentWeather = {
           temperature: Math.round(worldData.temperature),
@@ -182,79 +180,37 @@ export default function WeatherPage() {
           cloudCover: worldData.cloudCover || 0,
           description: `Global average from ${worldData.citiesPolled} major cities. Hottest: ${worldData.extremes.hottest.city} (${worldData.extremes.hottest.temperature}°), Coldest: ${worldData.extremes.coldest.city} (${worldData.extremes.coldest.temperature}°)`,
         };
-
-        // Transform hourly forecast
         const hourlyForecast = (worldData.hourlyForecast || []).map((h: any) => ({
-          time: h.time,
-          temperature: h.temperature,
-          condition: h.condition,
-          precipitation: h.precipitation,
-          icon: "",
+          time: h.time, temperature: h.temperature, condition: h.condition, precipitation: h.precipitation, icon: "",
         }));
-
-        // Transform daily forecast
         const dailyForecast = (worldData.dailyForecast || []).map((d: any) => ({
-          day: d.day,
-          condition: d.condition,
-          description: d.condition,
-          highTemp: d.highTemp,
-          lowTemp: d.lowTemp,
-          precipitation: d.precipitation,
-          icon: "",
+          day: d.day, condition: d.condition, description: d.condition, highTemp: d.highTemp, lowTemp: d.lowTemp, precipitation: d.precipitation, icon: "",
         }));
-
         const transformedData: WeatherResponse = {
-          mostAccurate: {
-            currentWeather: baseCurrentWeather,
-            source: "World Average",
-            location: "World",
-            latitude: 0,
-            longitude: 0,
-            accuracy: 100,
-            hourlyForecast,
-            dailyForecast,
-          },
+          mostAccurate: { currentWeather: baseCurrentWeather, source: "World Average", location: "World", latitude: 0, longitude: 0, accuracy: 100, hourlyForecast, dailyForecast },
           sources: [],
-          aggregated: {
-            currentWeather: baseCurrentWeather,
-            source: "World Average",
-            location: "World",
-            latitude: 0,
-            longitude: 0,
-            accuracy: 100,
-            hourlyForecast,
-            dailyForecast,
-          },
+          aggregated: { currentWeather: baseCurrentWeather, source: "World Average", location: "World", latitude: 0, longitude: 0, accuracy: 100, hourlyForecast, dailyForecast },
         };
-
         setIsUsingCachedData(false);
         return transformedData;
       }
 
       try {
+        // enhance=false → returns immediately after Open-Meteo, no AI wait
         const data = await weatherApi.getWeatherData(
           selectedLocation!.lat,
           selectedLocation!.lon,
           selectedLocation!.name,
+          false,
         );
         setIsUsingCachedData(false);
-
-        // Save to offline cache for premium users
-        if (offlineCacheEnabled && data) {
-          saveToCache(selectedLocation!.lat, selectedLocation!.lon, selectedLocation!.name, data);
-        }
-
         return data;
       } catch (fetchError) {
-        // Try to use cached data if fetch fails (premium feature)
         if (offlineCacheEnabled) {
           const cached = await getFromCache(selectedLocation!.lat, selectedLocation!.lon);
           if (cached) {
             setIsUsingCachedData(true);
-            toast({
-              title: "Using cached data",
-              description: `Showing weather from ${new Date(cached.timestamp).toLocaleTimeString()}`,
-            });
+            toast({ title: "Using cached data", description: `Showing weather from ${new Date(cached.timestamp).toLocaleTimeString()}` });
             return cached.data as WeatherResponse;
           }
         }
@@ -266,6 +222,39 @@ export default function WeatherPage() {
     retry: 1,
     placeholderData: (prev) => prev,
   });
+
+  // ── Phase 2: background AI/aggregate enhancement, silently falls back to base ──
+  const { data: enhancedWeather, isFetching: isEnhancing } = useQuery<WeatherResponse, Error>({
+    queryKey: ["/api/weather/enhanced", selectedLocation?.lat, selectedLocation?.lon, selectedLocation?.name],
+    enabled: !!baseWeather && !!selectedLocation && selectedLocation.name !== "World Average",
+    queryFn: async () => {
+      try {
+        const enhanced = await weatherApi.enhanceWeatherData(
+          baseWeather!,
+          selectedLocation!.lat,
+          selectedLocation!.lon,
+          selectedLocation!.name,
+          5000, // 5s timeout — silent fallback
+        );
+        if (offlineCacheEnabled && enhanced) {
+          saveToCache(selectedLocation!.lat, selectedLocation!.lon, selectedLocation!.name, enhanced);
+        }
+        return enhanced;
+      } catch {
+        return baseWeather!; // silent fallback — no error shown
+      }
+    },
+    staleTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
+    retry: 0,
+  });
+
+  // Consumers continue to read `weatherData`; prefer enhanced once it lands.
+  const weatherData = enhancedWeather ?? baseWeather;
+  const isLoading = isBaseLoading;
+  const isFetching = isBaseFetching || isEnhancing;
+
+
 
   const sunrise = weatherData?.mostAccurate?.currentWeather?.sunrise;
   const sunset = weatherData?.mostAccurate?.currentWeather?.sunset;

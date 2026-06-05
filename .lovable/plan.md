@@ -1,62 +1,70 @@
+# Rejn — Aiven migration via Edge Functions
 
-# Aiven-via-Edge-Functions Refactor — Plan & Required Decisions
+## Architecture (decided)
+- **Browser** → `supabase.functions.invoke('<domain>')` → **Supabase Edge Function** → `postgres.js` over TCP → **Aiven Postgres**
+- Aiven credentials (`AIVEN_DATABASE_URL`) only ever exist as Supabase secrets. Never in the frontend bundle.
+- **Realtime tables stay on Supabase** (`social_posts`, `social_post_comments`, `social_post_likes`, `weather_reactions`, `user_notifications`, `prediction_battles`, `broadcast_messages`). Everything else moves to Aiven.
+- Auth stays on Supabase entirely.
 
-I surveyed the codebase before writing any code. The architecture you proposed is sound in principle (browser → edge fn → Aiven), but applied verbatim it will **break the majority of the app**. I need you to confirm trade-offs before I start.
+## Shared scaffolding (DONE this loop)
+- `supabase/functions/_shared/db.ts` — postgres.js pool against `AIVEN_DATABASE_URL`
+- `supabase/functions/_shared/auth.ts` — `getAuthUser(req)` + `corsHeaders` + `json()` helper
+- Secret `AIVEN_DATABASE_URL` added
 
-## What I found in the frontend
+## Pilot function (DONE)
+- `supabase/functions/user-preferences/` — GET + PUT, `verify_jwt = true`
+- `src/hooks/use-user-preferences.tsx` rewritten to call it
+- Pattern to copy for every other domain
 
-- **~60 distinct tables** referenced via `supabase.from(...)` across **38 files**
-- Heavy use of features your generic GET/POST/PUT/DELETE mapping does **not** cover:
-  - `.select('col, joined_table(*)')` embeds/joins
-  - `.eq() .in() .gte() .like() .or() .order() .limit() .range() .single() .maybeSingle()`
-  - `.upsert(..., { onConflict })`
-  - `.rpc('has_role' | 'get_leaderboard' | 'get_monthly_leaderboard' | 'get_public_profile' | ...)`
-  - `supabase.channel(...)` realtime (social feed, live reactions, predictions, debates)
-  - Public/anon reads (`blog_posts`, profiles, leaderboards, skycam stations, city_pages) — these have no logged-in user
+## Phase-1 weather load (DONE)
+- `weather-api.ts` split into `getWeatherData(..., enhance=false)` + `enhanceWeatherData()`
+- `Weather.tsx` runs two queries: instant base render, background AI enhancement, 5s timeout, silent fallback to base
 
-## Hard problems with the literal plan
+## Remaining domain functions to build (group by feature, ~12 total)
+Each follows the same pattern: GET/POST/PUT/DELETE, JWT-scoped, public branch where needed.
 
-1. **Latency goes up, not down.** Step 8 asks the app to feel faster. Wrapping every query in an edge function adds 150–500 ms of cold-start + auth round-trip per call. Pages currently fire 5–15 parallel `.from()` queries; turning each into an `invoke()` will make the app dramatically slower, the opposite of what Step 8 wants.
-2. **Realtime dies.** `supabase.channel()` only streams changes from Supabase Postgres. If the data lives in Aiven, the social feed, live reactions, prediction battle updates, and broadcast alerts all silently stop working. Aiven has no equivalent.
-3. **Anon/public pages break.** Blog, public profiles, leaderboards, city pages, skycam, and the marketing pages read without a user. `getAuthUser()` returning null → 401 → blank pages. They need an explicit "public" branch per endpoint.
-4. **`.rpc()` calls have no equivalent.** `has_role`, `get_leaderboard`, `get_monthly_leaderboard`, `get_public_profile`, `award_monthly_trophy`, `manual_verify_predictions`, `prune_analytics_events`, the `notify_*` triggers, etc. all live in Supabase Postgres. If data is in Aiven they need to be ported as raw SQL inside edge functions or as Aiven functions.
-5. **The generic CRUD shape doesn't fit real queries.** `weather_predictions` is filtered by date, location, opponent, verified-state, etc.; `social_posts` is filtered by radius + recency; `user_notifications` is paginated and marked-as-read. A flat `GET /table → SELECT *` returns the wrong data and overfetches. Each domain needs query parameters mapped to WHERE clauses.
-6. **Edge function count.** Supabase soft-limits matter — 60+ functions is a lot to deploy, monitor, and keep warm. Better to group by domain (≈10–15 functions) than one per table.
-7. **Cron + DB triggers.** `prune_analytics_events`, `award_monthly_trophy`, `update_prediction_points`, `notify_on_inbox_insert`, `sync_*_count` triggers all live in Supabase. If raw data moves to Aiven, these stop firing on writes. They need to be re-created in Aiven or replaced with edge-function logic.
-8. **I cannot verify Aiven actually has the schema.** Your message says the migration is done, but I have no way to introspect Aiven from here. If even one table is missing or column types differ, every call to that table 500s.
+1. `profiles` — GET (self + by user_id public via `get_public_profile`), PUT
+2. `saved-locations` — full CRUD
+3. `weather-predictions` — list filtered by date/location, create, update (verify), filters: user_id, prediction_date range, is_verified
+4. `user-streaks` — GET, PUT
+5. `achievements` (public read) + `user-achievements` (per-user)
+6. `weather-history` — list by user_id + location, insert
+7. `referrals` — list by referrer_id, create
+8. `shop` — `shop_offers` (public), `shop_purchases`, `user_inventory`, `user_offer_purchases`, `active_powerups`
+9. `seasonal` — christmas/ramadan calendars (public read) + claims (per-user)
+10. `leagues` — `prediction_leagues`, `league_members`, `league_invites`
+11. `feature-ideas` + `feature_idea_votes` (mixed public read / auth write)
+12. `admin` — admin-gated reads (`analytics_events_daily`, `api_usage`, `feature_flags` writes, broadcast inserts, premium_grants, monthly_trophies awards)
+13. `public-content` — `blog_posts` (published filter), `city_pages`, `app_versions` — no auth
 
-## What I recommend instead
+## Still on Supabase (do not move)
+- `social_posts`, `social_post_comments`, `social_post_likes` — realtime feed
+- `weather_reactions` — live map reactions
+- `user_notifications` — realtime inbox
+- `prediction_battles` — realtime battle updates
+- `broadcast_messages` — realtime alerts
+- All `chat_messages` + `conversations` (live AI chat)
 
-Two viable shapes — pick one:
+## RPCs / triggers that need to be ported
+If/when the tables they touch move to Aiven:
+- `has_role(user_id, role)` — replace with `await db\`SELECT 1 FROM user_roles WHERE ...\`` helper in `_shared/auth.ts` (`requireAdmin(user)`)
+- `get_leaderboard()`, `get_monthly_leaderboard()` — port SQL into edge function
+- `get_public_profile(uuid)` — handled by `profiles` GET with `?user_id=`
+- `update_prediction_points` trigger — implement in the `weather-predictions` PUT handler
+- `award_monthly_trophy(date)`, `sync_trophy_count_on_award` — call from a cron edge function
+- `prune_analytics_events()` — already in Supabase, leaves it there until analytics tables move
+- `notify_*` triggers (followers, comments, follows, inbox push) — for moved tables, call `send-push-notification` directly from edge functions
 
-### Option A — Full migration, done correctly (1–2 weeks of work)
-- Group by **domain**, not table: `user-data`, `predictions`, `social`, `weather-data`, `notifications`, `admin`, `public-content`, etc. ~12 functions total.
-- Each function is a thin router: `{ action: 'list' | 'get' | 'create' | 'update' | 'delete' | 'rpc-name', filters, payload }`.
-- Public endpoints take **no auth**; user endpoints validate JWT; admin endpoints check `has_role` (which must be re-implemented in Aiven).
-- Realtime: either keep `social_posts`, `weather_reactions`, `user_notifications`, `prediction_battles` in Supabase (hybrid), or replace realtime with polling (worse UX).
-- Port all triggers, cron jobs, and SECURITY DEFINER functions to Aiven.
-- Build a thin `src/lib/aiven-client.ts` wrapper that mimics the `.from().select().eq()` chain so component code barely changes.
+## Order of execution (next loops)
+1. `profiles` + `user-streaks` + `saved-locations` (touched everywhere)
+2. `weather-predictions` (largest blast radius, owns points/streaks)
+3. `seasonal` + `shop` + `referrals`
+4. `leagues` + `feature-ideas`
+5. `admin` + `public-content`
+6. Cleanup: search for any remaining `supabase.from(...)` on a migrated table
 
-### Option B — Hybrid (recommended, much smaller blast radius)
-- Keep Supabase as the DB for everything **except** the high-growth tables that caused the storage problem (`analytics_events`, `weather_history`, raw weather caches).
-- Move only those to Aiven, accessed via 2–3 edge functions.
-- Keep auth, realtime, RPCs, triggers, RLS, and 95% of the code untouched.
-- Storage problem solved; app keeps working; no 38-file rewrite.
+## Schema verification before each batch
+Before migrating each domain, run a `db\`SELECT column_name FROM information_schema.columns WHERE table_name = '...'\`` smoke test inside the edge function to confirm Aiven has the schema. Add `?ping=1` query handler to each function.
 
-The analytics rollup we shipped last session already cut the DB by ~95%. **Is full migration still necessary, or did the rollup buy enough room?**
-
-## Step 8 — Two-phase weather load (independent of the migration)
-This part I can do safely today without touching auth or DB:
-- Split `Weather.tsx` into `fetchWeatherData()` (raw Open-Meteo + WeatherAPI) and `fetchAIAggregate()` (LLM enhancement).
-- Render raw weather immediately via React Query's `keepPreviousData` + separate query keys.
-- AI section gets its own skeleton; 5 s timeout; silent fallback to raw data.
-- This is ~2 files changed and an obvious win regardless of which migration option you pick.
-
-## What I need from you before writing code
-
-1. **Did the analytics rollup solve the storage limit?** If yes, **Option B** (hybrid) is far safer. If you still need full migration, confirm Option A.
-2. **Realtime features** (social feed live reactions, prediction battle alerts) — keep on Supabase, accept polling, or drop?
-3. **Public/anon pages** — confirm those endpoints should be public (no auth) inside the new edge functions.
-4. **Can I ship Step 8 (two-phase weather load) right now**, independent of the migration decision? It's a clean win either way.
-
-Once you answer 1–4 I'll either: (a) ship Step 8 + Option B in this loop, or (b) start the Option A scaffolding with a domain-grouped function layout.
+## Things to fix later (out of scope this loop)
+- Step 1–2 of the original message (mascot bg, 21–28 June popup, real-data AI briefing, social revamp, 15-day daily summaries, searchbar overflow, Amplitude event audit, What's New 2.0 rollout). Most files already exist (`whats-new-dialog.tsx`, `day-summary.tsx`, `ai-day-summary` edge fn) — needs wiring + audit pass.

@@ -158,3 +158,6 @@ verify_jwt = false
 
 [functions.register-skycam-station]
 verify_jwt = true
+
+[functions.user-preferences]
+verify_jwt = true

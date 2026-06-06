@@ -89,6 +89,25 @@ window.addEventListener('unhandledrejection', (event) => {
   }
 });
 
+const HARD_REFRESH_DONE_FLAG = 'rejn-hard-refresh-rejn-2.0';
+
+if (hasServiceWorker) {
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    const msg = event.data;
+    if (msg && msg.type === 'REJN_HARD_REFRESH') {
+      const flag = `rejn-hard-refresh-${msg.tag || 'unknown'}`;
+      if (sessionStorage.getItem(flag) === '1') return;
+      sessionStorage.setItem(flag, '1');
+      try {
+        localStorage.removeItem('REACT_QUERY_OFFLINE_CACHE');
+      } catch {
+        /* noop */
+      }
+      window.location.reload();
+    }
+  });
+}
+
 window.addEventListener('load', () => {
   if (!hasServiceWorker) return;
 
@@ -97,6 +116,17 @@ window.addEventListener('load', () => {
       .register('/sw.js')
       .then((registration) => {
         console.log('Service Worker registered:', registration);
+        // If a brand new worker is found, ensure it activates immediately.
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (!newWorker) return;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // Old SW still controlling — new one waiting. Force it.
+              newWorker.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        });
       })
       .catch((error) => {
         console.error('Service Worker registration failed:', error);

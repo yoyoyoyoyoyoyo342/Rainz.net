@@ -68,3 +68,27 @@ Before migrating each domain, run a `db\`SELECT column_name FROM information_sch
 
 ## Things to fix later (out of scope this loop)
 - Step 1–2 of the original message (mascot bg, 21–28 June popup, real-data AI briefing, social revamp, 15-day daily summaries, searchbar overflow, Amplitude event audit, What's New 2.0 rollout). Most files already exist (`whats-new-dialog.tsx`, `day-summary.tsx`, `ai-day-summary` edge fn) — needs wiring + audit pass.
+
+## Rejn 2.0 release machinery (DONE this loop)
+
+### Hard refresh (`public/sw.js` v5.0)
+- VERSION bumped to `v5.0`, HARD_REFRESH_TAG = `rejn-2.0`
+- On `activate`: wipe ALL Cache Storage entries, delete IndexedDB databases (except `firebase-*`), `clients.claim()`, then postMessage `REJN_HARD_REFRESH` to every open client
+- `src/main.tsx` listens for that message, clears React Query persisted cache, and reloads once per session (`rejn-hard-refresh-rejn-2.0` flag) — guarantees no user is stuck on 1.x bundles
+- New SW registration also wires `updatefound` → `SKIP_WAITING` for future releases
+
+### Per-user lazy Aiven migration
+- `supabase/functions/migrate-user-to-aiven/` — service-role read from Supabase, bulk `INSERT … ON CONFLICT DO NOTHING` into Aiven for every user-scoped table in `TABLES[]`. Marks completion in new `user_migration_status (user_id PK, migrated_at, row_counts jsonb)` on Aiven (auto-created on first call). Idempotent.
+- `src/hooks/use-aiven-migration.tsx` — fires once per session on `SIGNED_IN` (and on mount if already authed). Mounted from `AnalyticsTracker` in `App.tsx`
+- Realtime tables (social_*, weather_reactions, user_notifications, prediction_battles, broadcast_messages, chat_*) intentionally NOT copied — they stay on Supabase
+
+### Supabase cleanup (admin-gated)
+- `supabase/functions/cleanup-supabase-migrated-tables/` — checks admin role, computes `migrated_users / supabase_profiles` coverage, refuses if < 95% (override flag available), defaults to `dry_run: true`
+- Cannot run DDL through PostgREST → returns the exact `DROP TABLE … CASCADE` SQL for the operator to paste into the Supabase SQL editor. Keeps drop ordering correct (profiles last, child tables first)
+- Tables in `DROP_TABLES` are kept in lockstep with `TABLES` in `migrate-user-to-aiven`
+
+### Release checklist when shipping 2.0
+1. Merge & deploy — SW v5.0 forces every active client to reload onto the new bundle
+2. Monitor `user_migration_status` row count in Aiven over a few days
+3. When coverage ≥ 95%: call `cleanup-supabase-migrated-tables` with `{ dry_run: false }` → paste returned SQL into Supabase SQL editor
+4. Bump `HARD_REFRESH_TAG` for the next breaking release

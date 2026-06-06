@@ -1,7 +1,13 @@
 // Service Worker for Rainz Weather App with Infrastructure-Level Analytics
-const VERSION = 'v4.3';
+// v5.0 — Rejn 2.0 hard-refresh release. On activate we wipe ALL caches +
+// known IndexedDB databases and force every open client to reload so no user
+// stays on a stale pre-2.0 bundle.
+const VERSION = 'v5.0';
 const CACHE_NAME = `rainz-weather-${VERSION}`;
 const STATIC_CACHE = `rainz-static-${VERSION}`;
+
+// Bump this string for every future hard-refresh release.
+const HARD_REFRESH_TAG = 'rejn-2.0';
 
 const ANALYTICS_ENDPOINT = 'https://ohwtbkudpkfbakynikyj.supabase.co/functions/v1/track-analytics';
 const ANALYTICS_BATCH_SIZE = 10;
@@ -19,6 +25,7 @@ const getSessionId = () => {
 };
 
 self.addEventListener('install', (event) => {
+  // Skip waiting immediately — old SW is replaced on the next event loop tick.
   event.waitUntil(
     caches
       .open(STATIC_CACHE)
@@ -37,20 +44,49 @@ self.addEventListener('install', (event) => {
   );
 });
 
+async function wipeAllCaches() {
+  const names = await caches.keys();
+  await Promise.all(names.map((n) => caches.delete(n)));
+}
+
+async function wipeKnownIDBs() {
+  // Best-effort — older browsers don't expose databases().
+  try {
+    if (indexedDB.databases) {
+      const dbs = await indexedDB.databases();
+      await Promise.all(
+        dbs
+          .filter((d) => !!d.name && !d.name.startsWith('firebase-'))
+          .map((d) => new Promise((resolve) => {
+            const req = indexedDB.deleteDatabase(d.name);
+            req.onsuccess = req.onerror = req.onblocked = () => resolve();
+          })),
+      );
+    }
+  } catch {
+    // ignore — IDB wipe is opportunistic
+  }
+}
+
+async function reloadAllClients() {
+  const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  for (const client of clients) {
+    try {
+      client.postMessage({ type: 'REJN_HARD_REFRESH', tag: HARD_REFRESH_TAG });
+    } catch {
+      /* noop */
+    }
+  }
+}
+
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((cacheNames) =>
-        Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE) {
-              return caches.delete(cacheName);
-            }
-          })
-        )
-      )
-      .then(() => self.clients.claim())
+    (async () => {
+      await wipeAllCaches();
+      await wipeKnownIDBs();
+      await self.clients.claim();
+      await reloadAllClients();
+    })()
   );
 });
 

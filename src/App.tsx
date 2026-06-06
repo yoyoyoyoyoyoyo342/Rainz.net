@@ -26,6 +26,7 @@ import { useAnalytics } from "@/hooks/use-analytics";
 import { useAmplitudeInstrumentation } from "@/hooks/use-amplitude-instrumentation";
 import { useAmplitudeFunnels } from "@/hooks/use-amplitude-funnels";
 import { useBroadcastListener } from "@/hooks/use-broadcast-listener";
+import { useAivenMigration } from "@/hooks/use-aiven-migration";
 import { toast as sonnerToast } from "sonner";
 import { resolveHost, maybeRedirectPathToSubdomain, maybeRedirectLegacyDomain } from "@/lib/subdomain-routing";
 
@@ -84,6 +85,7 @@ function AnalyticsTracker() {
   useAmplitudeInstrumentation();
   useAmplitudeFunnels();
   useBroadcastListener();
+  useAivenMigration();
   return null;
 }
 

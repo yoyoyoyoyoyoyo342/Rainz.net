@@ -170,3 +170,9 @@ verify_jwt = true
 
 [functions.profiles]
 verify_jwt = true
+
+[functions.migrate-user-to-aiven]
+verify_jwt = true
+
+[functions.cleanup-supabase-migrated-tables]
+verify_jwt = true

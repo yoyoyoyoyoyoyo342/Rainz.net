@@ -33,33 +33,21 @@ export function SavedLocations({ onLocationSelect, currentLocation, isImperial }
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
-
-      const { data, error } = await supabase
-        .from("saved_locations")
-        .select("*")
-        .order("is_primary", { ascending: false })
-        .order("name");
-
+      const { data, error } = await supabase.functions.invoke("saved-locations", { method: "GET" });
       if (error) throw error;
-      return data as SavedLocation[];
+      return (data?.data ?? []) as SavedLocation[];
     },
   });
 
   const addLocationMutation = useMutation({
     mutationFn: async ({ name, lat, lon }: { name: string; lat: number; lon: number }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
       if (savedLocations.length >= 3) throw new Error("MAX_REACHED");
-
-      const { error } = await supabase.from("saved_locations").insert({
-        user_id: user.id,
-        name,
-        latitude: lat,
-        longitude: lon,
-        is_primary: savedLocations.length === 0,
+      const { data, error } = await supabase.functions.invoke("saved-locations", {
+        method: "POST",
+        body: { name, latitude: lat, longitude: lon },
       });
-
       if (error) throw error;
+      if (data?.error === "MAX_REACHED") throw new Error("MAX_REACHED");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["saved-locations"] });
@@ -77,7 +65,9 @@ export function SavedLocations({ onLocationSelect, currentLocation, isImperial }
 
   const deleteLocationMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("saved_locations").delete().eq("id", id);
+      const { error } = await supabase.functions.invoke(`saved-locations?id=${id}`, {
+        method: "DELETE",
+      });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -89,14 +79,10 @@ export function SavedLocations({ onLocationSelect, currentLocation, isImperial }
 
   const setPrimaryMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      // Unset all primary flags
-      await supabase.from("saved_locations").update({ is_primary: false }).eq("user_id", user.id);
-
-      // Set the selected one as primary
-      const { error } = await supabase.from("saved_locations").update({ is_primary: true }).eq("id", id);
+      const { error } = await supabase.functions.invoke("saved-locations", {
+        method: "PATCH",
+        body: { id, action: "set_primary" },
+      });
       if (error) throw error;
     },
     onSuccess: () => {

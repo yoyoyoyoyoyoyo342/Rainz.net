@@ -161,3 +161,12 @@ verify_jwt = true
 
 [functions.user-preferences]
 verify_jwt = true
+
+[functions.saved-locations]
+verify_jwt = true
+
+[functions.user-streaks]
+verify_jwt = true
+
+[functions.profiles]
+verify_jwt = true

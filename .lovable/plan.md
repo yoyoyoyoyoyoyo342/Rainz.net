@@ -23,10 +23,10 @@
 ## Remaining domain functions to build (group by feature, ~12 total)
 Each follows the same pattern: GET/POST/PUT/DELETE, JWT-scoped, public branch where needed.
 
-1. `profiles` — GET (self + by user_id public via `get_public_profile`), PUT
-2. `saved-locations` — full CRUD
+1. `profiles` — GET (self + by user_id public via `get_public_profile`), PATCH ✅ DONE (edge fn only — frontend callers still on `supabase.from('profiles')`)
+2. `saved-locations` — full CRUD ✅ DONE (edge fn + `saved-locations.tsx` migrated)
 3. `weather-predictions` — list filtered by date/location, create, update (verify), filters: user_id, prediction_date range, is_verified
-4. `user-streaks` — GET, PUT
+4. `user-streaks` — GET, POST ✅ DONE (edge fn + `use-user-streaks.tsx` migrated)
 5. `achievements` (public read) + `user-achievements` (per-user)
 6. `weather-history` — list by user_id + location, insert
 7. `referrals` — list by referrer_id, create

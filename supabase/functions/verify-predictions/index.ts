@@ -166,6 +166,17 @@ serve(async (req) => {
         const confidenceMultiplier = prediction.confidence_multiplier || 1;
         let pointsEarned = Math.round(basePoints * confidenceMultiplier);
 
+        // 🎂 Birthday-month 2× multiplier (Aug 8 → Sep 8) — based on prediction_date
+        const predDate = new Date(prediction.prediction_date + "T12:00:00Z");
+        const m = predDate.getUTCMonth();
+        const d = predDate.getUTCDate();
+        const inBirthdayWindow =
+          (m === 7 && d >= 8) || (m === 8 && d <= 8); // Aug 8..31 or Sep 1..8
+        if (inBirthdayWindow && pointsEarned > 0) {
+          pointsEarned = pointsEarned * 2;
+          console.log(`🎂 Birthday-month 2× applied to prediction ${prediction.id}`);
+        }
+
         // Apply powerup flags
         const powerupFlags = prediction.powerup_flags || {};
         if (powerupFlags.double_points) {

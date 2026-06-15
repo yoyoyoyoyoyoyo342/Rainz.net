@@ -120,9 +120,9 @@ export const Leaderboard = () => {
         }
         footer={
           <div className="flex items-center justify-between gap-3">
-            <PillChips<LeaderboardTab>
+            <PillChips
               value={activeTab}
-              onChange={setActiveTab}
+              onChange={(v) => setActiveTab(v as LeaderboardTab)}
               options={[
                 { value: "monthly", label: monthName, icon: Calendar },
                 { value: "alltime", label: "All-Time", icon: Crown },

@@ -132,9 +132,9 @@ export function PointsHistory() {
           </>
         }
         footer={
-          <PillChips<Filter>
+          <PillChips
             value={filter}
-            onChange={setFilter}
+            onChange={(v) => setFilter(v as Filter)}
             options={[
               { value: "all", label: "All", icon: ListChecks, count: stats.count },
               { value: "predictions", label: "Predicts", icon: Target },

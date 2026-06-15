@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Gift, PartyPopper, Sparkles, X } from "lucide-react";
+import { Gamepad2, Gift, PartyPopper, Sparkles, X } from "lucide-react";
 import { useBirthdayMode } from "@/hooks/use-birthday-mode";
 import { BIRTHDAY_LOGO } from "@/lib/birthday-mode";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { BirthdayMinigames } from "@/components/rejn/birthday-minigames";
 
 const DISMISS_KEY = "rejn-birthday-banner-dismissed-v1";
 
@@ -11,6 +13,7 @@ export function BirthdayBanner() {
   const { active, isBirthday, daysLeft, age } = useBirthdayMode();
   const [dismissed, setDismissed] = useState(false);
   const [open, setOpen] = useState(false);
+  const [arcadeOpen, setArcadeOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -116,6 +119,14 @@ export function BirthdayBanner() {
             </button>
             <button
               type="button"
+              aria-label="Open birthday arcade"
+              onClick={() => setArcadeOpen(true)}
+              className="shrink-0 px-2 py-1 rounded-full bg-amber-900/15 hover:bg-amber-900/25 transition-colors flex items-center gap-1 text-xs font-bold"
+            >
+              <Gamepad2 className="h-3.5 w-3.5" /> Play
+            </button>
+            <button
+              type="button"
               aria-label="Dismiss birthday banner"
               onClick={dismiss}
               className="shrink-0 p-1 rounded-full hover:bg-amber-900/10 transition-colors"
@@ -168,11 +179,22 @@ export function BirthdayBanner() {
             </li>
           </ul>
 
-          <p className="mt-4 text-xs text-muted-foreground text-center">
+          <Button
+            onClick={() => { setOpen(false); setArcadeOpen(true); }}
+            className="w-full mt-4 bg-gradient-to-r from-amber-400 to-yellow-600 hover:from-amber-500 hover:to-yellow-700 text-amber-950 font-semibold"
+            data-birthday-glow
+          >
+            <Gamepad2 className="h-4 w-4 mr-2" />
+            Open Birthday Arcade
+          </Button>
+
+          <p className="mt-3 text-xs text-muted-foreground text-center">
             All perks active Aug 8 – Sep 8. From everyone at Rejn — tusen takk. 💛
           </p>
         </DialogContent>
       </Dialog>
+
+      <BirthdayMinigames open={arcadeOpen} onOpenChange={setArcadeOpen} />
     </>
   );
 }

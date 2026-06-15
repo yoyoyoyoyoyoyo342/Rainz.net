@@ -124,7 +124,7 @@ const PredictionBattlesInner = ({
         footer={
           <PillChips
             value={tab}
-            onChange={setTab}
+            onChange={(v) => setTab(v as BattleTab)}
             options={[
               { value: "open", label: "Open", icon: Users, count: openBattles.length },
               { value: "incoming", label: "Incoming", icon: Inbox, count: pendingChallenges.length },

@@ -28,11 +28,11 @@ await renderMedia({
   composition,
   serveUrl: bundled,
   codec: "h264",
-  outputLocation: "/mnt/documents/rainz-producthunt-launch.mp4",
+  outputLocation: "/mnt/documents/rejn-2.0-launch.mp4",
   puppeteerInstance: browser,
   muted: true,
   concurrency: 1,
 });
 
 await browser.close({ silent: false });
-console.log("✅ Rendered to /mnt/documents/rainz-producthunt-launch.mp4");
+console.log("Rendered to /mnt/documents/rejn-2.0-launch.mp4");

@@ -75,3 +75,17 @@ export function restoreFavicon() {
       if (orig) m.content = orig;
     });
 }
+
+/**
+ * Rejn 2.0 launch celebration window: only show the "2.0" label between
+ * 21 June 2026 and 28 June 2026. Outside this week we just say "Rejn".
+ */
+export function isRejn2Window(now: Date = new Date()): boolean {
+  const start = new Date(2026, 5, 21, 0, 0, 0); // 21 June 2026
+  const end = new Date(2026, 5, 28, 23, 59, 59); // 28 June 2026
+  return now >= start && now <= end;
+}
+
+export function brandName(now: Date = new Date()): string {
+  return isRejn2Window(now) ? "Rejn 2.0" : "Rejn";
+}

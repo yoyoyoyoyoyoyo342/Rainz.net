@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, Suspense, lazy, useTransition } from "react";
 import { queryClient } from "@/lib/queryClient";
-import { CloudSun, LogIn, WifiOff } from "lucide-react";
+import { CloudSun, WifiOff } from "lucide-react";
+import { brandName } from "@/lib/birthday-mode";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -593,7 +594,7 @@ export default function WeatherPage() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex flex-col">
                   <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight leading-tight">
-                    Rejn 2.0
+                    {brandName()}
                   </h1>
                   <p className="text-sm text-muted-foreground">Be prepared.</p>
                 </div>
@@ -615,17 +616,6 @@ export default function WeatherPage() {
                     onUnitsChange={setIsImperial}
                     mostAccurate={weatherData?.mostAccurate}
                   />
-                  {!user && (
-                    <Button
-                      variant="outline"
-                      size="default"
-                      onClick={() => (window.location.href = "/auth")}
-                      className="gap-2"
-                    >
-                      <LogIn className="w-4 h-4" />
-                      <span>{t("header.signIn")}</span>
-                    </Button>
-                  )}
                   <div className="flex items-center gap-2 px-3 py-2 bg-muted/40 rounded-lg border border-border/60">
                     <span className="text-sm font-medium text-foreground">°F</span>
                     <Switch

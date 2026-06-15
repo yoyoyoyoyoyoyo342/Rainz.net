@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Gift, PartyPopper, Sparkles, X } from "lucide-react";
+import { Gamepad2, Gift, PartyPopper, Sparkles, X } from "lucide-react";
 import { useBirthdayMode } from "@/hooks/use-birthday-mode";
 import { BIRTHDAY_LOGO } from "@/lib/birthday-mode";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { BirthdayMinigames } from "@/components/rejn/birthday-minigames";
 
 const DISMISS_KEY = "rejn-birthday-banner-dismissed-v1";
 

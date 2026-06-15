@@ -314,7 +314,7 @@ function AppContent() {
                     <Toaster />
                     <Sonner />
                     <CookieConsentBanner />
-                    <PWAInstallPopup />
+                    {/* PWA install popup removed — use /download for opt-in install */}
                     <AppSplashScreen />
                      <BrowserRouter>
                         <div className="flex flex-col min-h-screen">

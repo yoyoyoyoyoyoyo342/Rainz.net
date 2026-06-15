@@ -1,14 +1,10 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { brandName } from "@/lib/birthday-mode";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ReferralProgram } from "@/components/weather/referral-program";
 
 export function Footer() {
   const { getValue } = useFeatureFlags();
   const version = getValue("app_version", "2.0.0");
-  const [referralOpen, setReferralOpen] = useState(false);
 
   return (
     <footer className="w-full border-t border-border bg-background/80 backdrop-blur-sm mt-auto">
@@ -27,9 +23,6 @@ export function Footer() {
             <Link to="/download" className="hover:text-foreground transition-colors">
               Download
             </Link>
-            <Link to="/dryroutes" className="hover:text-foreground transition-colors">
-              DryRoutes
-            </Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">
               Privacy Policy
             </Link>
@@ -39,23 +32,6 @@ export function Footer() {
             <Link to="/data-settings" className="hover:text-foreground transition-colors">
               Data & Privacy Settings
             </Link>
-            <Link to="/mcp" className="hover:text-foreground transition-colors">
-              MCP
-            </Link>
-            <Link to="/airport" className="hover:text-foreground transition-colors">
-              Landing page
-            </Link>
-            <button
-              onClick={() => setReferralOpen(true)}
-              className="hover:text-foreground transition-colors text-primary font-medium"
-            >
-              Refer a Friend 🎁
-            </button>
-            <Dialog open={referralOpen} onOpenChange={setReferralOpen}>
-              <DialogContent className="max-w-md">
-                <ReferralProgram />
-              </DialogContent>
-            </Dialog>
           </div>
           <div className="text-center md:text-right space-y-3">
             <div className="flex flex-col sm:flex-row items-center justify-center md:justify-end gap-3">

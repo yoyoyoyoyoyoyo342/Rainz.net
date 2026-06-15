@@ -119,6 +119,14 @@ export function BirthdayBanner() {
             </button>
             <button
               type="button"
+              aria-label="Open birthday arcade"
+              onClick={() => setArcadeOpen(true)}
+              className="shrink-0 px-2 py-1 rounded-full bg-amber-900/15 hover:bg-amber-900/25 transition-colors flex items-center gap-1 text-xs font-bold"
+            >
+              <Gamepad2 className="h-3.5 w-3.5" /> Play
+            </button>
+            <button
+              type="button"
               aria-label="Dismiss birthday banner"
               onClick={dismiss}
               className="shrink-0 p-1 rounded-full hover:bg-amber-900/10 transition-colors"

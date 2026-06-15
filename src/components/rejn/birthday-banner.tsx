@@ -13,6 +13,7 @@ export function BirthdayBanner() {
   const { active, isBirthday, daysLeft, age } = useBirthdayMode();
   const [dismissed, setDismissed] = useState(false);
   const [open, setOpen] = useState(false);
+  const [arcadeOpen, setArcadeOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

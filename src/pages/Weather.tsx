@@ -540,14 +540,14 @@ export default function WeatherPage() {
         title={
           selectedLocation
             ? `${selectedLocation.name} Weather - Rejn`
-            : "Rejn 2.0 - AI-Powered Hyper-Local Weather Forecasts"
+            : `${brandName()} - AI-Powered Hyper-Local Weather Forecasts`
         }
         description={
           selectedLocation
             ? `Get accurate AI-enhanced weather forecast for ${selectedLocation.name}. Current conditions, hourly forecast, 10-day outlook, pollen levels, and severe weather alerts.`
-            : "Get accurate AI-powered weather forecasts with Rejn 2.0. Hyper-local predictions, pollen tracking, weather alerts, AI certainty, and a 15-day forecast. Free weather app."
+            : `Get accurate AI-powered weather forecasts with ${brandName()}. Hyper-local predictions, pollen tracking, weather alerts, AI certainty, and a 15-day forecast. Free weather app.`
         }
-        keywords={`Rejn, Rejn 2.0, ${selectedLocation?.name || "local"} weather, weather forecast, AI weather, pollen tracker, weather alerts, accurate weather`}
+        keywords={`Rejn, ${selectedLocation?.name || "local"} weather, weather forecast, AI weather, pollen tracker, weather alerts, accurate weather`}
       />
       <div className="min-h-screen overflow-x-hidden relative">
         {/* Animated backgrounds - always render both to avoid hook count issues */}

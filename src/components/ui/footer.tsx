@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
+import { brandName } from "@/lib/birthday-mode";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ReferralProgram } from "@/components/weather/referral-program";
 
@@ -84,7 +85,7 @@ export function Footer() {
               </a>
             </div>
             <p>© 2025-{new Date().getFullYear()} <a href="https://localilabs.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">Locali Labs</a>. All rights reserved.</p>
-            <p className="text-xs text-muted-foreground/70">Rejn 2.0 · v{version}</p>
+            <p className="text-xs text-muted-foreground/70">{brandName()} · v{version}</p>
           </div>
         </div>
       </div>

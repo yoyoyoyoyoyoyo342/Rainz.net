@@ -122,7 +122,7 @@ const PredictionBattlesInner = ({
           </>
         }
         footer={
-          <PillChips<BattleTab,>
+          <PillChips
             value={tab}
             onChange={setTab}
             options={[

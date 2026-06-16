@@ -11,6 +11,7 @@ interface MorningWeatherReviewProps {
   location: string;
   isImperial: boolean;
   userId?: string;
+  alwaysShow?: boolean;
 }
 
 interface MorningReviewData {

@@ -29,12 +29,33 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { api_key, endpoint, quantity = 1 } = await req.json();
-    
+    // Require authenticated caller
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: authError } = await supabaseClient.auth.getUser(token);
+    if (authError || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const callerId = userData.user.id;
+
+    const { api_key, endpoint, quantity: rawQty = 1 } = await req.json();
     if (!api_key) throw new Error("API key is required");
+
+    // Clamp quantity to a safe range
+    const quantity = Math.max(1, Math.min(Number(rawQty) || 1, 1000));
+
     logStep("Processing usage report", { api_key: api_key.substring(0, 8) + '...', endpoint, quantity });
 
-    // Look up the API key to get user and subscription info
+    // Look up the API key and ensure it belongs to the caller
     const { data: apiKeyData, error: apiKeyError } = await supabaseClient
       .from('api_keys')
       .select('*')
@@ -44,6 +65,12 @@ serve(async (req) => {
 
     if (apiKeyError || !apiKeyData) {
       throw new Error("Invalid or inactive API key");
+    }
+    if (apiKeyData.user_id !== callerId) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     logStep("API key found", { userId: apiKeyData.user_id, subscriptionId: apiKeyData.stripe_subscription_id });

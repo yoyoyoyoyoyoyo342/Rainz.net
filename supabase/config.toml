@@ -176,3 +176,6 @@ verify_jwt = true
 
 [functions.cleanup-supabase-migrated-tables]
 verify_jwt = true
+
+[functions.ask-rejn]
+verify_jwt = false

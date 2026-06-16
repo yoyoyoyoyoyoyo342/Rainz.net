@@ -5,39 +5,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const BASE_URL = "https://rainz.net";
-
-// Curated subdomain mapping (must mirror src/lib/subdomain-routing.ts)
-const SUBDOMAIN_FOR_PATH: Record<string, string> = {
-  "/predict": "predict",
-  "/social": "social",
-  "/explore": "explore",
-  "/dryroutes": "dryroutes",
-  "/widgets": "widgets",
-  "/info": "info",
-  "/download": "download",
-  "/airport": "airport",
-  "/faq": "faq",
-  "/about": "about",
-  "/auth": "auth",
-  "/admin": "admin",
-  "/mcp": "mcp",
-  "/docs": "docs",
-};
+const BASE_URL = "https://rejn.app";
 
 function urlForRoute(path: string): string {
-  // Top-level curated → subdomain root
-  if (path in SUBDOMAIN_FOR_PATH) {
-    return `https://${SUBDOMAIN_FOR_PATH[path]}.rainz.net/`;
-  }
-  // Nested under curated (e.g. /airport/features)
-  for (const [topPath, sub] of Object.entries(SUBDOMAIN_FOR_PATH)) {
-    if (path.startsWith(topPath + "/")) {
-      return `https://${sub}.rainz.net${path.slice(topPath.length)}`;
-    }
-  }
   return `${BASE_URL}${path}`;
 }
+
 
 const STATIC_ROUTES = [
   { path: "/", priority: "1.0", changefreq: "hourly" },
@@ -93,7 +66,7 @@ Deno.serve(async (req) => {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 `;
 
-    // Static routes (curated paths emitted as their subdomain URLs)
+    // Static routes
     for (const route of STATIC_ROUTES) {
       xml += `  <url>
     <loc>${urlForRoute(route.path)}</loc>
@@ -104,7 +77,8 @@ Deno.serve(async (req) => {
 `;
     }
 
-    // Blog posts — keep on apex (also served by blog.rainz.net via separate logic)
+
+    // Blog posts — served from /articles on the apex
     if (posts) {
       for (const post of posts) {
         const lastmod = (post.updated_at || post.published_at || today).split("T")[0];
@@ -118,12 +92,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    // City pages → <city>.rainz.net/
+    // City pages → /weather/<city>
     if (cities) {
       for (const city of cities) {
         const lastmod = (city.updated_at || today).split("T")[0];
         xml += `  <url>
-    <loc>https://${city.slug}.rainz.net/</loc>
+    <loc>${BASE_URL}/weather/${city.slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>

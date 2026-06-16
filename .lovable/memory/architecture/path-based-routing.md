@@ -1,6 +1,6 @@
 ---
 name: Path-based routing on rejn.app
-description: Wildcard subdomains retired — every page lives at rejn.app/<path>, legacy subdomains 301 to apex, except beta524563.rejn.app
+description: Wildcard subdomains retired — every page lives at rejn.app/<path>, legacy subdomains 301 to apex, except any subdomain starting with "beta"
 type: constraint
 ---
 All routes live on the canonical apex `rejn.app` as standard paths (e.g. `rejn.app/predict`, `rejn.app/weather/oslo`, `rejn.app/auth`).

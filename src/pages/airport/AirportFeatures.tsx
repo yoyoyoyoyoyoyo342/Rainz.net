@@ -114,14 +114,7 @@ const tagGlows: Record<string, string> = {
 };
 
 
-const tagGlows: Record<string, string> = {
-  Core: "group-hover:shadow-blue-500/10",
-  Premium: "group-hover:shadow-purple-500/10",
-  Social: "group-hover:shadow-green-500/10",
-  Health: "group-hover:shadow-emerald-500/10",
-  Fun: "group-hover:shadow-yellow-500/10",
-  Advanced: "group-hover:shadow-orange-500/10",
-};
+
 
 /* ── Tilt card ── */
 function FeatureTiltCard({ children, className, glowClass }: { children: React.ReactNode; className?: string; glowClass?: string }) {

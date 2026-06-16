@@ -291,11 +291,8 @@ function AppContent() {
                           <BirthdayBanner />
                           <div className="flex-1">
                             <AnalyticsTracker />
-                            <AnimatedRoutes
-                              isApiSubdomain={isApiSubdomain}
-                              isBlogSubdomain={isBlogSubdomain}
-                              rewrittenPath={rewrittenPath}
-                            />
+                            <AnimatedRoutes />
+
                           </div>
                           {window.location.pathname !== '/dryroutes' && (
                          <Footer />

@@ -23,7 +23,6 @@ const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-c
 const DailySpinWheel = lazy(() => import("@/components/weather/daily-spin-wheel").then(m => ({ default: m.DailySpinWheel })));
 import { StreakMultiplierMeter } from "@/components/predict/streak-multiplier-meter";
 import { RejnMascot } from "@/components/rejn/rejn-mascot";
-import { LocationSearch } from "@/components/weather/location-search";
 
 export default function PredictPage() {
   const { user, loading: authLoading } = useAuth();

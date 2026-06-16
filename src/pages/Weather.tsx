@@ -787,21 +787,47 @@ export default function WeatherPage() {
                       footer={
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="w-full gap-2">
-                              <Sparkles className="w-3.5 h-3.5" /> View Extended Briefing
-                            </Button>
+                            <button
+                              type="button"
+                              className="group w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] backdrop-blur-sm transition-all"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="shrink-0 w-8 h-8 rounded-xl bg-gradient-to-br from-blue-400/30 to-violet-500/30 border border-white/10 flex items-center justify-center">
+                                  <Sparkles className="w-3.5 h-3.5 text-blue-200" />
+                                </div>
+                                <div className="text-left min-w-0">
+                                  <div className="text-[10px] uppercase tracking-[0.18em] font-semibold text-blue-200/70">Extended briefing</div>
+                                  <div className="text-sm font-medium text-white/90 truncate">Full morning review</div>
+                                </div>
+                              </div>
+                              <span className="shrink-0 text-white/40 group-hover:text-white/70 transition-colors text-lg leading-none">→</span>
+                            </button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle>Extended Morning Review</DialogTitle>
-                            </DialogHeader>
-                            <MorningWeatherReview
-                              weatherData={weatherData.mostAccurate}
-                              location={actualStationName}
-                              isImperial={isImperial}
-                              userId={user?.id}
-                              alwaysShow
-                            />
+                          <DialogContent className="max-w-2xl p-0 overflow-hidden border-white/10 bg-gradient-to-b from-slate-950/95 via-slate-950/95 to-slate-900/95 backdrop-blur-2xl">
+                            <div className="relative">
+                              {/* Decorative gradient header */}
+                              <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-blue-500/20 via-violet-500/10 to-transparent pointer-events-none" />
+                              <DialogHeader className="relative px-6 pt-6 pb-4 border-b border-white/5">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-400/30 to-violet-500/30 border border-white/10 flex items-center justify-center">
+                                    <Sparkles className="w-5 h-5 text-blue-200" />
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] uppercase tracking-[0.18em] font-semibold text-blue-200/70">Rejn AI</div>
+                                    <DialogTitle className="text-xl text-white">Extended Morning Review</DialogTitle>
+                                  </div>
+                                </div>
+                              </DialogHeader>
+                              <div className="relative max-h-[70vh] overflow-y-auto px-6 py-5">
+                                <MorningWeatherReview
+                                  weatherData={weatherData.mostAccurate}
+                                  location={actualStationName}
+                                  isImperial={isImperial}
+                                  userId={user?.id}
+                                  alwaysShow
+                                />
+                              </div>
+                            </div>
                           </DialogContent>
                         </Dialog>
                       }

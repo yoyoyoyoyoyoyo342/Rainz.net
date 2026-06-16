@@ -127,7 +127,7 @@ interface PollenSvgWheelProps {
 const PollenSvgWheel = memo(function PollenSvgWheel({ segments, trackedTypes, allergySeverities, t }: PollenSvgWheelProps) {
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
 
-  const cx = 100, cy = 100, outerR = 90, innerR = 55;
+  const cx = 100, cy = 100, outerR = 88, innerR = 68;
 
   const getAlertForSegment = (pollenType: string, value: number): boolean => {
     if (!trackedTypes.has(pollenType) || value === 0) return false;
@@ -139,20 +139,28 @@ const PollenSvgWheel = memo(function PollenSvgWheel({ segments, trackedTypes, al
     return false;
   };
 
-  const totalValue = segments.reduce((s, seg) => s + Math.max(seg.value, 0.5), 0);
-  const rawAngles = segments.map(seg => Math.max(MIN_ARC_DEG, ((Math.max(seg.value, 0.5)) / totalValue) * 360));
-  const rawTotal = rawAngles.reduce((s, a) => s + a, 0);
-  const normalizedAngles = rawAngles.map(a => (a / rawTotal) * 360);
+  // Intensity-based color: matches UV/AQI semantic palette so users
+  // can read severity at a glance instead of memorising allergen hues.
+  const intensityColor = (value: number): string => {
+    if (value <= 0) return "hsl(var(--muted))";
+    if (value <= 2) return "hsl(217 90% 60%)"; // low (brand blue)
+    if (value <= 5) return "hsl(45 95% 55%)";  // medium
+    if (value <= 8) return "hsl(20 90% 55%)";  // high
+    return "hsl(0 80% 60%)";                    // very high
+  };
 
-  const overallValue = Math.round(segments.reduce((s, seg) => s + seg.value, 0) / segments.length);
+  // Equal arcs so the wheel reads as a clean dial; intensity is encoded by COLOR,
+  // not arc length — much more honest and minimal.
+  const n = Math.max(segments.length, 1);
+  const arcDeg = 360 / n;
+
+  const overallValue = Math.round(segments.reduce((s, seg) => s + seg.value, 0) / n);
   const overallLevel = getIntensityLabelStatic(overallValue);
   const alertCount = segments.filter(seg => getAlertForSegment(seg.pollenType, seg.value)).length;
 
-  let currentAngle = 0;
   const paths = segments.map((seg, i) => {
-    const start = currentAngle;
-    const end = currentAngle + normalizedAngles[i];
-    currentAngle = end;
+    const start = i * arcDeg;
+    const end = start + arcDeg;
     const tracked = trackedTypes.has(seg.pollenType);
     const alert = getAlertForSegment(seg.pollenType, seg.value);
     const hovered = hoveredSegment === seg.pollenType;
@@ -162,44 +170,39 @@ const PollenSvgWheel = memo(function PollenSvgWheel({ segments, trackedTypes, al
   return (
     <>
       <div className="flex justify-center">
-        <svg width="200" height="200" viewBox="0 0 200 200" className="drop-shadow-sm">
+        <svg width="200" height="200" viewBox="0 0 200 200">
           <defs>
             <style>{`
-              @keyframes pollenPulse {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0.6; }
-              }
-              .pollen-pulse { animation: pollenPulse 1.5s ease-in-out infinite; }
+              @keyframes pollenPulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+              .pollen-pulse { animation: pollenPulse 1.6s ease-in-out infinite; }
             `}</style>
           </defs>
-          {paths.map(({ seg, start, end, tracked, alert, hovered }) => (
-            <g key={seg.pollenType}>
+          {paths.map(({ seg, start, end, tracked, alert, hovered }) => {
+            const fill = intensityColor(seg.value);
+            return (
               <path
-                d={describeArc(cx, cy, hovered ? outerR + 4 : outerR, innerR, start, end - 0.5)}
-                fill={seg.color}
-                stroke={tracked ? "hsl(var(--foreground))" : "hsl(var(--background))"}
-                strokeWidth={tracked ? 3 : 1}
+                key={seg.pollenType}
+                d={describeArc(cx, cy, hovered ? outerR + 3 : outerR, innerR, start + 1, end - 1)}
+                fill={fill}
+                opacity={seg.value === 0 ? 0.18 : tracked ? 1 : 0.78}
+                stroke={tracked ? "hsl(var(--foreground))" : "transparent"}
+                strokeWidth={tracked ? 1.5 : 0}
                 className={alert ? "pollen-pulse" : ""}
-                style={{
-                  cursor: "pointer",
-                  filter: tracked ? `drop-shadow(0 0 4px ${seg.color})` : undefined,
-                  transition: "all 0.2s ease",
-                }}
+                style={{ cursor: "pointer", transition: "all 0.2s ease" }}
                 onMouseEnter={() => setHoveredSegment(seg.pollenType)}
                 onMouseLeave={() => setHoveredSegment(null)}
                 onTouchStart={() => setHoveredSegment(seg.pollenType === hoveredSegment ? null : seg.pollenType)}
               />
-            </g>
-          ))}
-          <circle cx={cx} cy={cy} r={innerR - 4} fill="hsl(var(--background))" opacity="0.9" />
-          <text x={cx} y={cy - 8} textAnchor="middle" className="fill-foreground" fontSize="28" fontWeight="bold">
+            );
+          })}
+          <text x={cx} y={cy - 4} textAnchor="middle" className="fill-foreground" fontSize="34" fontWeight="700" letterSpacing="-1">
             {overallValue}
           </text>
-          <text x={cx} y={cy + 12} textAnchor="middle" className="fill-muted-foreground" fontSize="11">
+          <text x={cx} y={cy + 14} textAnchor="middle" className="fill-muted-foreground" fontSize="10" letterSpacing="1.5" style={{ textTransform: 'uppercase' }}>
             {overallLevel}
           </text>
           {alertCount > 0 && (
-            <text x={cx} y={cy + 28} textAnchor="middle" className="fill-destructive" fontSize="10" fontWeight="600">
+            <text x={cx} y={cy + 30} textAnchor="middle" className="fill-destructive" fontSize="10" fontWeight="600">
               ⚠ {alertCount} alert{alertCount > 1 ? "s" : ""}
             </text>
           )}
@@ -221,8 +224,8 @@ const PollenSvgWheel = memo(function PollenSvgWheel({ segments, trackedTypes, al
         {segments.map(seg => {
           const tracked = trackedTypes.has(seg.pollenType);
           return (
-            <div key={seg.pollenType} className={`flex items-center gap-1 ${tracked ? "font-semibold" : ""}`}>
-              <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: seg.color }} />
+            <div key={seg.pollenType} className={`flex items-center gap-1.5 ${tracked ? "font-semibold text-foreground" : ""}`}>
+              <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: intensityColor(seg.value) }} />
               <span className="text-muted-foreground">{seg.name}</span>
               <span className={getIntensityColorStatic(seg.value)}>{seg.value}</span>
             </div>

@@ -638,15 +638,6 @@ export default function WeatherPage() {
             {/* Search */}
             <div className="flex items-center gap-2">
               <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
-              {weatherData && (
-                <div className="shrink-0">
-                  <WeatherReportForm
-                    location={actualStationName}
-                    currentCondition={weatherData.mostAccurate.currentWeather.condition}
-                    locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }}
-                  />
-                </div>
-              )}
             </div>
 
             {/* Saved location pills */}

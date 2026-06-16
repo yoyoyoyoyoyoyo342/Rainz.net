@@ -179,29 +179,35 @@ export const PointsShop = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const spPurchase = params.get("sp_purchase");
-    const points = params.get("points");
-    
-    if (spPurchase === "success" && points && user) {
-      confirmPurchase(parseInt(points));
+    const sessionId = params.get("session_id");
+
+    if (spPurchase === "success" && sessionId && user) {
+      confirmPurchase(sessionId);
       // Clean URL
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, [user]);
 
-  const confirmPurchase = async (points: number) => {
+  const confirmPurchase = async (sessionId: string) => {
     try {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session) return;
 
-      await supabase.functions.invoke("confirm-sp-purchase", {
-        body: { points },
+      const { data, error } = await supabase.functions.invoke("confirm-sp-purchase", {
+        body: { sessionId },
         headers: { Authorization: `Bearer ${session.session.access_token}` },
       });
-      
-      toast.success(`${points} Shop Points added to your account!`);
+      if (error) throw error;
+
+      if (data?.already_consumed) {
+        toast.info("Purchase already credited.");
+      } else if (data?.new_total !== undefined) {
+        toast.success("Shop Points added to your account!");
+      }
       fetchUserData();
     } catch (error) {
       console.error("Error confirming purchase:", error);
+      toast.error("Could not verify your purchase.");
     }
   };
 

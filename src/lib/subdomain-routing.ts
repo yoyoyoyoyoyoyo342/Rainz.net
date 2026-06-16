@@ -54,6 +54,8 @@ export function resolveHost(): HostResolution {
 // subdomain) to the equivalent path on the canonical apex rejn.app.
 // Old subdomain hosts like predict.rainz.net or predict.rejn.app are
 // flattened to https://rejn.app/predict<rest><search><hash>.
+// beta524563.rejn.app is kept as an exception and is NOT redirected.
+const BETA_SUBDOMAIN = "beta524563.rejn.app";
 export function maybeRedirectLegacyDomain(): boolean {
   if (typeof window === "undefined") return false;
   const host = getHostname();
@@ -61,6 +63,9 @@ export function maybeRedirectLegacyDomain(): boolean {
 
   const isApex = host === ROOT_DOMAIN || host === "www." + ROOT_DOMAIN;
   if (isApex) return false;
+
+  // Allow the beta subdomain to stay on its own host
+  if (host === BETA_SUBDOMAIN) return false;
 
   // Build canonical apex URL preserving path/search/hash
   const apexUrl = (path: string) =>

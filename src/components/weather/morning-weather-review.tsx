@@ -26,7 +26,8 @@ export function MorningWeatherReview({
   weatherData, 
   location, 
   isImperial,
-  userId 
+  userId,
+  alwaysShow = false,
 }: MorningWeatherReviewProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isDismissed, setIsDismissed] = useState(false);
@@ -36,17 +37,19 @@ export function MorningWeatherReview({
   const { t, language } = useLanguage();
 
   const isMorningTime = () => {
+    if (alwaysShow) return true;
     const hour = new Date().getHours();
     return hour >= 6 && hour < 12;
   };
 
   useEffect(() => {
+    if (alwaysShow) return;
     const dismissedDate = localStorage.getItem('morning-review-dismissed');
     const today = new Date().toDateString();
     if (dismissedDate === today) {
       setIsDismissed(true);
     }
-  }, []);
+  }, [alwaysShow]);
 
   useEffect(() => {
     if (isMorningTime() && !isDismissed && weatherData && !reviewData) {

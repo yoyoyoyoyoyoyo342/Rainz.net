@@ -186,6 +186,7 @@ export function AIBriefingHero({
               )}
             </div>
           )}
+          {footer && <div className="mt-3">{footer}</div>}
         </div>
       </div>
     </RainzCard>

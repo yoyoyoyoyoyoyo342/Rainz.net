@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Plus, History, ArrowLeft, Loader2 } from "lucide-react";
+import { Send, Plus, History, ArrowLeft, Loader2, Shuffle } from "lucide-react";
+import { pickSuggestions } from "@/lib/ask-rejn-suggestions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,12 +37,8 @@ const GREETINGS = [
   "Heyyy {name}, ready when you are",
 ];
 
-const SUGGESTIONS = [
-  "Will it rain tomorrow?",
-  "What should I wear today?",
-  "How do predictions work?",
-  "Tell me a weird weather fact",
-];
+// Suggestions are now sourced from a 200+ pool and shuffled on mount /
+// new chat / shuffle button — see src/lib/ask-rejn-suggestions.ts.
 
 export default function AskRejnPage() {
   const { user, profile, loading: authLoading } = useAuth();
@@ -52,6 +49,7 @@ export default function AskRejnPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>(() => pickSuggestions(4));
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const displayName = useMemo(() => {
@@ -122,6 +120,7 @@ export default function AskRejnPage() {
     setConversationId(null);
     setMessages([]);
     setInput("");
+    setSuggestions(pickSuggestions(4));
   };
 
   const send = async () => {
@@ -292,17 +291,37 @@ export default function AskRejnPage() {
                   Ask me anything — weather, plans, or just say hi.
                 </p>
 
-                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-md">
-                  {SUGGESTIONS.map((s) => (
+                <div className="mt-6 w-full max-w-md">
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Try asking</span>
                     <button
-                      key={s}
-                      onClick={() => setInput(s)}
-                      className="px-3 py-2.5 rounded-xl text-sm text-left bg-card/60 hover:bg-card/90 border border-border/40 transition-colors"
+                      onClick={() => setSuggestions(pickSuggestions(4))}
+                      className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label="Shuffle suggestions"
                     >
-                      {s}
+                      <Shuffle className="w-3 h-3" /> Shuffle
                     </button>
-                  ))}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <AnimatePresence mode="popLayout">
+                      {suggestions.map((s) => (
+                        <motion.button
+                          key={s}
+                          layout
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                          transition={{ duration: 0.2 }}
+                          onClick={() => setInput(s)}
+                          className="px-3 py-2.5 rounded-xl text-sm text-left bg-card/40 hover:bg-card/70 border border-border/30 transition-colors"
+                        >
+                          {s}
+                        </motion.button>
+                      ))}
+                    </AnimatePresence>
+                  </div>
                 </div>
+
               </motion.div>
             ) : (
               <motion.div

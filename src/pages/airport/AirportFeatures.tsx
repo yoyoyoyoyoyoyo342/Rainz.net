@@ -2,11 +2,23 @@ import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   Cloud, Brain, Swords, MapPin, Flower2, Wind,
-  Gamepad2, BarChart3, Bell, Thermometer, Moon, Eye, ArrowRight
+  Gamepad2, BarChart3, Bell, Thermometer, Moon, Eye, ArrowRight, MessageCircle, Camera
 } from "lucide-react";
 import { useRef } from "react";
 
 const features = [
+  {
+    icon: MessageCircle,
+    title: "Ask Rejn — AI Mascot Chat",
+    desc: "Brand new in 2.0. Chat directly with Rejn, our cloud mascot, in a friendly conversational interface. Ask anything from 'umbrella tomorrow?' to 'plan my weekend around the rain' and get instant, locally-aware answers. No menus, no friction — just talk.",
+    tag: "New 2.0",
+  },
+  {
+    icon: Camera,
+    title: "Rejn SkyCam Network",
+    desc: "A growing network of community-hosted SkyCams across Scandinavia streaming live sky imagery into your forecast. See real clouds over real rooftops, not just radar pixels. Brand new in 2.0.",
+    tag: "New 2.0",
+  },
   {
     icon: Cloud,
     title: "Multi-Source Forecasts",
@@ -82,6 +94,7 @@ const features = [
 ];
 
 const tagColors: Record<string, string> = {
+  "New 2.0": "bg-amber-400/20 text-amber-300 border-amber-400/30",
   Core: "bg-blue-500/20 text-blue-300 border-blue-500/20",
   Premium: "bg-purple-500/20 text-purple-300 border-purple-500/20",
   Social: "bg-green-500/20 text-green-300 border-green-500/20",
@@ -91,6 +104,7 @@ const tagColors: Record<string, string> = {
 };
 
 const tagGlows: Record<string, string> = {
+  "New 2.0": "group-hover:shadow-amber-400/20",
   Core: "group-hover:shadow-blue-500/10",
   Premium: "group-hover:shadow-purple-500/10",
   Social: "group-hover:shadow-green-500/10",
@@ -98,6 +112,9 @@ const tagGlows: Record<string, string> = {
   Fun: "group-hover:shadow-yellow-500/10",
   Advanced: "group-hover:shadow-orange-500/10",
 };
+
+
+
 
 /* ── Tilt card ── */
 function FeatureTiltCard({ children, className, glowClass }: { children: React.ReactNode; className?: string; glowClass?: string }) {

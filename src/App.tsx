@@ -73,6 +73,7 @@ const ApiPricing = lazy(() => import("./pages/ApiPricing"));
 const Predict = lazy(() => import("./pages/Predict"));
 const Social = lazy(() => import("./pages/Social"));
 const Explore = lazy(() => import("./pages/Explore"));
+const AskRejn = lazy(() => import("./pages/AskRejn"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const Docs = lazy(() => import("./pages/Docs"));
 const AdminSkyCam = lazy(() => import("./pages/skycam/AdminSkyCam"));
@@ -200,6 +201,7 @@ function AnimatedRoutes({
               <Route path="/predict" element={<Predict />} />
               <Route path="/social" element={<Social />} />
               <Route path="/explore" element={<Explore />} />
+              <Route path="/ai" element={<AskRejn />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<AdminPanel />} />
               <Route path="/articles" element={<Articles />} />

@@ -936,13 +936,8 @@ export default function WeatherPage() {
                 </div>
               </AnimatedCard>
 
-              {hyperlocalData?.aqi ? (
-                <AnimatedCard index={8}>
-                  <div className="mb-4">
-                    <AQICard data={hyperlocalData.aqi} />
-                  </div>
-                </AnimatedCard>
-              ) : null}
+
+
 
               {/* DryRoutes - embedded card experience */}
               <AnimatedCard index={9}>

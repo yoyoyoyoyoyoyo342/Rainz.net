@@ -813,6 +813,7 @@ export default function WeatherPage() {
                             location={actualStationName}
                             isImperial={isImperial}
                             userId={user?.id}
+                            alwaysShow
                           />
                         </DialogContent>
                       </Dialog>

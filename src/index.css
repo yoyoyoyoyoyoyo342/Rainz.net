@@ -207,15 +207,6 @@
     stroke-width: 1.5;
   }
 }
-    background: hsl(var(--card) / 0.75);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid hsl(var(--border) / 0.2);
-    border-top: 0;
-    border-left: 0;
-    border-right: 0;
-  }
-}
 
 
 /* Safe area support for iOS devices */

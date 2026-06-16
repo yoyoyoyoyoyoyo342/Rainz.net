@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -591,111 +591,55 @@ export default function WeatherPage() {
             </div>
           )}
 
-          <Card className="mb-6 relative z-[1000] overflow-visible rounded-2xl glass-card-strong">
-            <div className="p-4 sm:p-6 border-b border-border/50">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex flex-col">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight leading-tight">
-                    {brandName()}
-                  </h1>
-                  <p className="text-sm text-muted-foreground">Be prepared.</p>
-                </div>
-
-                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                  <HeaderInfoBar user={user} showInbox={false} />
-                  <Suspense fallback={null}>
-                    <SkyCamSubmissionDialog
-                      location={actualStationName}
-                      locationData={{
-                        latitude: selectedLocation?.lat || 0,
-                        longitude: selectedLocation?.lon || 0,
-                        city: selectedLocation?.name,
-                      }}
-                    />
-                  </Suspense>
-                  <SettingsDialog
-                    isImperial={isImperial}
-                    onUnitsChange={setIsImperial}
-                    mostAccurate={weatherData?.mostAccurate}
+          {/* Minimalist hero — wordmark, search, controls all in one airy block */}
+          <section className="mb-6 relative z-[1000] space-y-4">
+            {/* Top row: wordmark + controls */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-baseline gap-2 min-w-0">
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
+                  {brandName()}
+                </h1>
+                <span className="text-xs text-muted-foreground/70 hidden sm:inline">Be prepared.</span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <HeaderInfoBar user={user} showInbox={false} />
+                <Suspense fallback={null}>
+                  <SkyCamSubmissionDialog
+                    location={actualStationName}
+                    locationData={{
+                      latitude: selectedLocation?.lat || 0,
+                      longitude: selectedLocation?.lon || 0,
+                      city: selectedLocation?.name,
+                    }}
                   />
-                  <div className="flex items-center gap-2 px-3 py-2 bg-muted/40 rounded-lg border border-border/60">
-                    <span className="text-sm font-medium text-foreground">°F</span>
-                    <Switch
-                      checked={!isImperial}
-                      onCheckedChange={(checked) => {
-                        setIsImperial(!checked);
-                        import("@amplitude/unified")
-                          .then((amp) => amp.track("unit_toggled", { unit: checked ? "celsius" : "fahrenheit" }))
-                          .catch(() => {});
-                      }}
-                    />
-                    <span className="text-sm font-medium text-foreground">°C</span>
-                  </div>
-                </div>
+                </Suspense>
+                <SettingsDialog
+                  isImperial={isImperial}
+                  onUnitsChange={setIsImperial}
+                  mostAccurate={weatherData?.mostAccurate}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !isImperial;
+                    setIsImperial(next);
+                    import("@amplitude/unified")
+                      .then((amp) => amp.track("unit_toggled", { unit: next ? "fahrenheit" : "celsius" }))
+                      .catch(() => {});
+                  }}
+                  aria-label="Toggle units"
+                  className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded-full hover:bg-muted/40"
+                >
+                  {isImperial ? "°F" : "°C"}
+                </button>
               </div>
             </div>
 
-            <CardContent className="p-4 sm:p-6 bg-card space-y-4 overflow-visible">
-              {/* Guided help banner */}
-              <Suspense fallback={null}>
-                <GuidedHelpBanner tip={activeTip} onDismiss={dismissTip} />
-              </Suspense>
-              {/* Offline cache indicator for premium users */}
-              {isUsingCachedData && (
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300">
-                  <WifiOff className="w-4 h-4" />
-                  <span className="text-xs">
-                    Using cached weather data • Last updated {lastUpdated?.toLocaleTimeString()}
-                  </span>
-                </div>
-              )}
-
-              {/* Background refresh indicator */}
-              {!isLoading && weatherData && isFetching && (
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/10 text-muted-foreground animate-pulse">
-                  <CloudSun className="w-4 h-4 text-primary animate-spin" style={{ animationDuration: '3s' }} />
-                  <span className="text-xs">Refreshing weather data…</span>
-                </div>
-              )}
-
-              <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-start">
-              <div className="min-w-0 space-y-3">
-                <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
-                {/* Saved locations — fixed 3-up grid, no scroll */}
-                {savedLocations.length > 0 && (
-                  <div className="grid grid-cols-3 gap-2">
-                    {savedLocations.slice(0, 3).map((loc: any) => {
-                      const isActive = selectedLocation &&
-                        Math.abs(loc.latitude - selectedLocation.lat) < 0.01 &&
-                        Math.abs(loc.longitude - selectedLocation.lon) < 0.01;
-                      const cityName = loc.name.split(',')[0].trim();
-                      return (
-                        <button
-                          key={loc.id}
-                          onClick={() => handleLocationSelect(loc.latitude, loc.longitude, loc.name)}
-                          className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-left transition-all active:scale-95 truncate ${
-                            isActive
-                              ? "bg-primary/15 ring-1 ring-primary/40"
-                              : "bg-card/60 hover:bg-card/80 ring-1 ring-border/20"
-                          }`}
-                        >
-                          <span className={`text-sm shrink-0 ${isActive ? "" : "opacity-60"}`}>
-                            {loc.is_primary ? "📍" : "🌍"}
-                          </span>
-                          <span className={`text-xs font-semibold truncate ${isActive ? "text-primary" : "text-foreground"}`}>
-                            {cityName}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-                {weatherData?.aggregated?.stationInfo && (
-                  <WeatherStationInfo stationInfo={weatherData.aggregated.stationInfo} />
-                )}
-              </div>
+            {/* Search */}
+            <div className="flex items-center gap-2">
+              <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
               {weatherData && (
-                <div className="flex flex-wrap gap-2">
+                <div className="shrink-0">
                   <WeatherReportForm
                     location={actualStationName}
                     currentCondition={weatherData.mostAccurate.currentWeather.condition}
@@ -705,8 +649,52 @@ export default function WeatherPage() {
               )}
             </div>
 
-            </CardContent>
-          </Card>
+            {/* Saved location pills */}
+            {savedLocations.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {savedLocations.slice(0, 5).map((loc: any) => {
+                  const isActive = selectedLocation &&
+                    Math.abs(loc.latitude - selectedLocation.lat) < 0.01 &&
+                    Math.abs(loc.longitude - selectedLocation.lon) < 0.01;
+                  const cityName = loc.name.split(',')[0].trim();
+                  return (
+                    <button
+                      key={loc.id}
+                      onClick={() => handleLocationSelect(loc.latitude, loc.longitude, loc.name)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95 ${
+                        isActive
+                          ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+                          : "bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                      }`}
+                    >
+                      <span className="opacity-70">{loc.is_primary ? "📍" : "🌍"}</span>
+                      {cityName}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Station info, guided help, status indicators */}
+            <Suspense fallback={null}>
+              <GuidedHelpBanner tip={activeTip} onDismiss={dismissTip} />
+            </Suspense>
+            {weatherData?.aggregated?.stationInfo && (
+              <WeatherStationInfo stationInfo={weatherData.aggregated.stationInfo} />
+            )}
+            {isUsingCachedData && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs w-fit">
+                <WifiOff className="w-3.5 h-3.5" />
+                Cached • {lastUpdated?.toLocaleTimeString()}
+              </div>
+            )}
+            {!isLoading && weatherData && isFetching && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-primary/5 text-muted-foreground text-xs w-fit animate-pulse">
+                <CloudSun className="w-3.5 h-3.5 text-primary animate-spin" style={{ animationDuration: '3s' }} />
+                Refreshing…
+              </div>
+            )}
+          </section>
           {selectedLocation && isLoading && !weatherData ? (
             <div className="transition-opacity duration-300 ease-out">
               <WeatherPageSkeleton />
@@ -927,12 +915,6 @@ export default function WeatherPage() {
 
               {/* Extended Morning Review moved to "View Extended Briefing" button on the AI hero */}
 
-              <AnimatedCard index={6}>
-                <div className="mb-4">
-                  <RainMapCard latitude={selectedLocation.lat} longitude={selectedLocation.lon} locationName={actualStationName} />
-                </div>
-              </AnimatedCard>
-
               <AnimatedCard index={7}>
                 <DetailedMetrics
                   currentWeather={weatherData.mostAccurate.currentWeather}
@@ -940,15 +922,22 @@ export default function WeatherPage() {
                   is24Hour={is24Hour}
                   premiumSettings={premiumSettings}
                 />
-              </AnimatedCard>
-
-              {hyperlocalData?.aqi ? (
-                <AnimatedCard index={8}>
-                  <div className="mb-4">
+                {hyperlocalData?.aqi ? (
+                  <div className="mt-4">
                     <AQICard data={hyperlocalData.aqi} />
                   </div>
-                </AnimatedCard>
-              ) : null}
+                ) : null}
+              </AnimatedCard>
+
+              {/* Rain map */}
+              <AnimatedCard index={8}>
+                <div className="mb-4">
+                  <RainMapCard latitude={selectedLocation.lat} longitude={selectedLocation.lon} locationName={actualStationName} />
+                </div>
+              </AnimatedCard>
+
+
+
 
               {/* DryRoutes - embedded card experience */}
               <AnimatedCard index={9}>

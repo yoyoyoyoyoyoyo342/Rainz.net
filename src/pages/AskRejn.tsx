@@ -49,6 +49,7 @@ export default function AskRejnPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>(() => pickSuggestions(4));
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const displayName = useMemo(() => {
@@ -119,6 +120,7 @@ export default function AskRejnPage() {
     setConversationId(null);
     setMessages([]);
     setInput("");
+    setSuggestions(pickSuggestions(4));
   };
 
   const send = async () => {

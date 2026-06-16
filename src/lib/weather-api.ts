@@ -426,18 +426,19 @@ export const weatherApi = {
             return Math.abs(d - target) < Math.abs(best - target) ? i : bestIdx;
           }, 0);
         }
-        const currentMonth = new Date().getMonth();
-        
-        const getSeasonalMultiplier = (pollenType: string, month: number): number => {
-          const multipliers = {
-            alder: [2.0, 2.5, 1.8, 0.5, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 1.2],
-            birch: [0.0, 0.2, 1.5, 2.5, 2.0, 0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            grass: [0.0, 0.0, 0.5, 1.2, 2.5, 3.0, 2.8, 2.2, 1.0, 0.2, 0.0, 0.0],
-            mugwort: [0.0, 0.0, 0.0, 0.0, 0.2, 0.8, 2.0, 2.5, 1.5, 0.3, 0.0, 0.0],
-            olive: [0.0, 0.0, 0.5, 1.8, 2.5, 2.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0],
-            ragweed: [0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 1.0, 2.5, 2.8, 1.5, 0.2, 0.0]
-          };
-          return multipliers[pollenType as keyof typeof multipliers]?.[month] || 1.0;
+        // Open-Meteo returns pollen concentration in grains/m³.
+        // Convert to a 0–10 index that matches our UI thresholds
+        // (Low ≤2, Medium ≤5, High ≤8, Very High >8).
+        // Do NOT apply seasonal multipliers — the API value already
+        // reflects real, current conditions; inflating it produced wrong info.
+        const toIndex = (g: number): number => {
+          if (!g || g <= 0) return 0;
+          if (g < 1) return 1;
+          if (g < 5) return 2;
+          if (g < 15) return 4;
+          if (g < 50) return 6;
+          if (g < 100) return 8;
+          return 10;
         };
 
         const rawValues = {
@@ -450,12 +451,12 @@ export const weatherApi = {
         };
 
         pollenData = {
-          alder: Math.round((rawValues.alder * getSeasonalMultiplier('alder', currentMonth)) * 10) / 10,
-          birch: Math.round((rawValues.birch * getSeasonalMultiplier('birch', currentMonth)) * 10) / 10,
-          grass: Math.round((rawValues.grass * getSeasonalMultiplier('grass', currentMonth)) * 10) / 10,
-          mugwort: Math.round((rawValues.mugwort * getSeasonalMultiplier('mugwort', currentMonth)) * 10) / 10,
-          olive: Math.round((rawValues.olive * getSeasonalMultiplier('olive', currentMonth)) * 10) / 10,
-          ragweed: Math.round((rawValues.ragweed * getSeasonalMultiplier('ragweed', currentMonth)) * 10) / 10,
+          alder: toIndex(rawValues.alder),
+          birch: toIndex(rawValues.birch),
+          grass: toIndex(rawValues.grass),
+          mugwort: toIndex(rawValues.mugwort),
+          olive: toIndex(rawValues.olive),
+          ragweed: toIndex(rawValues.ragweed),
         };
       }
     } catch {}

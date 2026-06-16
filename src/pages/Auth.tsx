@@ -4,14 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@supabase/supabase-js';
-import { Eye, EyeOff, CloudRain, Mail, Lock, ArrowLeft, Sparkles, Shield, Zap } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowLeft } from 'lucide-react';
 import { SignupSurvey } from '@/components/weather/signup-survey';
 import { useReferral } from '@/hooks/use-referral';
-import { Separator } from '@/components/ui/separator';
 import rainzLogo from '@/assets/rainz-logo-new.png';
 
 export default function Auth() {
@@ -42,12 +40,9 @@ export default function Auth() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const currentIsReset = new URLSearchParams(window.location.search).get('reset') === 'true';
-      
       if (session?.user) {
         setUser(session.user);
-        if (!currentIsReset) {
-          postAuthRedirect();
-        }
+        if (!currentIsReset) postAuthRedirect();
       } else {
         setUser(null);
       }
@@ -56,9 +51,7 @@ export default function Auth() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user);
-        if (!isReset) {
-          postAuthRedirect();
-        }
+        if (!isReset) postAuthRedirect();
       }
     });
 
@@ -67,14 +60,10 @@ export default function Auth() {
 
   const cleanupAuthState = () => {
     Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        localStorage.removeItem(key);
-      }
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) localStorage.removeItem(key);
     });
     Object.keys(sessionStorage || {}).forEach(key => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        sessionStorage.removeItem(key);
-      }
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) sessionStorage.removeItem(key);
     });
   };
 
@@ -83,15 +72,9 @@ export default function Auth() {
     setLoading(true);
     try {
       cleanupAuthState();
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {}
-      
+      try { await supabase.auth.signOut({ scope: 'global' }); } catch {}
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        toast({ variant: "destructive", title: "Sign In Failed", description: error.message });
-        return;
-      }
+      if (error) { toast({ variant: "destructive", title: "Sign In Failed", description: error.message }); return; }
       if (data.user) {
         toast({ title: "Welcome back!", description: "You've been signed in successfully." });
         const host = window.location.hostname;
@@ -106,68 +89,18 @@ export default function Auth() {
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
-      toast({ variant: "destructive", title: "Email Required", description: "Please enter your email address first." });
-      return;
-    }
+    if (!email) { toast({ variant: "destructive", title: "Email Required", description: "Please enter your email address first." }); return; }
     setLoading(true);
     try {
       const response = await supabase.functions.invoke('send-password-reset', {
-        body: {
-          email,
-          redirectUrl: `${window.location.origin}/auth?reset=true`
-        }
+        body: { email, redirectUrl: `${window.location.origin}/auth?reset=true` }
       });
-      
-      if (response.error) {
-        toast({ variant: "destructive", title: "Password Reset Failed", description: response.error.message });
-        return;
-      }
-      
-      if (response.data?.error) {
-        toast({ variant: "destructive", title: "Password Reset Failed", description: response.data.error });
-        return;
-      }
-      
+      if (response.error) { toast({ variant: "destructive", title: "Password Reset Failed", description: response.error.message }); return; }
+      if (response.data?.error) { toast({ variant: "destructive", title: "Password Reset Failed", description: response.data.error }); return; }
       toast({ title: "Reset Link Sent!", description: "Check your email for a password reset link." });
     } catch (error: any) {
       toast({ variant: "destructive", title: "Password Reset Failed", description: error.message || "An unexpected error occurred" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePasswordReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (newPassword !== confirmPassword) {
-      toast({ variant: "destructive", title: "Passwords Don't Match", description: "Please make sure both passwords are the same." });
-      return;
-    }
-    
-    const pwErrors = getPasswordErrors(newPassword);
-    if (pwErrors.length > 0) {
-      toast({ variant: "destructive", title: "Weak Password", description: `Missing: ${pwErrors.join(", ")}` });
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      
-      if (error) {
-        toast({ variant: "destructive", title: "Password Update Failed", description: error.message });
-        return;
-      }
-      
-      toast({ title: "Password Updated!", description: "Your password has been successfully changed." });
-      setResetMode(false);
-      window.location.href = '/';
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Password Update Failed", description: error.message || "An unexpected error occurred" });
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const getPasswordErrors = (pw: string): string[] => {
@@ -180,31 +113,36 @@ export default function Auth() {
     return errors;
   };
 
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) { toast({ variant: "destructive", title: "Passwords Don't Match", description: "Please make sure both passwords are the same." }); return; }
+    const pwErrors = getPasswordErrors(newPassword);
+    if (pwErrors.length > 0) { toast({ variant: "destructive", title: "Weak Password", description: `Missing: ${pwErrors.join(", ")}` }); return; }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) { toast({ variant: "destructive", title: "Password Update Failed", description: error.message }); return; }
+      toast({ title: "Password Updated!", description: "Your password has been successfully changed." });
+      setResetMode(false);
+      window.location.href = '/';
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Password Update Failed", description: error.message || "An unexpected error occurred" });
+    } finally { setLoading(false); }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-
     const pwErrors = getPasswordErrors(password);
-    if (pwErrors.length > 0) {
-      toast({ variant: "destructive", title: "Weak Password", description: `Missing: ${pwErrors.join(", ")}` });
-      return;
-    }
-
+    if (pwErrors.length > 0) { toast({ variant: "destructive", title: "Weak Password", description: `Missing: ${pwErrors.join(", ")}` }); return; }
     setLoading(true);
     try {
       cleanupAuthState();
       const redirectUrl = `${window.location.origin}/`;
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: redirectUrl }
-      });
+      const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirectUrl } });
       if (error) {
         let errorMessage = error.message;
-        if (error.message.includes('Database error')) {
-          errorMessage = "This email may already be registered. Try signing in instead.";
-        } else if (error.message.includes('already registered')) {
-          errorMessage = "This email is already registered. Please sign in instead.";
-        }
+        if (error.message.includes('Database error')) errorMessage = "This email may already be registered. Try signing in instead.";
+        else if (error.message.includes('already registered')) errorMessage = "This email is already registered. Please sign in instead.";
         toast({ variant: "destructive", title: "Sign Up Failed", description: errorMessage });
         return;
       }
@@ -217,424 +155,205 @@ export default function Auth() {
             notification_enabled: false,
             notification_time: '08:00'
           }, { onConflict: 'user_id' });
-        } catch (profileErr) {
-          console.log('Profile upsert skipped:', profileErr);
-        }
+        } catch (profileErr) { console.log('Profile upsert skipped:', profileErr); }
         setNewUserId(data.user.id);
         setShowSurvey(true);
-        
-        // Process referral if ref param exists
         const refCode = searchParams.get('ref');
-        if (refCode) {
-          processReferral(refCode, data.user.id);
-        }
-        
+        if (refCode) processReferral(refCode, data.user.id);
         toast({ title: "Account Created!", description: "Please check your email to verify your account." });
       }
     } catch (error: any) {
       toast({ variant: "destructive", title: "Sign Up Failed", description: error.message || "An unexpected error occurred" });
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
       cleanupAuthState();
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {}
-
-      // Use origin as redirect - Supabase handles the OAuth callback internally
+      try { await supabase.auth.signOut({ scope: 'global' }); } catch {}
       const host = window.location.hostname;
       const onRainz = host === 'rainz.net' || host.endsWith('.rainz.net');
       const redirectTo = onRainz ? 'https://www.rainz.net/' : `${window.location.origin}/`;
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'select_account',
-          },
-        },
+        options: { redirectTo, queryParams: { access_type: 'offline', prompt: 'select_account' } },
       });
-
       if (error) {
-        // Provide more helpful error messages
         let errorMessage = error.message;
-        if (error.message.includes('provider is not enabled')) {
-          errorMessage = 'Google sign-in is not configured. Please contact support.';
-        } else if (error.message.includes('invalid')) {
-          errorMessage = 'Google sign-in configuration error. Please try email sign-in.';
-        }
+        if (error.message.includes('provider is not enabled')) errorMessage = 'Google sign-in is not configured. Please contact support.';
+        else if (error.message.includes('invalid')) errorMessage = 'Google sign-in configuration error. Please try email sign-in.';
         toast({ variant: "destructive", title: "Google Sign In Failed", description: errorMessage });
       }
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Google Sign In Failed",
-        description: error.message || "An unexpected error occurred",
-      });
-    } finally {
-      setLoading(false);
-    }
+      toast({ variant: "destructive", title: "Google Sign In Failed", description: error.message || "An unexpected error occurred" });
+    } finally { setLoading(false); }
   };
 
-  // Password reset form
+  const GoogleIcon = () => (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden>
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+    </svg>
+  );
+
+  // Password reset form (minimal)
   if (resetMode && user) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <img src={rainzLogo} alt="Rainz" className="h-12 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-foreground">Set New Password</h1>
-            <p className="text-muted-foreground mt-2">Enter your new password below</p>
+      <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+        <div className="w-full max-w-sm space-y-8">
+          <div className="text-center space-y-2">
+            <img src={rainzLogo} alt="Rainz" className="h-10 mx-auto" />
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Set new password</h1>
+            <p className="text-sm text-muted-foreground">Choose a strong password to secure your account.</p>
           </div>
-          
-          <Card className="border-border shadow-lg">
-            <CardContent className="pt-6">
-              <form onSubmit={handlePasswordReset} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="new-password" className="text-sm font-medium">New Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      id="new-password" 
-                      type={showPassword ? "text" : "password"} 
-                      placeholder="Enter new password" 
-                      value={newPassword} 
-                      onChange={e => setNewPassword(e.target.value)} 
-                      required 
-                      minLength={6}
-                      className="pl-10 pr-10 h-11"
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      onClick={() => setShowPassword(prev => !prev)}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password" className="text-sm font-medium">Confirm Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      id="confirm-password" 
-                      type={showPassword ? "text" : "password"} 
-                      placeholder="Confirm new password" 
-                      value={confirmPassword} 
-                      onChange={e => setConfirmPassword(e.target.value)} 
-                      required 
-                      minLength={6}
-                      className="pl-10 h-11"
-                    />
-                  </div>
-                </div>
-                <Button type="submit" className="w-full h-11 font-medium" disabled={loading}>
-                  {loading ? "Updating..." : "Update Password"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+          <form onSubmit={handlePasswordReset} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password" className="text-xs font-medium text-muted-foreground">New password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input id="new-password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={newPassword} onChange={e => setNewPassword(e.target.value)} required minLength={6} className="pl-10 pr-10 h-12 rounded-2xl bg-muted/30 border-border/50" />
+                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(v => !v)}>
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password" className="text-xs font-medium text-muted-foreground">Confirm password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input id="confirm-password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required minLength={6} className="pl-10 h-12 rounded-2xl bg-muted/30 border-border/50" />
+              </div>
+            </div>
+            <Button type="submit" className="w-full h-12 rounded-2xl font-medium" disabled={loading}>
+              {loading ? "Updating..." : "Update password"}
+            </Button>
+          </form>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
-      {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-blue-700" />
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-20 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
-        </div>
-        
-        <div className="relative z-10 flex flex-col justify-center p-12 text-white">
-          <img src={rainzLogo} alt="Rainz" className="h-14 w-auto mb-8 brightness-0 invert" />
-          
-          <h2 className="text-4xl font-bold mb-4 leading-tight">
-            Weather predictions<br />you can trust
-          </h2>
-          <p className="text-lg text-white/80 mb-12 max-w-md">
-            Join thousands of weather enthusiasts who predict, compete, and earn points.
-          </p>
-          
-          <div className="space-y-6">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold mb-1">Accurate Forecasts</h3>
-                <p className="text-sm text-white/70">Multi-source weather data for reliable predictions</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                <Zap className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold mb-1">Compete & Earn</h3>
-                <p className="text-sm text-white/70">Make predictions and climb the leaderboard</p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold mb-1">Advanced Features</h3>
-                <p className="text-sm text-white/70">Access powerful tools and personalized alerts</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-background p-6">
+      <div className="w-full max-w-sm space-y-8">
+        {/* Back link */}
+        <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to Rainz
+        </Link>
 
-      {/* Right side - Auth forms */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8">
-        <div className="w-full max-w-md">
-          {/* Mobile header */}
-          <div className="lg:hidden text-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Rainz
-            </Link>
-            <img src={rainzLogo} alt="Rainz" className="h-10 mx-auto mb-4" />
+        {/* Header */}
+        <div className="space-y-3">
+          <img src={rainzLogo} alt="Rainz" className="h-9" />
+          <div className="space-y-1.5">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Welcome back</h1>
+            <p className="text-sm text-muted-foreground">Sign in to predict, compete and save your spots.</p>
           </div>
-          
-          {/* Desktop back link */}
-          <div className="hidden lg:block mb-8">
-            <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Rainz
-            </Link>
-          </div>
-
-          <Card className="border-border shadow-lg">
-            <CardHeader className="space-y-1 pb-6">
-              <CardTitle className="text-2xl font-bold text-center">Welcome</CardTitle>
-              <CardDescription className="text-center">
-                Sign in to save preferences and get personalized alerts
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="signin" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6 h-11">
-                  <TabsTrigger value="signin" className="text-sm font-medium">Sign In</TabsTrigger>
-                  <TabsTrigger value="signup" className="text-sm font-medium">Sign Up</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="signin" className="mt-0">
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-email" className="text-sm font-medium">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          id="signin-email" 
-                          type="email" 
-                          placeholder="Enter your email" 
-                          value={email} 
-                          onChange={e => setEmail(e.target.value)} 
-                          required 
-                          className="pl-10 h-11"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-password" className="text-sm font-medium">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          id="signin-password" 
-                          type={showPassword ? "text" : "password"} 
-                          placeholder="Enter your password" 
-                          value={password} 
-                          onChange={e => setPassword(e.target.value)} 
-                          required 
-                          className="pl-10 pr-10 h-11"
-                        />
-                        <button
-                          type="button"
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          onClick={() => setShowPassword(prev => !prev)}
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </div>
-                    <Button type="submit" className="w-full h-11 font-medium" disabled={loading}>
-                      {loading ? "Signing in..." : "Sign In"}
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      className="w-full text-sm text-muted-foreground hover:text-foreground" 
-                      onClick={handleForgotPassword} 
-                      disabled={loading}
-                    >
-                      Forgot your password?
-                    </Button>
-                  </form>
-                  
-                  <div className="relative my-6">
-                    <Separator />
-                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs text-muted-foreground uppercase tracking-wide">
-                      or
-                    </span>
-                  </div>
-                  
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="w-full h-11 flex items-center justify-center gap-3 font-medium" 
-                    onClick={handleGoogleSignIn}
-                    disabled={loading}
-                  >
-                    <svg className="h-5 w-5" viewBox="0 0 24 24">
-                      <path
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        fill="#4285F4"
-                      />
-                      <path
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        fill="#34A853"
-                      />
-                      <path
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                        fill="#FBBC05"
-                      />
-                      <path
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                        fill="#EA4335"
-                      />
-                    </svg>
-                    Continue with Google
-                  </Button>
-                </TabsContent>
-                
-                <TabsContent value="signup" className="mt-0">
-                  {showSurvey ? (
-                    <SignupSurvey
-                      userId={newUserId}
-                      onComplete={() => {
-                        setShowSurvey(false);
-                        // User already got the "check email" toast
-                      }}
-                    />
-                  ) : (
-                  <form onSubmit={handleSignUp} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email" className="text-sm font-medium">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          id="signup-email" 
-                          type="email" 
-                          placeholder="Enter your email" 
-                          value={email} 
-                          onChange={e => setEmail(e.target.value)} 
-                          required 
-                          className="pl-10 h-11"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password" className="text-sm font-medium">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          id="signup-password" 
-                          type={showPassword ? "text" : "password"} 
-                          placeholder="Create a password" 
-                          value={password} 
-                          onChange={e => setPassword(e.target.value)} 
-                          required 
-                          minLength={6}
-                          className="pl-10 pr-10 h-11"
-                        />
-                        <button
-                          type="button"
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          onClick={() => setShowPassword(prev => !prev)}
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                      <div className="text-xs text-muted-foreground space-y-0.5">
-                        <p>Password must have:</p>
-                        <ul className="list-disc pl-4 space-y-0">
-                          <li className={password.length >= 8 ? "text-green-500" : ""}>8+ characters</li>
-                          <li className={/[A-Z]/.test(password) ? "text-green-500" : ""}>Uppercase letter</li>
-                          <li className={/[a-z]/.test(password) ? "text-green-500" : ""}>Lowercase letter</li>
-                          <li className={/[0-9]/.test(password) ? "text-green-500" : ""}>Number</li>
-                          <li className={/[^A-Za-z0-9]/.test(password) ? "text-green-500" : ""}>Special character</li>
-                        </ul>
-                      </div>
-                    </div>
-                    <Button type="submit" className="w-full h-11 font-medium" disabled={loading}>
-                      {loading ? "Creating account..." : "Create Account"}
-                    </Button>
-                  </form>
-                  )}
-                  
-                  <div className="relative my-6">
-                    <Separator />
-                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs text-muted-foreground uppercase tracking-wide">
-                      or
-                    </span>
-                  </div>
-                  
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="w-full h-11 flex items-center justify-center gap-3 font-medium" 
-                    onClick={handleGoogleSignIn}
-                    disabled={loading}
-                  >
-                    <svg className="h-5 w-5" viewBox="0 0 24 24">
-                      <path
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        fill="#4285F4"
-                      />
-                      <path
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        fill="#34A853"
-                      />
-                      <path
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                        fill="#FBBC05"
-                      />
-                      <path
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                        fill="#EA4335"
-                      />
-                    </svg>
-                    Continue with Google
-                  </Button>
-                  
-                  <p className="text-xs text-muted-foreground text-center mt-6">
-                    By creating an account, you agree to our{' '}
-                    <Link to="/terms" className="text-primary hover:underline">Terms</Link>
-                    {' '}and{' '}
-                    <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
-                  </p>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
         </div>
+
+        {/* Google first — friction-free */}
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full h-12 rounded-2xl flex items-center justify-center gap-3 font-medium border-border/60 bg-muted/20 hover:bg-muted/40"
+          onClick={handleGoogleSignIn}
+          disabled={loading}
+        >
+          <GoogleIcon />
+          Continue with Google
+        </Button>
+
+        <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+          <span className="h-px flex-1 bg-border/60" />
+          or with email
+          <span className="h-px flex-1 bg-border/60" />
+        </div>
+
+        <Tabs defaultValue="signin" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 h-11 rounded-full bg-muted/30 p-1">
+            <TabsTrigger value="signin" className="rounded-full text-sm">Sign in</TabsTrigger>
+            <TabsTrigger value="signup" className="rounded-full text-sm">Sign up</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="signin" className="mt-6">
+            <form onSubmit={handleSignIn} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="signin-email" className="text-xs font-medium text-muted-foreground">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input id="signin-email" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required className="pl-10 h-12 rounded-2xl bg-muted/30 border-border/50" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signin-password" className="text-xs font-medium text-muted-foreground">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input id="signin-password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required className="pl-10 pr-10 h-12 rounded-2xl bg-muted/30 border-border/50" />
+                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(v => !v)}>
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              <Button type="submit" className="w-full h-12 rounded-2xl font-medium" disabled={loading}>
+                {loading ? "Signing in..." : "Sign in"}
+              </Button>
+              <button type="button" onClick={handleForgotPassword} disabled={loading} className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors">
+                Forgot your password?
+              </button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="signup" className="mt-6">
+            {showSurvey ? (
+              <SignupSurvey userId={newUserId} onComplete={() => setShowSurvey(false)} />
+            ) : (
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email" className="text-xs font-medium text-muted-foreground">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input id="signup-email" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required className="pl-10 h-12 rounded-2xl bg-muted/30 border-border/50" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password" className="text-xs font-medium text-muted-foreground">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input id="signup-password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} className="pl-10 pr-10 h-12 rounded-2xl bg-muted/30 border-border/50" />
+                    <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(v => !v)}>
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {[
+                      { ok: password.length >= 8, label: "8+ chars" },
+                      { ok: /[A-Z]/.test(password), label: "A-Z" },
+                      { ok: /[a-z]/.test(password), label: "a-z" },
+                      { ok: /[0-9]/.test(password), label: "0-9" },
+                      { ok: /[^A-Za-z0-9]/.test(password), label: "!@#" },
+                    ].map(c => (
+                      <span key={c.label} className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${c.ok ? "border-primary/40 bg-primary/10 text-primary" : "border-border/50 text-muted-foreground"}`}>
+                        {c.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <Button type="submit" className="w-full h-12 rounded-2xl font-medium" disabled={loading}>
+                  {loading ? "Creating account..." : "Create account"}
+                </Button>
+                <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+                  By continuing you agree to our{' '}
+                  <Link to="/terms" className="text-foreground hover:underline">Terms</Link>
+                  {' '}and{' '}
+                  <Link to="/privacy" className="text-foreground hover:underline">Privacy Policy</Link>.
+                </p>
+              </form>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

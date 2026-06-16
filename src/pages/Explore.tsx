@@ -56,25 +56,26 @@ export default function ExplorePage() {
     <>
       <SEOHead title="Explore — Rainz Weather" description="Weather tools, games, debates, and more" />
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-6 max-w-2xl space-y-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Compass className="w-5 h-5 text-primary" />
+        <div className="container mx-auto px-4 py-6 max-w-2xl">
+          {/* Minimalist hero — matches the Weather page top card */}
+          <section className="mb-6 space-y-4">
+            <div className="flex items-baseline gap-2 min-w-0">
+              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">Explore</h1>
+              <span className="text-xs text-muted-foreground/70 hidden sm:inline">Tools, games & debates.</span>
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Explore</h1>
-          </div>
 
-          <LocationSearch
-            onLocationSelect={(lt, ln, name) => setSelectedLocation({ lat: lt, lon: ln, name })}
-            isImperial={isImperial}
-          />
-          {/* Location info */}
-          {selectedLocation && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Compass className="w-4 h-4" />
-              <span>{selectedLocation.name.split(',')[0].trim()}</span>
-            </div>
-          )}
+            <LocationSearch
+              onLocationSelect={(lt, ln, name) => setSelectedLocation({ lat: lt, lon: ln, name })}
+              isImperial={isImperial}
+            />
+
+            {selectedLocation && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/30 text-xs font-medium text-muted-foreground w-fit">
+                <Compass className="w-3.5 h-3.5 text-primary" />
+                {selectedLocation.name.split(',')[0].trim()}
+              </div>
+            )}
+          </section>
 
           <Suspense fallback={null}>
             <div className="space-y-4">

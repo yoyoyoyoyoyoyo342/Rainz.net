@@ -915,12 +915,6 @@ export default function WeatherPage() {
 
               {/* Extended Morning Review moved to "View Extended Briefing" button on the AI hero */}
 
-              <AnimatedCard index={6}>
-                <div className="mb-4">
-                  <RainMapCard latitude={selectedLocation.lat} longitude={selectedLocation.lon} locationName={actualStationName} />
-                </div>
-              </AnimatedCard>
-
               <AnimatedCard index={7}>
                 <DetailedMetrics
                   currentWeather={weatherData.mostAccurate.currentWeather}
@@ -928,6 +922,18 @@ export default function WeatherPage() {
                   is24Hour={is24Hour}
                   premiumSettings={premiumSettings}
                 />
+                {hyperlocalData?.aqi ? (
+                  <div className="mt-4">
+                    <AQICard data={hyperlocalData.aqi} />
+                  </div>
+                ) : null}
+              </AnimatedCard>
+
+              {/* Rain map */}
+              <AnimatedCard index={8}>
+                <div className="mb-4">
+                  <RainMapCard latitude={selectedLocation.lat} longitude={selectedLocation.lon} locationName={actualStationName} />
+                </div>
               </AnimatedCard>
 
               {hyperlocalData?.aqi ? (

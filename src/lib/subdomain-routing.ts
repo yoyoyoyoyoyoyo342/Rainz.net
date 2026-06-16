@@ -1,63 +1,12 @@
-// Subdomain routing for *.rainz.net
-// Each curated app route can live on its own subdomain (e.g. predict.rainz.net).
-// City routes get city.rainz.net. Unknown subdomains auto-map to /<sub>.
-
-import { CITIES } from "@/data/cities";
+// Path-based routing on rejn.app.
+// The wildcard subdomain setup (*.rainz.net, *.rejn.app) has been retired.
+// Every page now lives at rejn.app/<path>.
+//
+// This module keeps a small compatibility surface so old callers
+// (subdomainHref, maybeRedirectLegacyDomain) keep working without changes.
 
 const ROOT_DOMAIN = "rejn.app";
 const LEGACY_DOMAIN = "rainz.net";
-
-// subdomain -> internal path the SPA should render
-export const SUBDOMAIN_TO_PATH: Record<string, string> = {
-  predict: "/predict",
-  social: "/social",
-  explore: "/explore",
-  dryroutes: "/dryroutes",
-  widgets: "/widgets",
-  info: "/info",
-  download: "/download",
-  airport: "/airport",
-  faq: "/faq",
-  about: "/about",
-  auth: "/auth",
-  admin: "/admin",
-  mcp: "/mcp",
-  docs: "/docs",
-  // api & blog are handled separately (existing logic)
-};
-
-// Inverse map: path -> subdomain (only top-level, not nested like /airport/features)
-export const PATH_TO_SUBDOMAIN: Record<string, string> = Object.fromEntries(
-  Object.entries(SUBDOMAIN_TO_PATH).map(([sub, path]) => [path, sub])
-);
-
-// Subdomains we never want to auto-map to a path
-export const RESERVED_SUBDOMAINS = new Set([
-  "www",
-  "mail",
-  "notify",
-  "mx",
-  "smtp",
-  "ftp",
-  "cdn",
-  "static",
-  "assets",
-  "id-preview",
-  "api", // handled separately
-  "blog", // handled separately
-]);
-
-const CITY_SLUGS = new Set(CITIES.map((c) => c.slug));
-
-export type HostResolution =
-  | { kind: "preview" } // *.lovable.app, localhost, capacitor
-  | { kind: "apex" } // rainz.net or www.rainz.net
-  | { kind: "api" }
-  | { kind: "blog" }
-  | { kind: "curated"; subdomain: string; path: string }
-  | { kind: "city"; slug: string }
-  | { kind: "generic"; path: string }
-  | { kind: "reserved" }; // reserved subdomain that isn't api/blog -> apex behavior
 
 export function getHostname(): string {
   if (typeof window === "undefined") return "";
@@ -69,7 +18,6 @@ export function isPreviewHost(host: string = getHostname()): boolean {
   if (host === "localhost" || host.endsWith(".localhost")) return true;
   if (host.endsWith(".lovable.app")) return true;
   if (host.startsWith("id-preview--")) return true;
-  // capacitor / native
   if (host === "" || host === "ionic" || host === "capacitor") return true;
   return !host.endsWith(ROOT_DOMAIN) && !host.endsWith(LEGACY_DOMAIN);
 }
@@ -78,115 +26,75 @@ export function isLegacyRainzHost(host: string = getHostname()): boolean {
   return host === LEGACY_DOMAIN || host.endsWith("." + LEGACY_DOMAIN);
 }
 
-export function getSubdomain(host: string = getHostname()): string | null {
-  if (isPreviewHost(host)) return null;
-  const base = isLegacyRainzHost(host) ? LEGACY_DOMAIN : ROOT_DOMAIN;
-  if (host === base) return null;
-  if (!host.endsWith("." + base)) return null;
-  const sub = host.slice(0, host.length - base.length - 1);
-  if (sub.includes(".")) return null;
-  return sub.toLowerCase();
-}
-
-export function resolveHost(host: string = getHostname()): HostResolution {
-  if (isPreviewHost(host)) return { kind: "preview" };
-  const sub = getSubdomain(host);
-  if (!sub || sub === "www") return { kind: "apex" };
-  if (sub === "api") return { kind: "api" };
-  if (sub === "blog") return { kind: "blog" };
-  if (RESERVED_SUBDOMAINS.has(sub)) return { kind: "reserved" };
-  if (sub in SUBDOMAIN_TO_PATH) {
-    return { kind: "curated", subdomain: sub, path: SUBDOMAIN_TO_PATH[sub] };
-  }
-  if (CITY_SLUGS.has(sub)) {
-    return { kind: "city", slug: sub };
-  }
-  // generic: treat /<sub> as the intended path
-  return { kind: "generic", path: "/" + sub };
-}
-
-// Build a full https URL for a path on its appropriate subdomain.
-// Falls back to a relative path on preview/native hosts.
+// Build an absolute URL for a path on the canonical apex.
+// On preview/native we return a relative path so React Router handles it.
 export function subdomainHref(path: string): string {
-  const host = getHostname();
-  if (isPreviewHost(host)) return path;
-
-  // Normalize
   const cleanPath = path.startsWith("/") ? path : "/" + path;
-
-  // Top-level curated path → subdomain root
-  if (cleanPath in PATH_TO_SUBDOMAIN) {
-    return `https://${PATH_TO_SUBDOMAIN[cleanPath]}.${ROOT_DOMAIN}/`;
-  }
-
-  // /weather/<city> → <city>.rainz.net
-  const cityMatch = cleanPath.match(/^\/weather\/([^/?#]+)/);
-  if (cityMatch && CITY_SLUGS.has(cityMatch[1])) {
-    return `https://${cityMatch[1]}.${ROOT_DOMAIN}/`;
-  }
-
-  // Nested under a curated subdomain (e.g. /airport/features) → keep on that subdomain
-  for (const [topPath, sub] of Object.entries(PATH_TO_SUBDOMAIN)) {
-    if (cleanPath.startsWith(topPath + "/")) {
-      const rest = cleanPath.slice(topPath.length); // includes leading /
-      return `https://${sub}.${ROOT_DOMAIN}${rest}`;
-    }
-  }
-
-  // Default: apex
+  if (isPreviewHost()) return cleanPath;
   return `https://${ROOT_DOMAIN}${cleanPath}`;
 }
 
-// On apex/www: if the current path maps to a subdomain, redirect there once.
+// No-op kept for backwards compatibility (subdomains are no longer used).
 export function maybeRedirectPathToSubdomain(): boolean {
+  return false;
+}
+
+// Returns a minimal host descriptor. Subdomains are no longer treated specially
+// (apex behaviour is used everywhere) except api/blog which were never
+// wildcard-routed in the SPA itself.
+export type HostResolution =
+  | { kind: "preview" }
+  | { kind: "apex" };
+
+export function resolveHost(): HostResolution {
+  return { kind: isPreviewHost() ? "preview" : "apex" };
+}
+
+// Redirect any *.rainz.net or apex rainz.net (and any leftover *.rejn.app
+// subdomain) to the equivalent path on the canonical apex rejn.app.
+// Old subdomain hosts like predict.rainz.net or predict.rejn.app are
+// flattened to https://rejn.app/predict<rest><search><hash>.
+export function maybeRedirectLegacyDomain(): boolean {
   if (typeof window === "undefined") return false;
   const host = getHostname();
-  if (isPreviewHost(host)) return false;
-  const sub = getSubdomain(host);
-  if (sub && sub !== "www") return false; // only redirect from apex/www
-
   const { pathname, search, hash } = window.location;
 
-  // Top-level curated
-  if (pathname in PATH_TO_SUBDOMAIN) {
-    const target = `https://${PATH_TO_SUBDOMAIN[pathname]}.${ROOT_DOMAIN}/${search}${hash}`;
-    window.location.replace(target);
+  const isApex = host === ROOT_DOMAIN || host === "www." + ROOT_DOMAIN;
+  if (isApex) return false;
+
+  // Build canonical apex URL preserving path/search/hash
+  const apexUrl = (path: string) =>
+    `https://${ROOT_DOMAIN}${path.startsWith("/") ? path : "/" + path}${search}${hash}`;
+
+  // rainz.net (apex) → rejn.app same path
+  if (host === LEGACY_DOMAIN || host === "www." + LEGACY_DOMAIN) {
+    window.location.replace(apexUrl(pathname));
     return true;
   }
 
-  // Nested under curated
-  for (const [topPath, subName] of Object.entries(PATH_TO_SUBDOMAIN)) {
-    if (pathname.startsWith(topPath + "/")) {
-      const rest = pathname.slice(topPath.length);
-      window.location.replace(
-        `https://${subName}.${ROOT_DOMAIN}${rest}${search}${hash}`
-      );
+  // *.rainz.net subdomain → rejn.app/<sub><pathname>
+  if (host.endsWith("." + LEGACY_DOMAIN)) {
+    const sub = host.slice(0, host.length - LEGACY_DOMAIN.length - 1);
+    if (sub && !sub.includes(".") && sub !== "www") {
+      const newPath = pathname === "/" ? "/" + sub : "/" + sub + pathname;
+      window.location.replace(apexUrl(newPath));
+      return true;
+    }
+    window.location.replace(apexUrl(pathname));
+    return true;
+  }
+
+  // *.rejn.app subdomain (legacy wildcard) → rejn.app/<sub><pathname>
+  if (host.endsWith("." + ROOT_DOMAIN) && host !== "www." + ROOT_DOMAIN) {
+    const sub = host.slice(0, host.length - ROOT_DOMAIN.length - 1);
+    if (sub && !sub.includes(".")) {
+      const newPath = pathname === "/" ? "/" + sub : "/" + sub + pathname;
+      window.location.replace(apexUrl(newPath));
       return true;
     }
   }
 
-  // City pages
-  const cityMatch = pathname.match(/^\/weather\/([^/?#]+)\/?$/);
-  if (cityMatch && CITY_SLUGS.has(cityMatch[1])) {
-    window.location.replace(
-      `https://${cityMatch[1]}.${ROOT_DOMAIN}/${search}${hash}`
-    );
-    return true;
-  }
-
   return false;
-}
-
-// Redirect any rainz.net hostname to the equivalent path on rejn.app.
-// Preserves subdomain (e.g. predict.rainz.net → predict.rejn.app), path, search, hash.
-export function maybeRedirectLegacyDomain(): boolean {
-  if (typeof window === "undefined") return false;
-  const host = getHostname();
-  if (!isLegacyRainzHost(host)) return false;
-  const newHost = host.slice(0, host.length - LEGACY_DOMAIN.length) + ROOT_DOMAIN;
-  const { pathname, search, hash } = window.location;
-  window.location.replace(`https://${newHost}${pathname}${search}${hash}`);
-  return true;
 }
 
 export { ROOT_DOMAIN, LEGACY_DOMAIN };

@@ -29,7 +29,7 @@ import { useAmplitudeFunnels } from "@/hooks/use-amplitude-funnels";
 import { useBroadcastListener } from "@/hooks/use-broadcast-listener";
 import { useAivenMigration } from "@/hooks/use-aiven-migration";
 import { toast as sonnerToast } from "sonner";
-import { resolveHost, maybeRedirectPathToSubdomain, maybeRedirectLegacyDomain } from "@/lib/subdomain-routing";
+import { maybeRedirectLegacyDomain } from "@/lib/subdomain-routing";
 
 
 // Critical components - load immediately
@@ -151,23 +151,11 @@ function usePrefetchSavedLocations() {
   }, []);
 }
 
-function AnimatedRoutes({
-  isApiSubdomain,
-  isBlogSubdomain,
-  rewrittenPath,
-}: {
-  isApiSubdomain: boolean;
-  isBlogSubdomain: boolean;
-  rewrittenPath: string | null;
-}) {
+function AnimatedRoutes() {
   const location = useLocation();
-
-  // For subdomain routing: only rewrite when the user is on the subdomain root.
-  // Once they navigate inside the SPA, respect the actual location.
-  const effectiveLocation =
-    rewrittenPath && location.pathname === "/"
-      ? { ...location, pathname: rewrittenPath }
-      : location;
+  const effectiveLocation = location;
+  const isApiSubdomain = false;
+  const isBlogSubdomain = false;
 
   return (
     <Suspense fallback={<div className="min-h-screen bg-background p-4"><WeatherPageSkeleton /></div>}>
@@ -258,30 +246,10 @@ function AppContent() {
   usePrefetchSavedLocations();
   useOAuthErrorToast();
 
-  // Redirect rainz.net → rejn.app before anything else renders meaningfully.
+  // Redirect legacy hosts (rainz.net + leftover *.rejn.app subdomains) to the canonical apex.
   if (typeof window !== "undefined" && maybeRedirectLegacyDomain()) {
-    // navigation in progress; render nothing to avoid flashing UI
     return null;
   }
-
-  // Resolve which subdomain we're on (apex/api/blog/curated/city/generic)
-  const hostResolution = resolveHost();
-
-  // On apex/www: redirect well-known paths to their subdomain (acts like a 301).
-  useEffect(() => {
-    if (hostResolution.kind === "apex") {
-      maybeRedirectPathToSubdomain();
-    }
-  }, [hostResolution.kind]);
-
-  const isApiSubdomain = hostResolution.kind === "api";
-  const isBlogSubdomain = hostResolution.kind === "blog";
-
-  // For curated/city/generic subdomains, rewrite the SPA's "/" to the matching path.
-  let rewrittenPath: string | null = null;
-  if (hostResolution.kind === "curated") rewrittenPath = hostResolution.path;
-  else if (hostResolution.kind === "city") rewrittenPath = `/weather/${hostResolution.slug}`;
-  else if (hostResolution.kind === "generic") rewrittenPath = hostResolution.path;
 
   const isEmbedRoute = window.location.pathname === "/embed";
 
@@ -323,11 +291,8 @@ function AppContent() {
                           <BirthdayBanner />
                           <div className="flex-1">
                             <AnalyticsTracker />
-                            <AnimatedRoutes
-                              isApiSubdomain={isApiSubdomain}
-                              isBlogSubdomain={isBlogSubdomain}
-                              rewrittenPath={rewrittenPath}
-                            />
+                            <AnimatedRoutes />
+
                           </div>
                           {window.location.pathname !== '/dryroutes' && (
                          <Footer />

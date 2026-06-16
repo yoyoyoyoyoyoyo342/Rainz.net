@@ -8,114 +8,12 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-// Cross-subdomain auth: when running on *.rainz.net, persist the Supabase
-// session in a cookie scoped to .rainz.net so users stay signed in when they
-// move between predict.rainz.net, social.rainz.net, etc. Falls back to
-// localStorage on preview/native hosts.
-function getAuthStorage(): Storage | undefined {
-  if (typeof window === "undefined") return undefined;
-  const host = window.location.hostname;
-  const isRainzApex = host === "rainz.net" || host.endsWith(".rainz.net");
-  if (!isRainzApex) return localStorage;
-
-  const COOKIE_DOMAIN = ".rainz.net";
-  const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
-  const CHUNK_SIZE = 3000; // stay safely under the 4KB per-cookie limit
-
-  const writeCookie = (name: string, value: string) => {
-    document.cookie = `${name}=${value}; Max-Age=${MAX_AGE}; Path=/; Domain=${COOKIE_DOMAIN}; Secure; SameSite=Lax`;
-  };
-  const deleteCookie = (name: string) => {
-    document.cookie = `${name}=; Max-Age=0; Path=/; Domain=${COOKIE_DOMAIN}; Secure; SameSite=Lax`;
-    // Also clear host-only fallback
-    document.cookie = `${name}=; Max-Age=0; Path=/; Secure; SameSite=Lax`;
-  };
-  const readCookie = (name: string): string | null => {
-    const match = document.cookie
-      .split("; ")
-      .find((c) => c.startsWith(name + "="));
-    return match ? match.substring(name.length + 1) : null;
-  };
-
-  // Mirror to localStorage as a safety net so reloads still work even if
-  // the cookie write was silently rejected by the browser.
-  const cookieStorage: Storage = {
-    get length() {
-      return localStorage.length;
-    },
-    clear() {
-      // Clear sb-* cookies (and their chunks) on this domain
-      document.cookie.split("; ").forEach((c) => {
-        const name = c.split("=")[0];
-        if (name.startsWith("sb-")) deleteCookie(name);
-      });
-      localStorage.clear();
-    },
-    key(index: number) {
-      return localStorage.key(index);
-    },
-    getItem(key: string) {
-      const encKey = encodeURIComponent(key);
-      // Try chunked cookies first
-      const meta = readCookie(encKey + ".0");
-      if (meta) {
-        const chunks: string[] = [];
-        let i = 1;
-        while (true) {
-          const c = readCookie(`${encKey}.${i}`);
-          if (c == null) break;
-          chunks.push(c);
-          i++;
-        }
-        try {
-          return decodeURIComponent(chunks.join(""));
-        } catch {
-          return null;
-        }
-      }
-      // Single-cookie legacy
-      const single = readCookie(encKey);
-      if (single != null) {
-        try {
-          return decodeURIComponent(single);
-        } catch {
-          return null;
-        }
-      }
-      // Fallback to localStorage
-      return localStorage.getItem(key);
-    },
-    setItem(key: string, value: string) {
-      const encKey = encodeURIComponent(key);
-      const encVal = encodeURIComponent(value);
-      // Always mirror to localStorage so we never lose the session
-      try { localStorage.setItem(key, value); } catch {}
-      // Clear any prior single-cookie value
-      deleteCookie(encKey);
-      // Chunk and write
-      const totalChunks = Math.ceil(encVal.length / CHUNK_SIZE) || 1;
-      // Sentinel cookie marks chunked storage exists
-      writeCookie(`${encKey}.0`, String(totalChunks));
-      for (let i = 0; i < totalChunks; i++) {
-        writeCookie(`${encKey}.${i + 1}`, encVal.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE));
-      }
-    },
-    removeItem(key: string) {
-      const encKey = encodeURIComponent(key);
-      try { localStorage.removeItem(key); } catch {}
-      deleteCookie(encKey);
-      deleteCookie(`${encKey}.0`);
-      // Remove up to a generous number of chunks
-      for (let i = 1; i < 32; i++) deleteCookie(`${encKey}.${i}`);
-    },
-  };
-
-  return cookieStorage;
-}
-
+// All routes now live on the canonical apex (rejn.app/<path>), so the
+// previous cross-subdomain cookie storage is no longer needed.
+// Persist the Supabase session in localStorage on every host.
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: getAuthStorage(),
+    storage: typeof window !== "undefined" ? localStorage : undefined,
     persistSession: true,
     autoRefreshToken: true,
   }

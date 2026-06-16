@@ -14,8 +14,8 @@
     },
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "(?<sub>.+)\\.rainz\\.net" }],
-      "destination": "https://:sub.rejn.app/:path*",
+      "has": [{ "type": "host", "value": "www.rejn.app" }],
+      "destination": "https://rejn.app/:path*",
       "permanent": true
     }
   ],

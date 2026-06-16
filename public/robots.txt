@@ -1,7 +1,7 @@
 # ===============================================================
 # Rainz Weather - SEO & AI Optimized Robots.txt
 # AI-powered hyperlocal weather forecasting application
-# Domain: rainz.net
+# Domain: rejn.app
 # Version: 2.1
 # Last Updated: 29 January 2026
 # ===============================================================
@@ -13,8 +13,8 @@ Allow: /llm.txt
 Allow: /openapi.yaml
 Allow: /.well-known/
 
-# Sitemaps (covers apex + all *.rainz.net subdomains)
-Sitemap: https://rainz.net/sitemap.xml
+# Sitemap
+Sitemap: https://rejn.app/sitemap.xml
 
 # ===============================================================
 # AI/LLM Crawler Instructions
@@ -122,4 +122,4 @@ Allow: /
 # ===============================================================
 
 # Host directive
-Host: https://rainz.net
+Host: https://rejn.app

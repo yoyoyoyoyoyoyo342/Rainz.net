@@ -21,6 +21,7 @@ export function AIBriefingHero({
   condition,
   hourly,
   isImperial,
+  footer,
 }: AIBriefingHeroProps) {
   const [text, setText] = useState("");
   const [streaming, setStreaming] = useState(false);

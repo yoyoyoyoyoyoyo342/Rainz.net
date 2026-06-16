@@ -64,6 +64,9 @@ export function maybeRedirectLegacyDomain(): boolean {
   const isApex = host === ROOT_DOMAIN || host === "www." + ROOT_DOMAIN;
   if (isApex) return false;
 
+  // Allow the beta subdomain to stay on its own host
+  if (host === BETA_SUBDOMAIN) return false;
+
   // Build canonical apex URL preserving path/search/hash
   const apexUrl = (path: string) =>
     `https://${ROOT_DOMAIN}${path.startsWith("/") ? path : "/" + path}${search}${hash}`;

@@ -113,7 +113,7 @@ export function SkyCamSubmissionDialog({ location, locationData, trigger }: SkyC
         {trigger ?? (
           <Button variant="outline" size="sm" className="gap-2">
             <Camera className="w-4 h-4" />
-            Rainz SkyCam
+            Rejn SkyCam
           </Button>
         )}
       </DialogTrigger>
@@ -122,7 +122,7 @@ export function SkyCamSubmissionDialog({ location, locationData, trigger }: SkyC
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold flex items-center gap-2">
               <Cloud className="w-5 h-5 text-primary" />
-              Rainz SkyCam
+              Rejn SkyCam
             </DialogTitle>
             <DialogDescription>
               Help Rainz check the sky near you{location ? ` in ${location}` : ''}.
@@ -142,7 +142,7 @@ export function SkyCamSubmissionDialog({ location, locationData, trigger }: SkyC
         ) : (
           <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
             <div className="rounded-lg bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground space-y-1">
-              <p className="font-medium text-foreground">Rainz SkyCam rules</p>
+              <p className="font-medium text-foreground">Rejn SkyCam rules</p>
               <ul className="list-disc list-inside space-y-0.5">
                 <li>Point your camera mostly at the sky.</li>
                 <li>Do not include faces or private windows.</li>

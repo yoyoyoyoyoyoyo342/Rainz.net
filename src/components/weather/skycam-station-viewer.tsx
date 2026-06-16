@@ -121,7 +121,7 @@ export function SkyCamStationViewer({ latitude, longitude, className }: SkyCamSt
     <>
       <button
         onClick={() => setOpen(true)}
-        aria-label="View Rainz SkyCam image"
+        aria-label="View Rejn SkyCam image"
         className={`absolute bottom-3 right-3 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-lg hover:opacity-90 active:scale-95 transition ${className ?? ''}`}
       >
         <Camera className="w-3.5 h-3.5" />
@@ -134,7 +134,7 @@ export function SkyCamStationViewer({ latitude, longitude, className }: SkyCamSt
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-lg">
                 <Camera className="w-5 h-5 text-primary" />
-                Rainz SkyCam — {station.city}
+                Rejn SkyCam — {station.city}
               </DialogTitle>
               <DialogDescription className="flex items-center gap-1.5 text-xs">
                 <MapPin className="w-3 h-3" />

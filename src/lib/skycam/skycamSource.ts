@@ -1,4 +1,4 @@
-// Rainz SkyCam — client-side source decision logic.
+// Rejn SkyCam — client-side source decision logic.
 // Decides whether the current weather UI should label data as "Data from SkyCam"
 // or "Data from API", based on nearby trusted SkyCam stations.
 

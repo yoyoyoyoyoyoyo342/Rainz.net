@@ -1,10 +1,10 @@
-// Rainz SkyCam — shared AI analysis prompt + parser.
+// Rejn SkyCam — shared AI analysis prompt + parser.
 // Used by edge functions (upload-skycam-observation, submit-skycam-photo).
 // Client-side code should NOT call this directly because GROQ_API_KEY is server-only.
 
 import type { SkyCamAnalysisResult, SkyCamConditionLabel } from '@/types/skycam';
 
-export const SKYCAM_AI_SYSTEM_PROMPT = `You are Rainz SkyCam, an automated weather verification AI.
+export const SKYCAM_AI_SYSTEM_PROMPT = `You are Rejn SkyCam, an automated weather verification AI.
 You receive a single photo of the sky and must analyse what the weather looks like RIGHT NOW.
 Return STRICT JSON only. Do not include markdown, prose, or commentary.
 

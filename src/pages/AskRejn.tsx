@@ -269,130 +269,140 @@ export default function AskRejnPage() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
-                className="flex-1 flex flex-col items-center justify-start pt-8 px-6"
+                className="flex-1 flex flex-col items-center justify-center px-6 pb-24"
               >
                 {/* Mascot on grass */}
-                <div className="relative w-full max-w-sm flex flex-col items-center">
-                  <RejnMascot pose="sit" className="w-40 h-40 sm:w-48 sm:h-48 drop-shadow-xl" />
-                  {/* Grass strip */}
-                  <div className="-mt-4 w-56 h-3 rounded-full bg-gradient-to-r from-transparent via-green-500/40 to-transparent blur-[2px]" />
-                  <div className="-mt-2 w-44 h-1.5 rounded-full bg-gradient-to-r from-transparent via-green-700/40 to-transparent" />
+                <div className="relative flex flex-col items-center">
+                  <RejnMascot pose="sit" className="w-32 h-32 sm:w-40 sm:h-40 drop-shadow-xl" />
+                  <div className="-mt-3 w-48 h-2.5 rounded-full bg-gradient-to-r from-transparent via-green-500/40 to-transparent blur-[2px]" />
                 </div>
 
                 <motion.h2
                   key={greeting}
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-8 text-2xl sm:text-3xl font-bold text-center tracking-tight"
+                  className="mt-6 text-[28px] sm:text-4xl font-serif font-normal text-center tracking-tight"
                 >
                   {greeting}
                 </motion.h2>
-                <p className="mt-2 text-sm text-muted-foreground text-center max-w-xs">
-                  Ask me anything — weather, plans, or just say hi.
-                </p>
 
-                <div className="mt-6 w-full max-w-md">
-                  <div className="flex items-center justify-between mb-2 px-1">
-                    <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Try asking</span>
-                    <button
-                      onClick={() => setSuggestions(pickSuggestions(4))}
-                      className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-                      aria-label="Shuffle suggestions"
+                {/* Inline Claude-style composer */}
+                <div className="mt-8 w-full max-w-2xl">
+                  <div className="relative rounded-[28px] border border-border/40 bg-card/60 backdrop-blur-xl shadow-lg transition-colors focus-within:border-border/70">
+                    <Textarea
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKey}
+                      placeholder="How can I help you today?"
+                      rows={1}
+                      className="min-h-[56px] max-h-40 resize-none border-0 focus-visible:ring-0 bg-transparent text-[16px] px-5 pt-4 pb-12 rounded-[28px]"
+                      disabled={sending}
+                    />
+                    <Button
+                      size="icon"
+                      onClick={send}
+                      disabled={sending || !input.trim()}
+                      className="absolute right-2.5 bottom-2.5 h-9 w-9 rounded-full shrink-0"
                     >
-                      <Shuffle className="w-3 h-3" /> Shuffle
-                    </button>
+                      {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </Button>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+                  {/* Suggestion pills */}
+                  <div className="mt-5 flex items-center gap-2 flex-wrap justify-center">
                     <AnimatePresence mode="popLayout">
                       {suggestions.map((s) => (
                         <motion.button
                           key={s}
                           layout
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -6 }}
-                          transition={{ duration: 0.2 }}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          transition={{ duration: 0.18 }}
                           onClick={() => setInput(s)}
-                          className="px-3 py-2.5 rounded-xl text-sm text-left bg-card/40 hover:bg-card/70 border border-border/30 transition-colors"
+                          className="px-3.5 py-1.5 rounded-full text-[13px] bg-card/50 hover:bg-card/80 border border-border/30 text-muted-foreground hover:text-foreground transition-colors"
                         >
                           {s}
                         </motion.button>
                       ))}
                     </AnimatePresence>
+                    <button
+                      onClick={() => setSuggestions(pickSuggestions(4))}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] text-muted-foreground/70 hover:text-foreground transition-colors"
+                      aria-label="Shuffle suggestions"
+                    >
+                      <Shuffle className="w-3 h-3" /> Shuffle
+                    </button>
                   </div>
                 </div>
-
               </motion.div>
             ) : (
-              <motion.div
-                key="chat"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 space-y-3"
-                ref={scrollRef}
-              >
-                {messages.map((m, i) => (
-                  <div
-                    key={i}
-                    className={`flex gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    {m.role === "assistant" && (
-                      <div className="shrink-0">
-                        <RejnMascot pose="wave" className="w-8 h-8" />
+              <>
+                <motion.div
+                  key="chat"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex-1 overflow-y-auto px-4 sm:px-6 py-6"
+                  ref={scrollRef}
+                >
+                  <div className="max-w-2xl mx-auto space-y-6">
+                    {messages.map((m, i) => (
+                      <div key={i} className="flex flex-col gap-2">
+                        {m.role === "assistant" ? (
+                          <div className="flex gap-3">
+                            <RejnMascot pose="wave" className="w-7 h-7 shrink-0 mt-0.5" />
+                            <div className="text-[15px] leading-relaxed whitespace-pre-wrap text-foreground/90 flex-1">
+                              {m.content}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex justify-end">
+                            <div className="max-w-[85%] rounded-3xl rounded-br-lg px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap bg-muted/60 text-foreground">
+                              {m.content}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {sending && (
+                      <div className="flex gap-3">
+                        <RejnMascot pose="wave" className="w-7 h-7 shrink-0 mt-0.5" />
+                        <div className="flex gap-1.5 items-center h-7">
+                          <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" />
+                          <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: "120ms" }} />
+                          <span className="w-1.5 h-1.5 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: "240ms" }} />
+                        </div>
                       </div>
                     )}
-                    <div
-                      className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap ${
-                        m.role === "user"
-                          ? "bg-primary text-primary-foreground rounded-br-md"
-                          : "bg-muted/70 text-foreground rounded-bl-md"
-                      }`}
+                  </div>
+                </motion.div>
+
+                {/* Bottom composer for active chat */}
+                <div className="px-4 sm:px-6 pb-4 pt-2 bg-gradient-to-t from-background via-background/95 to-transparent">
+                  <div className="max-w-2xl mx-auto relative rounded-[28px] border border-border/40 bg-card/70 backdrop-blur-xl shadow-lg focus-within:border-border/70">
+                    <Textarea
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKey}
+                      placeholder="Reply to Rejn…"
+                      rows={1}
+                      className="min-h-[52px] max-h-40 resize-none border-0 focus-visible:ring-0 bg-transparent text-[15px] px-5 pt-3.5 pb-11 rounded-[28px]"
+                      disabled={sending}
+                    />
+                    <Button
+                      size="icon"
+                      onClick={send}
+                      disabled={sending || !input.trim()}
+                      className="absolute right-2.5 bottom-2.5 h-9 w-9 rounded-full shrink-0"
                     >
-                      {m.content}
-                    </div>
+                      {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </Button>
                   </div>
-                ))}
-                {sending && (
-                  <div className="flex gap-2 justify-start">
-                    <RejnMascot pose="wave" className="w-8 h-8" />
-                    <div className="bg-muted/70 rounded-2xl rounded-bl-md px-4 py-3">
-                      <div className="flex gap-1.5">
-                        <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" />
-                        <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: "120ms" }} />
-                        <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: "240ms" }} />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </motion.div>
+                </div>
+              </>
             )}
           </AnimatePresence>
-
-          {/* Composer */}
-          <div className="px-3 sm:px-4 pb-3 pt-2 bg-gradient-to-t from-background via-background/95 to-transparent">
-            <Card className="glass-card-strong rounded-2xl">
-              <CardContent className="p-2 flex items-end gap-2">
-                <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKey}
-                  placeholder={isEmpty ? `Message Rejn…` : "Reply…"}
-                  rows={1}
-                  className="min-h-[44px] max-h-32 resize-none border-0 focus-visible:ring-0 bg-transparent text-[15px]"
-                  disabled={sending}
-                />
-                <Button
-                  size="icon"
-                  onClick={send}
-                  disabled={sending || !input.trim()}
-                  className="h-10 w-10 rounded-xl shrink-0"
-                >
-                  {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
         </div>
 
         <BottomTabBar />

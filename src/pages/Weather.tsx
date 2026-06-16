@@ -640,33 +640,41 @@ export default function WeatherPage() {
               <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
             </div>
 
-            {/* Saved location chips — glass style to match AI hero */}
+            {/* Saved locations — minimal inline switcher (no pills) */}
             {savedLocations.length > 0 && (
-              <div className="-mx-1 px-1 flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory">
-                {savedLocations.slice(0, 5).map((loc: any) => {
-                  const isActive = selectedLocation &&
-                    Math.abs(loc.latitude - selectedLocation.lat) < 0.01 &&
-                    Math.abs(loc.longitude - selectedLocation.lon) < 0.01;
-                  const cityName = loc.name.split(',')[0].trim();
-                  return (
-                    <button
-                      key={loc.id}
-                      onClick={() => handleLocationSelect(loc.latitude, loc.longitude, loc.name)}
-                      className={`snap-start shrink-0 inline-flex items-center gap-1.5 pl-2.5 pr-3.5 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md border transition-all active:scale-95 ${
-                        isActive
-                          ? "bg-white/15 text-white border-white/30 shadow-[0_4px_20px_-6px_rgba(255,255,255,0.25)]"
-                          : "bg-white/[0.06] text-white/80 border-white/10 hover:bg-white/10 hover:text-white"
-                      }`}
-                    >
-                      {loc.is_primary ? (
-                        <MapPin className="w-3.5 h-3.5 opacity-80" />
-                      ) : (
-                        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
-                      )}
-                      {cityName}
-                    </button>
-                  );
-                })}
+              <div className="flex items-center gap-2 px-1 text-xs overflow-x-auto no-scrollbar">
+                <span className="shrink-0 uppercase tracking-[0.18em] text-[10px] font-semibold text-muted-foreground/70">
+                  Saved
+                </span>
+                <div className="flex items-center gap-3 min-w-0">
+                  {savedLocations.slice(0, 5).map((loc: any, idx: number) => {
+                    const isActive = selectedLocation &&
+                      Math.abs(loc.latitude - selectedLocation.lat) < 0.01 &&
+                      Math.abs(loc.longitude - selectedLocation.lon) < 0.01;
+                    const cityName = loc.name.split(',')[0].trim();
+                    return (
+                      <div key={loc.id} className="flex items-center gap-3 shrink-0">
+                        {idx > 0 && <span className="text-muted-foreground/30">·</span>}
+                        <button
+                          onClick={() => handleLocationSelect(loc.latitude, loc.longitude, loc.name)}
+                          className={`group relative inline-flex items-center gap-1 font-medium transition-colors active:scale-95 ${
+                            isActive
+                              ? "text-foreground"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          {loc.is_primary && <MapPin className="w-3 h-3 opacity-60" />}
+                          <span>{cityName}</span>
+                          <span
+                            className={`absolute -bottom-0.5 left-0 right-0 h-[2px] rounded-full bg-primary transition-all ${
+                              isActive ? "opacity-100 scale-x-100" : "opacity-0 scale-x-0"
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 

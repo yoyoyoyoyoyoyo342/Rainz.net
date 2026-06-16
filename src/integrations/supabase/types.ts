@@ -1342,6 +1342,7 @@ export type Database = {
           item_type: string
           points_spent: number
           purchased_at: string
+          stripe_session_id: string | null
           user_id: string
         }
         Insert: {
@@ -1350,6 +1351,7 @@ export type Database = {
           item_type: string
           points_spent: number
           purchased_at?: string
+          stripe_session_id?: string | null
           user_id: string
         }
         Update: {
@@ -1358,6 +1360,7 @@ export type Database = {
           item_type?: string
           points_spent?: number
           purchased_at?: string
+          stripe_session_id?: string | null
           user_id?: string
         }
         Relationships: []
@@ -2712,6 +2715,39 @@ export type Database = {
         }
         Relationships: []
       }
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          display_name: string | null
+          total_points: number | null
+          trophy_count: number | null
+          user_id: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          total_points?: number | null
+          trophy_count?: number | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          total_points?: number | null
+          trophy_count?: number | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       award_monthly_trophy: {
@@ -2757,6 +2793,13 @@ export type Database = {
           display_name: string
           id: string
           username: string
+        }[]
+      }
+      get_tip_jar_stats: {
+        Args: never
+        Returns: {
+          recent_tippers: string[]
+          total_cents: number
         }[]
       }
       has_role: {

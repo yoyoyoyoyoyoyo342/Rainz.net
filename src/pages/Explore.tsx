@@ -100,27 +100,3 @@ export default function ExplorePage() {
     </>
   );
 }
-
-          <Suspense fallback={null}>
-            <div className="space-y-4">
-              <LiveWeatherMap latitude={lat} longitude={lon} locationName={locationName} userId={user?.id} />
-              <WeatherTimeMachine latitude={lat} longitude={lon} locationName={locationName} isImperial={isImperial} />
-              <WeatherReactionsFeed latitude={lat} longitude={lon} locationName={locationName} />
-              <PhotoChallenge latitude={lat} longitude={lon} locationName={locationName} />
-              <WeatherDebateArena latitude={lat} longitude={lon} locationName={locationName} />
-              <WeatherTrivia />
-              <WeatherPersonalityQuiz />
-              <WeatherMoodJournal />
-              <WeatherCompare isImperial={isImperial} />
-              <WeatherTrendsCard location={locationName} latitude={lat} longitude={lon} isImperial={isImperial} />
-              {user && <StreakChallenge latitude={lat} longitude={lon} locationName={locationName} />}
-              <ReferralProgram />
-              <FeatureIdeasCard />
-            </div>
-          </Suspense>
-        </div>
-      </div>
-      <BottomTabBar />
-    </>
-  );
-}

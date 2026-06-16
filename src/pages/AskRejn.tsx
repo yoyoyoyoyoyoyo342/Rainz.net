@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Plus, History, ArrowLeft, Loader2 } from "lucide-react";
+import { Send, Plus, History, ArrowLeft, Loader2, Shuffle } from "lucide-react";
+import { pickSuggestions } from "@/lib/ask-rejn-suggestions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,12 +37,8 @@ const GREETINGS = [
   "Heyyy {name}, ready when you are",
 ];
 
-const SUGGESTIONS = [
-  "Will it rain tomorrow?",
-  "What should I wear today?",
-  "How do predictions work?",
-  "Tell me a weird weather fact",
-];
+// Suggestions are now sourced from a 200+ pool and shuffled on mount /
+// new chat / shuffle button — see src/lib/ask-rejn-suggestions.ts.
 
 export default function AskRejnPage() {
   const { user, profile, loading: authLoading } = useAuth();

@@ -9,6 +9,7 @@ interface AIBriefingHeroProps {
   condition?: string;
   hourly?: Array<{ time: string; temperature: number; condition: string; precipitation: number }>;
   isImperial?: boolean;
+  footer?: React.ReactNode;
 }
 
 // Rainz 2.0 — Streaming AI weather briefing hero.

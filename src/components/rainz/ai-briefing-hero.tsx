@@ -9,6 +9,7 @@ interface AIBriefingHeroProps {
   condition?: string;
   hourly?: Array<{ time: string; temperature: number; condition: string; precipitation: number }>;
   isImperial?: boolean;
+  footer?: React.ReactNode;
 }
 
 // Rainz 2.0 — Streaming AI weather briefing hero.
@@ -20,6 +21,7 @@ export function AIBriefingHero({
   condition,
   hourly,
   isImperial,
+  footer,
 }: AIBriefingHeroProps) {
   const [text, setText] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -184,6 +186,7 @@ export function AIBriefingHero({
               )}
             </div>
           )}
+          {footer && <div className="mt-3">{footer}</div>}
         </div>
       </div>
     </RainzCard>

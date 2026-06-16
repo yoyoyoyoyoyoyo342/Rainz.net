@@ -199,6 +199,15 @@
   }
 }
 
+/* Minimalist 2.0 — thin, uniform lucide icon strokes app-wide.
+   Lucide ships at stroke-width 2 by default; 1.5 reads cleaner without
+   losing legibility. Individual icons can still override via strokeWidth prop. */
+@layer base {
+  svg.lucide {
+    stroke-width: 1.5;
+  }
+}
+
 
 /* Safe area support for iOS devices */
 @supports (padding: env(safe-area-inset-bottom)) {

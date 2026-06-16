@@ -1,4 +1,4 @@
-// Rainz SkyCam shared types
+// Rejn SkyCam shared types
 export type SkyCamConditionLabel =
   | 'clear'
   | 'partly_cloudy'

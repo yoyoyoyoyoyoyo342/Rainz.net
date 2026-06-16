@@ -111,7 +111,7 @@ export default function AdminSkyCam() {
 
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2"><Cloud className="w-7 h-7" /> Rainz SkyCam</h1>
+          <h1 className="text-3xl font-bold flex items-center gap-2"><Cloud className="w-7 h-7" /> Rejn SkyCam</h1>
           <p className="text-muted-foreground">All registered stations and pending user submissions</p>
         </div>
         <Link to="/admin/skycam/submissions">

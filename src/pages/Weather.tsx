@@ -789,35 +789,35 @@ export default function WeatherPage() {
                     precipitation: h.precipitation ?? 0,
                   }));
                   return (
-                    <div className="space-y-2">
-                      <AIBriefingHero
-                        location={customDisplayName || actualStationName || selectedLocation?.name || "your location"}
-                        currentTemp={toUserUnit(raw.temperature)}
-                        feelsLike={toUserUnit(raw.feelsLike)}
-                        condition={raw.condition}
-                        hourly={normalizedHourly}
-                        isImperial={isImperial}
-                      />
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="w-full gap-2">
-                            <Sparkles className="w-3.5 h-3.5" /> View Extended Briefing
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Extended Morning Review</DialogTitle>
-                          </DialogHeader>
-                          <MorningWeatherReview
-                            weatherData={weatherData.mostAccurate}
-                            location={actualStationName}
-                            isImperial={isImperial}
-                            userId={user?.id}
-                            alwaysShow
-                          />
-                        </DialogContent>
-                      </Dialog>
-                    </div>
+                    <AIBriefingHero
+                      location={customDisplayName || actualStationName || selectedLocation?.name || "your location"}
+                      currentTemp={toUserUnit(raw.temperature)}
+                      feelsLike={toUserUnit(raw.feelsLike)}
+                      condition={raw.condition}
+                      hourly={normalizedHourly}
+                      isImperial={isImperial}
+                      footer={
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="w-full gap-2">
+                              <Sparkles className="w-3.5 h-3.5" /> View Extended Briefing
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle>Extended Morning Review</DialogTitle>
+                            </DialogHeader>
+                            <MorningWeatherReview
+                              weatherData={weatherData.mostAccurate}
+                              location={actualStationName}
+                              isImperial={isImperial}
+                              userId={user?.id}
+                              alwaysShow
+                            />
+                          </DialogContent>
+                        </Dialog>
+                      }
+                    />
                   );
                 })()}
               </AnimatedCard>

@@ -33,9 +33,7 @@ export default function Auth() {
     setResetMode(isReset);
 
     const postAuthRedirect = () => {
-      const host = window.location.hostname;
-      const onRainz = host === 'rainz.net' || host.endsWith('.rainz.net');
-      window.location.href = onRainz ? 'https://www.rainz.net/' : '/';
+      window.location.href = '/';
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -77,9 +75,7 @@ export default function Auth() {
       if (error) { toast({ variant: "destructive", title: "Sign In Failed", description: error.message }); return; }
       if (data.user) {
         toast({ title: "Welcome back!", description: "You've been signed in successfully." });
-        const host = window.location.hostname;
-        const onRainz = host === 'rainz.net' || host.endsWith('.rainz.net');
-        window.location.href = onRainz ? 'https://www.rainz.net/' : '/';
+        window.location.href = '/';
       }
     } catch (error: any) {
       toast({ variant: "destructive", title: "Sign In Failed", description: error.message || "An unexpected error occurred" });
@@ -172,9 +168,7 @@ export default function Auth() {
     try {
       cleanupAuthState();
       try { await supabase.auth.signOut({ scope: 'global' }); } catch {}
-      const host = window.location.hostname;
-      const onRainz = host === 'rainz.net' || host.endsWith('.rainz.net');
-      const redirectTo = onRainz ? 'https://www.rainz.net/' : `${window.location.origin}/`;
+      const redirectTo = `${window.location.origin}/`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo, queryParams: { access_type: 'offline', prompt: 'select_account' } },

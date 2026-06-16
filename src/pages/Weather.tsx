@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, Suspense, lazy, useTransition } from "react";
 import { queryClient } from "@/lib/queryClient";
-import { CloudSun, WifiOff } from "lucide-react";
+import { CloudSun, WifiOff, MapPin } from "lucide-react";
 import { brandName } from "@/lib/birthday-mode";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";

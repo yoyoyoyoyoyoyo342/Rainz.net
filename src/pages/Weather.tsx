@@ -54,7 +54,7 @@ const GuidedHelpBanner = lazy(() => import("@/components/weather/guided-help-ban
 const TenDayForecast = lazy(() => import("@/components/weather/ten-day-forecast").then(m => ({ default: m.TenDayForecast })));
 const DetailedMetrics = lazy(() => import("@/components/weather/detailed-metrics").then(m => ({ default: m.DetailedMetrics })));
 const PollenCard = lazy(() => import("@/components/weather/pollen-card").then(m => ({ default: m.PollenCard })));
-const WeatherReportForm = lazy(() => import("@/components/weather/weather-report-form").then(m => ({ default: m.WeatherReportForm })));
+
 const SkyCamSubmissionDialog = lazy(() => import("@/components/weather/skycam-submission-dialog").then(m => ({ default: m.SkyCamSubmissionDialog })));
 const AIChatButton = lazy(() => import("@/components/weather/ai-chat-button").then(m => ({ default: m.AIChatButton })));
 const MorningWeatherReview = lazy(() => import("@/components/weather/morning-weather-review").then(m => ({ default: m.MorningWeatherReview })));
@@ -638,15 +638,6 @@ export default function WeatherPage() {
             {/* Search */}
             <div className="flex items-center gap-2">
               <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
-              {weatherData && (
-                <div className="shrink-0">
-                  <WeatherReportForm
-                    location={actualStationName}
-                    currentCondition={weatherData.mostAccurate.currentWeather.condition}
-                    locationData={{ latitude: selectedLocation?.lat || 0, longitude: selectedLocation?.lon || 0 }}
-                  />
-                </div>
-              )}
             </div>
 
             {/* Saved location pills */}

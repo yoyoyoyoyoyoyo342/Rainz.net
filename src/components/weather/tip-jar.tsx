@@ -30,26 +30,11 @@ export const TipJar = () => {
 
   const fetchTipData = async () => {
     try {
-      // Get total raised - ONLY count completed tips
-      const { data: tips } = await supabase
-        .from("tip_jar")
-        .select("amount_cents, user_id")
-        .eq("status", "completed");
-
-      const total = tips?.reduce((sum, tip) => sum + tip.amount_cents, 0) || 0;
-      setTotalRaised(total);
-
-      // Get recent tippers (last 5 unique users who tipped)
-      const userIds = [...new Set(tips?.filter(t => t.user_id).map(t => t.user_id))].slice(0, 5);
-      
-      if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("display_name")
-          .in("user_id", userIds);
-        
-        setRecentTippers(profiles?.map(p => p.display_name || "Anonymous").filter(Boolean) || []);
-      }
+      const { data, error } = await supabase.rpc("get_tip_jar_stats");
+      if (error) throw error;
+      const row: any = Array.isArray(data) ? data[0] : data;
+      setTotalRaised(Number(row?.total_cents) || 0);
+      setRecentTippers((row?.recent_tippers as string[] | null) ?? []);
     } catch (error) {
       console.error("Error fetching tip data:", error);
     } finally {

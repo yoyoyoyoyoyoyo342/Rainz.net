@@ -23,6 +23,7 @@ const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-c
 const DailySpinWheel = lazy(() => import("@/components/weather/daily-spin-wheel").then(m => ({ default: m.DailySpinWheel })));
 import { StreakMultiplierMeter } from "@/components/predict/streak-multiplier-meter";
 import { RejnMascot } from "@/components/rejn/rejn-mascot";
+import { LocationSearch } from "@/components/weather/location-search";
 
 export default function PredictPage() {
   const { user } = useAuth();
@@ -258,7 +259,7 @@ export default function PredictPage() {
                 <StreakMultiplierMeter streak={userStats?.streak || 0} />
               )}
 
-              {selectedLocation && (
+              {selectedLocation ? (
                 <Suspense fallback={null}>
                   <WeatherPredictionForm
                     location={selectedLocation.name}
@@ -268,6 +269,22 @@ export default function PredictPage() {
                     isImperial={isImperial}
                   />
                 </Suspense>
+              ) : (
+                <Card className="glass-card border-primary/20">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      Pick a location to predict
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Search a city or use your current location to start predicting tomorrow's weather.
+                    </p>
+                    <LocationSearch
+                      isImperial={isImperial}
+                      onLocationSelect={(lat, lon, name) => setSelectedLocation({ lat, lon, name })}
+                    />
+                  </CardContent>
+                </Card>
               )}
 
               <Suspense fallback={null}>

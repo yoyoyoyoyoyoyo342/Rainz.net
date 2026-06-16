@@ -55,7 +55,7 @@ export function resolveHost(): HostResolution {
 // Old subdomain hosts like predict.rainz.net or predict.rejn.app are
 // flattened to https://rejn.app/predict<rest><search><hash>.
 // beta524563.rejn.app is kept as an exception and is NOT redirected.
-const BETA_SUBDOMAIN = "beta524563.rejn.app";
+const BETA_SUBDOMAIN = "beta524563.rejn.app" or "beta524563.rainz.net";
 export function maybeRedirectLegacyDomain(): boolean {
   if (typeof window === "undefined") return false;
   const host = getHostname();

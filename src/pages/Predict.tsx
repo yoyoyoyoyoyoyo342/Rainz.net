@@ -23,15 +23,18 @@ const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-c
 const DailySpinWheel = lazy(() => import("@/components/weather/daily-spin-wheel").then(m => ({ default: m.DailySpinWheel })));
 import { StreakMultiplierMeter } from "@/components/predict/streak-multiplier-meter";
 import { RejnMascot } from "@/components/rejn/rejn-mascot";
-import { LocationSearch } from "@/components/weather/location-search";
 
 export default function PredictPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("predict");
-  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lon: number; name: string } | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lon: number; name: string }>({
+    lat: 55.6761,
+    lon: 12.5683,
+    name: "Copenhagen",
+  });
   const [isImperial, setIsImperial] = useState(false);
   const acceptBattleId = searchParams.get("accept_battle");
 
@@ -48,17 +51,17 @@ export default function PredictPage() {
 
   // Load user's primary saved location
   const { data: savedLocations = [] } = useQuery({
-    queryKey: ["saved-locations"],
+    queryKey: ["saved-locations", user?.id],
     queryFn: async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return [];
       const { data } = await supabase
         .from("saved_locations")
         .select("*")
+        .eq("user_id", user!.id)
         .order("is_primary", { ascending: false })
         .order("name");
       return data || [];
     },
+    enabled: !!user,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -105,11 +108,30 @@ export default function PredictPage() {
   });
 
   useEffect(() => {
-    if (!selectedLocation && savedLocations.length > 0) {
+    if (savedLocations.length > 0) {
       const primary = savedLocations[0];
       setSelectedLocation({ lat: Number(primary.latitude), lon: Number(primary.longitude), name: primary.name });
     }
-  }, [savedLocations, selectedLocation]);
+  }, [savedLocations]);
+
+  if (authLoading) {
+    return (
+      <>
+        <SEOHead title="Predict — Rainz Weather" description="Make weather predictions and compete on the leaderboard" />
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <Card className="glass-card max-w-sm w-full">
+            <CardContent className="flex flex-col items-center gap-4 pt-8 pb-8">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <Target className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground">Loading prediction form…</h2>
+            </CardContent>
+          </Card>
+        </div>
+        <BottomTabBar />
+      </>
+    );
+  }
 
   if (!user) {
     return (
@@ -259,47 +281,27 @@ export default function PredictPage() {
                 <StreakMultiplierMeter streak={userStats?.streak || 0} />
               )}
 
-              {selectedLocation ? (
-                <Suspense fallback={null}>
-                  <WeatherPredictionForm
-                    location={selectedLocation.name}
-                    latitude={selectedLocation.lat}
-                    longitude={selectedLocation.lon}
-                    onPredictionMade={() => trackPredictionMade(selectedLocation.name)}
-                    isImperial={isImperial}
-                  />
-                </Suspense>
-              ) : (
-                <Card className="glass-card border-primary/20">
-                  <CardContent className="p-4 space-y-3">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                      <MapPin className="w-4 h-4 text-primary" />
-                      Pick a location to predict
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Search a city or use your current location to start predicting tomorrow's weather.
-                    </p>
-                    <LocationSearch
-                      isImperial={isImperial}
-                      onLocationSelect={(lat, lon, name) => setSelectedLocation({ lat, lon, name })}
-                    />
-                  </CardContent>
-                </Card>
-              )}
+              <Suspense fallback={<Card className="glass-card"><CardContent className="p-6 text-sm text-muted-foreground">Loading prediction form…</CardContent></Card>}>
+                <WeatherPredictionForm
+                  location={selectedLocation.name}
+                  latitude={selectedLocation.lat}
+                  longitude={selectedLocation.lon}
+                  onPredictionMade={() => trackPredictionMade(selectedLocation.name)}
+                  isImperial={isImperial}
+                />
+              </Suspense>
 
               <Suspense fallback={null}>
                 <DailySpinWheel />
               </Suspense>
 
-              {selectedLocation && (
-                <Suspense fallback={null}>
-                  <PredictionBattles
-                    location={selectedLocation.name}
-                    latitude={selectedLocation.lat}
-                    longitude={selectedLocation.lon}
-                  />
-                </Suspense>
-              )}
+              <Suspense fallback={null}>
+                <PredictionBattles
+                  location={selectedLocation.name}
+                  latitude={selectedLocation.lat}
+                  longitude={selectedLocation.lon}
+                />
+              </Suspense>
             </TabsContent>
 
             <TabsContent value="leaderboard" className="mt-4 space-y-4">

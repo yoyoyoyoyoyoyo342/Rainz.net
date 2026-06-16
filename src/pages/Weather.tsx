@@ -640,9 +640,9 @@ export default function WeatherPage() {
               <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
             </div>
 
-            {/* Saved location pills */}
+            {/* Saved location chips — glass style to match AI hero */}
             {savedLocations.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
+              <div className="-mx-1 px-1 flex gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory">
                 {savedLocations.slice(0, 5).map((loc: any) => {
                   const isActive = selectedLocation &&
                     Math.abs(loc.latitude - selectedLocation.lat) < 0.01 &&
@@ -652,13 +652,17 @@ export default function WeatherPage() {
                     <button
                       key={loc.id}
                       onClick={() => handleLocationSelect(loc.latitude, loc.longitude, loc.name)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all active:scale-95 ${
+                      className={`snap-start shrink-0 inline-flex items-center gap-1.5 pl-2.5 pr-3.5 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md border transition-all active:scale-95 ${
                         isActive
-                          ? "bg-primary/15 text-primary ring-1 ring-primary/30"
-                          : "bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                          ? "bg-white/15 text-white border-white/30 shadow-[0_4px_20px_-6px_rgba(255,255,255,0.25)]"
+                          : "bg-white/[0.06] text-white/80 border-white/10 hover:bg-white/10 hover:text-white"
                       }`}
                     >
-                      <span className="opacity-70">{loc.is_primary ? "📍" : "🌍"}</span>
+                      {loc.is_primary ? (
+                        <MapPin className="w-3.5 h-3.5 opacity-80" />
+                      ) : (
+                        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
+                      )}
                       {cityName}
                     </button>
                   );
@@ -787,8 +791,7 @@ export default function WeatherPage() {
                                   <Sparkles className="w-3.5 h-3.5 text-blue-200" />
                                 </div>
                                 <div className="text-left min-w-0">
-                                  <div className="text-[10px] uppercase tracking-[0.18em] font-semibold text-blue-200/70">Extended briefing</div>
-                                  <div className="text-sm font-medium text-white/90 truncate">Full morning review</div>
+                                  <div className="text-sm font-semibold text-white/95 truncate">View full briefing</div>
                                 </div>
                               </div>
                               <span className="shrink-0 text-white/40 group-hover:text-white/70 transition-colors text-lg leading-none">→</span>

@@ -118,7 +118,17 @@ export default function PredictPage() {
     return (
       <>
         <SEOHead title="Predict — Rainz Weather" description="Make weather predictions and compete on the leaderboard" />
-        <div className="min-h-screen bg-background" />
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <Card className="glass-card max-w-sm w-full">
+            <CardContent className="flex flex-col items-center gap-4 pt-8 pb-8">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <Target className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground">Loading prediction form…</h2>
+            </CardContent>
+          </Card>
+        </div>
+        <BottomTabBar />
       </>
     );
   }

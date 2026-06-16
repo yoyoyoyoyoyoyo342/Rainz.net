@@ -420,9 +420,9 @@ export function LocationSearch({
 
   return (
     <div className="relative flex-1 z-50">
-      {/* Search Input — glass wrapper around the row only, so dropdown can overflow */}
-      <div className="relative flex items-center rounded-2xl glass-card overflow-hidden">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground/60 pointer-events-none z-10" />
+      {/* Search Input — pill-shaped Claude-style */}
+      <div className="relative flex items-center rounded-full bg-card/50 border border-border/30 backdrop-blur-xl shadow-sm transition-all focus-within:border-border/60 focus-within:shadow-md hover:bg-card/60">
+        <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground/60 pointer-events-none z-10" strokeWidth={1.75} />
         <input
           type="text"
           placeholder={placeholder}
@@ -430,7 +430,7 @@ export function LocationSearch({
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-          className="w-full pl-11 pr-14 py-[14px] bg-transparent text-foreground text-[15px] placeholder:text-muted-foreground/50 outline-none transition-colors"
+          className="w-full pl-12 pr-14 py-[15px] bg-transparent text-foreground text-[15px] placeholder:text-muted-foreground/50 outline-none rounded-full"
         />
         <Button
           onMouseDown={(e) => {
@@ -441,12 +441,12 @@ export function LocationSearch({
           variant="ghost"
           size="sm"
           aria-label="Use my current location"
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-primary hover:bg-primary/10 transition-colors p-2.5 rounded-xl h-9 w-9"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-primary hover:bg-primary/10 transition-colors p-0 rounded-full h-9 w-9"
         >
           {isDetecting || loadingStations ? (
             <Loader2 className="w-[18px] h-[18px] animate-spin" />
           ) : (
-            <MapPin className="w-[18px] h-[18px]" />
+            <MapPin className="w-[18px] h-[18px]" strokeWidth={1.75} />
           )}
         </Button>
       </div>

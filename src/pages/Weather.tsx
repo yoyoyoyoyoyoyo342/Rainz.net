@@ -3,6 +3,8 @@ import { queryClient } from "@/lib/queryClient";
 import { CloudSun, WifiOff } from "lucide-react";
 import { brandName } from "@/lib/birthday-mode";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useQuery } from "@tanstack/react-query";
@@ -787,14 +789,34 @@ export default function WeatherPage() {
                     precipitation: h.precipitation ?? 0,
                   }));
                   return (
-                    <AIBriefingHero
-                      location={customDisplayName || actualStationName || selectedLocation?.name || "your location"}
-                      currentTemp={toUserUnit(raw.temperature)}
-                      feelsLike={toUserUnit(raw.feelsLike)}
-                      condition={raw.condition}
-                      hourly={normalizedHourly}
-                      isImperial={isImperial}
-                    />
+                    <div className="space-y-2">
+                      <AIBriefingHero
+                        location={customDisplayName || actualStationName || selectedLocation?.name || "your location"}
+                        currentTemp={toUserUnit(raw.temperature)}
+                        feelsLike={toUserUnit(raw.feelsLike)}
+                        condition={raw.condition}
+                        hourly={normalizedHourly}
+                        isImperial={isImperial}
+                      />
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full gap-2">
+                            <Sparkles className="w-3.5 h-3.5" /> View Extended Briefing
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Extended Morning Review</DialogTitle>
+                          </DialogHeader>
+                          <MorningWeatherReview
+                            weatherData={weatherData.mostAccurate}
+                            location={actualStationName}
+                            isImperial={isImperial}
+                            userId={user?.id}
+                          />
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   );
                 })()}
               </AnimatedCard>
@@ -902,14 +924,7 @@ export default function WeatherPage() {
                 </AnimatedCard>
               )}
 
-              <AnimatedCard index={5}>
-                <MorningWeatherReview
-                  weatherData={weatherData.mostAccurate}
-                  location={actualStationName}
-                  isImperial={isImperial}
-                  userId={user?.id}
-                />
-              </AnimatedCard>
+              {/* Extended Morning Review moved to "View Extended Briefing" button on the AI hero */}
 
               <AnimatedCard index={6}>
                 <div className="mb-4">
@@ -1010,13 +1025,7 @@ export default function WeatherPage() {
         </div>
 
         <Suspense fallback={null}>
-          {weatherData && (
-            <AIChatButton
-              weatherData={weatherData.mostAccurate}
-              location={selectedLocation?.name ?? ""}
-              isImperial={isImperial}
-            />
-          )}
+          {/* Floating AI chat button removed — use the "Ask Rejn" tab in the bottom nav */}
           <BottomTabBar />
         </Suspense>
         <OnboardingTour />

@@ -69,40 +69,40 @@ const SECTIONS: DocSection[] = [
     ),
   },
   {
-    id: "subdomains",
-    title: "Subdomain routing",
+    id: "routing",
+    title: "Path-based routing",
     category: "Architecture",
     icon: Globe,
-    summary: "Every page lives on its own subdomain under *.rainz.net.",
+    summary: "All pages live on rejn.app as standard paths.",
     content: (
       <>
         <p>
-          Every major route is reachable on its own subdomain. Visiting <code>predict.rainz.net</code>
-          loads the prediction game, <code>copenhagen.rainz.net</code> loads the Copenhagen city page,
-          and so on. Apex paths 301-redirect to their subdomain for canonical SEO.
+          Every page is served from the canonical apex <code>rejn.app</code> using
+          standard paths. Legacy <code>*.rainz.net</code> and <code>*.rejn.app</code>
+          subdomains 301-redirect to their equivalent path.
         </p>
-        <h4>Curated subdomains</h4>
+        <h4>Top-level paths</h4>
         <ul>
-          <li><code>predict.rainz.net</code> — Daily prediction game</li>
-          <li><code>social.rainz.net</code> — Live community feed</li>
-          <li><code>explore.rainz.net</code> — Discover other users and locations</li>
-          <li><code>dryroutes.rainz.net</code> — Rain-free route planning</li>
-          <li><code>widgets.rainz.net</code> — Embeddable weather widgets</li>
-          <li><code>download.rainz.net</code> — PWA & native app installers</li>
-          <li><code>airport.rainz.net</code> — Airport weather product</li>
-          <li><code>docs.rainz.net</code> — This documentation</li>
-          <li><code>blog.rainz.net</code> — Articles</li>
-          <li><code>api.rainz.net</code> — Public API landing</li>
+          <li><code>rejn.app/predict</code> — Daily prediction game</li>
+          <li><code>rejn.app/social</code> — Live community feed</li>
+          <li><code>rejn.app/explore</code> — Discover other users and locations</li>
+          <li><code>rejn.app/dryroutes</code> — Rain-free route planning</li>
+          <li><code>rejn.app/widgets</code> — Embeddable weather widgets</li>
+          <li><code>rejn.app/download</code> — PWA & native app installers</li>
+          <li><code>rejn.app/airport</code> — Airport weather product</li>
+          <li><code>rejn.app/docs</code> — This documentation</li>
+          <li><code>rejn.app/articles</code> — Blog & articles</li>
+          <li><code>rejn.app/api</code> — Public API landing</li>
         </ul>
-        <h4>City subdomains</h4>
+        <h4>City pages</h4>
         <p>
-          250+ cities each get their own subdomain (e.g. <code>oslo.rainz.net</code>,
-          <code>london.rainz.net</code>, <code>berlin.rainz.net</code>).
+          250+ cities each get their own page (e.g. <code>rejn.app/weather/oslo</code>,
+          <code>rejn.app/weather/london</code>, <code>rejn.app/weather/berlin</code>).
         </p>
-        <h4>Cross-subdomain auth</h4>
+        <h4>Auth</h4>
         <p>
-          Your Supabase session is stored in a cookie scoped to <code>.rainz.net</code> so you stay
-          signed in as you move between subdomains — no re-login required.
+          Your Supabase session is stored in <code>localStorage</code> on the apex —
+          one host, one cookie jar, no cross-subdomain complexity.
         </p>
       </>
     ),

@@ -198,8 +198,8 @@ export function UVIndexGraph({ currentUV, hourlyForecast, is24Hour = true }: UVI
               <stop offset="40%" stopColor="hsl(45 95% 55%)" stopOpacity="0.35" />
               <stop offset="100%" stopColor="hsl(140 65% 50%)" stopOpacity="0.05" />
             </linearGradient>
-            <linearGradient id="uv-line" x1="0" y1="0" x2="0" y2="1" gradientUnits="userSpaceOnUse">
-              <stop offset={`${(1 - 11 / maxUV) * 100}%`} stopColor="hsl(280 70% 60%)" />
+            <linearGradient id="uv-line" x1="0" y1={yFor(maxUV)} x2="0" y2={yFor(0)} gradientUnits="userSpaceOnUse">
+              <stop offset={`${Math.max(0, (1 - 11 / maxUV)) * 100}%`} stopColor="hsl(280 70% 60%)" />
               <stop offset={`${(1 - 8 / maxUV) * 100}%`} stopColor="hsl(0 80% 60%)" />
               <stop offset={`${(1 - 6 / maxUV) * 100}%`} stopColor="hsl(20 90% 55%)" />
               <stop offset={`${(1 - 3 / maxUV) * 100}%`} stopColor="hsl(45 95% 55%)" />

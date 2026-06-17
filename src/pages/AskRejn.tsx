@@ -342,9 +342,6 @@ export default function AskRejnPage() {
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(true)} aria-label="Open chats">
             <PanelLeft className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")} aria-label="Back">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
           <div className="flex-1">
             <h1 className="text-lg font-semibold leading-tight">Ask Rejn</h1>
             <p className="text-[11px] text-muted-foreground">Your weather buddy</p>

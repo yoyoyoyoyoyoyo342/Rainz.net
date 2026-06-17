@@ -94,6 +94,8 @@ export default function WeatherPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const { toast } = useToast();
   const { user, profile } = useAuth();
+  const { streakData } = useUserStreaks();
+
   const { visibleCards, cardOrder, is24Hour, isHighContrast } = useUserPreferences();
   const { t } = useLanguage();
   const { setTimeOfDay } = useTimeOfDayContext();

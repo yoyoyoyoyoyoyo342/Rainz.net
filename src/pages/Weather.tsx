@@ -791,6 +791,8 @@ export default function WeatherPage() {
                       condition={raw.condition}
                       hourly={normalizedHourly}
                       isImperial={isImperial}
+                      streak={streakData?.currentStreak}
+
                       footer={
                         <Dialog>
                           <DialogTrigger asChild>

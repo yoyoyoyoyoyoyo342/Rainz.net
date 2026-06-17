@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Plus, History, ArrowLeft, Loader2, Shuffle } from "lucide-react";
+import { Send, Plus, PanelLeft, ArrowLeft, Loader2, Shuffle, Trash2, MessageSquare, Search } from "lucide-react";
+
 import { pickSuggestions } from "@/lib/ask-rejn-suggestions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

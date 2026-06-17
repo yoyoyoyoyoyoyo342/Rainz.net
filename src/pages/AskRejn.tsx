@@ -251,13 +251,98 @@ export default function AskRejnPage() {
 
   const isEmpty = messages.length === 0;
 
+  const Sidebar = ({ onNavigateChat }: { onNavigateChat?: () => void }) => (
+    <div className="flex flex-col h-full bg-card/40 backdrop-blur-xl">
+      <div className="p-3 space-y-3 border-b border-border/30">
+        <button
+          onClick={() => { startNewChat(); onNavigateChat?.(); }}
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 active:scale-[0.98] transition-all shadow-sm"
+        >
+          <Plus className="w-4 h-4" /> New chat
+        </button>
+        <div className="relative">
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search chats"
+            className="w-full pl-9 pr-3 py-2 rounded-lg bg-muted/40 border border-border/30 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:border-border/60"
+          />
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
+        {(conversations as any[]).length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-center px-4 py-12 gap-2 text-muted-foreground/70">
+            <MessageSquare className="w-8 h-8 opacity-40" />
+            <p className="text-xs">Your chats will appear here</p>
+          </div>
+        ) : (
+          Object.entries(groupedConversations).map(([label, items]) =>
+            items.length === 0 ? null : (
+              <div key={label}>
+                <div className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                  {label}
+                </div>
+                <div className="space-y-0.5">
+                  {items.map((c: any) => (
+                    <div
+                      key={c.id}
+                      className={`group relative flex items-center rounded-lg transition-colors ${
+                        conversationId === c.id ? "bg-muted/70" : "hover:bg-muted/40"
+                      }`}
+                    >
+                      <button
+                        onClick={() => { loadConversation(c.id); onNavigateChat?.(); }}
+                        className="flex-1 text-left px-3 py-2 text-sm truncate"
+                      >
+                        {c.title || "Untitled chat"}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteConversation(c.id); }}
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 mr-1 p-1.5 rounded-md hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-all"
+                        aria-label="Delete chat"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          )
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <>
       <SEOHead title="Ask Rejn — AI Weather Chat" description="Chat with Rejn, your friendly weather mascot." />
-      <div className="min-h-screen flex flex-col relative overflow-hidden">
+      <div className="min-h-screen flex relative overflow-hidden">
+        {/* Persistent sidebar (desktop) */}
+        <aside className="hidden lg:flex w-[280px] shrink-0 border-r border-border/30 flex-col">
+          <Sidebar />
+        </aside>
+
+        {/* Mobile sidebar */}
+        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+          <SheetContent side="left" className="w-[300px] p-0">
+            <SheetHeader className="px-4 py-3 border-b border-border/30">
+              <SheetTitle className="text-left">Chats</SheetTitle>
+            </SheetHeader>
+            <div className="h-[calc(100%-57px)]">
+              <Sidebar onNavigateChat={() => setSidebarOpen(false)} />
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        <div className="flex-1 min-w-0 flex flex-col">
         {/* Header */}
         <header className="sticky top-0 z-30 px-4 py-3 flex items-center gap-2 glass-card-strong border-b border-border/40">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}> 
+          <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(true)} aria-label="Open chats">
+            <PanelLeft className="w-5 h-5" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/")} aria-label="Back">
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
@@ -267,41 +352,11 @@ export default function AskRejnPage() {
           <Button variant="ghost" size="icon" onClick={startNewChat} aria-label="New chat">
             <Plus className="w-5 h-5" />
           </Button>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="History">
-                <History className="w-5 h-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[360px]">
-              <SheetHeader>
-                <SheetTitle>Your chats</SheetTitle>
-              </SheetHeader>
-              <div className="mt-4 space-y-1">
-                <Button variant="outline" className="w-full justify-start gap-2" onClick={startNewChat}>
-                  <Plus className="w-4 h-4" /> New chat
-                </Button>
-                {conversations.length === 0 && (
-                  <p className="text-xs text-muted-foreground py-4 text-center">No chats yet</p>
-                )}
-                {conversations.map((c: any) => (
-                  <button
-                    key={c.id}
-                    onClick={() => loadConversation(c.id)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-muted/60 transition-colors truncate ${
-                      conversationId === c.id ? "bg-muted/60 font-medium" : ""
-                    }`}
-                  >
-                    {c.title || "Untitled chat"}
-                  </button>
-                ))}
-              </div>
-            </SheetContent>
-          </Sheet>
         </header>
 
         {/* Body */}
         <div className="flex-1 flex flex-col overflow-hidden">
+
           <AnimatePresence mode="wait">
             {isEmpty ? (
               <motion.div

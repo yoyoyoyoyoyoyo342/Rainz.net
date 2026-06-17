@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, Volume2, VolumeX, RefreshCw } from "lucide-react";
+import { Sparkles, Volume2, VolumeX, RefreshCw, Flame } from "lucide-react";
 import { RainzCard } from "@/components/rainz/rainz-card";
 
 interface AIBriefingHeroProps {
@@ -10,7 +10,9 @@ interface AIBriefingHeroProps {
   hourly?: Array<{ time: string; temperature: number; condition: string; precipitation: number }>;
   isImperial?: boolean;
   footer?: React.ReactNode;
+  streak?: number;
 }
+
 
 // Rainz 2.0 — Streaming AI weather briefing hero.
 // Hits supabase/functions/ai-briefing with SSE, renders tokens as they arrive.

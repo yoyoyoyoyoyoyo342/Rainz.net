@@ -501,7 +501,9 @@ export default function AskRejnPage() {
         </div>
 
         <BottomTabBar />
+        </div>
       </div>
+
     </>
   );
 }

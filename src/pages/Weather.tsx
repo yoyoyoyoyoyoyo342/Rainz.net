@@ -26,6 +26,8 @@ import { useAccountStorage } from "@/hooks/use-account-storage";
 import { useOfflineCache } from "@/hooks/use-offline-cache";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { useAmplitudeGuidedHelp } from "@/hooks/use-amplitude-guided-help";
+import { useUserStreaks } from "@/hooks/use-user-streaks";
+
 import { ProductHuntLaunchBanner } from "@/components/weather/producthunt-launch-banner";
 
 
@@ -92,6 +94,8 @@ export default function WeatherPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const { toast } = useToast();
   const { user, profile } = useAuth();
+  const { streakData } = useUserStreaks();
+
   const { visibleCards, cardOrder, is24Hour, isHighContrast } = useUserPreferences();
   const { t } = useLanguage();
   const { setTimeOfDay } = useTimeOfDayContext();
@@ -787,6 +791,8 @@ export default function WeatherPage() {
                       condition={raw.condition}
                       hourly={normalizedHourly}
                       isImperial={isImperial}
+                      streak={streakData?.currentStreak}
+
                       footer={
                         <Dialog>
                           <DialogTrigger asChild>

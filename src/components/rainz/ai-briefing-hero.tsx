@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, Volume2, VolumeX, RefreshCw } from "lucide-react";
+import { Sparkles, Volume2, VolumeX, RefreshCw, Flame } from "lucide-react";
 import { RainzCard } from "@/components/rainz/rainz-card";
 
 interface AIBriefingHeroProps {
@@ -10,7 +10,9 @@ interface AIBriefingHeroProps {
   hourly?: Array<{ time: string; temperature: number; condition: string; precipitation: number }>;
   isImperial?: boolean;
   footer?: React.ReactNode;
+  streak?: number;
 }
+
 
 // Rainz 2.0 — Streaming AI weather briefing hero.
 // Hits supabase/functions/ai-briefing with SSE, renders tokens as they arrive.
@@ -22,7 +24,9 @@ export function AIBriefingHero({
   hourly,
   isImperial,
   footer,
+  streak,
 }: AIBriefingHeroProps) {
+
   const [text, setText] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -144,6 +148,15 @@ export function AIBriefingHero({
               Rejn AI · Today's briefing
             </div>
             <div className="flex items-center gap-1">
+              {typeof streak === "number" && streak > 0 && (
+                <div
+                  className="flex items-center gap-1 mr-1 px-2 py-1 rounded-full bg-gradient-to-r from-orange-500/25 to-amber-400/20 border border-orange-300/30 text-orange-100"
+                  title={`${streak}-day streak`}
+                >
+                  <Flame className="w-3.5 h-3.5 text-orange-300" />
+                  <span className="text-xs font-bold tabular-nums">{streak}</span>
+                </div>
+              )}
               <button
                 type="button"
                 onClick={toggleVoice}
@@ -162,6 +175,7 @@ export function AIBriefingHero({
                 <RefreshCw className={`w-3.5 h-3.5 ${streaming ? "animate-spin" : ""}`} />
               </button>
             </div>
+
           </div>
           <p
             className="text-[15px] sm:text-base leading-relaxed text-white/95 font-medium"

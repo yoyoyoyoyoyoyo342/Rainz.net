@@ -85,6 +85,45 @@ export default function AskRejnPage() {
     enabled: !!user,
   });
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const deleteConversation = async (id: string) => {
+    if (!user) return;
+    const prev = conversationId;
+    if (prev === id) {
+      setConversationId(null);
+      setMessages([]);
+    }
+    const { error: mErr } = await supabase.from("chat_messages").delete().eq("conversation_id", id);
+    const { error: cErr } = await supabase.from("conversations").delete().eq("id", id).eq("user_id", user.id);
+    if (mErr || cErr) {
+      toast.error("Couldn't delete chat");
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["rejn-conversations", user.id] });
+  };
+
+  const groupedConversations = useMemo(() => {
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
+    const groups: Record<string, any[]> = { Today: [], Yesterday: [], "Previous 7 days": [], "Previous 30 days": [], Older: [] };
+    const filtered = (conversations as any[]).filter((c) =>
+      !search.trim() ? true : (c.title || "").toLowerCase().includes(search.toLowerCase())
+    );
+    for (const c of filtered) {
+      const ts = new Date(c.updated_at || c.created_at).getTime();
+      const diff = now - ts;
+      if (diff < day) groups.Today.push(c);
+      else if (diff < 2 * day) groups.Yesterday.push(c);
+      else if (diff < 7 * day) groups["Previous 7 days"].push(c);
+      else if (diff < 30 * day) groups["Previous 30 days"].push(c);
+      else groups.Older.push(c);
+    }
+    return groups;
+  }, [conversations, search]);
+
+
   // Auto-scroll
   useEffect(() => {
     if (scrollRef.current) {

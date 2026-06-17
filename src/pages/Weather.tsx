@@ -26,6 +26,8 @@ import { useAccountStorage } from "@/hooks/use-account-storage";
 import { useOfflineCache } from "@/hooks/use-offline-cache";
 import { useFeatureFlags } from "@/hooks/use-feature-flags";
 import { useAmplitudeGuidedHelp } from "@/hooks/use-amplitude-guided-help";
+import { useUserStreaks } from "@/hooks/use-user-streaks";
+
 import { ProductHuntLaunchBanner } from "@/components/weather/producthunt-launch-banner";
 
 

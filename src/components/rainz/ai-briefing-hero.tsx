@@ -143,20 +143,25 @@ export function AIBriefingHero({
           <Sparkles className="w-4 h-4 text-blue-200" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2 mb-1.5">
-            <div className="text-[10px] uppercase tracking-[0.18em] font-semibold text-blue-200/70">
-              Rejn AI · Today's briefing
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="text-[10px] uppercase tracking-[0.18em] font-semibold text-blue-200/70 truncate">
+                Rejn AI · Today's briefing
+              </div>
+              <div
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-orange-500/50 via-amber-400/40 to-yellow-300/30 border border-orange-300/50 text-orange-50 shadow-[0_0_16px_rgba(249,115,22,0.45)] backdrop-blur-sm"
+                title={typeof streak === "number" && streak > 0 ? `${streak}-day streak` : "Start your streak today"}
+              >
+                <Flame className="w-3.5 h-3.5 text-orange-200 drop-shadow-[0_0_4px_rgba(251,146,60,0.9)] animate-pulse" />
+                <span className="text-xs font-bold tabular-nums leading-none">
+                  {typeof streak === "number" ? streak : 0}
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80 leading-none">
+                  {streak === 1 ? "day" : "days"}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              {typeof streak === "number" && streak > 0 && (
-                <div
-                  className="flex items-center gap-1.5 mr-1.5 px-2.5 py-1.5 rounded-full bg-gradient-to-r from-orange-500/40 to-amber-400/30 border border-orange-400/40 text-orange-100 shadow-[0_0_12px_rgba(249,115,22,0.25)]"
-                  title={`${streak}-day streak`}
-                >
-                  <Flame className="w-4 h-4 text-orange-300 animate-pulse" />
-                  <span className="text-sm font-bold tabular-nums">{streak}</span>
-                </div>
-              )}
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 type="button"
                 onClick={toggleVoice}
@@ -175,7 +180,6 @@ export function AIBriefingHero({
                 <RefreshCw className={`w-3.5 h-3.5 ${streaming ? "animate-spin" : ""}`} />
               </button>
             </div>
-
           </div>
           <p
             className="text-[15px] sm:text-base leading-relaxed text-white/95 font-medium"

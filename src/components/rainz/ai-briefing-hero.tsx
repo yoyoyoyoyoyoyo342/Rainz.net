@@ -150,11 +150,11 @@ export function AIBriefingHero({
             <div className="flex items-center gap-1">
               {typeof streak === "number" && streak > 0 && (
                 <div
-                  className="flex items-center gap-1 mr-1 px-2 py-1 rounded-full bg-gradient-to-r from-orange-500/25 to-amber-400/20 border border-orange-300/30 text-orange-100"
+                  className="flex items-center gap-1.5 mr-1.5 px-2.5 py-1.5 rounded-full bg-gradient-to-r from-orange-500/40 to-amber-400/30 border border-orange-400/40 text-orange-100 shadow-[0_0_12px_rgba(249,115,22,0.25)]"
                   title={`${streak}-day streak`}
                 >
-                  <Flame className="w-3.5 h-3.5 text-orange-300" />
-                  <span className="text-xs font-bold tabular-nums">{streak}</span>
+                  <Flame className="w-4 h-4 text-orange-300 animate-pulse" />
+                  <span className="text-sm font-bold tabular-nums">{streak}</span>
                 </div>
               )}
               <button

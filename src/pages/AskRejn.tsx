@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Plus, PanelLeft, ArrowLeft, Loader2, Shuffle, Trash2, MessageSquare, Search } from "lucide-react";
+import { Send, Plus, PanelLeft, Loader2, Shuffle, Trash2, MessageSquare, Search } from "lucide-react";
 
 import { pickSuggestions } from "@/lib/ask-rejn-suggestions";
 import { Button } from "@/components/ui/button";
@@ -341,9 +341,6 @@ export default function AskRejnPage() {
         <header className="sticky top-0 z-30 px-4 py-3 flex items-center gap-2 glass-card-strong border-b border-border/40">
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(true)} aria-label="Open chats">
             <PanelLeft className="w-5 h-5" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")} aria-label="Back">
-            <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
             <h1 className="text-lg font-semibold leading-tight">Ask Rejn</h1>

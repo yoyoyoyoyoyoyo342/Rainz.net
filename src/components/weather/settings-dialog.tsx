@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Globe, LogOut, User, Eye, RotateCcw, GripVertical, Languages, Moon, Sun, Shield, Bell, Smartphone, Cookie, FlaskConical, Thermometer, Droplets, Wind, Gauge, Sunrise, MoonIcon, ChevronRight, MapPin, Edit2 } from "lucide-react";
+import { Settings, Globe, LogOut, User, Eye, RotateCcw, GripVertical, Languages, Moon, Sun, Shield, Bell, Smartphone, Cookie, FlaskConical, Thermometer, Droplets, Wind, Gauge, Sunrise, MoonIcon, ChevronRight, MapPin, Edit2, Sparkles, Zap, Vibrate, RefreshCw } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,18 +32,23 @@ interface SettingsDialogProps {
   mostAccurate?: any;
 }
 
-// Reusable section wrapper with glass styling
-function SettingsSection({ title, icon: Icon, children, badge }: { 
-  title: string; 
-  icon?: any; 
+// Reusable section wrapper with glass styling + scroll anchor
+function SettingsSection({ id, title, icon: Icon, children, badge }: {
+  id?: string;
+  title: string;
+  icon?: any;
   children: React.ReactNode;
   badge?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-card/50 overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 bg-muted/30 border-b border-border/40">
-        {Icon && <Icon className="w-4 h-4 text-muted-foreground" />}
-        <span className="font-medium text-sm">{title}</span>
+    <div id={id} className="rounded-2xl border border-border/40 bg-card/40 backdrop-blur-sm overflow-hidden scroll-mt-32">
+      <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-primary/5 to-transparent border-b border-border/30">
+        {Icon && (
+          <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Icon className="w-3.5 h-3.5 text-primary" />
+          </div>
+        )}
+        <span className="font-semibold text-sm">{title}</span>
         {badge}
       </div>
       <div className="p-4 space-y-4">
@@ -51,6 +56,19 @@ function SettingsSection({ title, icon: Icon, children, badge }: {
       </div>
     </div>
   );
+}
+
+const CATEGORY_NAV = [
+  { id: 'account', label: 'Account', icon: User },
+  { id: 'display', label: 'Display', icon: Eye },
+  { id: 'behavior', label: 'Behavior', icon: Zap },
+  { id: 'notifications', label: 'Alerts', icon: Bell },
+  { id: 'privacy', label: 'Privacy', icon: Shield },
+];
+
+function scrollToSection(id: string) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // Toggle row component for consistent styling

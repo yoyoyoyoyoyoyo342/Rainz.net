@@ -54,7 +54,7 @@ export function BottomTabBar() {
               {baseTabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
-                const dot = tab.showDot && unread > 0;
+                const tone = isActive ? "text-primary" : "text-muted-foreground/70";
                 return (
                   <button
                     key={tab.id}
@@ -69,26 +69,13 @@ export function BottomTabBar() {
                       {tab.mascot ? (
                         <RejnMascot
                           pose={isActive ? "wave" : "sit"}
-                          className={`h-7 w-7 ${isActive ? "" : "opacity-70"}`}
+                          className={`h-7 w-7 ${isActive ? "" : "opacity-60"}`}
                         />
                       ) : (
-                        Icon && (
-                          <Icon
-                            className={`h-[22px] w-[22px] transition-colors ${
-                              isActive ? "text-primary" : "text-muted-foreground"
-                            }`}
-                          />
-                        )
-                      )}
-                      {dot && (
-                        <span className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-background animate-pulse" />
+                        Icon && <Icon className={`h-[22px] w-[22px] transition-colors ${tone}`} />
                       )}
                     </div>
-                    <span
-                      className={`text-[10px] font-semibold leading-none transition-colors ${
-                        isActive ? "text-primary" : "text-muted-foreground/70"
-                      }`}
-                    >
+                    <span className={`text-[10px] font-semibold leading-none transition-colors ${tone}`}>
                       {tab.label}
                     </span>
                   </button>
@@ -110,7 +97,6 @@ export function BottomTabBar() {
             {baseTabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
-              const dot = tab.showDot && unread > 0;
               return (
                 <button
                   key={tab.id}
@@ -118,7 +104,6 @@ export function BottomTabBar() {
                   className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl transition-all active:scale-95 relative bg-transparent ${
                     isActive ? "text-primary" : "text-muted-foreground/60 hover:text-foreground"
                   }`}
-                  style={{ background: "transparent" }}
                 >
                   <div className="relative h-6 flex items-center justify-center">
                     {tab.mascot ? (
@@ -127,15 +112,10 @@ export function BottomTabBar() {
                         className={`h-7 w-7 -mt-1 ${isActive ? "" : "opacity-80"}`}
                       />
                     ) : (
-                      Icon && <Icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
-                    )}
-                    {dot && (
-                      <span className="absolute -top-1 -right-2 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-card animate-pulse" />
+                      Icon && <Icon className="h-5 w-5" />
                     )}
                   </div>
-                  <span className={`text-[10px] font-semibold leading-none ${isActive ? "text-primary" : ""}`}>
-                    {tab.label}
-                  </span>
+                  <span className="text-[10px] font-semibold leading-none">{tab.label}</span>
                   {isActive && (
                     <span className="absolute -bottom-0.5 w-4 h-0.5 rounded-full bg-primary" />
                   )}

@@ -62,7 +62,9 @@ function markMessageAsRead(messageId: string) {
 interface HeaderInfoBarProps {
   user: any;
   showInbox?: boolean;
+  showStreak?: boolean;
 }
+
 
 function isMessageForUser(message: BroadcastMessage, isSubscribed: boolean) {
   const audience = message.audience ?? "all";

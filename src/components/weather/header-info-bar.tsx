@@ -74,7 +74,7 @@ function isMessageForUser(message: BroadcastMessage, isSubscribed: boolean) {
   return true;
 }
 
-export function HeaderInfoBar({ user, showInbox = true }: HeaderInfoBarProps) {
+export function HeaderInfoBar({ user, showInbox = true, showStreak = true }: HeaderInfoBarProps) {
   const { streakData, loading: streakLoading } = useUserStreaks();
   const { isSubscribed } = useSubscription();
   const [messages, setMessages] = useState<BroadcastMessage[]>([]);

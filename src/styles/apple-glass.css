@@ -191,6 +191,12 @@
     inset 0 1px 0 hsla(0, 0%, 100%, 0.04);
 }
 
+.apple-glass .glass-tab-bar button[data-no-glass] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none;
+}
+
 /* --- Glass Header --- */
 .apple-glass .glass-header {
   background: hsla(0, 0%, 100%, 0.05);

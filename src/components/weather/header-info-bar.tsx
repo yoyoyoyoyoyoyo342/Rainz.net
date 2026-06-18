@@ -62,7 +62,9 @@ function markMessageAsRead(messageId: string) {
 interface HeaderInfoBarProps {
   user: any;
   showInbox?: boolean;
+  showStreak?: boolean;
 }
+
 
 function isMessageForUser(message: BroadcastMessage, isSubscribed: boolean) {
   const audience = message.audience ?? "all";
@@ -72,7 +74,7 @@ function isMessageForUser(message: BroadcastMessage, isSubscribed: boolean) {
   return true;
 }
 
-export function HeaderInfoBar({ user, showInbox = true }: HeaderInfoBarProps) {
+export function HeaderInfoBar({ user, showInbox = true, showStreak = true }: HeaderInfoBarProps) {
   const { streakData, loading: streakLoading } = useUserStreaks();
   const { isSubscribed } = useSubscription();
   const [messages, setMessages] = useState<BroadcastMessage[]>([]);
@@ -223,7 +225,7 @@ export function HeaderInfoBar({ user, showInbox = true }: HeaderInfoBarProps) {
 
   return (
     <div className="flex items-center gap-2">
-      {user && streakData && !streakLoading && (
+      {showStreak && user && streakData && !streakLoading && (
         <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-primary/10 rounded-full border border-primary/20">
           <Flame className="h-3.5 w-3.5 text-primary" />
           <span className="text-xs font-bold text-foreground">{streakData.currentStreak}</span>

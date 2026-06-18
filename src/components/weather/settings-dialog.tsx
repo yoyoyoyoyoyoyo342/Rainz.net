@@ -457,7 +457,7 @@ export function SettingsDialog({
             </SettingsSection>
 
             {/* Display Settings Section */}
-            <SettingsSection title="Display" icon={Eye}>
+            <SettingsSection id="display" title="Display" icon={Eye}>
               <ToggleRow
                 icon={theme === 'dark' ? Moon : Sun}
                 label="Dark mode"
@@ -558,7 +558,7 @@ export function SettingsDialog({
             </SettingsSection>
 
             {/* Notifications Section */}
-            <SettingsSection title="Notifications" icon={Bell}>
+            <SettingsSection id="notifications" title="Notifications" icon={Bell}>
               {isIOS && !isPWAInstalled && (
                     <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 space-y-2">
                       <div className="flex items-center gap-2">
@@ -656,7 +656,7 @@ export function SettingsDialog({
             </SettingsSection>
 
             {/* Privacy & Data */}
-            <SettingsSection title="Privacy & Data" icon={Shield}>
+            <SettingsSection id="privacy" title="Privacy & Data" icon={Shield}>
               <div className="space-y-2">
                 <Button variant="ghost" className="w-full justify-between h-auto py-2.5" onClick={() => navigate('/data-settings')}>
                   <span className="text-sm">Manage Data & Privacy</span>

@@ -19,6 +19,7 @@ import { CookieConsentProvider } from "@/hooks/use-cookie-consent";
 import { CookieConsentBanner } from "@/components/ui/cookie-consent-banner";
 import { Footer } from "@/components/ui/footer";
 import { BirthdayBanner } from "@/components/rejn/birthday-banner";
+import { AppBanner } from "@/components/weather/app-banner";
 import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton";
 import { PWAInstallPopup } from "@/components/ui/pwa-install-popup";
 import { AppSplashScreen } from "@/components/ui/app-splash-screen";
@@ -288,6 +289,7 @@ function AppContent() {
                     <AppSplashScreen />
                      <BrowserRouter>
                         <div className="flex flex-col min-h-screen">
+                          <AppBanner />
                           <BirthdayBanner />
                           <div className="flex-1">
                             <AnalyticsTracker />

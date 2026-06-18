@@ -240,10 +240,10 @@ export function HeaderInfoBar({ user, showInbox = true, showStreak = true }: Hea
       {showInbox && (
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="sm" className="relative h-8 w-8 p-0">
-              <Inbox className="h-4 w-4" />
+            <Button variant="ghost" size="sm" className="relative h-9 w-9 p-0 rounded-full">
+              <Bell className="h-[18px] w-[18px]" />
               {totalUnread > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-destructive rounded-full animate-pulse" />
+                <span className="absolute top-1 right-1 h-2.5 w-2.5 bg-destructive rounded-full animate-pulse ring-2 ring-background" />
               )}
             </Button>
           </PopoverTrigger>

@@ -165,6 +165,10 @@ export default function PredictPage() {
       <SEOHead title="Predict — Rainz Weather" description="Make weather predictions and compete on the leaderboard" />
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-6 max-w-2xl space-y-4">
+          <div className="flex justify-end -mb-2">
+            <HeaderInfoBar user={user} showInbox={true} showStreak={false} />
+          </div>
+
           {/* Hero — Tomorrow's Challenge */}
           <Card className="relative overflow-hidden border-primary/30 bg-gradient-to-br from-primary/15 via-primary/5 to-background">
             <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-primary/20 blur-3xl pointer-events-none" />

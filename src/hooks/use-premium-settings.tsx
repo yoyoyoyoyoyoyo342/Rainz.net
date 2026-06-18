@@ -16,6 +16,10 @@ export interface PremiumSettings {
   showVisibility: boolean;
   showSunTimes: boolean;
   showMoonPhase: boolean;
+  // New behavioural settings
+  hapticFeedback: boolean;
+  reducedMotion: boolean;
+  autoRefreshMinutes: number; // 0 = off
 }
 
 const DEFAULT_PREMIUM_SETTINGS: PremiumSettings = {
@@ -31,6 +35,9 @@ const DEFAULT_PREMIUM_SETTINGS: PremiumSettings = {
   showVisibility: true,
   showSunTimes: true,
   showMoonPhase: true,
+  hapticFeedback: true,
+  reducedMotion: false,
+  autoRefreshMinutes: 0,
 };
 
 const LOCAL_STORAGE_KEY = "rainz-premium-settings";

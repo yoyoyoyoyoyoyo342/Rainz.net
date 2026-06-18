@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Globe, LogOut, User, Eye, RotateCcw, GripVertical, Languages, Moon, Sun, Shield, Bell, Smartphone, Cookie, FlaskConical, Thermometer, Droplets, Wind, Gauge, Sunrise, MoonIcon, ChevronRight, MapPin, Edit2 } from "lucide-react";
+import { Settings, Globe, LogOut, User, Eye, RotateCcw, GripVertical, Languages, Moon, Sun, Shield, Bell, Smartphone, Cookie, FlaskConical, Thermometer, Droplets, Wind, Gauge, Sunrise, MoonIcon, ChevronRight, MapPin, Edit2, Sparkles, Zap, Vibrate, RefreshCw } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,18 +32,23 @@ interface SettingsDialogProps {
   mostAccurate?: any;
 }
 
-// Reusable section wrapper with glass styling
-function SettingsSection({ title, icon: Icon, children, badge }: { 
-  title: string; 
-  icon?: any; 
+// Reusable section wrapper with glass styling + scroll anchor
+function SettingsSection({ id, title, icon: Icon, children, badge }: {
+  id?: string;
+  title: string;
+  icon?: any;
   children: React.ReactNode;
   badge?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-card/50 overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 bg-muted/30 border-b border-border/40">
-        {Icon && <Icon className="w-4 h-4 text-muted-foreground" />}
-        <span className="font-medium text-sm">{title}</span>
+    <div id={id} className="rounded-2xl border border-border/40 bg-card/40 backdrop-blur-sm overflow-hidden scroll-mt-32">
+      <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-primary/5 to-transparent border-b border-border/30">
+        {Icon && (
+          <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Icon className="w-3.5 h-3.5 text-primary" />
+          </div>
+        )}
+        <span className="font-semibold text-sm">{title}</span>
         {badge}
       </div>
       <div className="p-4 space-y-4">
@@ -51,6 +56,19 @@ function SettingsSection({ title, icon: Icon, children, badge }: {
       </div>
     </div>
   );
+}
+
+const CATEGORY_NAV = [
+  { id: 'account', label: 'Account', icon: User },
+  { id: 'display', label: 'Display', icon: Eye },
+  { id: 'behavior', label: 'Behavior', icon: Zap },
+  { id: 'notifications', label: 'Alerts', icon: Bell },
+  { id: 'privacy', label: 'Privacy', icon: Shield },
+];
+
+function scrollToSection(id: string) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // Toggle row component for consistent styling
@@ -364,21 +382,40 @@ export function SettingsDialog({
             <Settings className="w-5 h-5" />
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col overflow-hidden p-0">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/50 bg-muted/30">
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <Settings className="w-5 h-5" />
+        <DialogContent className="sm:max-w-[520px] max-h-[92vh] flex flex-col overflow-hidden p-0 border-border/50">
+          <DialogHeader className="px-6 pt-6 pb-5 border-b border-border/30 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+            <DialogTitle className="flex items-center gap-2.5 text-xl font-bold relative">
+              <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-primary" />
+              </div>
               {t('settings.title')}
             </DialogTitle>
-            <DialogDescription className="text-sm">
+            <DialogDescription className="text-sm pl-[46px] -mt-1 relative">
               {t('settings.customise')}
             </DialogDescription>
           </DialogHeader>
-          
+
+          {/* Sticky category pill nav */}
+          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border/20 px-4 py-2.5">
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-1 px-1">
+              {CATEGORY_NAV.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => scrollToSection(c.id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-muted/50 hover:bg-primary/10 hover:text-primary text-muted-foreground shrink-0 transition-colors"
+                >
+                  <c.icon className="w-3 h-3" />
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
             {/* Account Section */}
             {user && (
-              <SettingsSection title={t('settings.account')} icon={User}>
+              <SettingsSection id="account" title={t('settings.account')} icon={User}>
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{user.email}</p>
@@ -420,7 +457,7 @@ export function SettingsDialog({
             </SettingsSection>
 
             {/* Display Settings Section */}
-            <SettingsSection title="Display" icon={Eye}>
+            <SettingsSection id="display" title="Display" icon={Eye}>
               <ToggleRow
                 icon={theme === 'dark' ? Moon : Sun}
                 label="Dark mode"
@@ -520,8 +557,63 @@ export function SettingsDialog({
               </div>
             </SettingsSection>
 
+            {/* Behavior Section — new */}
+            <SettingsSection id="behavior" title="Behavior" icon={Zap}>
+              <ToggleRow
+                icon={Vibrate}
+                label="Haptic feedback"
+                description="Vibrate on taps, refreshes, and predictions (mobile only)"
+                checked={premiumSettings.hapticFeedback}
+                onCheckedChange={(checked) => {
+                  updatePremiumSetting('hapticFeedback', checked);
+                  if (checked && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                    navigator.vibrate(15);
+                  }
+                  toast({ title: 'Haptic feedback', description: checked ? 'Enabled' : 'Disabled' });
+                }}
+              />
+              <ToggleRow
+                icon={FlaskConical}
+                label="Reduced motion"
+                description="Limit transitions and parallax effects across the app"
+                checked={premiumSettings.reducedMotion}
+                onCheckedChange={(checked) => {
+                  updatePremiumSetting('reducedMotion', checked);
+                  toast({ title: 'Reduced motion', description: checked ? 'Enabled' : 'Disabled' });
+                }}
+              />
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm font-medium">Auto-refresh weather</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5 ml-6">
+                    {premiumSettings.autoRefreshMinutes === 0
+                      ? 'Off — manual refresh only'
+                      : `Every ${premiumSettings.autoRefreshMinutes} minutes`}
+                  </p>
+                </div>
+                <select
+                  value={premiumSettings.autoRefreshMinutes}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    updatePremiumSetting('autoRefreshMinutes', v);
+                    toast({ title: 'Auto-refresh', description: v === 0 ? 'Disabled' : `Every ${v} min` });
+                  }}
+                  className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
+                >
+                  <option value={0}>Off</option>
+                  <option value={5}>5 min</option>
+                  <option value={15}>15 min</option>
+                  <option value={30}>30 min</option>
+                  <option value={60}>1 hour</option>
+                </select>
+              </div>
+            </SettingsSection>
+
             {/* Notifications Section */}
-            <SettingsSection title="Notifications" icon={Bell}>
+            <SettingsSection id="notifications" title="Notifications" icon={Bell}>
               {isIOS && !isPWAInstalled && (
                     <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 space-y-2">
                       <div className="flex items-center gap-2">
@@ -619,7 +711,7 @@ export function SettingsDialog({
             </SettingsSection>
 
             {/* Privacy & Data */}
-            <SettingsSection title="Privacy & Data" icon={Shield}>
+            <SettingsSection id="privacy" title="Privacy & Data" icon={Shield}>
               <div className="space-y-2">
                 <Button variant="ghost" className="w-full justify-between h-auto py-2.5" onClick={() => navigate('/data-settings')}>
                   <span className="text-sm">Manage Data & Privacy</span>

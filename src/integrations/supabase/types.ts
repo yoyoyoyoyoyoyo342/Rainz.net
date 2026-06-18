@@ -293,6 +293,45 @@ export type Database = {
         }
         Relationships: []
       }
+      app_banners: {
+        Row: {
+          background_color: string
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          id: string
+          is_active: boolean
+          message: string
+          starts_at: string
+          text_color: string
+          title: string
+        }
+        Insert: {
+          background_color?: string
+          created_at?: string
+          created_by?: string | null
+          ends_at: string
+          id?: string
+          is_active?: boolean
+          message?: string
+          starts_at?: string
+          text_color?: string
+          title: string
+        }
+        Update: {
+          background_color?: string
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          id?: string
+          is_active?: boolean
+          message?: string
+          starts_at?: string
+          text_color?: string
+          title?: string
+        }
+        Relationships: []
+      }
       app_versions: {
         Row: {
           changelog: string[]

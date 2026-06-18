@@ -25,7 +25,8 @@ import { AdminFeatureFlags } from './admin-feature-flags';
 import { AdminContentModeration } from './admin-content-moderation';
 import { AdminEmergencyAlert } from './admin-emergency-alert';
 import { AdminDownloadInstructions } from './admin-download-instructions';
-import { Download } from 'lucide-react';
+import { AdminBanners } from './admin-banners';
+import { Download, Megaphone } from 'lucide-react';
 
 interface WeatherReport {
   id: string;
@@ -167,6 +168,7 @@ export function AdminPanel() {
     { value: 'api-data', label: 'API Data', icon: <Database className="w-3.5 h-3.5" /> },
     { value: 'api-token', label: 'API Token', icon: <Key className="w-3.5 h-3.5" /> },
     { value: 'shop-offers', label: 'Shop', icon: <Tag className="w-3.5 h-3.5" /> },
+    { value: 'banners', label: 'Banners', icon: <Megaphone className="w-3.5 h-3.5" /> },
     { value: 'downloads', label: 'Downloads', icon: <Download className="w-3.5 h-3.5" /> },
   ];
 
@@ -301,6 +303,12 @@ export function AdminPanel() {
 
         <TabsContent value="shop-offers">
           <AdminSection title="Shop Offers"><AdminShopOffers /></AdminSection>
+        </TabsContent>
+
+        <TabsContent value="banners">
+          <AdminSection title="App Banners 📣" description="Schedule announcement banners shown at the top of the app.">
+            <AdminBanners />
+          </AdminSection>
         </TabsContent>
 
         <TabsContent value="downloads">

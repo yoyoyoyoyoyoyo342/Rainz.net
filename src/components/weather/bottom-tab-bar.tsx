@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { RejnMascot } from "@/components/rejn/rejn-mascot";
 import { toast } from "sonner";
-import { useUnreadNotificationsCount } from "@/hooks/use-unread-notifications";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 type Tab = {
@@ -13,12 +12,11 @@ type Tab = {
   icon?: React.ComponentType<{ className?: string }>;
   mascot?: boolean;
   requiresAuth?: boolean;
-  showDot?: boolean;
 };
 
 const baseTabs: Tab[] = [
   { id: "home", path: "/", label: "Home", icon: CloudSun },
-  { id: "predict", path: "/predict", label: "Games", icon: Trophy, requiresAuth: true, showDot: true },
+  { id: "predict", path: "/predict", label: "Games", icon: Trophy, requiresAuth: true },
   { id: "ai", path: "/ai", label: "Ask Rejn", mascot: true, requiresAuth: true },
   { id: "explore", path: "/explore", label: "Explore", icon: Compass },
 ];
@@ -27,7 +25,6 @@ export function BottomTabBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const unread = useUnreadNotificationsCount();
   const isMobile = useIsMobile();
 
   const activeTab = baseTabs.find((t) => t.path === location.pathname)?.id || "home";

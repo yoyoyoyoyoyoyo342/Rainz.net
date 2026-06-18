@@ -644,43 +644,64 @@ export default function WeatherPage() {
               <LocationSearch onLocationSelect={handleLocationSelect} isImperial={isImperial} />
             </div>
 
-            {/* Saved locations — minimal inline switcher (no pills) */}
-            {savedLocations.length > 0 && (
-              <div className="flex items-center gap-2 px-1 text-xs overflow-x-auto no-scrollbar">
-                <span className="shrink-0 uppercase tracking-[0.18em] text-[10px] font-semibold text-muted-foreground/70">
-                  Saved
-                </span>
-                <div className="flex items-center gap-3 min-w-0">
-                  {savedLocations.slice(0, 5).map((loc: any, idx: number) => {
-                    const isActive = selectedLocation &&
-                      Math.abs(loc.latitude - selectedLocation.lat) < 0.01 &&
-                      Math.abs(loc.longitude - selectedLocation.lon) < 0.01;
-                    const cityName = loc.name.split(',')[0].trim();
-                    return (
-                      <div key={loc.id} className="flex items-center gap-3 shrink-0">
-                        {idx > 0 && <span className="text-muted-foreground/30">·</span>}
-                        <button
-                          onClick={() => handleLocationSelect(loc.latitude, loc.longitude, loc.name)}
-                          className={`group relative inline-flex items-center gap-1 font-medium transition-colors active:scale-95 ${
-                            isActive
-                              ? "text-foreground"
-                              : "text-muted-foreground hover:text-foreground"
-                          }`}
-                        >
-                          {loc.is_primary && <MapPin className="w-3 h-3 opacity-60" />}
-                          <span>{cityName}</span>
-                          <span
-                            className={`absolute -bottom-0.5 left-0 right-0 h-[2px] rounded-full bg-primary transition-all ${
-                              isActive ? "opacity-100 scale-x-100" : "opacity-0 scale-x-0"
-                            }`}
-                          />
-                        </button>
+            {/* Saved locations + streak — minimal inline switcher */}
+            {(savedLocations.length > 0 || (user && streakData)) && (
+              <div className="flex items-center gap-2 px-1 text-xs">
+                <div className="flex items-center gap-2 min-w-0 flex-1 overflow-x-auto no-scrollbar">
+                  {savedLocations.length > 0 && (
+                    <>
+                      <span className="shrink-0 uppercase tracking-[0.18em] text-[10px] font-semibold text-muted-foreground/70">
+                        Saved
+                      </span>
+                      <div className="flex items-center gap-3 min-w-0">
+                        {savedLocations.slice(0, 5).map((loc: any, idx: number) => {
+                          const isActive = selectedLocation &&
+                            Math.abs(loc.latitude - selectedLocation.lat) < 0.01 &&
+                            Math.abs(loc.longitude - selectedLocation.lon) < 0.01;
+                          const cityName = loc.name.split(',')[0].trim();
+                          return (
+                            <div key={loc.id} className="flex items-center gap-3 shrink-0">
+                              {idx > 0 && <span className="text-muted-foreground/30">·</span>}
+                              <button
+                                onClick={() => handleLocationSelect(loc.latitude, loc.longitude, loc.name)}
+                                className={`group relative inline-flex items-center gap-1 font-medium transition-colors active:scale-95 ${
+                                  isActive
+                                    ? "text-foreground"
+                                    : "text-muted-foreground hover:text-foreground"
+                                }`}
+                              >
+                                {loc.is_primary && <MapPin className="w-3 h-3 opacity-60" />}
+                                <span>{cityName}</span>
+                                <span
+                                  className={`absolute -bottom-0.5 left-0 right-0 h-[2px] rounded-full bg-primary transition-all ${
+                                    isActive ? "opacity-100 scale-x-100" : "opacity-0 scale-x-0"
+                                  }`}
+                                />
+                              </button>
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
+                    </>
+                  )}
                 </div>
+                {user && streakData && (
+                  <div
+                    className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-orange-500/20 to-amber-400/15 border border-orange-400/40 text-orange-700 dark:text-orange-200 shadow-[0_0_12px_rgba(249,115,22,0.25)]"
+                    title={`${streakData.currentStreak}-day streak · best ${streakData.longestStreak}`}
+                  >
+                    <Flame className="w-3.5 h-3.5 text-orange-500 dark:text-orange-300 drop-shadow-[0_0_4px_rgba(251,146,60,0.7)]" />
+                    <span className="text-xs font-bold tabular-nums leading-none">
+                      {streakData.currentStreak}
+                    </span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80 leading-none">
+                      {streakData.currentStreak === 1 ? "day" : "days"}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
+
 
             {/* Station info, guided help, status indicators */}
             <Suspense fallback={null}>

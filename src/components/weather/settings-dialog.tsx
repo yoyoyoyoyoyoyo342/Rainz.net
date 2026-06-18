@@ -557,6 +557,61 @@ export function SettingsDialog({
               </div>
             </SettingsSection>
 
+            {/* Behavior Section — new */}
+            <SettingsSection id="behavior" title="Behavior" icon={Zap}>
+              <ToggleRow
+                icon={Vibrate}
+                label="Haptic feedback"
+                description="Vibrate on taps, refreshes, and predictions (mobile only)"
+                checked={premiumSettings.hapticFeedback}
+                onCheckedChange={(checked) => {
+                  updatePremiumSetting('hapticFeedback', checked);
+                  if (checked && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                    navigator.vibrate(15);
+                  }
+                  toast({ title: 'Haptic feedback', description: checked ? 'Enabled' : 'Disabled' });
+                }}
+              />
+              <ToggleRow
+                icon={FlaskConical}
+                label="Reduced motion"
+                description="Limit transitions and parallax effects across the app"
+                checked={premiumSettings.reducedMotion}
+                onCheckedChange={(checked) => {
+                  updatePremiumSetting('reducedMotion', checked);
+                  toast({ title: 'Reduced motion', description: checked ? 'Enabled' : 'Disabled' });
+                }}
+              />
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm font-medium">Auto-refresh weather</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5 ml-6">
+                    {premiumSettings.autoRefreshMinutes === 0
+                      ? 'Off — manual refresh only'
+                      : `Every ${premiumSettings.autoRefreshMinutes} minutes`}
+                  </p>
+                </div>
+                <select
+                  value={premiumSettings.autoRefreshMinutes}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    updatePremiumSetting('autoRefreshMinutes', v);
+                    toast({ title: 'Auto-refresh', description: v === 0 ? 'Disabled' : `Every ${v} min` });
+                  }}
+                  className="h-9 rounded-lg border border-input bg-background px-2 text-sm"
+                >
+                  <option value={0}>Off</option>
+                  <option value={5}>5 min</option>
+                  <option value={15}>15 min</option>
+                  <option value={30}>30 min</option>
+                  <option value={60}>1 hour</option>
+                </select>
+              </div>
+            </SettingsSection>
+
             {/* Notifications Section */}
             <SettingsSection id="notifications" title="Notifications" icon={Bell}>
               {isIOS && !isPWAInstalled && (

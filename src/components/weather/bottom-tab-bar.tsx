@@ -47,24 +47,24 @@ export function BottomTabBar() {
       <>
         <nav className="fixed bottom-0 left-0 right-0 z-50 pb-safe px-3 pointer-events-none">
           <div
-            className="pointer-events-auto mx-auto max-w-md mb-3 rounded-[28px] border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-2xl bg-background/70 dark:bg-background/60"
-            style={{ WebkitBackdropFilter: "blur(20px) saturate(180%)" }}
+            className="glass-card glass-tab-bar pointer-events-auto mx-auto max-w-md mb-3 overflow-hidden rounded-[28px] border border-border/30 bg-card/70 shadow-lg"
           >
-            <div className="grid grid-cols-4 px-2 py-2">
+            <div className="grid grid-cols-4 p-1.5">
               {baseTabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
-                const tone = isActive ? "text-primary" : "text-muted-foreground/70";
+                const tone = isActive ? "text-primary" : "text-muted-foreground";
                 return (
                   <button
+                    data-no-glass
                     key={tab.id}
                     onClick={() => handleTabClick(tab)}
-                    className="relative flex flex-col items-center justify-center gap-1 py-1.5 rounded-2xl transition-all active:scale-90"
+                    className={`relative flex min-h-[72px] flex-col items-center justify-center gap-1 rounded-[22px] bg-transparent py-1.5 transition-all active:scale-95 ${
+                      isActive ? "bg-primary/12 shadow-inner" : "hover:bg-muted/20"
+                    }`}
                   >
                     <div
-                      className={`relative h-10 w-12 flex items-center justify-center rounded-2xl transition-all ${
-                        isActive ? "bg-primary/15" : ""
-                      }`}
+                      className="relative flex h-9 w-12 items-center justify-center rounded-2xl transition-all"
                     >
                       {tab.mascot ? (
                         <RejnMascot

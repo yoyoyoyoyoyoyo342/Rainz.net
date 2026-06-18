@@ -225,7 +225,7 @@ export function HeaderInfoBar({ user, showInbox = true, showStreak = true }: Hea
 
   return (
     <div className="flex items-center gap-2">
-      {user && streakData && !streakLoading && (
+      {showStreak && user && streakData && !streakLoading && (
         <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-primary/10 rounded-full border border-primary/20">
           <Flame className="h-3.5 w-3.5 text-primary" />
           <span className="text-xs font-bold text-foreground">{streakData.currentStreak}</span>

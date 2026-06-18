@@ -606,7 +606,7 @@ export default function WeatherPage() {
                 <span className="text-xs text-muted-foreground/70 hidden sm:inline">Be prepared.</span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <HeaderInfoBar user={user} showInbox={false} />
+                <HeaderInfoBar user={user} showInbox={true} />
                 <Suspense fallback={null}>
                   <SkyCamSubmissionDialog
                     location={actualStationName}

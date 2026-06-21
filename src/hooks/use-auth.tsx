@@ -120,21 +120,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('user_id', user.id)
-        .select()
-        .single();
-
+      const { data: res, error } = await supabase.functions.invoke('profiles', {
+        method: 'PATCH',
+        body: updates,
+      });
       if (error) throw error;
-
-      setProfile(data);
+      setProfile((res?.data ?? null) as Profile | null);
     } catch (error) {
       console.error('Error updating profile:', error);
       throw error;
     }
   };
+
 
   const value = {
     user,

@@ -1,7 +1,23 @@
 <!DOCTYPE html>
 <html lang="en" prefix="og: https://ogp.me/ns#">
   <head>
+    <script>
+      // Force apex domain to avoid CORS breakage when www.* redirects
+      // assets to the apex mid-load (white screen bug).
+      (function () {
+        try {
+          var h = window.location.hostname;
+          if (h === 'www.rejn.app' || h === 'www.rainz.net') {
+            var apex = h.replace(/^www\./, '');
+            window.location.replace(
+              window.location.protocol + '//' + apex + window.location.pathname + window.location.search + window.location.hash
+            );
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="manifest" href="manifest.json" />
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 

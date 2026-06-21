@@ -133,8 +133,9 @@ export function AchievementsDisplay() {
         await checkAndAwardAchievements(achievementsData, userAchievementsData || [], {
           predictions_made: predictions.length,
           correct_predictions: correctPredictions,
-          current_streak: streaksResult.data?.current_streak || 0,
-          total_points: profileResult.data?.total_points || 0,
+          current_streak: currentStreak,
+          total_points: totalPoints,
+
           battles_won: battlesResult.data?.length || 0,
           games_played: gamesPlayed,
           locations_searched: locationSearches,

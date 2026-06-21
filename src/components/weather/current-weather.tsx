@@ -57,6 +57,8 @@ import { useState, useRef, useEffect } from "react";
 import { useLanguage } from "@/contexts/language-context";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { listSavedLocations, addSavedLocation, deleteSavedLocation } from "@/lib/saved-locations-api";
+
 import { toast } from "sonner";
 import { PremiumSettings } from "@/hooks/use-premium-settings";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";

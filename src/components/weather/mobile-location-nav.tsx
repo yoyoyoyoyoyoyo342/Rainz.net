@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { listSavedLocations, addSavedLocation, renameSavedLocation } from "@/lib/saved-locations-api";
+
 import { MapPin, Plus, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";

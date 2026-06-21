@@ -144,14 +144,19 @@ export default function Auth() {
       }
       if (data.user) {
         try {
-          await supabase.from('profiles').upsert({
-            user_id: data.user.id,
-            username: email.split('@')[0],
-            display_name: email.split('@')[0],
-            notification_enabled: false,
-            notification_time: '08:00'
-          }, { onConflict: 'user_id' });
+          // Profiles live on Aiven now — go through the edge function instead
+          // of supabase.from('profiles'), which is empty post-cleanup.
+          await supabase.functions.invoke('profiles', {
+            method: 'POST',
+            body: {
+              username: email.split('@')[0],
+              display_name: email.split('@')[0],
+              notification_enabled: false,
+              notification_time: '08:00',
+            },
+          });
         } catch (profileErr) { console.log('Profile upsert skipped:', profileErr); }
+
         setNewUserId(data.user.id);
         setShowSurvey(true);
         const refCode = searchParams.get('ref');

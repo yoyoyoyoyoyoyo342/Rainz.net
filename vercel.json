@@ -3,19 +3,13 @@
     {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "rainz.net" }],
-      "destination": "https://rejn.app/:path*",
+      "destination": "https://www.rejn.app/:path*",
       "permanent": true
     },
     {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "www.rainz.net" }],
-      "destination": "https://rejn.app/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [{ "type": "host", "value": "www.rejn.app" }],
-      "destination": "https://rejn.app/:path*",
+      "destination": "https://www.rejn.app/:path*",
       "permanent": true
     }
   ],

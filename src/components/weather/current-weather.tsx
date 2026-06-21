@@ -131,10 +131,8 @@ export function CurrentWeather({
     queryKey: ["saved-locations"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-      const { data, error } = await supabase.from("saved_locations").select("*").order("is_primary", { ascending: false }).order("name");
-      if (error) throw error;
-      return data as SavedLocation[];
+      if (!user) return [] as SavedLocation[];
+      return (await listSavedLocations()) as SavedLocation[];
     },
   });
 
@@ -144,14 +142,11 @@ export function CurrentWeather({
       if (!user) throw new Error("Not authenticated");
       if (!currentLocation) throw new Error("No current location");
       if (savedLocations.length >= 3) throw new Error("MAX_REACHED");
-      const { error } = await supabase.from("saved_locations").insert({
-        user_id: user.id,
+      await addSavedLocation({
         name: currentLocation.name,
         latitude: currentLocation.lat,
         longitude: currentLocation.lon,
-        is_primary: savedLocations.length === 0,
       });
-      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["saved-locations"] });
@@ -175,8 +170,7 @@ export function CurrentWeather({
         loc => Math.abs(loc.latitude - currentLocation.lat) < 0.01 && Math.abs(loc.longitude - currentLocation.lon) < 0.01
       );
       if (!savedLocation) throw new Error("Location not found");
-      const { error } = await supabase.from("saved_locations").delete().eq("id", savedLocation.id);
-      if (error) throw error;
+      await deleteSavedLocation(savedLocation.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["saved-locations"] });
@@ -184,6 +178,7 @@ export function CurrentWeather({
     },
     onError: () => toast.error("Failed to remove location"),
   });
+
 
   const savedLocationData = currentLocation && savedLocations.find(
     loc => Math.abs(loc.latitude - currentLocation.lat) < 0.01 && Math.abs(loc.longitude - currentLocation.lon) < 0.01

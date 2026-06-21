@@ -36,6 +36,14 @@ export function WhatsNewDialog() {
       // Local check first
       if (localStorage.getItem(STORAGE_KEY) === "1") return;
 
+      // Don't open over the cookie consent banner — it blocks the banner's
+      // clicks because Radix Dialog disables pointer events on the body.
+      if (!localStorage.getItem("cookie_consent")) {
+        // Re-check shortly so we open as soon as the user dismisses cookies.
+        setTimeout(() => !cancelled && check(), 1500);
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (cancelled) return;
       setUserId(user?.id ?? null);
@@ -65,6 +73,7 @@ export function WhatsNewDialog() {
       cancelled = true;
     };
   }, []);
+
 
   const markSeen = async () => {
     localStorage.setItem(STORAGE_KEY, "1");

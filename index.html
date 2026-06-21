@@ -2,15 +2,13 @@
 <html lang="en" prefix="og: https://ogp.me/ns#">
   <head>
     <script>
-      // Force apex domain to avoid CORS breakage when www.* redirects
-      // assets to the apex mid-load (white screen bug).
+      // Keep legacy Rainz domains on the working Rejn host before assets load.
       (function () {
         try {
           var h = window.location.hostname;
-          if (h === 'www.rejn.app' || h === 'www.rainz.net') {
-            var apex = h.replace(/^www\./, '');
+          if (h === 'rainz.net' || h === 'www.rainz.net') {
             window.location.replace(
-              window.location.protocol + '//' + apex + window.location.pathname + window.location.search + window.location.hash
+              'https://www.rejn.app' + window.location.pathname + window.location.search + window.location.hash
             );
           }
         } catch (e) {}

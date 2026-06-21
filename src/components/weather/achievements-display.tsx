@@ -93,10 +93,12 @@ export function AchievementsDisplay() {
       setUserAchievements(userAchievementsData || []);
 
       // Calculate user stats from various tables
-      const [predictionsResult, streaksResult, profileResult, battlesResult, analyticsResult] = await Promise.all([
+      // profiles + user_streaks live on Aiven now → use the edge functions.
+      // weather_predictions, prediction_battles, analytics_events still on Supabase.
+      const [predictionsResult, streaksRes, profileRes, battlesResult, analyticsResult] = await Promise.all([
         supabase.from('weather_predictions').select('id, is_correct').eq('user_id', user.id),
-        supabase.from('user_streaks').select('current_streak').eq('user_id', user.id).single(),
-        supabase.from('profiles').select('total_points').eq('user_id', user.id).single(),
+        supabase.functions.invoke('user-streaks', { method: 'GET' }),
+        supabase.functions.invoke('profiles', { method: 'GET' }),
         supabase.from('prediction_battles').select('winner_id').eq('winner_id', user.id),
         supabase.from('analytics_events').select('event_type, metadata').eq('user_id', user.id),
       ]);
@@ -104,17 +106,20 @@ export function AchievementsDisplay() {
       const predictions = predictionsResult.data || [];
       const correctPredictions = predictions.filter(p => p.is_correct).length;
       const analyticsEvents = analyticsResult.data || [];
-      
+
       const gamesPlayed = analyticsEvents.filter(e => e.event_type === 'game_played').length;
       const locationSearches = analyticsEvents.filter(e => e.event_type === 'location_search').length;
       const aiChats = analyticsEvents.filter(e => e.event_type === 'ai_chat_message').length;
       const shares = analyticsEvents.filter(e => e.event_type === 'share_weather').length;
 
+      const currentStreak = (streaksRes?.data as { data?: { current_streak?: number } } | null)?.data?.current_streak ?? 0;
+      const totalPoints = (profileRes?.data as { data?: { total_points?: number } } | null)?.data?.total_points ?? 0;
+
       setUserStats({
         predictions_made: predictions.length,
         correct_predictions: correctPredictions,
-        current_streak: streaksResult.data?.current_streak || 0,
-        total_points: profileResult.data?.total_points || 0,
+        current_streak: currentStreak,
+        total_points: totalPoints,
         battles_won: battlesResult.data?.length || 0,
         games_played: gamesPlayed,
         locations_searched: locationSearches,
@@ -122,13 +127,15 @@ export function AchievementsDisplay() {
         shares: shares,
       });
 
+
       // Check for new achievements to award
       if (achievementsData) {
         await checkAndAwardAchievements(achievementsData, userAchievementsData || [], {
           predictions_made: predictions.length,
           correct_predictions: correctPredictions,
-          current_streak: streaksResult.data?.current_streak || 0,
-          total_points: profileResult.data?.total_points || 0,
+          current_streak: currentStreak,
+          total_points: totalPoints,
+
           battles_won: battlesResult.data?.length || 0,
           games_played: gamesPlayed,
           locations_searched: locationSearches,

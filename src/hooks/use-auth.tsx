@@ -34,22 +34,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error loading profile:', error);
-        return;
+      // Profiles live on Aiven; route through the edge function. If the row
+      // doesn't exist yet (Google OAuth signup, first ever login), upsert one
+      // so downstream code never sees a null profile.
+      const { data: getRes } = await supabase.functions.invoke('profiles', { method: 'GET' });
+      let row = (getRes?.data ?? null) as Profile | null;
+      if (!row) {
+        const email = (await supabase.auth.getUser()).data.user?.email ?? '';
+        const fallback = email ? email.split('@')[0] : 'user';
+        const { data: postRes } = await supabase.functions.invoke('profiles', {
+          method: 'POST',
+          body: {
+            username: fallback,
+            display_name: fallback,
+            notification_enabled: false,
+            notification_time: '08:00',
+          },
+        });
+        row = (postRes?.data ?? null) as Profile | null;
       }
-
-      setProfile(data);
+      setProfile(row);
     } catch (error) {
       console.error('Error loading profile:', error);
     }
   };
+
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -111,21 +120,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('user_id', user.id)
-        .select()
-        .single();
-
+      const { data: res, error } = await supabase.functions.invoke('profiles', {
+        method: 'PATCH',
+        body: updates,
+      });
       if (error) throw error;
-
-      setProfile(data);
+      setProfile((res?.data ?? null) as Profile | null);
     } catch (error) {
       console.error('Error updating profile:', error);
       throw error;
     }
   };
+
 
   const value = {
     user,

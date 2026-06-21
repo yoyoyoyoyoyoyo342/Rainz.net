@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { listSavedLocations, addSavedLocation, renameSavedLocation } from "@/lib/saved-locations-api";
+
 import { MapPin, Plus, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";
@@ -37,16 +39,8 @@ export function MobileLocationNav({ onLocationSelect, currentLocation, isImperia
     queryKey: ["saved-locations"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-
-      const { data, error } = await supabase
-        .from("saved_locations")
-        .select("*")
-        .order("is_primary", { ascending: false })
-        .order("name");
-
-      if (error) throw error;
-      return data as SavedLocation[];
+      if (!user) return [] as SavedLocation[];
+      return (await listSavedLocations()) as SavedLocation[];
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     gcTime: 1000 * 60 * 10, // Keep in cache for 10 minutes
@@ -57,16 +51,7 @@ export function MobileLocationNav({ onLocationSelect, currentLocation, isImperia
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (savedLocations.length >= 3) throw new Error("MAX_REACHED");
-
-      const { error } = await supabase.from("saved_locations").insert({
-        user_id: user.id,
-        name,
-        latitude: lat,
-        longitude: lon,
-        is_primary: savedLocations.length === 0,
-      });
-
-      if (error) throw error;
+      await addSavedLocation({ name, latitude: lat, longitude: lon });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["saved-locations"] });
@@ -84,12 +69,7 @@ export function MobileLocationNav({ onLocationSelect, currentLocation, isImperia
 
   const renameLocationMutation = useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      const { error } = await supabase
-        .from("saved_locations")
-        .update({ name })
-        .eq("id", id);
-
-      if (error) throw error;
+      await renameSavedLocation(id, name);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["saved-locations"] });
@@ -99,6 +79,7 @@ export function MobileLocationNav({ onLocationSelect, currentLocation, isImperia
     },
     onError: () => toast.error("Failed to rename location"),
   });
+
 
   const handleLocationSelect = (lat: number, lon: number, locationName: string) => {
     addLocationMutation.mutate({ name: locationName, lat, lon });

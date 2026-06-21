@@ -50,7 +50,7 @@ serve(async (req) => {
 
     if (req.method === "PATCH") {
       const body = await req.json();
-      const { id, action } = body ?? {};
+      const { id, action, name } = body ?? {};
       if (!id) return json({ error: "id required" }, 400);
 
       if (action === "set_primary") {
@@ -60,8 +60,18 @@ serve(async (req) => {
         });
         return json({ data: { id, is_primary: true } });
       }
+      if (action === "rename") {
+        if (!name || typeof name !== "string") return json({ error: "name required" }, 400);
+        const rows = await db`
+          UPDATE saved_locations SET name = ${name.slice(0, 120)}
+          WHERE id = ${id} AND user_id = ${user.id}
+          RETURNING *
+        `;
+        return json({ data: rows[0] ?? null });
+      }
       return json({ error: "unknown action" }, 400);
     }
+
 
     if (req.method === "DELETE") {
       const id = url.searchParams.get("id");

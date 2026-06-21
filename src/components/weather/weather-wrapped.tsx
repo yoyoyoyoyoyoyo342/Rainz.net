@@ -405,8 +405,12 @@ export function WeatherWrapped() {
         pointsEarned: best.points_earned || 0,
       } : null;
 
-      const { data: streakData } = await supabase.from("user_streaks").select("current_streak, longest_streak").eq("user_id", user.id).maybeSingle();
-      const { data: profileData } = await supabase.from("profiles").select("total_points, created_at").eq("user_id", user.id).maybeSingle();
+      // streaks + own profile live on Aiven now → use edge functions.
+      const { data: streaksRes } = await supabase.functions.invoke("user-streaks", { method: "GET" });
+      const streakData = (streaksRes?.data ?? null) as { current_streak?: number; longest_streak?: number } | null;
+      const { data: profileRes } = await supabase.functions.invoke("profiles", { method: "GET" });
+      const profileData = (profileRes?.data ?? null) as { total_points?: number; created_at?: string } | null;
+
 
       // Rank by user_id
       const { data: leaderboard } = await supabase.rpc("get_leaderboard");
@@ -449,8 +453,9 @@ export function WeatherWrapped() {
       let topRival: string | null = null;
       const topRivalId = Object.entries(rivalCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
       if (topRivalId) {
-        const { data: rivalProfile } = await supabase.from("profiles").select("display_name").eq("user_id", topRivalId).maybeSingle();
-        topRival = rivalProfile?.display_name || "Unknown";
+        const { data: rivalRes } = await supabase.functions.invoke(`profiles?user_id=${encodeURIComponent(topRivalId)}`, { method: "GET" });
+        topRival = (rivalRes?.data as { display_name?: string } | null)?.display_name || "Unknown";
+
       }
 
       const personalityType = getPersonality({ accuracy, totalPredictions: predictions.length, conditionBreakdown });

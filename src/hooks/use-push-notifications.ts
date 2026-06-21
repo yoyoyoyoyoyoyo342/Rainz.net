@@ -207,19 +207,18 @@ export function usePushNotifications() {
         return;
       }
 
-      // Get user's primary location
-      const { data: locations } = await supabase
-        .from('saved_locations')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_primary', true)
-        .limit(1);
+      // Get user's primary location via the Aiven edge function.
+      const { data: locRes } = await supabase.functions.invoke('saved-locations', { method: 'GET' });
+      const locations = ((locRes?.data ?? []) as Array<{ id: string; name: string; latitude: number; longitude: number; is_primary: boolean }>)
+        .filter((l) => l.is_primary)
+        .slice(0, 1);
 
       if (!locations || locations.length === 0) {
         console.log('No primary location found, sending generic notification');
         await sendGenericNotification();
         return;
       }
+
 
       const location = locations[0];
       

@@ -453,8 +453,9 @@ export function WeatherWrapped() {
       let topRival: string | null = null;
       const topRivalId = Object.entries(rivalCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
       if (topRivalId) {
-        const { data: rivalProfile } = await supabase.from("profiles").select("display_name").eq("user_id", topRivalId).maybeSingle();
-        topRival = rivalProfile?.display_name || "Unknown";
+        const { data: rivalRes } = await supabase.functions.invoke(`profiles?user_id=${encodeURIComponent(topRivalId)}`, { method: "GET" });
+        topRival = (rivalRes?.data as { display_name?: string } | null)?.display_name || "Unknown";
+
       }
 
       const personalityType = getPersonality({ accuracy, totalPredictions: predictions.length, conditionBreakdown });

@@ -40,6 +40,25 @@ serve(async (req) => {
       return json({ data: rows[0] ?? null });
     }
 
+    if (req.method === "POST") {
+      // Upsert own profile (used by signup flow). Only own profile creation.
+      const body = await req.json().catch(() => ({}));
+      const username = (body?.username ?? "").toString().slice(0, 64) || (user.email?.split("@")[0] ?? "user");
+      const display_name = (body?.display_name ?? username).toString().slice(0, 64);
+      const notification_enabled = !!body?.notification_enabled;
+      const notification_time = (body?.notification_time ?? "08:00").toString().slice(0, 8);
+      const rows = await db`
+        INSERT INTO profiles (user_id, username, display_name, notification_enabled, notification_time)
+        VALUES (${user.id}, ${username}, ${display_name}, ${notification_enabled}, ${notification_time})
+        ON CONFLICT (user_id) DO UPDATE SET
+          username = COALESCE(profiles.username, EXCLUDED.username),
+          display_name = COALESCE(profiles.display_name, EXCLUDED.display_name),
+          updated_at = now()
+        RETURNING ${db.unsafe(OWN_FIELDS)}
+      `;
+      return json({ data: rows[0] ?? null });
+    }
+
     if (req.method === "PATCH" || req.method === "PUT") {
       const body = await req.json();
       const entries = Object.entries(body ?? {}).filter(([k]) => UPDATABLE.has(k));
@@ -51,6 +70,7 @@ serve(async (req) => {
       const rows = await db.unsafe(sql, [user.id, ...values]);
       return json({ data: rows[0] ?? null });
     }
+
 
     return json({ error: `Method ${req.method} not allowed` }, 405);
   } catch (e) {

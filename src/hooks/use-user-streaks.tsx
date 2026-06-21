@@ -13,6 +13,9 @@ interface StreakData {
 
 const STREAK_BONUS = 25;
 
+// Reads/writes go through the `user-streaks` Aiven edge function. The legacy
+// path that hit `supabase.from('user_streaks')` was removed when the data
+// moved to Aiven and the Supabase table was emptied.
 export const useUserStreaks = () => {
   const { user } = useAuth();
   const [streakData, setStreakData] = useState<StreakData | null>(null);
@@ -26,97 +29,38 @@ export const useUserStreaks = () => {
 
     const checkAndUpdateStreak = async () => {
       try {
-        const today = new Date().toISOString().split("T")[0];
-
-        const { data: existing } = await supabase
-          .from("user_streaks")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("updated_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        const setFromRow = (row: any) => {
+        // 1. Show whatever we already have so the UI never sits at 0.
+        const { data: getRes } = await supabase.functions.invoke("user-streaks", { method: "GET" });
+        if (getRes?.data) {
           setStreakData({
-            currentStreak: row.current_streak,
-            longestStreak: row.longest_streak,
-            totalVisits: row.total_visits,
-            lastVisitDate: row.last_visit_date,
-            streakFreezesUsed: row.streak_freezes_used ?? 0,
+            currentStreak: getRes.data.current_streak ?? 0,
+            longestStreak: getRes.data.longest_streak ?? 0,
+            totalVisits: getRes.data.total_visits ?? 0,
+            lastVisitDate: getRes.data.last_visit_date,
+            streakFreezesUsed: getRes.data.streak_freezes_used ?? 0,
           });
-        };
+        }
+        setLoading(false);
 
-        if (!existing) {
-          const { data: inserted } = await supabase
-            .from("user_streaks")
-            .insert({
-              user_id: user.id,
-              current_streak: 1,
-              longest_streak: 1,
-              last_visit_date: today,
-              total_visits: 1,
-              streak_freezes_used: 0,
-            })
-            .select()
-            .single();
-          if (inserted) setFromRow(inserted);
+        // 2. Check-in for today (server is the source of truth for diffing dates).
+        const { data: postRes, error } = await supabase.functions.invoke("user-streaks", { method: "POST" });
+        if (error) {
+          console.warn("[use-user-streaks] check-in failed", error);
           return;
         }
-
-        // Show current data immediately so UI never sits at 0
-        setFromRow(existing);
-
-        if (existing.last_visit_date === today) return;
-
-        const lastDate = new Date(existing.last_visit_date);
-        const currentDate = new Date(today);
-        const diffDays = Math.floor(
-          (currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
-        );
-
-        let newCurrentStreak = existing.current_streak;
-        let event: "incremented" | "broken" | "same" = "same";
-
-        if (diffDays === 1) {
-          newCurrentStreak = existing.current_streak + 1;
-          event = "incremented";
-        } else if (diffDays > 1) {
-          newCurrentStreak = 1;
-          event = "broken";
+        if (postRes?.data) {
+          setStreakData({
+            currentStreak: postRes.data.current_streak ?? 0,
+            longestStreak: postRes.data.longest_streak ?? 0,
+            totalVisits: postRes.data.total_visits ?? 0,
+            lastVisitDate: postRes.data.last_visit_date,
+            streakFreezesUsed: postRes.data.streak_freezes_used ?? 0,
+          });
         }
-
-        const newLongest = Math.max(existing.longest_streak, newCurrentStreak);
-
-        const { data: updated } = await supabase
-          .from("user_streaks")
-          .update({
-            current_streak: newCurrentStreak,
-            longest_streak: newLongest,
-            last_visit_date: today,
-            total_visits: existing.total_visits + 1,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("user_id", user.id)
-          .select()
-          .single();
-
-        if (updated) setFromRow(updated);
-
-        if (event === "incremented" && newCurrentStreak > 1) {
-          await supabase.rpc as any;
-          // Award streak bonus points
-          const { data: prof } = await supabase
-            .from("profiles")
-            .select("total_points")
-            .eq("user_id", user.id)
-            .maybeSingle();
-          if (prof) {
-            await supabase
-              .from("profiles")
-              .update({ total_points: (prof.total_points ?? 0) + STREAK_BONUS })
-              .eq("user_id", user.id);
-          }
-          toast.success(`🔥 ${newCurrentStreak} day streak! +${STREAK_BONUS} points`);
+        if (postRes?.event === "incremented" && (postRes?.data?.current_streak ?? 0) > 1) {
+          toast.success(`🔥 ${postRes.data.current_streak} day streak! +${STREAK_BONUS} points`);
+        } else if (postRes?.event === "freeze_used") {
+          toast.success(`🧊 Streak freeze saved your streak (${postRes.missed_days} day${postRes.missed_days === 1 ? "" : "s"})`);
         }
       } catch (error) {
         console.error("Error managing streak:", error);

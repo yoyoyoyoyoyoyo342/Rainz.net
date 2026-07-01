@@ -291,12 +291,23 @@ export default function PredictPage() {
                 <StreakMultiplierMeter streak={userStats?.streak || 0} />
               )}
 
+              <RejnCommentary
+                streak={userStats?.streak || 0}
+                accuracy={userStats?.accuracy || 0}
+                totalPredictions={userStats?.totalPredictions || 0}
+              />
+
+              <WildCardHype />
+
               <Suspense fallback={<Card className="glass-card"><CardContent className="p-6 text-sm text-muted-foreground">Loading prediction form…</CardContent></Card>}>
                 <WeatherPredictionForm
                   location={selectedLocation.name}
                   latitude={selectedLocation.lat}
                   longitude={selectedLocation.lon}
-                  onPredictionMade={() => trackPredictionMade(selectedLocation.name)}
+                  onPredictionMade={() => {
+                    trackPredictionMade(selectedLocation.name);
+                    setCelebrateTick((n) => n + 1);
+                  }}
                   isImperial={isImperial}
                 />
               </Suspense>

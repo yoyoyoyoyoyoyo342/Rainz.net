@@ -346,6 +346,8 @@ export default function PredictPage() {
         </div>
       </div>
       <BottomTabBar />
+      <PredictionCelebration trigger={celebrateTick} streak={userStats?.streak || 0} />
     </>
   );
 }
+

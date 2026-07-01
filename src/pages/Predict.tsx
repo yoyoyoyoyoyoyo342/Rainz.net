@@ -25,6 +25,9 @@ const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-c
 const DailySpinWheel = lazy(() => import("@/components/weather/daily-spin-wheel").then(m => ({ default: m.DailySpinWheel })));
 import { StreakMultiplierMeter } from "@/components/predict/streak-multiplier-meter";
 import { RejnMascot } from "@/components/rejn/rejn-mascot";
+import { PredictionCelebration } from "@/components/predict/prediction-celebration";
+import { RejnCommentary } from "@/components/predict/rejn-commentary";
+import { WildCardHype } from "@/components/predict/wild-card-hype";
 
 export default function PredictPage() {
   const { user, loading: authLoading } = useAuth();
@@ -38,6 +41,7 @@ export default function PredictPage() {
     name: "Copenhagen",
   });
   const [isImperial, setIsImperial] = useState(false);
+  const [celebrateTick, setCelebrateTick] = useState(0);
   const acceptBattleId = searchParams.get("accept_battle");
 
   // If we land here with accept_battle, ensure we're on the predict tab
@@ -287,12 +291,23 @@ export default function PredictPage() {
                 <StreakMultiplierMeter streak={userStats?.streak || 0} />
               )}
 
+              <RejnCommentary
+                streak={userStats?.streak || 0}
+                accuracy={userStats?.accuracy || 0}
+                totalPredictions={userStats?.totalPredictions || 0}
+              />
+
+              <WildCardHype />
+
               <Suspense fallback={<Card className="glass-card"><CardContent className="p-6 text-sm text-muted-foreground">Loading prediction form…</CardContent></Card>}>
                 <WeatherPredictionForm
                   location={selectedLocation.name}
                   latitude={selectedLocation.lat}
                   longitude={selectedLocation.lon}
-                  onPredictionMade={() => trackPredictionMade(selectedLocation.name)}
+                  onPredictionMade={() => {
+                    trackPredictionMade(selectedLocation.name);
+                    setCelebrateTick((n) => n + 1);
+                  }}
                   isImperial={isImperial}
                 />
               </Suspense>
@@ -331,6 +346,8 @@ export default function PredictPage() {
         </div>
       </div>
       <BottomTabBar />
+      <PredictionCelebration trigger={celebrateTick} streak={userStats?.streak || 0} />
     </>
   );
 }
+

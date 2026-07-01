@@ -41,6 +41,7 @@ export default function PredictPage() {
     name: "Copenhagen",
   });
   const [isImperial, setIsImperial] = useState(false);
+  const [celebrateTick, setCelebrateTick] = useState(0);
   const acceptBattleId = searchParams.get("accept_battle");
 
   // If we land here with accept_battle, ensure we're on the predict tab

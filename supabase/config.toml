@@ -179,3 +179,6 @@ verify_jwt = true
 
 [functions.ask-rejn]
 verify_jwt = false
+
+[functions.claim-sf-founder]
+verify_jwt = true

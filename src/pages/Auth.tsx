@@ -126,6 +126,27 @@ export default function Auth() {
     } finally { setLoading(false); }
   };
 
+  const tryClaimSFFounder = () => {
+    if (!('geolocation' in navigator)) return;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { data } = await supabase.functions.invoke('claim-sf-founder', {
+            body: { latitude: pos.coords.latitude, longitude: pos.coords.longitude },
+          });
+          if (data?.awarded) {
+            toast({
+              title: '🌉 Welcome, SF Founder!',
+              description: `Exclusive Bay Area badge unlocked + ${data.points ?? 500} bonus points.`,
+            });
+          }
+        } catch { /* silent */ }
+      },
+      () => { /* denied — no reward, no error */ },
+      { maximumAge: 60_000, timeout: 8000 },
+    );
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     const pwErrors = getPasswordErrors(password);
@@ -162,6 +183,8 @@ export default function Auth() {
         const refCode = searchParams.get('ref');
         if (refCode) processReferral(refCode, data.user.id);
         toast({ title: "Account Created!", description: "Please check your email to verify your account." });
+        // 🌉 SF Founder launch reward — try to claim if the user is in the Bay Area.
+        tryClaimSFFounder();
       }
     } catch (error: any) {
       toast({ variant: "destructive", title: "Sign Up Failed", description: error.message || "An unexpected error occurred" });
@@ -309,6 +332,15 @@ export default function Auth() {
             {showSurvey ? (
               <SignupSurvey userId={newUserId} onComplete={() => setShowSurvey(false)} />
             ) : (
+              <>
+                <div className="mb-4 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-3.5">
+                  <p className="text-xs font-semibold tracking-tight text-foreground flex items-center gap-1.5">
+                    <span aria-hidden>🌉</span> Now live in San Francisco
+                  </p>
+                  <p className="text-[11px] leading-relaxed text-muted-foreground mt-1">
+                    Sign up from the Bay Area and unlock the exclusive <span className="text-foreground font-medium">SF Founder badge</span> + <span className="text-foreground font-medium">500 bonus points</span>. Location permission required.
+                  </p>
+                </div>
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-email" className="text-xs font-medium text-muted-foreground">Email</Label>
@@ -350,6 +382,7 @@ export default function Auth() {
                   <Link to="/privacy" className="text-foreground hover:underline">Privacy Policy</Link>.
                 </p>
               </form>
+              </>
             )}
           </TabsContent>
         </Tabs>

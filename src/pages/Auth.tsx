@@ -332,6 +332,15 @@ export default function Auth() {
             {showSurvey ? (
               <SignupSurvey userId={newUserId} onComplete={() => setShowSurvey(false)} />
             ) : (
+              <>
+                <div className="mb-4 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-3.5">
+                  <p className="text-xs font-semibold tracking-tight text-foreground flex items-center gap-1.5">
+                    <span aria-hidden>🌉</span> Now live in San Francisco
+                  </p>
+                  <p className="text-[11px] leading-relaxed text-muted-foreground mt-1">
+                    Sign up from the Bay Area and unlock the exclusive <span className="text-foreground font-medium">SF Founder badge</span> + <span className="text-foreground font-medium">500 bonus points</span>. Location permission required.
+                  </p>
+                </div>
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-email" className="text-xs font-medium text-muted-foreground">Email</Label>

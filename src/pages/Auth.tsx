@@ -126,6 +126,27 @@ export default function Auth() {
     } finally { setLoading(false); }
   };
 
+  const tryClaimSFFounder = () => {
+    if (!('geolocation' in navigator)) return;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { data } = await supabase.functions.invoke('claim-sf-founder', {
+            body: { latitude: pos.coords.latitude, longitude: pos.coords.longitude },
+          });
+          if (data?.awarded) {
+            toast({
+              title: '🌉 Welcome, SF Founder!',
+              description: `Exclusive Bay Area badge unlocked + ${data.points ?? 500} bonus points.`,
+            });
+          }
+        } catch { /* silent */ }
+      },
+      () => { /* denied — no reward, no error */ },
+      { maximumAge: 60_000, timeout: 8000 },
+    );
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     const pwErrors = getPasswordErrors(password);

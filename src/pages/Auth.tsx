@@ -382,6 +382,7 @@ export default function Auth() {
                   <Link to="/privacy" className="text-foreground hover:underline">Privacy Policy</Link>.
                 </p>
               </form>
+              </>
             )}
           </TabsContent>
         </Tabs>

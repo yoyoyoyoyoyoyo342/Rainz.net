@@ -39,6 +39,7 @@ import { WeatherPageSkeleton } from "@/components/weather/weather-page-skeleton"
 import { AnimatedCard } from "@/components/ui/animated-card";
 import { SEOHead } from "@/components/seo/seo-head";
 import { SkyRenderer } from "@/components/rainz/sky-renderer";
+import { LandmarkLayer } from "@/components/rainz/landmarks/landmark-layer";
 import { AIBriefingHero } from "@/components/rainz/ai-briefing-hero";
 import { WhatsNewDialog } from "@/components/rejn/whats-new-dialog";
 import { PredictiveTimeline } from "@/components/rejn/predictive-timeline";
@@ -576,6 +577,13 @@ export default function WeatherPage() {
                 windDirectionDeg={(weatherData?.mostAccurate?.currentWeather as any)?.windDirection}
               />
             )}
+            <LandmarkLayer
+              latitude={selectedLocation?.lat}
+              longitude={selectedLocation?.lon}
+              locationName={selectedLocation?.name}
+              sunrise={weatherData?.mostAccurate?.currentWeather?.sunrise}
+              sunset={weatherData?.mostAccurate?.currentWeather?.sunset}
+            />
           </>
         )}
 

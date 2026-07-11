@@ -162,6 +162,8 @@ export default function Auth() {
         const refCode = searchParams.get('ref');
         if (refCode) processReferral(refCode, data.user.id);
         toast({ title: "Account Created!", description: "Please check your email to verify your account." });
+        // 🌉 SF Founder launch reward — try to claim if the user is in the Bay Area.
+        tryClaimSFFounder();
       }
     } catch (error: any) {
       toast({ variant: "destructive", title: "Sign Up Failed", description: error.message || "An unexpected error occurred" });

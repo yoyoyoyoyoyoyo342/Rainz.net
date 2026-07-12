@@ -450,6 +450,343 @@ export const StockholmCityHall: React.FC<Props> = ({ className, reducedMotion })
   className,
 );
 
+// ─── BRANDENBURG GATE (Berlin) ───────────────────────────────────────────────
+export const BrandenburgGate: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <>
+    <g fill="var(--lm-main)">
+      {/* Base steps */}
+      <rect x="620" y="410" width="360" height="20" />
+      {/* Columns */}
+      {[640, 700, 760, 820, 880, 940].map((x, i) => (
+        <g key={i}>
+          <rect x={x} y="220" width="24" height="190" />
+          <rect x={x - 4} y="212" width="32" height="10" />
+          <rect x={x - 4} y="410" width="32" height="8" />
+        </g>
+      ))}
+      {/* Entablature */}
+      <rect x="610" y="190" width="380" height="24" />
+      <rect x="620" y="180" width="360" height="10" />
+      {/* Quadriga (chariot silhouette) */}
+      <rect x="770" y="150" width="60" height="26" />
+      <circle cx="785" cy="180" r="6" />
+      <circle cx="815" cy="180" r="6" />
+      <path d="M 760 150 L 780 130 L 830 130 L 840 150 Z" />
+    </g>
+    <g fill="var(--lm-glow, transparent)">
+      {[650, 710, 770, 830, 890, 950].map((x, i) => (
+        <rect key={i} x={x + 4} y="330" width="4" height="12">{!reducedMotion && twinkle(`br-l${i}`, i * 0.3)}</rect>
+      ))}
+    </g>
+  </>,
+  className,
+);
+
+// ─── COLOSSEUM (Rome) ────────────────────────────────────────────────────────
+export const Colosseum: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <>
+    <g fill="var(--lm-main)">
+      {/* Outer ellipse shell */}
+      <path d="M 500 420 Q 500 220 800 200 Q 1100 220 1100 420 L 1080 420 Q 1080 245 800 225 Q 520 245 520 420 Z" />
+      {/* Arches — 4 rows */}
+    </g>
+    {[
+      { y: 260, h: 40 },
+      { y: 310, h: 40 },
+      { y: 360, h: 40 },
+    ].map((row, r) => (
+      <g key={r} fill="var(--lm-main)">
+        {Array.from({ length: 18 }).map((_, i) => {
+          const x = 520 + i * 32;
+          return <rect key={i} x={x} y={row.y} width="20" height={row.h} />;
+        })}
+      </g>
+    ))}
+    {/* Broken top-left */}
+    <path d="M 500 420 Q 500 260 620 210 L 640 240 Q 540 280 540 420 Z" fill="var(--lm-main)" opacity="0.9" />
+    <g fill="var(--lm-glow, transparent)">
+      {[600, 680, 760, 840, 920, 1000].map((x, i) => (
+        <rect key={i} x={x} y="320" width="3" height="10">{!reducedMotion && twinkle(`co-l${i}`, i * 0.25)}</rect>
+      ))}
+    </g>
+  </>,
+  className,
+);
+
+// ─── SAGRADA FAMILIA (Barcelona) ─────────────────────────────────────────────
+export const SagradaFamilia: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <>
+    <g fill="var(--lm-main)">
+      {/* Base */}
+      <rect x="640" y="380" width="320" height="50" />
+      {/* Central tallest spire */}
+      <polygon points="785,380 800,60 815,380" />
+      <circle cx="800" cy="70" r="8" fill="var(--lm-accent)" />
+      {/* Flanking spires */}
+      <polygon points="720,380 735,120 750,380" />
+      <polygon points="850,380 865,120 880,380" />
+      <polygon points="675,380 688,180 700,380" />
+      <polygon points="900,380 912,180 924,380" />
+      {/* Cross-detail bands */}
+      {[130, 200, 260, 320].map((y, i) => (
+        <rect key={i} x="710" y={y} width="180" height="4" />
+      ))}
+    </g>
+    <g fill="var(--lm-glow, transparent)">
+      <circle cx="800" cy="70" r="10">{!reducedMotion && twinkle("sf-c", 0)}</circle>
+      {[735, 800, 865].map((x, i) => (
+        <rect key={i} x={x - 2} y="300" width="4" height="10">{!reducedMotion && twinkle(`sf-l${i}`, i * 0.4)}</rect>
+      ))}
+    </g>
+  </>,
+  className,
+);
+
+// ─── AMSTERDAM CANAL HOUSES ──────────────────────────────────────────────────
+export const AmsterdamCanal: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <>
+    <WaterStrip y={410} reduced={reducedMotion} />
+    <g fill="var(--lm-main)">
+      {(() => {
+        const houses = [] as React.ReactNode[];
+        let x = 200;
+        let key = 0;
+        while (x < 1400) {
+          const w = 70 + (key % 3) * 12;
+          const h = 180 + (key % 4) * 24;
+          const y = 410 - h;
+          houses.push(<rect key={`h${key}`} x={x} y={y} width={w} height={h} />);
+          // Gable variants
+          const gable = key % 4;
+          if (gable === 0) {
+            houses.push(<polygon key={`g${key}`} points={`${x},${y} ${x + w / 2},${y - 22} ${x + w},${y}`} />);
+          } else if (gable === 1) {
+            houses.push(<rect key={`gb${key}`} x={x - 2} y={y - 14} width={w + 4} height="14" />);
+            houses.push(<polygon key={`gp${key}`} points={`${x + w / 2 - 6},${y - 14} ${x + w / 2},${y - 26} ${x + w / 2 + 6},${y - 14}`} />);
+          } else {
+            houses.push(<path key={`gs${key}`} d={`M ${x} ${y} Q ${x + w / 2} ${y - 30} ${x + w} ${y} Z`} />);
+          }
+          x += w + 4;
+          key++;
+        }
+        return houses;
+      })()}
+    </g>
+    <g fill="var(--lm-glow, transparent)">
+      {Array.from({ length: 18 }).map((_, i) => (
+        <rect key={i} x={230 + i * 70} y={330 + (i % 3) * 20} width="4" height="6">
+          {!reducedMotion && twinkle(`am-l${i}`, (i * 0.3) % 3)}
+        </rect>
+      ))}
+    </g>
+  </>,
+  className,
+);
+
+// ─── BURJ KHALIFA (Dubai) ────────────────────────────────────────────────────
+export const BurjKhalifa: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <>
+    <g fill="var(--lm-main)">
+      {/* Tapered tower */}
+      <polygon points="770,440 780,300 790,180 795,80 800,20 805,80 810,180 820,300 830,440" />
+      {/* Setback ridges */}
+      {[110, 160, 220, 280, 340].map((y, i) => (
+        <rect key={i} x={775 - i} y={y} width={50 + i * 2} height="6" />
+      ))}
+      {/* Antenna */}
+      <line x1="800" y1="20" x2="800" y2="-30" stroke="var(--lm-main)" strokeWidth="3" />
+    </g>
+    {/* Distant skyline */}
+    <g fill="var(--lm-main)" opacity="0.55">
+      <rect x="0" y="360" width="700" height="80" />
+      {[40, 130, 220, 310, 400, 490, 580].map((x, i) => (
+        <rect key={i} x={x} y={310 - (i % 3) * 20} width="60" height={130 + (i % 3) * 20} />
+      ))}
+      <rect x="900" y="360" width="700" height="80" />
+      {[900, 990, 1080, 1170, 1260, 1360, 1470].map((x, i) => (
+        <rect key={i} x={x} y={320 - (i % 3) * 15} width="55" height={120 + (i % 3) * 15} />
+      ))}
+    </g>
+    <g fill="var(--lm-glow, transparent)">
+      {[100, 200, 400, 550, 950, 1100, 1300, 1500].map((x, i) => (
+        <rect key={i} x={x} y={350} width="3" height="5">{!reducedMotion && twinkle(`du-l${i}`, i * 0.3)}</rect>
+      ))}
+      <circle cx="800" cy="-20" r="3">{!reducedMotion && twinkle("du-a", 0)}</circle>
+    </g>
+  </>,
+  className,
+);
+
+// ─── CN TOWER (Toronto) ──────────────────────────────────────────────────────
+export const CNTower: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <>
+    <g fill="var(--lm-main)">
+      {/* Shaft */}
+      <polygon points="792,440 796,240 796,140 804,140 804,240 808,440" />
+      {/* Observation pod */}
+      <ellipse cx="800" cy="220" rx="34" ry="12" />
+      <rect x="770" y="215" width="60" height="18" />
+      <ellipse cx="800" cy="235" rx="30" ry="8" />
+      {/* Small upper pod */}
+      <rect x="790" y="150" width="20" height="14" />
+      <ellipse cx="800" cy="150" rx="14" ry="5" />
+      {/* Antenna */}
+      <line x1="800" y1="150" x2="800" y2="40" stroke="var(--lm-main)" strokeWidth="3" />
+    </g>
+    {/* Toronto skyline */}
+    <g fill="var(--lm-main)" opacity="0.55">
+      <rect x="0" y="380" width="720" height="60" />
+      {[40, 130, 230, 330, 430, 530, 630].map((x, i) => (
+        <rect key={i} x={x} y={330 - (i % 3) * 15} width="55" height={110 + (i % 3) * 15} />
+      ))}
+      <rect x="880" y="380" width="720" height="60" />
+      {[880, 970, 1070, 1170, 1270, 1370, 1470].map((x, i) => (
+        <rect key={i} x={x} y={335 - (i % 3) * 20} width="55" height={105 + (i % 3) * 20} />
+      ))}
+    </g>
+    <g fill="var(--lm-glow, transparent)">
+      <circle cx="800" cy="45" r="3">{!reducedMotion && twinkle("cn-a", 0)}</circle>
+      {[770, 800, 830].map((x, i) => (
+        <rect key={i} x={x - 1} y="220" width="2" height="4">{!reducedMotion && twinkle(`cn-p${i}`, i * 0.4)}</rect>
+      ))}
+    </g>
+  </>,
+  className,
+);
+
+// ─── WILLIS TOWER + SKYLINE (Chicago) ────────────────────────────────────────
+export const WillisTower: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <>
+    <g fill="var(--lm-main)">
+      {/* Willis tower with stepped setbacks */}
+      <rect x="740" y="200" width="30" height="240" />
+      <rect x="770" y="140" width="30" height="300" />
+      <rect x="800" y="140" width="30" height="300" />
+      <rect x="830" y="200" width="30" height="240" />
+      <rect x="710" y="260" width="30" height="180" />
+      <rect x="860" y="260" width="30" height="180" />
+      {/* Antennas */}
+      <line x1="785" y1="140" x2="785" y2="80" stroke="var(--lm-main)" strokeWidth="3" />
+      <line x1="815" y1="140" x2="815" y2="90" stroke="var(--lm-main)" strokeWidth="3" />
+    </g>
+    <g fill="var(--lm-main)" opacity="0.7">
+      <rect x="0" y="330" width="700" height="110" />
+      {[[40, 300], [110, 280], [190, 310], [270, 260], [350, 290], [430, 275], [510, 300], [590, 285]].map(([x, y], i) => (
+        <rect key={i} x={x} y={y} width="60" height={340 - y + 40} />
+      ))}
+      <rect x="900" y="330" width="700" height="110" />
+      {[[900, 285], [980, 300], [1060, 265], [1150, 295], [1230, 275], [1320, 300], [1420, 270], [1520, 290]].map(([x, y], i) => (
+        <rect key={i} x={x} y={y} width="60" height={340 - y + 40} />
+      ))}
+    </g>
+    <g fill="var(--lm-glow, transparent)">
+      {[60, 220, 400, 560, 940, 1100, 1280, 1470].map((x, i) => (
+        <rect key={i} x={x} y="340" width="3" height="4">{!reducedMotion && twinkle(`chi-l${i}`, i * 0.3)}</rect>
+      ))}
+    </g>
+  </>,
+  className,
+);
+
+// ─── SPACE NEEDLE (Seattle) ──────────────────────────────────────────────────
+export const SpaceNeedle: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <>
+    <g fill="var(--lm-main)">
+      {/* Three tripod legs */}
+      <polygon points="770,440 795,180 805,180 780,440" />
+      <polygon points="830,440 805,180 795,180 820,440" />
+      <rect x="795" y="180" width="10" height="60" />
+      {/* Saucer top */}
+      <path d="M 750 170 Q 800 130 850 170 L 840 195 Q 800 215 760 195 Z" />
+      <ellipse cx="800" cy="170" rx="50" ry="8" />
+      {/* Antenna */}
+      <line x1="800" y1="130" x2="800" y2="60" stroke="var(--lm-main)" strokeWidth="3" />
+    </g>
+    <g fill="var(--lm-main)" opacity="0.55">
+      <rect x="0" y="380" width="700" height="60" />
+      {[40, 130, 230, 330, 430, 530, 630].map((x, i) => (
+        <rect key={i} x={x} y={340 - (i % 3) * 12} width="55" height={100 + (i % 3) * 12} />
+      ))}
+      <rect x="900" y="380" width="700" height="60" />
+      {[900, 990, 1090, 1190, 1290, 1400, 1500].map((x, i) => (
+        <rect key={i} x={x} y={345 - (i % 3) * 15} width="55" height={95 + (i % 3) * 15} />
+      ))}
+    </g>
+    <g fill="var(--lm-glow, transparent)">
+      <ellipse cx="800" cy="180" rx="46" ry="4" opacity="0.7" />
+      <circle cx="800" cy="65" r="3">{!reducedMotion && twinkle("sn-a", 0)}</circle>
+    </g>
+  </>,
+  className,
+);
+
+// ─── ST. BASIL'S CATHEDRAL (Moscow) ──────────────────────────────────────────
+export const StBasil: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <>
+    <g fill="var(--lm-main)">
+      {/* Base */}
+      <rect x="600" y="360" width="400" height="80" />
+      {/* Central spire */}
+      <rect x="785" y="220" width="30" height="140" />
+      <polygon points="785,220 800,170 815,220" />
+      {/* Onion dome center */}
+      <path d="M 780 170 Q 780 140 800 130 Q 820 140 820 170 Q 820 190 800 200 Q 780 190 780 170 Z" />
+      <polygon points="798,130 800,110 802,130" />
+      {/* Side towers with onion domes */}
+      {[
+        { x: 660, dy: 40, w: 22, colorAccent: true },
+        { x: 720, dy: 60 },
+        { x: 870, dy: 60 },
+        { x: 930, dy: 40, colorAccent: true },
+      ].map((t, i) => (
+        <g key={i}>
+          <rect x={t.x - 15} y={260 + t.dy} width="30" height={100 - t.dy} />
+          <path
+            d={`M ${t.x - 18} ${260 + t.dy} Q ${t.x - 18} ${230 + t.dy} ${t.x} ${218 + t.dy} Q ${t.x + 18} ${230 + t.dy} ${t.x + 18} ${260 + t.dy} Q ${t.x + 18} ${278 + t.dy} ${t.x} ${288 + t.dy} Q ${t.x - 18} ${278 + t.dy} ${t.x - 18} ${260 + t.dy} Z`}
+            fill={t.colorAccent ? "var(--lm-accent)" : "var(--lm-main)"}
+          />
+        </g>
+      ))}
+    </g>
+    <g fill="var(--lm-glow, transparent)">
+      {[660, 720, 800, 870, 930].map((x, i) => (
+        <rect key={i} x={x - 2} y="360" width="4" height="10">{!reducedMotion && twinkle(`sb-l${i}`, i * 0.35)}</rect>
+      ))}
+    </g>
+  </>,
+  className,
+);
+
+// ─── CHRIST THE REDEEMER (Rio) ───────────────────────────────────────────────
+export const ChristRedeemer: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <>
+    {/* Corcovado mountain */}
+    <path d="M 0 440 L 0 380 Q 300 340 600 360 Q 800 200 1000 360 Q 1300 340 1600 380 L 1600 440 Z"
+          fill="var(--lm-main)" opacity="0.85" />
+    {/* Pedestal */}
+    <g fill="var(--lm-main)">
+      <rect x="785" y="240" width="30" height="30" />
+      <rect x="778" y="270" width="44" height="10" />
+      {/* Body */}
+      <path d="M 790 240 L 810 240 L 815 180 L 785 180 Z" />
+      {/* Arms outstretched */}
+      <rect x="720" y="188" width="160" height="10" />
+      <rect x="720" y="188" width="10" height="30" />
+      <rect x="870" y="188" width="10" height="30" />
+      {/* Head */}
+      <circle cx="800" cy="170" r="10" />
+    </g>
+    {/* Glow halo */}
+    <circle cx="800" cy="170" r="16" fill="var(--lm-glow, transparent)" opacity="0.7" />
+    <g fill="var(--lm-glow, transparent)">
+      {[400, 550, 1050, 1200].map((x, i) => (
+        <circle key={i} cx={x} cy="390" r="2">{!reducedMotion && twinkle(`rio-l${i}`, i * 0.4)}</circle>
+      ))}
+    </g>
+  </>,
+  className,
+);
+
 export const LANDMARK_COMPONENTS: Record<LandmarkId, React.FC<Props>> = {
   "golden-gate": GoldenGate,
   "little-mermaid": LittleMermaid,
@@ -460,4 +797,14 @@ export const LANDMARK_COMPONENTS: Record<LandmarkId, React.FC<Props>> = {
   "opera-house": OperaHouse,
   "hollywood-sign": HollywoodSign,
   "stockholm-city-hall": StockholmCityHall,
+  "brandenburg-gate": BrandenburgGate,
+  "colosseum": Colosseum,
+  "sagrada-familia": SagradaFamilia,
+  "amsterdam-canal": AmsterdamCanal,
+  "burj-khalifa": BurjKhalifa,
+  "cn-tower": CNTower,
+  "willis-tower": WillisTower,
+  "space-needle": SpaceNeedle,
+  "st-basil": StBasil,
+  "christ-redeemer": ChristRedeemer,
 };

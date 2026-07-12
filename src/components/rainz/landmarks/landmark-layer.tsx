@@ -104,24 +104,38 @@ export function LandmarkLayer({
 
   const palette = PALETTES[time];
   const styleVars = palette as unknown as React.CSSProperties;
+  const isCompact = !!entry.compact;
 
   return (
     <div
       aria-hidden
-      className="fixed inset-x-0 bottom-0 -z-[5] pointer-events-none select-none"
+      className="fixed inset-x-0 -z-[5] pointer-events-none select-none flex items-end justify-end sm:justify-center"
       style={{
         ...styleVars,
-        height: "min(42vh, 380px)",
+        // Lift above the mobile navbar (~72px + safe area) so it isn't clipped.
+        bottom: "calc(72px + env(safe-area-inset-bottom, 0px))",
+        height: "min(72vh, 640px)",
         maskImage:
-          "linear-gradient(to top, black 60%, black 80%, transparent 100%)",
+          "linear-gradient(to top, black 65%, black 85%, transparent 100%)",
         WebkitMaskImage:
-          "linear-gradient(to top, black 60%, black 80%, transparent 100%)",
+          "linear-gradient(to top, black 65%, black 85%, transparent 100%)",
         opacity: time === "night" ? 0.95 : 0.92,
         transition: "opacity 800ms ease, filter 800ms ease",
         filter: time === "golden" ? "saturate(1.1)" : "none",
       }}
     >
-      <Cmp reducedMotion={!!reducedMotion} />
+      <div
+        style={{
+          width: isCompact ? "min(70%, 780px)" : "100%",
+          height: "100%",
+          // Nudge compact landmarks toward the right edge on wider viewports.
+          marginRight: isCompact ? "-4%" : 0,
+          transform: isCompact ? "scale(1.15)" : "scale(1.05)",
+          transformOrigin: "bottom right",
+        }}
+      >
+        <Cmp reducedMotion={!!reducedMotion} />
+      </div>
     </div>
   );
 }

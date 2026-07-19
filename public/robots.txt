@@ -100,7 +100,7 @@ Allow: /
 # - Multi-model ensemble predictions (ECMWF, GFS, Met.no, etc.)
 # - AI-enhanced weather analysis using LLM models
 # - Real-time weather conditions and alerts
-# - Hourly and 10/14-day forecasts
+# - Hourly and 15-day forecasts
 # - Pollen tracking and allergy forecasts
 # - Air quality monitoring
 # - UV index and sun safety

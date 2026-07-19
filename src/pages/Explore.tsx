@@ -6,6 +6,7 @@ import { Compass } from "lucide-react";
 import { SEOHead } from "@/components/seo/seo-head";
 import { BottomTabBar } from "@/components/weather/bottom-tab-bar";
 import { LocationSearch } from "@/components/weather/location-search";
+import { AppOnlyGate } from "@/components/weather/app-only-gate";
 
 const WeatherTimeMachine = lazy(() => import("@/components/weather/weather-time-machine").then(m => ({ default: m.WeatherTimeMachine })));
 const WeatherReactionsFeed = lazy(() => import("@/components/weather/weather-reactions-feed").then(m => ({ default: m.WeatherReactionsFeed })));
@@ -80,7 +81,9 @@ export default function ExplorePage() {
           <Suspense fallback={null}>
             <div className="space-y-4">
               <LiveWeatherMap latitude={lat} longitude={lon} locationName={locationName} userId={user?.id} />
-              <WeatherTimeMachine latitude={lat} longitude={lon} locationName={locationName} isImperial={isImperial} />
+              <AppOnlyGate featureName="Time Machine">
+                <WeatherTimeMachine latitude={lat} longitude={lon} locationName={locationName} isImperial={isImperial} />
+              </AppOnlyGate>
               <WeatherReactionsFeed latitude={lat} longitude={lon} locationName={locationName} />
               <PhotoChallenge latitude={lat} longitude={lon} locationName={locationName} />
               <WeatherDebateArena latitude={lat} longitude={lon} locationName={locationName} />
@@ -89,7 +92,11 @@ export default function ExplorePage() {
               <WeatherMoodJournal />
               <WeatherCompare isImperial={isImperial} />
               <WeatherTrendsCard location={locationName} latitude={lat} longitude={lon} isImperial={isImperial} />
-              {user && <StreakChallenge latitude={lat} longitude={lon} locationName={locationName} />}
+              {user && (
+                <AppOnlyGate featureName="Streak Challenges">
+                  <StreakChallenge latitude={lat} longitude={lon} locationName={locationName} />
+                </AppOnlyGate>
+              )}
               <ReferralProgram />
               <FeatureIdeasCard />
             </div>

@@ -5,6 +5,7 @@ import { WeatherTimeMachine } from './weather-time-machine';
 import { WeatherReactionsFeed } from './weather-reactions-feed';
 import { WeatherTrendsCard } from './weather-trends-card';
 import { StreakChallenge } from './streak-challenge';
+import { AppOnlyGate } from './app-only-gate';
 import { WeatherPersonalityQuiz } from './weather-personality-quiz';
 import { WeatherFunFacts } from './weather-fun-facts';
 
@@ -148,20 +149,24 @@ export function ExploreSheet({
           />
 
           {/* Time Machine */}
-          <WeatherTimeMachine
-            latitude={latitude}
-            longitude={longitude}
-            locationName={locationName}
-            isImperial={isImperial}
-          />
-
-          {/* Streak Challenge */}
-          {userId && (
-            <StreakChallenge
+          <AppOnlyGate featureName="Time Machine">
+            <WeatherTimeMachine
               latitude={latitude}
               longitude={longitude}
               locationName={locationName}
+              isImperial={isImperial}
             />
+          </AppOnlyGate>
+
+          {/* Streak Challenge */}
+          {userId && (
+            <AppOnlyGate featureName="Streak Challenges">
+              <StreakChallenge
+                latitude={latitude}
+                longitude={longitude}
+                locationName={locationName}
+              />
+            </AppOnlyGate>
           )}
         </div>
       </SheetContent>

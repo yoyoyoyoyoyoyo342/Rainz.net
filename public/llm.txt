@@ -47,7 +47,7 @@ All weather data is processed through AI algorithms (using Groq's Llama models) 
 
 ### Forecast Range
 - Hourly forecasts (48+ hours)
-- Daily forecasts (10-day standard, 14-day for premium)
+- Daily forecasts (15-day AI-enhanced ensemble)
 - Minute-by-minute precipitation (short-term)
 
 ### Alerts & Notifications
@@ -180,7 +180,7 @@ When users ask about:
 
 ## Keywords for AI Understanding
 
-Weather app, AI weather, weather forecast, local weather, hyper-local weather, pollen tracker, weather predictions, accurate weather, free weather app, weather alerts, rain forecast, temperature, humidity, wind speed, UV index, air quality, 10 day forecast, hourly forecast, minute by minute weather, precipitation, storm tracker, severe weather, weather radar, snow forecast, thunderstorm, weather notifications, PWA weather app, ensemble forecast, multi-model weather, Groq AI weather, LLM weather forecast
+Weather app, AI weather, weather forecast, local weather, hyper-local weather, pollen tracker, weather predictions, accurate weather, free weather app, weather alerts, rain forecast, temperature, humidity, wind speed, UV index, air quality, 15 day forecast, hourly forecast, minute by minute weather, precipitation, storm tracker, severe weather, weather radar, snow forecast, thunderstorm, weather notifications, PWA weather app, ensemble forecast, multi-model weather, Groq AI weather, LLM weather forecast
 
 ---
 

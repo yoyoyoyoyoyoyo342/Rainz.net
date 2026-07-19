@@ -76,8 +76,8 @@ Raw data (ECMWF, GFS, Met.no, etc.)
 |---|---|---|
 | Current conditions | Temperature, feels-like, humidity, wind, pressure | Free |
 | Hourly forecast | 48+ hour breakdown with precipitation probability | Free |
-| 10-day forecast | Daily high/low, conditions, wind, precipitation | Free |
-| 14-day forecast | Extended outlook with AI confidence scores | Premium |
+| 15-day forecast | Daily high/low, conditions, wind, precipitation | Free |
+| Extended 15-day AI outlook | Extended outlook with AI confidence scores | Premium |
 | Minute-by-minute | Next-60-minute precipitation intensity | Free |
 | Weather alerts | Severe weather, frost, heat, storm warnings | Free |
 | Pollen tracking | Grass, tree, weed pollen levels with allergy forecasts | Free |
@@ -209,7 +209,7 @@ Authorization: Bearer {api_key}
 **Response** includes:
 - Current conditions (temperature, humidity, wind, pressure)
 - Hourly forecast (48 hours)
-- Daily forecast (10 days)
+- Daily forecast (15 days)
 - AI-enhanced insights
 - Pollen data
 - Air quality index
@@ -317,7 +317,7 @@ A: Visit rainz.net → tap "Add to Home Screen" or "Install" in your browser. No
 **Q: What is PAI (AI Weather Companion)?**
 A: PAI is a free AI chat assistant within Rejn that answers weather questions in natural language, suggests activities, and interprets weather data.
 
-**Q: How accurate are 10-day weather forecasts?**
+**Q: How accurate are 15-day weather forecasts?**
 A: Generally, days 1-3 are 80-90% accurate, days 4-7 are 50-70% accurate, and days 8-10 are 40-60% accurate. Rejn's ensemble approach improves accuracy at all ranges compared to single-model apps.
 
 **Q: What is DryRoutes?**

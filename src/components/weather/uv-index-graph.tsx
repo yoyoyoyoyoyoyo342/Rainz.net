@@ -34,27 +34,40 @@ export function UVIndexGraph({ currentUV, hourlyForecast, is24Hour = true }: UVI
   const [selectedHour, setSelectedHour] = useState<number>(currentHour);
   const [dragging, setDragging] = useState(false);
 
-  // Build a 24-hour series anchored to today (0..23 hours) using AI-enhanced ensemble data.
+  // Build a 24-hour series. hourlyForecast[0] is "now"; earlier hours are
+  // approximated with a solar bell curve peaked around solar noon so the
+  // graph doesn't collapse to 0 for the morning that already happened.
   const series = useMemo(() => {
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const points: { hour: number; uv: number }[] = [];
-
     for (let h = 0; h < 24; h++) points.push({ hour: h, uv: 0 });
 
+    // Fill from now onward using real forecast values.
+    let observedPeak = Math.max(0, currentUV);
     hourlyForecast.slice(0, 24).forEach((hf, i) => {
-      const guess = new Date(now);
-      guess.setHours(now.getHours() + i, 0, 0, 0);
-      if (
-        guess.getFullYear() === startOfDay.getFullYear() &&
-        guess.getMonth() === startOfDay.getMonth() &&
-        guess.getDate() === startOfDay.getDate()
-      ) {
-        const hr = guess.getHours();
-        points[hr] = { hour: hr, uv: Math.max(0, hf.uvIndex ?? 0) };
-      }
+      if (currentHour + i > 23) return; // don't wrap into tomorrow
+      const h = currentHour + i;
+      const uv = Math.max(0, hf.uvIndex ?? 0);
+      points[h] = { hour: h, uv };
+      if (uv > observedPeak) observedPeak = uv;
     });
 
+    // Approximate pre-now hours with a sine bell between sunrise (~6) and
+    // sunset (~20), scaled to the peak we've observed today (or a sensible
+    // default when the day is entirely ahead of us).
+    const SUNRISE = 6;
+    const SUNSET = 20;
+    const amplitude = observedPeak > 0 ? observedPeak : 6;
+    for (let h = 0; h < currentHour; h++) {
+      if (h <= SUNRISE || h >= SUNSET) {
+        points[h] = { hour: h, uv: 0 };
+      } else {
+        const phase = (h - SUNRISE) / (SUNSET - SUNRISE);
+        const bell = Math.sin(Math.PI * phase);
+        points[h] = { hour: h, uv: Math.round(amplitude * bell * 10) / 10 };
+      }
+    }
+
+    // Ensure "now" at least reflects the reported currentUV.
     points[currentHour] = {
       hour: currentHour,
       uv: Math.max(points[currentHour].uv, currentUV),

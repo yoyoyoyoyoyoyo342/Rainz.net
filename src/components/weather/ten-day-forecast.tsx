@@ -97,7 +97,7 @@ export function TenDayForecast({ dailyForecast, weatherSources, hourlyForecast, 
         {/* Content */}
         <div className={cardPadding}>
           <div className={`${isCompact ? 'space-y-1' : 'space-y-2'}`}>
-            {dailyForecast.slice(1, showAllDays ? 15 : 5).map((day, index) => (
+            {(dailyForecast ?? []).filter(Boolean).slice(1, showAllDays ? 15 : 5).map((day, index) => (
               <Collapsible
                 key={index}
                 open={expandedDay === index}

@@ -195,6 +195,7 @@ function AnimatedRoutes() {
               <Route path="/explore" element={<Explore />} />
               <Route path="/ai" element={<AskRejn />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/welcome" element={<Welcome />} />
               <Route path="/admin" element={<AdminPanel />} />
               <Route path="/articles" element={<Articles />} />
               <Route path="/articles/:slug" element={<BlogPost />} />

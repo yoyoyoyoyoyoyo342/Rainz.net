@@ -80,7 +80,9 @@ export default function ExplorePage() {
           <Suspense fallback={null}>
             <div className="space-y-4">
               <LiveWeatherMap latitude={lat} longitude={lon} locationName={locationName} userId={user?.id} />
-              <WeatherTimeMachine latitude={lat} longitude={lon} locationName={locationName} isImperial={isImperial} />
+              <AppOnlyGate featureName="Time Machine">
+                <WeatherTimeMachine latitude={lat} longitude={lon} locationName={locationName} isImperial={isImperial} />
+              </AppOnlyGate>
               <WeatherReactionsFeed latitude={lat} longitude={lon} locationName={locationName} />
               <PhotoChallenge latitude={lat} longitude={lon} locationName={locationName} />
               <WeatherDebateArena latitude={lat} longitude={lon} locationName={locationName} />
@@ -89,7 +91,11 @@ export default function ExplorePage() {
               <WeatherMoodJournal />
               <WeatherCompare isImperial={isImperial} />
               <WeatherTrendsCard location={locationName} latitude={lat} longitude={lon} isImperial={isImperial} />
-              {user && <StreakChallenge latitude={lat} longitude={lon} locationName={locationName} />}
+              {user && (
+                <AppOnlyGate featureName="Streak Challenges">
+                  <StreakChallenge latitude={lat} longitude={lon} locationName={locationName} />
+                </AppOnlyGate>
+              )}
               <ReferralProgram />
               <FeatureIdeasCard />
             </div>

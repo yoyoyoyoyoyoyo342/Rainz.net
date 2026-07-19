@@ -36,6 +36,9 @@ import { maybeRedirectLegacyDomain } from "@/lib/subdomain-routing";
 // Critical components - load immediately
 import Weather from "./pages/Weather";
 import Auth from "./pages/Auth";
+import Welcome from "./pages/Welcome";
+import { ChangelogPopup } from "@/components/rejn/changelog-popup";
+import { DownloadPWANudge } from "@/components/rejn/download-pwa-nudge";
 
 // Lazy load non-critical routes for faster initial load
 const NotFound = lazy(() => import("./pages/NotFound"));

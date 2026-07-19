@@ -39,7 +39,7 @@ export default function Welcome() {
   const [otherSource, setOtherSource] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
 
-  const { accept, decline } = useCookieConsent();
+  const { acceptAll, declineAll } = useCookieConsent();
   const { persist: persistLocation } = useLocationPermission();
   const step = STEPS[stepIdx];
   const progress = useMemo(() => ((stepIdx + 1) / STEPS.length) * 100, [stepIdx]);
@@ -76,7 +76,7 @@ export default function Welcome() {
   };
 
   const handleCookies = async (choice: "accept" | "decline") => {
-    if (choice === "accept") accept(); else decline();
+    if (choice === "accept") acceptAll(); else declineAll();
     advance();
   };
 

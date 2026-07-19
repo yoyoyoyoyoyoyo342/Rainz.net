@@ -26,7 +26,8 @@ import { AdminContentModeration } from './admin-content-moderation';
 import { AdminEmergencyAlert } from './admin-emergency-alert';
 import { AdminDownloadInstructions } from './admin-download-instructions';
 import { AdminBanners } from './admin-banners';
-import { Download, Megaphone } from 'lucide-react';
+import { AdminChangelog } from './admin-changelog';
+import { Download, Megaphone, Sparkles } from 'lucide-react';
 
 interface WeatherReport {
   id: string;
@@ -169,6 +170,7 @@ export function AdminPanel() {
     { value: 'api-token', label: 'API Token', icon: <Key className="w-3.5 h-3.5" /> },
     { value: 'shop-offers', label: 'Shop', icon: <Tag className="w-3.5 h-3.5" /> },
     { value: 'banners', label: 'Banners', icon: <Megaphone className="w-3.5 h-3.5" /> },
+    { value: 'changelog', label: 'Changelog', icon: <Sparkles className="w-3.5 h-3.5" /> },
     { value: 'downloads', label: 'Downloads', icon: <Download className="w-3.5 h-3.5" /> },
   ];
 
@@ -310,6 +312,14 @@ export function AdminPanel() {
             <AdminBanners />
           </AdminSection>
         </TabsContent>
+
+        <TabsContent value="changelog">
+          <AdminSection title="Changelog ✨" description="Publish 'What's new' entries. Newest published version popups once per user.">
+            <AdminChangelog />
+          </AdminSection>
+        </TabsContent>
+
+
 
         <TabsContent value="downloads">
           <AdminSection title="Download Instructions 📥" description="Update desktop app download URLs, versions, and macOS bypass instructions.">

@@ -36,6 +36,9 @@ import { maybeRedirectLegacyDomain } from "@/lib/subdomain-routing";
 // Critical components - load immediately
 import Weather from "./pages/Weather";
 import Auth from "./pages/Auth";
+import Welcome from "./pages/Welcome";
+import { ChangelogPopup } from "@/components/rejn/changelog-popup";
+import { DownloadPWANudge } from "@/components/rejn/download-pwa-nudge";
 
 // Lazy load non-critical routes for faster initial load
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -192,6 +195,7 @@ function AnimatedRoutes() {
               <Route path="/explore" element={<Explore />} />
               <Route path="/ai" element={<AskRejn />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/welcome" element={<Welcome />} />
               <Route path="/admin" element={<AdminPanel />} />
               <Route path="/articles" element={<Articles />} />
               <Route path="/articles/:slug" element={<BlogPost />} />
@@ -294,7 +298,8 @@ function AppContent() {
                           <div className="flex-1">
                             <AnalyticsTracker />
                             <AnimatedRoutes />
-
+                            <ChangelogPopup />
+                            <DownloadPWANudge source="ambient_bottom_right" />
                           </div>
                           {window.location.pathname !== '/dryroutes' && (
                          <Footer />

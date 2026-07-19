@@ -26,7 +26,8 @@ import { AdminContentModeration } from './admin-content-moderation';
 import { AdminEmergencyAlert } from './admin-emergency-alert';
 import { AdminDownloadInstructions } from './admin-download-instructions';
 import { AdminBanners } from './admin-banners';
-import { Download, Megaphone } from 'lucide-react';
+import { AdminChangelog } from './admin-changelog';
+import { Download, Megaphone, Sparkles } from 'lucide-react';
 
 interface WeatherReport {
   id: string;

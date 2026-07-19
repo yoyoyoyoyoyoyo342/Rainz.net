@@ -170,6 +170,7 @@ export function AdminPanel() {
     { value: 'api-token', label: 'API Token', icon: <Key className="w-3.5 h-3.5" /> },
     { value: 'shop-offers', label: 'Shop', icon: <Tag className="w-3.5 h-3.5" /> },
     { value: 'banners', label: 'Banners', icon: <Megaphone className="w-3.5 h-3.5" /> },
+    { value: 'changelog', label: 'Changelog', icon: <Sparkles className="w-3.5 h-3.5" /> },
     { value: 'downloads', label: 'Downloads', icon: <Download className="w-3.5 h-3.5" /> },
   ];
 

@@ -39,8 +39,8 @@ export default function About() {
 
   const faqs = [
     {
-      question: "How accurate are Rainz Weather forecasts?",
-      answer: "Rainz Weather uses a multi-model ensemble approach, aggregating predictions from 7+ weather models including ECMWF, GFS, and Met.no. This method significantly improves accuracy by identifying model agreement and calculating confidence scores."
+      question: "How accurate are Rejn Weather forecasts?",
+      answer: "Rejn Weather uses a multi-model ensemble approach, aggregating predictions from 7+ weather models including ECMWF, GFS, and Met.no. This method significantly improves accuracy by identifying model agreement and calculating confidence scores."
     },
     {
       question: "How do weather predictions work?",
@@ -48,11 +48,11 @@ export default function About() {
     },
     {
       question: "Is everything really free?",
-      answer: "Yes! All features in Rainz Weather are completely free, including AI-enhanced weather data, push notifications, the AI Weather Companion, predictions, battles, and leaderboards. No paywalls, no premium tiers."
+      answer: "Yes! All features in Rejn Weather are completely free, including AI-enhanced weather data, push notifications, the AI Weather Companion, predictions, battles, and leaderboards. No paywalls, no premium tiers."
     },
     {
-      question: "How is Rainz funded?",
-      answer: "Rainz is a passion project maintained by weather enthusiasts. We keep it free for everyone through community support and tips."
+      question: "How is Rejn funded?",
+      answer: "Rejn is a passion project maintained by weather enthusiasts. We keep it free for everyone through community support and tips."
     },
     {
       question: "What is the leaderboard?",
@@ -67,8 +67,8 @@ export default function About() {
       answer: "Yes! Logged-in users can save multiple locations and quickly switch between them using the mobile navigation bar."
     },
     {
-      question: "How do I install Rainz as an app?",
-      answer: "Rainz Weather is a Progressive Web App (PWA). On iOS, tap the Share button and select 'Add to Home Screen'. On Android, tap the menu and select 'Install app'. Installing the PWA enables push notifications."
+      question: "How do I install Rejn as an app?",
+      answer: "Rejn Weather is a Progressive Web App (PWA). On iOS, tap the Share button and select 'Add to Home Screen'. On Android, tap the menu and select 'Install app'. Installing the PWA enables push notifications."
     },
     {
       question: "What data do you collect?",
@@ -87,9 +87,9 @@ export default function About() {
   return (
     <>
       <SEOHead 
-        title="About Rainz Weather - AI-Powered Weather Forecasts"
-        description="Learn about Rainz Weather, the free AI-powered weather app with hyper-local forecasts, pollen tracking, gamified predictions, and advanced features."
-        keywords="About Rainz, Rainz Weather features, AI weather app, weather predictions, pollen tracker"
+        title="About Rejn Weather - AI-Powered Weather Forecasts"
+        description="Learn about Rejn Weather, the free AI-powered weather app with hyper-local forecasts, pollen tracking, gamified predictions, and advanced features."
+        keywords="About Rejn, Rejn Weather features, AI weather app, weather predictions, pollen tracker"
       />
       <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -106,7 +106,7 @@ export default function About() {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Cloud className="w-12 h-12 text-primary" />
-            <h1 className="text-4xl font-bold text-foreground">Rainz Weather</h1>
+            <h1 className="text-4xl font-bold text-foreground">Rejn Weather</h1>
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             The most accurate hyperlocal weather app, powered by multi-model ensemble forecasting and a passionate community of weather enthusiasts.
@@ -125,7 +125,7 @@ export default function About() {
           </CardHeader>
           <CardContent className="text-muted-foreground space-y-4">
             <p>
-              At Rainz Weather, we believe everyone deserves access to accurate, hyperlocal weather information. 
+              At Rejn Weather, we believe everyone deserves access to accurate, hyperlocal weather information. 
               Traditional weather apps rely on a single data source, but we aggregate predictions from multiple 
               world-class meteorological models to deliver forecasts you can truly rely on.
             </p>
@@ -139,7 +139,7 @@ export default function About() {
 
         {/* Features Grid */}
         <div className="mb-12">
-          <h2 className="text-2xl font-semibold text-foreground mb-6 text-center">Why Choose Rainz?</h2>
+          <h2 className="text-2xl font-semibold text-foreground mb-6 text-center">Why Choose Rejn?</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {features.map((feature, index) => (
               <Card key={index} className="text-center">

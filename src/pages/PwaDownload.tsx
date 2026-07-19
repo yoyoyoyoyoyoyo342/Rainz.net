@@ -5,10 +5,10 @@ import { useFeatureFlags } from "@/hooks/use-feature-flags";
 
 const PwaDownload = () => {
   const { getValue } = useFeatureFlags();
-  const title = getValue("download_mobile_title", "Install Rainz on your device");
+  const title = getValue("download_mobile_title", "Install Rejn on your device");
   const description = getValue(
     "download_mobile_description",
-    'You can install Rainz directly from your browser. Visit rainz.net and select "Add to Home Screen" or "Install App" in your browser menu.',
+    'You can install Rejn directly from your browser. Visit rainz.net and select "Add to Home Screen" or "Install App" in your browser menu.',
   );
   const cta = getValue("download_mobile_cta", "Install from Browser");
 
@@ -18,7 +18,7 @@ const PwaDownload = () => {
     { title: 'Select "Add to Home Screen"', desc: "Or 'Install App' on android" },
     {
       title: "On iphone make sure that you have the 'Install as a pwa'switch on, then click install/add!",
-      desc: "Rainz will launch like a native app",
+      desc: "Rejn will launch like a native app",
     },
   ];
 

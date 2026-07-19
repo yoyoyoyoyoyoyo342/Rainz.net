@@ -125,7 +125,7 @@ export function SkyCamSubmissionDialog({ location, locationData, trigger }: SkyC
               Rejn SkyCam
             </DialogTitle>
             <DialogDescription>
-              Help Rainz check the sky near you{location ? ` in ${location}` : ''}.
+              Help Rejn check the sky near you{location ? ` in ${location}` : ''}.
             </DialogDescription>
           </DialogHeader>
         </div>

@@ -8,11 +8,11 @@ import { useFeatureFlags } from "@/hooks/use-feature-flags";
 const AppDownload = () => {
   const { getValue } = useFeatureFlags();
 
-  const macUrl = getValue("download_mac_url", "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.V1.0.dmg");
-  const winUrl = getValue("download_win_url", "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.Setup.V1.0.exe");
+  const macUrl = getValue("download_mac_url", "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rejn/Rejn.Weather.V1.0.dmg");
+  const winUrl = getValue("download_win_url", "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rejn/Rejn.Weather.Setup.V1.0.exe");
   const macVersion = getValue("download_mac_version", "1.0.0");
   const winVersion = getValue("download_win_version", "1.0.0");
-  const macInstructionsRaw = getValue("download_mac_instructions", "Download the .dmg file above.\nTry to open the app. macOS will block it.\nOpen System Settings → Privacy & Security.\nAt the bottom, you'll see \"Rainz Weather was blocked\" → click Open Anyway.\nConfirm the prompt. Now Rainz Weather will open normally.");
+  const macInstructionsRaw = getValue("download_mac_instructions", "Download the .dmg file above.\nTry to open the app. macOS will block it.\nOpen System Settings → Privacy & Security.\nAt the bottom, you'll see \"Rejn Weather was blocked\" → click Open Anyway.\nConfirm the prompt. Now Rejn Weather will open normally.");
   const macBypassSteps = macInstructionsRaw.split("\n").filter(Boolean);
 
   const features = [
@@ -36,9 +36,9 @@ const AppDownload = () => {
 
         <div className="text-center mb-12">
           <Badge variant="secondary" className="mb-4 text-lg">Desktop App</Badge>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">Rainz Desktop Downloads</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">Rejn Desktop Downloads</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Get Rainz on your computer. Fast, native, and packed with features for Mac and Windows.
+            Get Rejn on your computer. Fast, native, and packed with features for Mac and Windows.
           </p>
         </div>
 
@@ -80,7 +80,7 @@ const AppDownload = () => {
         </div>
 
         <div className="max-w-2xl mx-auto text-center mb-12">
-          <h2 className="text-2xl font-semibold mb-6 text-foreground">Why download Rainz?</h2>
+          <h2 className="text-2xl font-semibold mb-6 text-foreground">Why download Rejn?</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             {features.map((feature, index) => (
               <div key={index} className="flex items-center gap-3 p-4 rounded-lg border border-border/50 bg-card/50">
@@ -94,7 +94,7 @@ const AppDownload = () => {
         <div className="max-w-2xl mx-auto mb-12 p-6 rounded-xl border border-border/50 bg-card/50">
           <h3 className="text-xl font-semibold mb-4 text-foreground">macOS Users — Opening Unsigned Apps</h3>
           <p className="text-muted-foreground mb-3">
-            Because we don't have a paid Apple Developer ID, macOS will warn you when opening Rainz Weather. Follow these steps:
+            Because we don't have a paid Apple Developer ID, macOS will warn you when opening Rejn Weather. Follow these steps:
           </p>
           <ol className="list-decimal list-inside text-foreground space-y-2">
             {macBypassSteps.map((step, idx) => (

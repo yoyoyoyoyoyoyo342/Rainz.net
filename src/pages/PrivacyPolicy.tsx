@@ -32,7 +32,7 @@ export default function PrivacyPolicy() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <p>
-              This Privacy Policy describes how Rainz Weather ("we", "us", or "the Service") collects, uses, stores, and protects your personal information. We are committed to protecting your privacy and complying with applicable data protection laws, including GDPR (General Data Protection Regulation) and CCPA (California Consumer Privacy Act).
+              This Privacy Policy describes how Rejn Weather ("we", "us", or "the Service") collects, uses, stores, and protects your personal information. We are committed to protecting your privacy and complying with applicable data protection laws, including GDPR (General Data Protection Regulation) and CCPA (California Consumer Privacy Act).
             </p>
           </CardContent>
         </Card>
@@ -161,7 +161,7 @@ export default function PrivacyPolicy() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <p>
-              We use Amplitude, a third-party product analytics platform, to understand how users interact with Rainz. Amplitude may collect the following:
+              We use Amplitude, a third-party product analytics platform, to understand how users interact with Rejn. Amplitude may collect the following:
             </p>
             <ul className="list-disc list-inside space-y-1 ml-4">
               <li><strong>Interaction Data:</strong> Clicks, taps, page views, scroll depth, and navigation patterns (via autocapture)</li>
@@ -182,7 +182,7 @@ export default function PrivacyPolicy() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <p>
-              Routes generated through the DryRoutes feature are created by users and are not vetted by Rainz.net. Users are responsible for their own safety when following any route; we are not liable for injuries, accidents, or other harm resulting from use of user‑generated routes, and we collect no special personal data for this purpose.
+              Routes generated through the DryRoutes feature are created by users and are not vetted by Rejn.net. Users are responsible for their own safety when following any route; we are not liable for injuries, accidents, or other harm resulting from use of user‑generated routes, and we collect no special personal data for this purpose.
             </p>
           </CardContent>
         </Card>

@@ -23,7 +23,7 @@ export function AIChatButton({ weatherData, location, isImperial }: AIChatButton
     if (!isAppUser) {
       toast({
         title: "📱 App-Exclusive Feature",
-        description: "Install the Rainz app (PWA or desktop) to use the AI Weather Companion.",
+        description: "Install the Rejn app (PWA or desktop) to use the AI Weather Companion.",
         action: (
           <a href="/download" className="px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90">
             Download

@@ -25,13 +25,13 @@ export function AdminDownloadInstructions() {
   useEffect(() => {
     if (isLoading || initialized.current) return;
     initialized.current = true;
-    setMacUrl(getValue("download_mac_url", "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.V1.0.dmg"));
-    setWinUrl(getValue("download_win_url", "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rainz/Rainz.Weather.Setup.V1.0.exe"));
+    setMacUrl(getValue("download_mac_url", "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rejn/Rejn.Weather.V1.0.dmg"));
+    setWinUrl(getValue("download_win_url", "https://github.com/8zhm9mc6r6-wq/rainz-weather-desktop/releases/download/Rejn/Rejn.Weather.Setup.V1.0.exe"));
     setMacVersion(getValue("download_mac_version", "1.0.0"));
     setWinVersion(getValue("download_win_version", "1.0.0"));
-    setMacInstructions(getValue("download_mac_instructions", "Download the .dmg file above.\nTry to open the app. macOS will block it.\nOpen System Settings → Privacy & Security.\nAt the bottom, you'll see \"Rainz Weather was blocked\" → click Open Anyway.\nConfirm the prompt. Now Rainz Weather will open normally."));
+    setMacInstructions(getValue("download_mac_instructions", "Download the .dmg file above.\nTry to open the app. macOS will block it.\nOpen System Settings → Privacy & Security.\nAt the bottom, you'll see \"Rejn Weather was blocked\" → click Open Anyway.\nConfirm the prompt. Now Rejn Weather will open normally."));
     setMobileTitle(getValue("download_mobile_title", "Prefer not to download?"));
-    setMobileDescription(getValue("download_mobile_description", 'You can install Rainz directly from your browser. Visit rainz.net and select "Add to Home Screen" or "Install App" in your browser menu.'));
+    setMobileDescription(getValue("download_mobile_description", 'You can install Rejn directly from your browser. Visit rainz.net and select "Add to Home Screen" or "Install App" in your browser menu.'));
     setMobileCta(getValue("download_mobile_cta", "Install from Browser"));
   }, [isLoading]);
 

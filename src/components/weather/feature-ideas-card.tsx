@@ -207,7 +207,7 @@ export function FeatureIdeasCard() {
               Suggest a Feature
             </DialogTitle>
             <DialogDescription>
-              What would you like to see in Rainz? Your idea will be visible to everyone.
+              What would you like to see in Rejn? Your idea will be visible to everyone.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">

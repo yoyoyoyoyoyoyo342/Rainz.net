@@ -25,7 +25,7 @@ const FEATURE_FLAGS: FeatureFlagDef[] = [
   { id: 'trivia_enabled', label: 'Daily Trivia', description: 'Show the daily weather trivia question', key: 'trivia_enabled', defaultValue: true, category: 'games' },
   { id: 'ai_companion_enabled', label: 'AI Companion', description: 'Enable PAI weather chat assistant', key: 'ai_companion_enabled', defaultValue: true, category: 'experimental' },
   { id: 'spin_wheel_enabled', label: 'Daily Spin Wheel', description: 'Enable the daily free spin reward', key: 'spin_wheel_enabled', defaultValue: true, category: 'games' },
-  { id: 'explore_enabled', label: 'Explore Section', description: 'Show the Explore Rainz button and sheet', key: 'explore_enabled', defaultValue: true, category: 'core' },
+  { id: 'explore_enabled', label: 'Explore Section', description: 'Show the Explore Rejn button and sheet', key: 'explore_enabled', defaultValue: true, category: 'core' },
 ];
 
 const CATEGORY_LABELS: Record<string, string> = {

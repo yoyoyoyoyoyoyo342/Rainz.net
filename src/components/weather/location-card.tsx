@@ -187,7 +187,7 @@ export function LocationCard({ open, onOpenChange, temperature, location, actual
               </div>
             </div>
             <div className="text-lg text-white/80 font-medium mt-2">
-              {location.split(',').slice(1).join(',').trim() || 'Rainz'}
+              {location.split(',').slice(1).join(',').trim() || 'Rejn'}
             </div>
           </div>
 

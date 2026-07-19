@@ -278,7 +278,7 @@ export default function WeatherPage() {
       const elapsed = Math.round(performance.now() - mountTimeRef.current);
       const fromCache = elapsed < 200;
       console.log(
-        `⚡ [Rainz Perf] Weather data ready in ${elapsed}ms — ${fromCache ? '📦 from cache' : '🌐 from network'}`
+        `⚡ [Rejn Perf] Weather data ready in ${elapsed}ms — ${fromCache ? '📦 from cache' : '🌐 from network'}`
       );
       hasLoggedTimingRef.current = true;
     }
@@ -307,7 +307,7 @@ export default function WeatherPage() {
     });
 
     if (locationsToPreload.length > 0) {
-      console.log(`⚡ [Rainz Perf] Prefetching weather for ${locationsToPreload.length} saved locations`);
+      console.log(`⚡ [Rejn Perf] Prefetching weather for ${locationsToPreload.length} saved locations`);
     }
   }, [weatherData, savedLocations, selectedLocation]);
 

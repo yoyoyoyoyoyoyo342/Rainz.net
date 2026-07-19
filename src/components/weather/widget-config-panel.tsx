@@ -88,11 +88,11 @@ export function WidgetConfigPanel({ defaultLocation }: { defaultLocation?: { lat
   const baseUrl = "https://rainz.lovable.app/widget";
   const widgetUrl = `${baseUrl}?lat=${config.location.lat}&lon=${config.location.lon}&location=${encodeURIComponent(config.location.name)}&theme=${config.theme}&size=${config.size}&units=${config.units}&hourly=${config.showHourly}&details=${config.showDetails}&accent=${encodeURIComponent(config.accentColor)}&radius=${config.borderRadius}&fontsize=${config.fontSize}`;
 
-  const iframeCode = `<iframe\n  src="${widgetUrl}"\n  width="${config.width}"\n  height="${config.height}"\n  frameborder="0"\n  style="border-radius: ${config.borderRadius}px; overflow: hidden;"\n  title="Rainz Weather Widget"\n></iframe>`;
+  const iframeCode = `<iframe\n  src="${widgetUrl}"\n  width="${config.width}"\n  height="${config.height}"\n  frameborder="0"\n  style="border-radius: ${config.borderRadius}px; overflow: hidden;"\n  title="Rejn Weather Widget"\n></iframe>`;
 
-  const reactCode = `<iframe\n  src="${widgetUrl}"\n  width={${config.width}}\n  height={${config.height}}\n  frameBorder="0"\n  style={{ borderRadius: ${config.borderRadius}, overflow: "hidden" }}\n  title="Rainz Weather Widget"\n/>`;
+  const reactCode = `<iframe\n  src="${widgetUrl}"\n  width={${config.width}}\n  height={${config.height}}\n  frameBorder="0"\n  style={{ borderRadius: ${config.borderRadius}, overflow: "hidden" }}\n  title="Rejn Weather Widget"\n/>`;
 
-  const scriptCode = `<!-- Rainz Weather Widget -->\n<div id="rainz-widget"></div>\n<script>\n  (function() {\n    var iframe = document.createElement('iframe');\n    iframe.src = '${widgetUrl}';\n    iframe.width = '${config.width}';\n    iframe.height = '${config.height}';\n    iframe.frameBorder = '0';\n    iframe.style.borderRadius = '${config.borderRadius}px';\n    iframe.style.overflow = 'hidden';\n    iframe.title = 'Rainz Weather Widget';\n    document.getElementById('rainz-widget').appendChild(iframe);\n  })();\n</script>`;
+  const scriptCode = `<!-- Rejn Weather Widget -->\n<div id="rainz-widget"></div>\n<script>\n  (function() {\n    var iframe = document.createElement('iframe');\n    iframe.src = '${widgetUrl}';\n    iframe.width = '${config.width}';\n    iframe.height = '${config.height}';\n    iframe.frameBorder = '0';\n    iframe.style.borderRadius = '${config.borderRadius}px';\n    iframe.style.overflow = 'hidden';\n    iframe.title = 'Rejn Weather Widget';\n    document.getElementById('rainz-widget').appendChild(iframe);\n  })();\n</script>`;
 
   const currentCode = codeTab === "iframe" ? iframeCode : codeTab === "react" ? reactCode : scriptCode;
 

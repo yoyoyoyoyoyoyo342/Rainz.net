@@ -14,7 +14,7 @@ interface SignupSurveyProps {
 const SURVEY_STEPS = [
   {
     id: "referral_source",
-    question: "Where did you hear about Rainz?",
+    question: "Where did you hear about Rejn?",
     options: [
       { value: "social_media", label: "Social Media (TikTok, Instagram, X)" },
       { value: "friend", label: "Friend or Family" },
@@ -26,7 +26,7 @@ const SURVEY_STEPS = [
   },
   {
     id: "interest",
-    question: "What interests you most about Rainz?",
+    question: "What interests you most about Rejn?",
     options: [
       { value: "accurate_weather", label: "Accurate weather forecasts" },
       { value: "predictions_games", label: "Weather predictions & games" },

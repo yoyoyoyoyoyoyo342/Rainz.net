@@ -109,7 +109,7 @@ export const TipJar = () => {
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <Heart className="w-5 h-5 text-rose-500" />
-          Support Rainz
+          Support Rejn
           {goalReached && (
             <Badge className="ml-auto bg-green-500/20 text-green-600 border-green-500/30">
               <CheckCircle className="w-3 h-3 mr-1" />
@@ -118,7 +118,7 @@ export const TipJar = () => {
           )}
         </CardTitle>
         <CardDescription className="text-xs">
-          Help keep Rainz free and ad-light
+          Help keep Rejn free and ad-light
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

@@ -1,8 +1,8 @@
 openapi: 3.0.0
 info:
-  title: Rainz Weather API
+  title: Rejn Weather API
   description: |
-    Rainz Weather provides AI-enhanced weather forecasts using multi-model ensemble predictions.
+    Rejn Weather provides AI-enhanced weather forecasts using multi-model ensemble predictions.
     This API returns real-time weather data aggregated from multiple sources including ECMWF, GFS, 
     Met.no, WeatherAPI, Tomorrow.io, and Open-Meteo, processed through AI for enhanced accuracy.
     
@@ -13,7 +13,7 @@ info:
     API keys are subject to rate limiting. Contact support for higher limits.
   version: 2.0.0
   contact:
-    name: Rainz Weather Support
+    name: Rejn Weather Support
     url: https://rainz.net
 servers:
   - url: https://ohwtbkudpkfbakynikyj.supabase.co/functions/v1
@@ -155,7 +155,7 @@ paths:
       summary: MCP endpoint for AI assistants
       description: |
         Model Context Protocol endpoint allowing AI assistants (ChatGPT, Claude, Gemini)
-        to query Rainz Weather data directly as a tool.
+        to query Rejn Weather data directly as a tool.
       requestBody:
         required: true
         content:
@@ -177,22 +177,22 @@ paths:
   /:
     get:
       operationId: getWeatherApp
-      summary: Access the Rainz Weather application
+      summary: Access the Rejn Weather application
       description: |
-        The main Rainz Weather web application providing real-time weather conditions,
+        The main Rejn Weather web application providing real-time weather conditions,
         hourly and 10-day forecasts, AI-enhanced predictions, pollen and air quality tracking,
         weather alerts, and gamified weather prediction games.
       servers:
         - url: https://rainz.net
       responses:
         '200':
-          description: The Rainz Weather web application
+          description: The Rejn Weather web application
 
   /about:
     get:
       operationId: getAboutPage
-      summary: Learn about Rainz Weather
-      description: Information about Rainz Weather features, mission, and premium subscription options.
+      summary: Learn about Rejn Weather
+      description: Information about Rejn Weather features, mission, and premium subscription options.
       servers:
         - url: https://rainz.net
       responses:
@@ -217,7 +217,7 @@ paths:
       operationId: getFAQ
       summary: Frequently Asked Questions
       description: |
-        Comprehensive FAQ with 25+ questions about Rainz Weather, AI forecasting,
+        Comprehensive FAQ with 25+ questions about Rejn Weather, AI forecasting,
         ensemble predictions, gamification, privacy, and technical details.
       servers:
         - url: https://rainz.net
@@ -230,7 +230,7 @@ components:
     BearerAuth:
       type: http
       scheme: bearer
-      description: API key obtained from Rainz Weather admin panel
+      description: API key obtained from Rejn Weather admin panel
 
   schemas:
     WeatherResponse:

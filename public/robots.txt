@@ -1,5 +1,5 @@
 # ===============================================================
-# Rainz Weather - SEO & AI Optimized Robots.txt
+# Rejn Weather - SEO & AI Optimized Robots.txt
 # AI-powered hyperlocal weather forecasting application
 # Domain: rejn.app
 # Version: 2.1
@@ -95,7 +95,7 @@ Allow: /
 # ===============================================================
 # Content Description for AI Crawlers
 # ===============================================================
-# Rainz Weather is an AI-powered weather application providing:
+# Rejn Weather is an AI-powered weather application providing:
 # - Hyper-local weather forecasts
 # - Multi-model ensemble predictions (ECMWF, GFS, Met.no, etc.)
 # - AI-enhanced weather analysis using LLM models
@@ -116,7 +116,7 @@ Allow: /
 # - /about - Feature overview
 # - /articles - Weather blog content
 #
-# Keywords: Rainz, Rainz Weather, AI weather, weather app,
+# Keywords: Rejn, Rejn Weather, AI weather, weather app,
 # hyper-local forecast, ensemble forecast, pollen tracker,
 # weather predictions, ChatGPT weather, free weather app
 # ===============================================================

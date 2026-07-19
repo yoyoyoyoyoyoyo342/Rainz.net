@@ -24,7 +24,7 @@ export function AISupportChat() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hi! I'm the Rainz Support Assistant. I can help you with questions about using Rainz, understanding weather data, managing your subscription, and troubleshooting issues. How can I help you today?",
+      content: "Hi! I'm the Rejn Support Assistant. I can help you with questions about using Rejn, understanding weather data, managing your subscription, and troubleshooting issues. How can I help you today?",
       timestamp: new Date()
     }
   ]);
@@ -117,11 +117,11 @@ export function AISupportChat() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="relative">
-              <img src={rainzLogo} alt="Rainz" className="h-10 w-10 rounded-xl" />
+              <img src={rainzLogo} alt="Rejn" className="h-10 w-10 rounded-xl" />
               <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-card" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-foreground">Rainz Assistant</h3>
+              <h3 className="font-semibold text-foreground">Rejn Assistant</h3>
               <div className="flex items-center gap-1.5">
                 <Sparkles className="w-3 h-3 text-primary" />
                 <span className="text-xs text-muted-foreground">AI-powered support</span>

@@ -1,4 +1,4 @@
-// Service Worker for Rainz Weather App with Infrastructure-Level Analytics
+// Service Worker for Rejn Weather App with Infrastructure-Level Analytics
 // v5.0 — Rejn 2.0 hard-refresh release. On activate we wipe ALL caches +
 // known IndexedDB databases and force every open client to reload so no user
 // stays on a stale pre-2.0 bundle.
@@ -261,7 +261,7 @@ self.addEventListener('fetch', (event) => {
 
 // Handle incoming push notifications
 self.addEventListener('push', (event) => {
-  let data = { title: 'Rainz Weather', body: 'You have a new weather update!' };
+  let data = { title: 'Rejn Weather', body: 'You have a new weather update!' };
 
   if (event.data) {
     try {
@@ -279,7 +279,7 @@ self.addEventListener('push', (event) => {
     requireInteraction: data.data?.type === 'severe_weather',
     data: data.data || {},
     actions: [
-      { action: 'open', title: 'Open Rainz' },
+      { action: 'open', title: 'Open Rejn' },
       { action: 'dismiss', title: 'Dismiss' },
     ],
   };

@@ -52,9 +52,9 @@ export default function Info() {
   return (
     <>
       <SEOHead
-        title="Rainz — Gamified Weather Forecasting App"
-        description="Predict tomorrow's weather, compete with friends, and climb the leaderboard. Rainz combines hyper-accurate multi-source forecasts with gamified predictions."
-        keywords="Rainz, weather app, weather prediction game, gamified weather, weather forecast"
+        title="Rejn — Gamified Weather Forecasting App"
+        description="Predict tomorrow's weather, compete with friends, and climb the leaderboard. Rejn combines hyper-accurate multi-source forecasts with gamified predictions."
+        keywords="Rejn, weather app, weather prediction game, gamified weather, weather forecast"
       />
 
       <div className="min-h-screen bg-background flex flex-col">
@@ -77,7 +77,7 @@ export default function Info() {
           <div className="container mx-auto px-4 py-16 sm:py-24 relative z-10 max-w-4xl">
             <div className="text-center space-y-8">
               <div className="inline-flex items-center justify-center">
-                <img src={rainzLogo} alt="Rainz" className="h-20 sm:h-24 drop-shadow-xl" />
+                <img src={rainzLogo} alt="Rejn" className="h-20 sm:h-24 drop-shadow-xl" />
               </div>
 
               <div className="space-y-4">
@@ -98,7 +98,7 @@ export default function Info() {
                 className="h-14 px-10 text-lg font-bold gap-3 rounded-2xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
                 onClick={() => window.location.href = "/"}
               >
-                Continue to Rainz
+                Continue to Rejn
                 <ArrowRight className="w-5 h-5" />
               </Button>
 
@@ -131,7 +131,7 @@ export default function Info() {
         {/* Image Carousel */}
         <section className="py-16 border-t border-border/30">
           <div className="container mx-auto px-4 max-w-5xl">
-            <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8">Learn more about Rainz</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8">Learn more about Rejn</h2>
             <RainzImageCarousel />
           </div>
         </section>
@@ -192,7 +192,7 @@ export default function Info() {
               className="h-14 px-10 text-lg font-bold gap-3 rounded-2xl shadow-lg shadow-primary/25"
               onClick={() => window.location.href = "/"}
             >
-              Continue to Rainz
+              Continue to Rejn
               <ArrowRight className="w-5 h-5" />
             </Button>
           </div>

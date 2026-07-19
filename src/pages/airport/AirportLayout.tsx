@@ -35,12 +35,12 @@ export default function AirportLayout() {
           <Link to="/airport" className="flex items-center gap-2.5 group">
             <motion.img
               src={rainzLogo}
-              alt="Rainz"
+              alt="Rejn"
               className="h-8 w-8 rounded-lg"
               whileHover={{ rotate: 10, scale: 1.1 }}
               transition={{ type: "spring", stiffness: 400 }}
             />
-            <span className="text-lg font-bold tracking-tight group-hover:text-blue-400 transition-colors">Rainz</span>
+            <span className="text-lg font-bold tracking-tight group-hover:text-blue-400 transition-colors">Rejn</span>
           </Link>
 
           {/* Desktop nav */}
@@ -169,8 +169,8 @@ export default function AirportLayout() {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
             >
-              <img src={rainzLogo} alt="Rainz" className="h-6 w-6 rounded-md" />
-              <span className="text-sm text-white/40">© {new Date().getFullYear()} Rainz Weather</span>
+              <img src={rainzLogo} alt="Rejn" className="h-6 w-6 rounded-md" />
+              <span className="text-sm text-white/40">© {new Date().getFullYear()} Rejn Weather</span>
             </motion.div>
             <div className="flex gap-6 text-sm text-white/40">
               <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>

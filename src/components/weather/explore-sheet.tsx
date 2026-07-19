@@ -51,7 +51,7 @@ export function ExploreSheet({
         <SheetHeader className="px-4 pt-4 pb-3 border-b border-border/50 shrink-0">
           <SheetTitle className="flex items-center gap-2 text-lg">
             <span>✨</span>
-            Explore Rainz
+            Explore Rejn
           </SheetTitle>
         </SheetHeader>
 
@@ -184,7 +184,7 @@ export function ExploreButton({ onClick }: ExploreButtonProps) {
           <Compass className="w-5 h-5 text-primary" />
         </div>
         <div className="text-left">
-          <p className="text-sm font-semibold text-foreground">Explore Rainz ✨</p>
+          <p className="text-sm font-semibold text-foreground">Explore Rejn ✨</p>
           <p className="text-xs text-muted-foreground">Routes · Stories · Photos · Debates · Pets · More</p>
         </div>
       </div>

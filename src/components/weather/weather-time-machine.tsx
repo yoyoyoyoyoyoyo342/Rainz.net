@@ -231,7 +231,7 @@ export function WeatherTimeMachine({ latitude, longitude, locationName, isImperi
             )}
 
             <p className="text-[10px] text-muted-foreground/60 text-center">
-              Rainz Weather Time Machine • {format(selectedDate, "MMM d, yyyy")}
+              Rejn Weather Time Machine • {format(selectedDate, "MMM d, yyyy")}
             </p>
           </div>
         ) : null}

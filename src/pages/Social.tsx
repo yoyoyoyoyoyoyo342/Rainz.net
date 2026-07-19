@@ -235,7 +235,7 @@ export default function SocialPage() {
   if (!user) {
     return (
       <>
-        <SEOHead title="Social — Rainz Weather" description="See what's happening in the Rainz community" />
+        <SEOHead title="Social — Rejn Weather" description="See what's happening in the Rejn community" />
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
           <Card className="glass-card max-w-sm w-full">
             <CardContent className="flex flex-col items-center gap-4 pt-8 pb-8">
@@ -259,7 +259,7 @@ export default function SocialPage() {
 
   return (
     <>
-      <SEOHead title="Social — Rainz Weather" description="See what's happening in the Rainz community" />
+      <SEOHead title="Social — Rejn Weather" description="See what's happening in the Rejn community" />
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-6 max-w-2xl space-y-4">
           <div className="flex items-center gap-3 mb-2">

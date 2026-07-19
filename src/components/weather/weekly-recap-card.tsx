@@ -103,7 +103,7 @@ export function WeeklyRecapCard() {
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <img src={rainzLogo} alt="Rainz" className="h-5 w-5 rounded" />
+                <img src={rainzLogo} alt="Rejn" className="h-5 w-5 rounded" />
                 <span className="text-xs font-medium opacity-80">Weekly Recap · {weekLabel}</span>
               </div>
               <Button

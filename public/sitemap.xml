@@ -9,8 +9,8 @@
     <priority>1.0</priority>
     <image:image>
       <image:loc>https://rainz.net/logo-icon.png</image:loc>
-      <image:title>Rainz Weather Logo</image:title>
-      <image:caption>Rainz Weather - AI-Powered Hyper-Local Weather Forecasts</image:caption>
+      <image:title>Rejn Weather Logo</image:title>
+      <image:caption>Rejn Weather - AI-Powered Hyper-Local Weather Forecasts</image:caption>
     </image:image>
   </url>
   <url><loc>https://rainz.net/about</loc><lastmod>2026-03-19</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>

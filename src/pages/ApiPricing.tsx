@@ -189,7 +189,7 @@ export default function ApiPricing() {
   return (
     <>
       <SEOHead
-        title="Rainz Weather API — Pricing & Developer Access"
+        title="Rejn Weather API — Pricing & Developer Access"
         description="Access real-time AI-enhanced weather data for Scandinavia. Free tier available. Pro and Business plans for developers and businesses."
         canonicalUrl="https://rainz.net/api"
       />
@@ -200,7 +200,7 @@ export default function ApiPricing() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Rainz Weather API</h1>
+              <h1 className="text-3xl font-bold text-foreground">Rejn Weather API</h1>
               <p className="text-muted-foreground">AI-enhanced weather data for developers</p>
             </div>
           </div>

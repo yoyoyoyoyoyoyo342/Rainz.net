@@ -251,12 +251,12 @@ export function AdminLocationStats() {
             {isBirthday ? (
               <>
                 <Sparkles className="w-6 h-6 text-yellow-500" />
-                Happy 1st Birthday Rainz! 🎂
+                Happy 1st Birthday Rejn! 🎂
               </>
             ) : (
               <>
                 <Cake className="w-6 h-6 text-pink-500" />
-                Rainz 1st Birthday Countdown
+                Rejn 1st Birthday Countdown
               </>
             )}
           </CardTitle>

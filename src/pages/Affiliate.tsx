@@ -161,7 +161,7 @@ export default function Affiliate() {
               We'll review your application and get back to you within 24-48 hours.
             </p>
             <Button onClick={() => navigate("/")} className="mt-4">
-              Return to Rainz
+              Return to Rejn
             </Button>
           </CardContent>
         </Card>
@@ -179,9 +179,9 @@ export default function Affiliate() {
 
         {/* Hero Section */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Become a Rainz Affiliate</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Become a Rejn Affiliate</h1>
           <p className="text-muted-foreground">
-            Advertise your business to Rainz users when specific weather conditions are active.
+            Advertise your business to Rejn users when specific weather conditions are active.
           </p>
         </div>
 

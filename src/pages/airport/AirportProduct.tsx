@@ -113,7 +113,7 @@ export default function AirportProduct() {
             transition={{ delay: 0.3 }}
             className="text-white/40 max-w-xl mx-auto text-lg"
           >
-            Rainz is a free weather platform built for Scandinavia — combining multi-source forecasting, AI, gamification, and community into one app.
+            Rejn is a free weather platform built for Scandinavia — combining multi-source forecasting, AI, gamification, and community into one app.
           </motion.p>
         </div>
       </section>
@@ -249,7 +249,7 @@ export default function AirportProduct() {
           <div className="relative z-10">
             <h2 className="text-3xl sm:text-4xl font-black mb-4">Completely free. No catch.</h2>
             <p className="text-white/40 mb-8 max-w-md mx-auto">
-              Rainz is free to use. No subscriptions, no paywalls. Just weather, done properly.
+              Rejn is free to use. No subscriptions, no paywalls. Just weather, done properly.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -257,7 +257,7 @@ export default function AirportProduct() {
                   to="/"
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-white text-black font-semibold shadow-[0_0_40px_rgba(255,255,255,0.15)] transition-shadow hover:shadow-[0_0_60px_rgba(255,255,255,0.25)]"
                 >
-                  Open Rainz <ArrowRight size={18} />
+                  Open Rejn <ArrowRight size={18} />
                 </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

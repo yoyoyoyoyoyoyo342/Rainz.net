@@ -71,7 +71,7 @@ export function PWAInstallPopup() {
             <Smartphone className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm">Install Rainz Weather</h3>
+            <h3 className="font-semibold text-sm">Install Rejn Weather</h3>
             <p className="text-xs text-muted-foreground mt-1">
               Get the app for the best experience with push notifications
             </p>

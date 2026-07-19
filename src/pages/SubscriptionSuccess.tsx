@@ -16,7 +16,7 @@ export default function SubscriptionSuccess() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-green-600">
-            Welcome to Rainz!
+            Welcome to Rejn!
           </CardTitle>
           <CardDescription className="text-lg">
             All features are now free for everyone
@@ -49,7 +49,7 @@ export default function SubscriptionSuccess() {
             className="w-full"
           >
             <Home className="w-4 h-4 mr-2" />
-            Start Using Rainz
+            Start Using Rejn
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </CardContent>

@@ -121,7 +121,7 @@ export function ARWeatherOverlay({
        ctx.fillRect(canvas.width - 150, 20, 130, 30);
        ctx.fillStyle = 'white';
        ctx.font = '14px system-ui';
-       ctx.fillText('📍 Rainz.net', canvas.width - 140, 40);
+       ctx.fillText('📍 Rejn.net', canvas.width - 140, 40);
        
        // Download
        const link = document.createElement('a');

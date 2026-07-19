@@ -127,7 +127,7 @@ export default function SkyCamStations() {
       <div className="min-h-screen flex items-center justify-center p-6 text-center">
         <div>
           <h1 className="text-2xl font-bold mb-2">Sign in required</h1>
-          <p className="text-muted-foreground mb-4">You need a Rainz account to register a SkyCam station.</p>
+          <p className="text-muted-foreground mb-4">You need a Rejn account to register a SkyCam station.</p>
           <Button onClick={() => navigate('/auth')}>Sign in</Button>
         </div>
       </div>
@@ -154,7 +154,7 @@ export default function SkyCamStations() {
         <Card className="p-8 text-center">
           <Cloud className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
           <p className="font-medium mb-1">No stations yet</p>
-          <p className="text-sm text-muted-foreground mb-4">Register a station to start contributing real sky photos to Rainz.</p>
+          <p className="text-sm text-muted-foreground mb-4">Register a station to start contributing real sky photos to Rejn.</p>
           <Button onClick={() => setOpenCreate(true)}><Plus className="w-4 h-4 mr-2" /> Register station</Button>
         </Card>
       ) : (

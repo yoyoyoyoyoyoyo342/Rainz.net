@@ -236,8 +236,8 @@ export default function EmbedPage() {
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 mt-4 opacity-70 hover:opacity-100 transition-opacity"
           >
-            <img src={rainzLogo} alt="Rainz" className="w-4 h-4 rounded" />
-            <span className="text-[10px] text-white font-medium">Rainz.net</span>
+            <img src={rainzLogo} alt="Rejn" className="w-4 h-4 rounded" />
+            <span className="text-[10px] text-white font-medium">Rejn.net</span>
           </a>
         </div>
       </div>
@@ -419,8 +419,8 @@ export default function EmbedPage() {
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-1.5 mt-2 opacity-80 hover:opacity-100 transition-opacity"
         >
-          <img src={rainzLogo} alt="Rainz" className="w-4 h-4 rounded shadow-sm" />
-          <span className={`text-[10px] ${textPrimary} font-medium ${dropShadowSm}`}>Rainz.net</span>
+          <img src={rainzLogo} alt="Rejn" className="w-4 h-4 rounded shadow-sm" />
+          <span className={`text-[10px] ${textPrimary} font-medium ${dropShadowSm}`}>Rejn.net</span>
         </a>
       </div>
     </div>

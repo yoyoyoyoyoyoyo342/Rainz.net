@@ -84,7 +84,7 @@ export default function Unsubscribe() {
         {state.kind === "valid" && (
           <>
             <MailX className="w-10 h-10 mx-auto text-primary" />
-            <h1 className="text-2xl font-semibold">Unsubscribe from Rainz emails?</h1>
+            <h1 className="text-2xl font-semibold">Unsubscribe from Rejn emails?</h1>
             <p className="text-muted-foreground text-sm">
               You'll stop receiving morning weather reviews and other emails from us.
             </p>
@@ -104,7 +104,7 @@ export default function Unsubscribe() {
             <CheckCircle2 className="w-10 h-10 mx-auto text-primary" />
             <h1 className="text-2xl font-semibold">You're unsubscribed</h1>
             <p className="text-muted-foreground text-sm">
-              You won't receive Rainz emails anymore. You can re-enable notifications
+              You won't receive Rejn emails anymore. You can re-enable notifications
               anytime in the app settings.
             </p>
           </>
@@ -124,7 +124,7 @@ export default function Unsubscribe() {
             <h1 className="text-2xl font-semibold">Invalid or expired link</h1>
             <p className="text-muted-foreground text-sm">
               This unsubscribe link is no longer valid. Please use the link from a
-              recent Rainz email.
+              recent Rejn email.
             </p>
           </>
         )}

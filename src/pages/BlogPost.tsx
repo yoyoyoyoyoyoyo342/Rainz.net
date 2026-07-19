@@ -92,15 +92,15 @@ export default function BlogPost() {
       '@context': 'https://schema.org',
       '@type': 'Article',
       headline: post.title,
-      description: post.excerpt || `Read "${post.title}" on the Rainz Weather blog.`,
+      description: post.excerpt || `Read "${post.title}" on the Rejn Weather blog.`,
       image: post.cover_image_url || undefined,
       datePublished: post.published_at || post.created_at,
       dateModified: post.updated_at || post.published_at || post.created_at,
       url: `https://rainz.net/articles/${post.slug}`,
-      author: { '@type': 'Organization', name: 'Rainz Weather', url: 'https://rainz.net' },
+      author: { '@type': 'Organization', name: 'Rejn Weather', url: 'https://rainz.net' },
       publisher: {
         '@type': 'Organization',
-        name: 'Rainz Weather',
+        name: 'Rejn Weather',
         logo: { '@type': 'ImageObject', url: 'https://rainz.net/logo-icon.png' },
       },
       mainEntityOfPage: { '@type': 'WebPage', '@id': `https://rainz.net/articles/${post.slug}` },
@@ -131,9 +131,9 @@ export default function BlogPost() {
   return (
     <>
       <SEOHead 
-        title={`${post.title} - Rainz Weather Blog`}
-        description={post.excerpt || `Read "${post.title}" on the Rainz Weather blog. Weather insights, tips, and updates.`}
-        keywords={`Rainz blog, weather article, ${post.title}, weather tips, weather news`}
+        title={`${post.title} - Rejn Weather Blog`}
+        description={post.excerpt || `Read "${post.title}" on the Rejn Weather blog. Weather insights, tips, and updates.`}
+        keywords={`Rejn blog, weather article, ${post.title}, weather tips, weather news`}
         ogType="article"
         articlePublishedTime={post.published_at || post.created_at}
         ogImage={post.cover_image_url || undefined}
@@ -146,8 +146,8 @@ export default function BlogPost() {
             <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <img src={rainzLogo} alt="Rainz" className="h-8 w-auto" />
-            <span className="font-semibold text-foreground">Rainz Blog</span>
+            <img src={rainzLogo} alt="Rejn" className="h-8 w-auto" />
+            <span className="font-semibold text-foreground">Rejn Blog</span>
           </div>
         </div>
       </header>
@@ -210,7 +210,7 @@ export default function BlogPost() {
 
       <footer className="border-t border-border py-8 mt-12">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>© {new Date().getFullYear()} Rainz. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Rejn. All rights reserved.</p>
         </div>
       </footer>
     </div>

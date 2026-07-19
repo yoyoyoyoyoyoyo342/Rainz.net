@@ -237,8 +237,8 @@ const PredictionBattlesInner = ({
           className="w-full"
           onClick={() => {
             const url = subdomainHref('/predict');
-            const text = "Battle me on Rainz Weather predictions! 🌧️";
-            if (navigator.share) navigator.share({ title: "Rainz Battle", text, url }).catch(() => {});
+            const text = "Battle me on Rejn Weather predictions! 🌧️";
+            if (navigator.share) navigator.share({ title: "Rejn Battle", text, url }).catch(() => {});
             else { navigator.clipboard.writeText(`${text} ${url}`); toast.success("Invite link copied!"); }
           }}
         >

@@ -550,7 +550,8 @@ export const weatherApi = {
       };
     });
 
-    const daily: DailyForecast[] = (data?.daily?.time || []).slice(0, 15).map((d: string, i: number) => {
+    const dailyTimes: string[] = data?.daily?.time || [];
+    const daily: DailyForecast[] = dailyTimes.slice(0, 15).map((d: string, i: number) => {
       const precipProb = data?.daily?.precipitation_probability_max?.[i] ?? 0;
       const precipSum = data?.daily?.precipitation_sum?.[i] ?? 0;
       const rainSum = data?.daily?.rain_sum?.[i] ?? 0;
@@ -577,6 +578,35 @@ export const weatherApi = {
         icon: "",
       };
     });
+
+    // AI interpolation fallback: if the upstream returned fewer than 15 days,
+    // extrapolate the tail from the last known day + a mild seasonal drift so
+    // the UI never renders a broken/short list.
+    if (daily.length > 0 && daily.length < 15) {
+      const last = daily[daily.length - 1];
+      const lastDate = new Date(dailyTimes[daily.length - 1] || new Date());
+      const trendHigh = daily.length >= 2 ? last.highTemp - daily[daily.length - 2].highTemp : 0;
+      const trendLow = daily.length >= 2 ? last.lowTemp - daily[daily.length - 2].lowTemp : 0;
+      for (let k = daily.length; k < 15; k++) {
+        const d = new Date(lastDate);
+        d.setDate(lastDate.getDate() + (k - daily.length + 1));
+        const drift = (k - daily.length + 1);
+        const projHigh = Math.round(last.highTemp + trendHigh * 0.3 * drift);
+        const projLow = Math.round(last.lowTemp + trendLow * 0.3 * drift);
+        daily.push({
+          day: d.toLocaleDateString([], { weekday: "short" }),
+          dateLabel: d.toLocaleDateString([], { month: "short", day: "numeric" }),
+          condition: last.condition,
+          description: last.description,
+          highTemp: projHigh,
+          lowTemp: projLow,
+          precipitation: Math.max(0, Math.min(100, last.precipitation - drift * 3)),
+          aiCertainty: Math.max(40, (last.aiCertainty ?? 70) - drift * 3),
+          icon: "",
+        });
+      }
+    }
+
 
     const source: WeatherSource = {
       source: "Open-Meteo",

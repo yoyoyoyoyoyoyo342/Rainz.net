@@ -69,12 +69,21 @@ Deno.serve(async (req) => {
       .insert({ user_id: userId, achievement_id: ach.id });
     if (insErr) return json({ error: insErr.message }, 500);
 
-    await admin.rpc("noop_that_does_not_exist").catch(() => {}); // ignore
     const points = ach.points ?? 500;
-    await admin
-      .from("profiles")
-      .update({ total_points: (await currentPoints(admin, userId)) + points })
-      .eq("user_id", userId);
+
+    // Profiles live on Aiven now — update total_points there so the leaderboard
+    // and UI actually reflect the bonus.
+    try {
+      await db`
+        UPDATE profiles
+        SET total_points = COALESCE(total_points, 0) + ${points},
+            updated_at = now()
+        WHERE user_id = ${userId}
+      `;
+    } catch (e) {
+      console.error("[claim-sf-founder] Aiven update failed", e);
+      return json({ error: "points_update_failed" }, 500);
+    }
 
     // Congratulate them in-app.
     await admin.from("user_notifications").insert({

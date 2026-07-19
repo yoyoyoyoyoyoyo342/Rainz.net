@@ -1,6 +1,7 @@
 // Grants the "SF Founder" achievement (500 points) to a signed-up user whose
 // geolocation lies inside the SF Bay Area bounding box. Idempotent.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import db from "../_shared/db.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

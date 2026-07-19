@@ -332,6 +332,45 @@ export type Database = {
         }
         Relationships: []
       }
+      app_changelog: {
+        Row: {
+          body_markdown: string
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string | null
+          is_published: boolean
+          published_at: string | null
+          title: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          body_markdown: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          published_at?: string | null
+          title: string
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          body_markdown?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          published_at?: string | null
+          title?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       app_versions: {
         Row: {
           changelog: string[]
@@ -1041,18 +1080,22 @@ export type Database = {
       }
       profiles: {
         Row: {
+          acquisition_source: string | null
           avatar_url: string | null
           bio: string | null
+          changelog_seen_version: string | null
           created_at: string
           display_name: string | null
           first_prediction_bonus_claimed: boolean | null
           id: string
+          location_permission: string | null
           notification_enabled: boolean | null
           notification_time: string | null
           notify_ai_preview: boolean | null
           notify_daily_summary: boolean | null
           notify_pollen: boolean | null
           notify_severe_weather: boolean | null
+          onboarding_step: string | null
           referral_code: string | null
           shop_points: number
           total_points: number | null
@@ -1062,18 +1105,22 @@ export type Database = {
           username: string | null
         }
         Insert: {
+          acquisition_source?: string | null
           avatar_url?: string | null
           bio?: string | null
+          changelog_seen_version?: string | null
           created_at?: string
           display_name?: string | null
           first_prediction_bonus_claimed?: boolean | null
           id?: string
+          location_permission?: string | null
           notification_enabled?: boolean | null
           notification_time?: string | null
           notify_ai_preview?: boolean | null
           notify_daily_summary?: boolean | null
           notify_pollen?: boolean | null
           notify_severe_weather?: boolean | null
+          onboarding_step?: string | null
           referral_code?: string | null
           shop_points?: number
           total_points?: number | null
@@ -1083,18 +1130,22 @@ export type Database = {
           username?: string | null
         }
         Update: {
+          acquisition_source?: string | null
           avatar_url?: string | null
           bio?: string | null
+          changelog_seen_version?: string | null
           created_at?: string
           display_name?: string | null
           first_prediction_bonus_claimed?: boolean | null
           id?: string
+          location_permission?: string | null
           notification_enabled?: boolean | null
           notification_time?: string | null
           notify_ai_preview?: boolean | null
           notify_daily_summary?: boolean | null
           notify_pollen?: boolean | null
           notify_severe_weather?: boolean | null
+          onboarding_step?: string | null
           referral_code?: string | null
           shop_points?: number
           total_points?: number | null
@@ -2693,6 +2744,48 @@ export type Database = {
         }
         Relationships: []
       }
+      world_cities: {
+        Row: {
+          admin1: string | null
+          ascii_name: string | null
+          country_code: string | null
+          created_at: string
+          geoname_id: number | null
+          id: number
+          latitude: number
+          longitude: number
+          name: string
+          population: number
+          timezone: string | null
+        }
+        Insert: {
+          admin1?: string | null
+          ascii_name?: string | null
+          country_code?: string | null
+          created_at?: string
+          geoname_id?: number | null
+          id?: number
+          latitude: number
+          longitude: number
+          name: string
+          population?: number
+          timezone?: string | null
+        }
+        Update: {
+          admin1?: string | null
+          ascii_name?: string | null
+          country_code?: string | null
+          created_at?: string
+          geoname_id?: number | null
+          id?: number
+          latitude?: number
+          longitude?: number
+          name?: string
+          population?: number
+          timezone?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       leaderboard: {
@@ -2851,6 +2944,8 @@ export type Database = {
       invoke_publish_scheduled_posts: { Args: never; Returns: undefined }
       manual_verify_predictions: { Args: never; Returns: Json }
       prune_analytics_events: { Args: never; Returns: undefined }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       trigger_verify_predictions: { Args: never; Returns: undefined }
     }
     Enums: {

@@ -99,7 +99,8 @@ export const GoldenGate: React.FC<Props> = ({ className, reducedMotion }) => wra
 
 // ─── LITTLE MERMAID (Copenhagen) ─────────────────────────────────────────────
 export const LittleMermaid: React.FC<Props> = ({ className, reducedMotion }) => wrap(
-  <>
+  <g transform="translate(0 70)">
+
     <WaterStrip y={410} reduced={reducedMotion} />
     {/* Rock */}
     <g fill="var(--lm-main)">

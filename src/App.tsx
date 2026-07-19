@@ -298,7 +298,8 @@ function AppContent() {
                           <div className="flex-1">
                             <AnalyticsTracker />
                             <AnimatedRoutes />
-
+                            <ChangelogPopup />
+                            <DownloadPWANudge source="ambient_bottom_right" />
                           </div>
                           {window.location.pathname !== '/dryroutes' && (
                          <Footer />

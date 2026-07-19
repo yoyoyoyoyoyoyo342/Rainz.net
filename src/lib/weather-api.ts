@@ -579,33 +579,78 @@ export const weatherApi = {
       };
     });
 
-    // AI interpolation fallback: if the upstream returned fewer than 15 days,
-    // extrapolate the tail from the last known day + a mild seasonal drift so
-    // the UI never renders a broken/short list.
+    // AI interpolation fallback: extend both daily AND hourly beyond upstream
+    // coverage by learning from the prior ~8 days. Days 10-15 use a rotating
+    // condition pool + trend-adjusted temps so the UI never shows repeated
+    // "rain + umbrella" placeholders, and hourly is synthesized with a
+    // diurnal curve so tapping a far-out day still shows an hourly breakdown.
     if (daily.length > 0 && daily.length < 15) {
-      const last = daily[daily.length - 1];
+      const windowSize = Math.min(8, daily.length);
+      const window = daily.slice(-windowSize);
+      const avgHigh = window.reduce((s, d) => s + d.highTemp, 0) / windowSize;
+      const avgLow = window.reduce((s, d) => s + d.lowTemp, 0) / windowSize;
+      const avgPrecip = window.reduce((s, d) => s + d.precipitation, 0) / windowSize;
+      const trendHigh = windowSize >= 2 ? (window[windowSize - 1].highTemp - window[0].highTemp) / (windowSize - 1) : 0;
+      const trendLow = windowSize >= 2 ? (window[windowSize - 1].lowTemp - window[0].lowTemp) / (windowSize - 1) : 0;
       const lastDate = new Date(dailyTimes[daily.length - 1] || new Date());
-      const trendHigh = daily.length >= 2 ? last.highTemp - daily[daily.length - 2].highTemp : 0;
-      const trendLow = daily.length >= 2 ? last.lowTemp - daily[daily.length - 2].lowTemp : 0;
-      for (let k = daily.length; k < 15; k++) {
+      const startCount = daily.length;
+
+      for (let k = startCount; k < 15; k++) {
+        const step = k - startCount + 1;
         const d = new Date(lastDate);
-        d.setDate(lastDate.getDate() + (k - daily.length + 1));
-        const drift = (k - daily.length + 1);
-        const projHigh = Math.round(last.highTemp + trendHigh * 0.3 * drift);
-        const projLow = Math.round(last.lowTemp + trendLow * 0.3 * drift);
+        d.setDate(lastDate.getDate() + step);
+        // Rotate through prior 8 days for condition variety; jitter the index
+        // so we don't just replay them in order.
+        const seed = (d.getDate() * 31 + d.getMonth() * 7 + k * 13) % windowSize;
+        const template = window[seed];
+        const dampen = 0.5; // trend confidence decays fast beyond week 1
+        const projHigh = Math.round(avgHigh + trendHigh * step * dampen);
+        const projLow = Math.round(avgLow + trendLow * step * dampen);
+        const projPrecip = Math.max(0, Math.min(100, Math.round(avgPrecip * 0.7 + template.precipitation * 0.3)));
         daily.push({
           day: d.toLocaleDateString([], { weekday: "short" }),
           dateLabel: d.toLocaleDateString([], { month: "short", day: "numeric" }),
-          condition: last.condition,
-          description: last.description,
+          condition: template.condition,
+          description: template.description,
           highTemp: projHigh,
           lowTemp: projLow,
-          precipitation: Math.max(0, Math.min(100, last.precipitation - drift * 3)),
-          aiCertainty: Math.max(40, (last.aiCertainty ?? 70) - drift * 3),
+          precipitation: projPrecip,
+          aiCertainty: Math.max(35, 75 - step * 5),
           icon: "",
         });
+
+        // Synthesize hourly entries for this projected day using a simple
+        // diurnal curve peaking mid-afternoon.
+        if (hourly.length < 15 * 24) {
+          for (let h = 0; h < 24; h++) {
+            const t = new Date(d);
+            t.setHours(h, 0, 0, 0);
+            // Diurnal factor: coldest ~5am, warmest ~15:00.
+            const phase = ((h - 5 + 24) % 24) / 24;
+            const warmth = Math.sin(phase * Math.PI); // 0 → 1 → 0
+            const temp = Math.round(projLow + (projHigh - projLow) * warmth);
+            // Sample hourly-precip probability from the daily precip with
+            // afternoon bias so it's not flat across the day.
+            const rainBias = 0.6 + 0.8 * Math.sin(((h - 10 + 24) % 24) / 24 * Math.PI);
+            const hourPrecip = Math.max(0, Math.min(100, Math.round(projPrecip * rainBias * 0.9)));
+            hourly.push({
+              time: t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              temperature: temp,
+              condition: template.condition,
+              precipitation: hourPrecip,
+              icon: "",
+              feelsLike: temp,
+              humidity: 60,
+              windSpeed: 8,
+              windDirection: 180,
+              uvIndex: Math.round(warmth * 5),
+              cloudCover: template.condition.toLowerCase().includes("cloud") ? 70 : 30,
+            });
+          }
+        }
       }
     }
+
 
 
     const source: WeatherSource = {

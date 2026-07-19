@@ -64,7 +64,7 @@ export function DownloadPWANudge({ delayMs = 30_000, source, message, className 
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           className={cn(
             "fixed right-4 z-40 flex items-end gap-2 pointer-events-none",
-            "bottom-[calc(96px+env(safe-area-inset-bottom))] sm:bottom-6",
+            "bottom-[calc(180px+env(safe-area-inset-bottom))] sm:bottom-24",
             className
           )}
         >

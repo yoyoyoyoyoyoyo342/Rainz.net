@@ -26,12 +26,12 @@ export default function AffiliatePolicy() {
             </CardHeader>
             <CardContent className="text-muted-foreground space-y-4">
               <p>
-                The Rainz Weather Affiliate Program allows businesses and individuals to display contextual 
-                advertising within the Rainz Weather application. This policy outlines the terms, conditions, 
+                The Rejn Weather Affiliate Program allows businesses and individuals to display contextual 
+                advertising within the Rejn Weather application. This policy outlines the terms, conditions, 
                 and guidelines for participation in our affiliate program.
               </p>
               <p>
-                By applying to become a Rainz affiliate, you agree to comply with all terms outlined in this 
+                By applying to become a Rejn affiliate, you agree to comply with all terms outlined in this 
                 policy, our Terms of Service, and applicable laws and regulations.
               </p>
             </CardContent>
@@ -42,10 +42,10 @@ export default function AffiliatePolicy() {
               <CardTitle>2. Eligibility Requirements</CardTitle>
             </CardHeader>
             <CardContent className="text-muted-foreground space-y-4">
-              <p>To participate in the Rainz Affiliate Program, you must:</p>
+              <p>To participate in the Rejn Affiliate Program, you must:</p>
               <ul className="list-disc list-inside space-y-2 ml-4">
                 <li>Be at least 18 years of age or the legal age in your jurisdiction</li>
-                <li>Have a valid Rainz account in good standing</li>
+                <li>Have a valid Rejn account in good standing</li>
                 <li>Own or have authorization to promote the website/business you submit</li>
                 <li>Have a legitimate business or service to promote</li>
                 <li>Agree to comply with all applicable advertising laws and regulations</li>
@@ -82,9 +82,9 @@ export default function AffiliatePolicy() {
             </CardHeader>
             <CardContent className="text-muted-foreground space-y-4">
               <p>
-                <strong>Pricing:</strong> The Rainz Affiliate Program is billed at €10 per month. This fee 
+                <strong>Pricing:</strong> The Rejn Affiliate Program is billed at €10 per month. This fee 
                 covers the display of your affiliate link when your selected weather condition is active 
-                for users in the Rainz Weather app.
+                for users in the Rejn Weather app.
               </p>
               <p>
                 <strong>Billing Cycle:</strong> Subscriptions are billed monthly on the anniversary of your 
@@ -132,7 +132,7 @@ export default function AffiliatePolicy() {
             </CardHeader>
             <CardContent className="text-muted-foreground space-y-4">
               <p>
-                Your affiliate link will be displayed to Rainz users based on the weather condition you 
+                Your affiliate link will be displayed to Rejn users based on the weather condition you 
                 selected during application:
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4">
@@ -156,7 +156,7 @@ export default function AffiliatePolicy() {
             </CardHeader>
             <CardContent className="text-muted-foreground space-y-4">
               <p>
-                <strong>By Rainz:</strong> We reserve the right to suspend or terminate any affiliate 
+                <strong>By Rejn:</strong> We reserve the right to suspend or terminate any affiliate 
                 account at any time if we determine that the affiliate has violated this policy, our 
                 Terms of Service, or applicable laws. We may also modify this policy at any time with 
                 notice to active affiliates.
@@ -167,8 +167,8 @@ export default function AffiliatePolicy() {
               </p>
               <p>
                 <strong>Effect of Termination:</strong> Upon termination, your affiliate link will be 
-                removed from the Rainz app, and you will no longer be charged. Any outstanding balances 
-                owed to Rainz must be settled prior to account closure.
+                removed from the Rejn app, and you will no longer be charged. Any outstanding balances 
+                owed to Rejn must be settled prior to account closure.
               </p>
             </CardContent>
           </Card>
@@ -184,7 +184,7 @@ export default function AffiliatePolicy() {
                 various factors including weather patterns, user traffic, and competition.
               </p>
               <p>
-                <strong>Indemnification:</strong> You agree to indemnify and hold harmless Rainz Weather, 
+                <strong>Indemnification:</strong> You agree to indemnify and hold harmless Rejn Weather, 
                 its officers, directors, employees, and affiliates from any claims, damages, or expenses 
                 arising from your use of the affiliate program or your promoted content.
               </p>
@@ -202,8 +202,8 @@ export default function AffiliatePolicy() {
             </CardHeader>
             <CardContent className="text-muted-foreground space-y-4">
               <p>
-                If you have questions about this Affiliate Policy or the Rainz Affiliate Program, 
-                please contact us through the feedback form in the Rainz app settings or visit our 
+                If you have questions about this Affiliate Policy or the Rejn Affiliate Program, 
+                please contact us through the feedback form in the Rejn app settings or visit our 
                 About page for more information.
               </p>
             </CardContent>

@@ -127,20 +127,20 @@ export default function MCP() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
-        title="Rainz MCP — Weather Data for AI Apps"
-        description="Add real-time weather data to your AI applications with the Rainz MCP server. Compatible with Claude, Cursor, Windsurf, and any MCP client."
+        title="Rejn MCP — Weather Data for AI Apps"
+        description="Add real-time weather data to your AI applications with the Rejn MCP server. Compatible with Claude, Cursor, Windsurf, and any MCP client."
       />
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8">
-          <ArrowLeft className="h-4 w-4" /> Back to Rainz
+          <ArrowLeft className="h-4 w-4" /> Back to Rejn
         </Link>
 
         <div className="mb-12 text-center">
           <Badge variant="secondary" className="mb-4">MCP Server</Badge>
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-            Rainz MCP
+            Rejn MCP
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Add real-time, multi-model weather intelligence to any AI application. 
@@ -207,7 +207,7 @@ export default function MCP() {
 
               <TabsContent value="python" className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Use any HTTP client to call Rainz MCP:
+                  Use any HTTP client to call Rejn MCP:
                 </p>
                 <CopyBlock code={pythonExample} language="python" />
               </TabsContent>
@@ -244,7 +244,7 @@ export default function MCP() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Unlike single-source weather APIs, Rainz aggregates data from multiple weather models and picks the most accurate one:
+              Unlike single-source weather APIs, Rejn aggregates data from multiple weather models and picks the most accurate one:
             </p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {["ECMWF", "GFS (NOAA)", "Met.no", "WeatherAPI", "Open-Meteo", "Tomorrow.io"].map((src) => (

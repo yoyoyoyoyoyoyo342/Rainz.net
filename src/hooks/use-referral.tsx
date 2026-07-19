@@ -77,8 +77,8 @@ export function useReferral() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Join Rainz',
-          text: 'Check out Rainz for weather predictions, competitions, and more!',
+          title: 'Join Rejn',
+          text: 'Check out Rejn for weather predictions, competitions, and more!',
           url: link,
         });
         return;

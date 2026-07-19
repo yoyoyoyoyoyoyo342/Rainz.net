@@ -1051,7 +1051,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
 
   const shareActivity = async () => {
     if (!trackSummary) return;
-    const text = `🏃 Activity Complete!\n📏 ${formatDistance(trackSummary.distance)}\n⏱ ${formatElapsed(trackSummary.duration)}\n⚡ Pace: ${formatPace(trackSummary.avgPace)}\n\nTracked with Rainz DryRoutes`;
+    const text = `🏃 Activity Complete!\n📏 ${formatDistance(trackSummary.distance)}\n⏱ ${formatElapsed(trackSummary.duration)}\n⚡ Pace: ${formatPace(trackSummary.avgPace)}\n\nTracked with Rejn DryRoutes`;
     try {
       if (navigator.share) {
         await navigator.share({ title: 'DryRoutes Activity', text });
@@ -2137,7 +2137,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <Navigation className="w-4 h-4 text-primary" />
-          Rainz DryRoutes
+          Rejn DryRoutes
           <button
             onClick={() => setIsFullscreen(true)}
             className="ml-auto p-1 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
@@ -2169,7 +2169,7 @@ export function DryRoute({ latitude, longitude, locationName, isImperial }: DryR
       >
         <div className="flex items-center gap-2">
           <Navigation className="w-4 h-4 text-primary" />
-          <span className="font-semibold text-sm">Rainz DryRoutes</span>
+          <span className="font-semibold text-sm">Rejn DryRoutes</span>
         </div>
         <button
           onClick={() => { setIsFullscreen(false); if (navigating) stopNavigation(); }}

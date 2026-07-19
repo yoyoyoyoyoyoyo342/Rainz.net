@@ -108,7 +108,7 @@ export default function CityWeather() {
       "@graph": [
         {
           "@type": "WebApplication",
-          name: "Rainz Weather",
+          name: "Rejn Weather",
           url: "https://rainz.net",
           applicationCategory: "WeatherApplication",
           operatingSystem: "Web, iOS, Android",
@@ -122,10 +122,10 @@ export default function CityWeather() {
         },
         {
           "@type": "WebPage",
-          name: `Rain Forecast & Weather in ${city.name} | Rainz.net`,
+          name: `Rain Forecast & Weather in ${city.name} | Rejn.net`,
           url: `https://rainz.net/weather/${city.slug}`,
-          description: `Check live rain radar, hourly forecasts, and plan rain-free routes in ${city.name} with Rainz.`,
-          isPartOf: { "@type": "WebSite", name: "Rainz.net", url: "https://rainz.net" },
+          description: `Check live rain radar, hourly forecasts, and plan rain-free routes in ${city.name} with Rejn.`,
+          isPartOf: { "@type": "WebSite", name: "Rejn.net", url: "https://rainz.net" },
         },
       ],
     };
@@ -145,8 +145,8 @@ export default function CityWeather() {
   return (
     <>
       <SEOHead
-        title={`Rain Forecast & Weather in ${city.name} | Rainz.net`}
-        description={`Check live rain radar, hourly forecasts, and plan rain-free routes in ${city.name} with Rainz — the free AI-powered weather app.`}
+        title={`Rain Forecast & Weather in ${city.name} | Rejn.net`}
+        description={`Check live rain radar, hourly forecasts, and plan rain-free routes in ${city.name} with Rejn — the free AI-powered weather app.`}
         keywords={`${city.name} weather, ${city.name} rain forecast, ${city.name} rain radar, weather ${city.name}, rain ${city.name}`}
         canonicalUrl={`https://rainz.net/weather/${city.slug}`}
         ogType="website"
@@ -328,7 +328,7 @@ export default function CityWeather() {
           {/* Back to main */}
           <div className="text-center pb-8">
             <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              ← Back to Rainz.net Weather
+              ← Back to Rejn.net Weather
             </Link>
           </div>
         </div>

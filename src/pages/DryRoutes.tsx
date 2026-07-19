@@ -35,7 +35,7 @@ export default function DryRoutesPage() {
     return (
       <>
         <SEOHead
-          title="DryRoutes - Rain-Free Route Planning | Rainz Weather"
+          title="DryRoutes - Rain-Free Route Planning | Rejn Weather"
           description="Plan walking and cycling routes that avoid rain. DryRoutes uses real-time precipitation data to find the driest path between two points."
           keywords="DryRoutes, rain-free routes, avoid rain, walking route planner, cycling route weather, dry commute, rain forecast route"
           canonicalUrl="https://rainz.net/dryroutes"
@@ -50,7 +50,7 @@ export default function DryRoutesPage() {
   return (
     <>
       <SEOHead
-        title="DryRoutes - Rain-Free Route Planning | Rainz Weather"
+        title="DryRoutes - Rain-Free Route Planning | Rejn Weather"
         description="Plan walking and cycling routes that avoid rain. DryRoutes uses real-time precipitation data to find the driest path between two points."
         keywords="DryRoutes, rain-free routes, avoid rain, walking route planner, cycling route weather, dry commute, rain forecast route"
         canonicalUrl="https://rainz.net/dryroutes"

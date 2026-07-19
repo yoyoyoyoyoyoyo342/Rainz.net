@@ -134,7 +134,7 @@ export default function WidgetPage() {
           rel="noopener noreferrer"
           className="text-[10px] opacity-50 hover:opacity-70 transition-opacity"
         >
-          Powered by Rainz
+          Powered by Rejn
         </a>
       </div>
     </div>

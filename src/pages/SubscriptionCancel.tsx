@@ -25,7 +25,7 @@ export default function SubscriptionCancel() {
         
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Rainz is now free for everyone. Enjoy all features including AI companion, enhanced forecasts, and more!
+            Rejn is now free for everyone. Enjoy all features including AI companion, enhanced forecasts, and more!
           </p>
 
           <Button 

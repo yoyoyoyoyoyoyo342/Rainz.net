@@ -1,5 +1,5 @@
 /**
- * Notification utilities for Rainz
+ * Notification utilities for Rejn
  * Handles Web Push API with VAPID from edge function
  */
 

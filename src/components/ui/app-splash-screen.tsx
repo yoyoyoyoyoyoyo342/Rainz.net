@@ -54,7 +54,7 @@ export function AppSplashScreen() {
           >
             <img
               src="/logo.png"
-              alt="Rainz"
+              alt="Rejn"
               className="w-28 h-28 object-contain"
             />
             <p className="text-base text-neutral-600">Be prepared</p>

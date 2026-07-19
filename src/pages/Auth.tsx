@@ -227,7 +227,7 @@ export default function Auth() {
       <div className="min-h-screen flex items-center justify-center p-6 bg-background">
         <div className="w-full max-w-sm space-y-8">
           <div className="text-center space-y-2">
-            <img src={rainzLogo} alt="Rainz" className="h-10 mx-auto" />
+            <img src={rainzLogo} alt="Rejn" className="h-10 mx-auto" />
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">Set new password</h1>
             <p className="text-sm text-muted-foreground">Choose a strong password to secure your account.</p>
           </div>
@@ -264,12 +264,12 @@ export default function Auth() {
         {/* Back link */}
         <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-3.5 h-3.5" />
-          Back to Rainz
+          Back to Rejn
         </Link>
 
         {/* Header */}
         <div className="space-y-3">
-          <img src={rainzLogo} alt="Rainz" className="h-9" />
+          <img src={rainzLogo} alt="Rejn" className="h-9" />
           <div className="space-y-1.5">
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">Welcome back</h1>
             <p className="text-sm text-muted-foreground">Sign in to predict, compete and save your spots.</p>

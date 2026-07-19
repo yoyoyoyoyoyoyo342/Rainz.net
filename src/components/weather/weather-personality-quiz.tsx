@@ -224,7 +224,7 @@ export function WeatherPersonalityQuiz({ inSheet = false }: WeatherPersonalityQu
       if (navigator.share && navigator.canShare({ files: [file] })) {
         await navigator.share({
           title: 'My Weather Personality',
-          text: `I'm ${result?.name} on Rainz! What's yours?`,
+          text: `I'm ${result?.name} on Rejn! What's yours?`,
           files: [file],
         });
       } else {

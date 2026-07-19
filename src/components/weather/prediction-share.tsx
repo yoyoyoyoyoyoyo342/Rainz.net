@@ -90,13 +90,13 @@ export const PredictionShare = ({ prediction, isOpen, onClose }: PredictionShare
     onClose();
   };
 
-  const shareText = `🌤️ My prediction on Rainz was...
+  const shareText = `🌤️ My prediction on Rejn was...
 
 📍 ${prediction.location}
 🌡️ High: ${prediction.high}° / Low: ${prediction.low}°
 ☁️ Condition: ${prediction.condition}
 
-You can also make your prediction at Rainz.net!`;
+You can also make your prediction at Rejn.net!`;
 
   const handleCopy = async () => {
     try {
@@ -138,7 +138,7 @@ You can also make your prediction at Rainz.net!`;
         const file = new File([blob], "rainz-prediction.png", { type: "image/png" });
         
         await navigator.share({
-          title: "My Weather Prediction on Rainz",
+          title: "My Weather Prediction on Rejn",
           text: shareText,
           files: [file],
         });
@@ -146,7 +146,7 @@ You can also make your prediction at Rainz.net!`;
         // Fallback to text only
         try {
           await navigator.share({
-            title: "My Weather Prediction on Rainz",
+            title: "My Weather Prediction on Rejn",
             text: shareText,
           });
         } catch {
@@ -156,7 +156,7 @@ You can also make your prediction at Rainz.net!`;
     } else if (navigator.share) {
       try {
         await navigator.share({
-          title: "My Weather Prediction on Rainz",
+          title: "My Weather Prediction on Rejn",
           text: shareText,
         });
       } catch {
@@ -192,8 +192,8 @@ You can also make your prediction at Rainz.net!`;
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <img src={rainzLogo} alt="Rainz" className="w-8 h-8 rounded-lg" />
-                  <span className="text-white font-bold text-lg drop-shadow-md">Rainz</span>
+                  <img src={rainzLogo} alt="Rejn" className="w-8 h-8 rounded-lg" />
+                  <span className="text-white font-bold text-lg drop-shadow-md">Rejn</span>
                 </div>
                 <span className="text-white/80 text-sm font-medium drop-shadow-md">My Prediction</span>
               </div>
@@ -234,8 +234,8 @@ You can also make your prediction at Rainz.net!`;
                 <div className={`w-full aspect-[5/3] rounded-xl bg-gradient-to-br ${gradient} p-4 flex flex-col justify-between`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <img src={rainzLogo} alt="Rainz" className="w-6 h-6 rounded-md" />
-                      <span className="text-white font-bold drop-shadow-md">Rainz</span>
+                      <img src={rainzLogo} alt="Rejn" className="w-6 h-6 rounded-md" />
+                      <span className="text-white font-bold drop-shadow-md">Rejn</span>
                     </div>
                     <span className="text-white/80 text-xs font-medium drop-shadow-md">My Prediction</span>
                   </div>

@@ -60,7 +60,7 @@ const predictionSchema = z.object({
   path: ["predictedHigh"],
 });
 
-// Read-only card showing what Rainz (LLM) predicts for tomorrow
+// Read-only card showing what Rejn (LLM) predicts for tomorrow
 function RainzPredictionCard({ latitude, longitude, isImperial }: { latitude: number; longitude: number; isImperial: boolean }) {
   const [prediction, setPrediction] = useState<{ high: number; low: number; condition: string } | null>(null);
 
@@ -104,7 +104,7 @@ function RainzPredictionCard({ latitude, longitude, isImperial }: { latitude: nu
     <div className="p-3 rounded-xl bg-gradient-to-br from-sky-500/10 to-primary/10 border border-sky-500/20">
       <div className="flex items-center gap-2 mb-2">
         <Bot className="w-4 h-4 text-primary" />
-        <span className="text-xs font-semibold text-primary">Rainz Prediction</span>
+        <span className="text-xs font-semibold text-primary">Rejn Prediction</span>
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -489,7 +489,7 @@ export const WeatherPredictionForm = ({
           </div>
         )}
 
-        {/* Rainz Prediction Card */}
+        {/* Rejn Prediction Card */}
         <RainzPredictionCard latitude={activeLocation.latitude} longitude={activeLocation.longitude} isImperial={isImperial} />
 
         {/* Confidence Betting */}

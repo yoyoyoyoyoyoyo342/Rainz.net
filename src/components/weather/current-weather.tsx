@@ -1,6 +1,6 @@
 import { MapPin, RefreshCw, Eye, Droplets, Wind, Sun, Cloud, CloudSun, CloudRain, CloudDrizzle, CloudSnow, CloudLightning, CloudFog, Share2, Plus, Minus, Snowflake, Thermometer, Clock, Star } from "lucide-react";
 
-// ---- Rainz Score ----
+// ---- Rejn Score ----
 function computeRainzScore(weather: {
   temperature: number; // always in °F
   precipitationProbability?: number;
@@ -44,7 +44,7 @@ function RainzScoreBadge({ score, isSnow, isCompact }: { score: number; isSnow: 
   return (
     <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${isSnow ? 'bg-slate-800/15' : 'bg-white/15'} backdrop-blur-sm`}>
       <Star className={`w-3 h-3 ${color} fill-current`} />
-      <span className={`text-[10px] uppercase tracking-wide font-medium ${isSnow ? 'text-slate-800/70' : 'text-white/70'}`}>Rainz Score</span>
+      <span className={`text-[10px] uppercase tracking-wide font-medium ${isSnow ? 'text-slate-800/70' : 'text-white/70'}`}>Rejn Score</span>
       <span className={`text-sm font-bold ${isSnow ? 'text-slate-800' : 'text-white'}`}>{score}</span>
       {!isCompact && <span className={`text-xs ${color} font-medium hidden sm:inline`}>· {label}</span>}
     </div>
@@ -644,8 +644,8 @@ function SocialShareCardDialog({
             )}
 
             <div className="flex items-center justify-center gap-2 pt-4 border-t border-white/20">
-              <img src={rainzLogo} alt="Rainz" className="h-6 w-6 rounded" />
-              <span className="text-sm font-medium opacity-90 drop-shadow-sm">Rainz.net</span>
+              <img src={rainzLogo} alt="Rejn" className="h-6 w-6 rounded" />
+              <span className="text-sm font-medium opacity-90 drop-shadow-sm">Rejn.net</span>
             </div>
           </div>
         </div>

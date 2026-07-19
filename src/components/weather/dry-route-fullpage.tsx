@@ -1310,7 +1310,7 @@ export function DryRouteFullPage({ latitude, longitude, locationName, isImperial
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline" className="flex-1" onClick={() => {
-                      const text = `🏃 Activity!\n📏 ${formatDistance(trackSummary.distance)}\n⏱ ${formatElapsed(trackSummary.duration)}\n⚡ ${formatPace(trackSummary.avgPace)}\nTracked with Rainz DryRoutes`;
+                      const text = `🏃 Activity!\n📏 ${formatDistance(trackSummary.distance)}\n⏱ ${formatElapsed(trackSummary.duration)}\n⚡ ${formatPace(trackSummary.avgPace)}\nTracked with Rejn DryRoutes`;
                       navigator.share?.({ title: 'DryRoutes Activity', text }).catch(() => navigator.clipboard.writeText(text).then(() => toast.success('Copied!')));
                     }}><Share2 className="w-4 h-4 mr-1" /> Share</Button>
                     <Button size="sm" variant="outline" onClick={() => { setTrackSummary(null); setTrackPoints([]); }}><Trash2 className="w-4 h-4" /></Button>

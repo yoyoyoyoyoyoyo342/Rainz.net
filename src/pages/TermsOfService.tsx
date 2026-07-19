@@ -32,7 +32,7 @@ export default function TermsOfService() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <p>
-              By accessing and using Rainz Weather ("the Service"), you accept and agree to be bound by the terms and provisions of this agreement. If you do not agree to these terms, please do not use the Service.
+              By accessing and using Rejn Weather ("the Service"), you accept and agree to be bound by the terms and provisions of this agreement. If you do not agree to these terms, please do not use the Service.
             </p>
           </CardContent>
         </Card>
@@ -72,7 +72,7 @@ export default function TermsOfService() {
           <CardContent className="space-y-4 text-sm">
             <h4 className="font-semibold">3.1 Features</h4>
             <p>
-              Rainz is a completely free weather application. All features are available to all users at no cost, including:
+              Rejn is a completely free weather application. All features are available to all users at no cost, including:
             </p>
             <ul className="list-disc list-inside space-y-1 ml-4">
               <li>AI-powered weather insights and enhanced data processing</li>
@@ -127,10 +127,10 @@ export default function TermsOfService() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <p>
-              Some features of Rainz Weather allow users to create and share routes via the&nbsp;DryRoutes&nbsp;planner. All routes are generated entirely by other users and may traverse private property, unmaintained trails, or hazardous terrain.
+              Some features of Rejn Weather allow users to create and share routes via the&nbsp;DryRoutes&nbsp;planner. All routes are generated entirely by other users and may traverse private property, unmaintained trails, or hazardous terrain.
             </p>
             <p>
-              Rainz.net provides no assurances regarding the safety, accuracy, or suitability of DryRoutes paths. By using or following any route obtained through DryRoutes, you agree that you do so at your own risk. We accept no liability for any injuries, accidents, damages, or other harm arising from your use of or reliance on user‑generated routes.
+              Rejn.net provides no assurances regarding the safety, accuracy, or suitability of DryRoutes paths. By using or following any route obtained through DryRoutes, you agree that you do so at your own risk. We accept no liability for any injuries, accidents, damages, or other harm arising from your use of or reliance on user‑generated routes.
             </p>
           </CardContent>
         </Card>
@@ -248,7 +248,7 @@ export default function TermsOfService() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <p>
-              Certain visual design elements displayed on Apple devices are inspired by Apple's Liquid Glass design language, introduced in 2025. Apple, iPhone, iPad, and macOS are trademarks of Apple Inc., registered in the U.S. and other countries. Rainz is not affiliated with or endorsed by Apple Inc.
+              Certain visual design elements displayed on Apple devices are inspired by Apple's Liquid Glass design language, introduced in 2025. Apple, iPhone, iPad, and macOS are trademarks of Apple Inc., registered in the U.S. and other countries. Rejn is not affiliated with or endorsed by Apple Inc.
             </p>
           </CardContent>
         </Card>

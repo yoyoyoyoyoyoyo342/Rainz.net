@@ -156,7 +156,7 @@ export function SocialWeatherCard({
   };
 
   const handleShareToTwitter = () => {
-    const text = encodeURIComponent(`Weather in ${location}: ${Math.round(temperature)}° ${condition} 🌤️ Check it out on Rainz.net!`);
+    const text = encodeURIComponent(`Weather in ${location}: ${Math.round(temperature)}° ${condition} 🌤️ Check it out on Rejn.net!`);
     window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(typeof window !== "undefined" ? window.location.origin : "https://rainz.net")}`, "_blank");
     amplitude.track("weather_card_shared", { platform: "twitter", location });
   };
@@ -276,8 +276,8 @@ export function SocialWeatherCard({
 
               {/* Branding */}
               <div className="flex items-center justify-center gap-2 pt-4 border-t border-white/20">
-                <img src={rainzLogo} alt="Rainz" className="h-6 w-6 rounded" />
-                <span className="text-sm font-medium opacity-90 drop-shadow-sm">Rainz.net</span>
+                <img src={rainzLogo} alt="Rejn" className="h-6 w-6 rounded" />
+                <span className="text-sm font-medium opacity-90 drop-shadow-sm">Rejn.net</span>
               </div>
             </div>
           </div>

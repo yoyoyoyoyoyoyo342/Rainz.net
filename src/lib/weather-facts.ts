@@ -207,7 +207,7 @@ export const WEATHER_FACTS: string[] = [
   "Seaweed gets soft before rain — old sailor trick. 🌿",
   "Ancient Greeks named 12 winds. 🏛️",
   "The word 'hurricane' comes from a Mayan storm god. 🌀",
-  "Rainz the app loves you. Stay dry out there. 💙",
+  "Rejn the app loves you. Stay dry out there. 💙",
 ];
 
 export function getRandomWeatherFact(): string {

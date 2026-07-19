@@ -8,7 +8,7 @@ export default function WidgetsPage() {
   return (
     <>
       <SEOHead
-        title="Embeddable Weather Widgets - Rainz"
+        title="Embeddable Weather Widgets - Rejn"
         description="Create customizable weather widgets for your website. Choose themes, sizes, and data displays with our easy embed code generator."
       />
       

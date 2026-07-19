@@ -12,9 +12,9 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Install Rainz on iPhone</DialogTitle>
+          <DialogTitle>Install Rejn on iPhone</DialogTitle>
           <DialogDescription>
-            Push notifications only work when Rainz is installed to your home screen
+            Push notifications only work when Rejn is installed to your home screen
           </DialogDescription>
         </DialogHeader>
 
@@ -50,7 +50,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
             <div className="flex-1">
               <p className="font-medium mb-1">Open from Home Screen</p>
               <p className="text-sm text-muted-foreground">
-                Find the Rainz icon <Home className="inline w-4 h-4 mx-1" /> on your home screen and open it from there
+                Find the Rejn icon <Home className="inline w-4 h-4 mx-1" /> on your home screen and open it from there
               </p>
             </div>
           </div>
@@ -69,7 +69,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
 
           <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              <strong>Important:</strong> Notifications only work when you open Rainz from your home screen, not from Safari.
+              <strong>Important:</strong> Notifications only work when you open Rejn from your home screen, not from Safari.
             </p>
           </div>
 

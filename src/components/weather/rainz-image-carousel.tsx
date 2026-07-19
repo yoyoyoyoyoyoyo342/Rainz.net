@@ -8,7 +8,7 @@ import carousel4 from "@/assets/carousel-4.png";
 import carousel5 from "@/assets/carousel-5.png";
 
 const images = [
-  { src: carousel1, alt: "What is Rainz?" },
+  { src: carousel1, alt: "What is Rejn?" },
   { src: carousel2, alt: "Why we made it" },
   { src: carousel3, alt: "Our mission" },
   { src: carousel4, alt: "How we get our data" },

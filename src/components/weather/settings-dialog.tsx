@@ -621,7 +621,7 @@ export function SettingsDialog({
                         <span className="text-sm font-medium text-blue-600 dark:text-blue-400">Installation Required</span>
                       </div>
                       <p className="text-xs text-blue-600/80 dark:text-blue-400/80">
-                        Notifications require Rainz to be installed to your home screen.
+                        Notifications require Rejn to be installed to your home screen.
                       </p>
                       <Button 
                         variant="outline" 

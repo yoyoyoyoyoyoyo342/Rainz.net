@@ -26,14 +26,14 @@ interface DocSection {
 const SECTIONS: DocSection[] = [
   {
     id: "intro",
-    title: "What is Rainz?",
+    title: "What is Rejn?",
     category: "Getting Started",
     icon: Cloud,
     summary: "An AI-powered, completely free weather app built for Scandinavia and beyond.",
     content: (
       <>
         <p>
-          Rainz is a free, AI-enhanced weather platform aimed at people aged 13–35 in
+          Rejn is a free, AI-enhanced weather platform aimed at people aged 13–35 in
           Scandinavia. We combine seven Open-Meteo numerical models, Met.no, OpenWeatherMap,
           and live weather stations to give you a forecast that's noticeably more accurate
           than any single provider.
@@ -44,7 +44,7 @@ const SECTIONS: DocSection[] = [
         </p>
         <h4>Core principles</h4>
         <ul>
-          <li>100% free, no paywalls, no "Rainz+" tier.</li>
+          <li>100% free, no paywalls, no "Rejn+" tier.</li>
           <li>Privacy-first: location and predictions stay on-device or in your account.</li>
           <li>Graceful degradation — if the LLM is down, you still get raw forecast data.</li>
         </ul>
@@ -174,7 +174,7 @@ const SECTIONS: DocSection[] = [
     content: (
       <>
         <p>
-          Rather than trusting a single forecast provider, Rainz queries multiple numerical
+          Rather than trusting a single forecast provider, Rejn queries multiple numerical
           weather prediction models in parallel and aggregates them. Models that historically
           performed better in your region get weighted higher.
         </p>
@@ -226,7 +226,7 @@ const SECTIONS: DocSection[] = [
     title: "Embeddable widgets",
     category: "Developers",
     icon: Code,
-    summary: "Drop a Rainz weather widget into any site with one line of HTML.",
+    summary: "Drop a Rejn weather widget into any site with one line of HTML.",
     content: (
       <>
         <p>Build a widget at <a href={subdomainHref("/widgets")}>widgets.rainz.net</a> and copy the iframe snippet:</p>
@@ -263,7 +263,7 @@ const SECTIONS: DocSection[] = [
       <>
         <p>
           Public MCP endpoint at <code>https://ohwtbkudpkfbakynikyj.supabase.co/functions/v1/rainz-mcp/mcp</code>.
-          Use it to give ChatGPT, Claude, or any MCP-compatible client live access to Rainz weather data.
+          Use it to give ChatGPT, Claude, or any MCP-compatible client live access to Rejn weather data.
         </p>
         <p>Setup instructions at <a href={subdomainHref("/mcp")}>mcp.rainz.net</a>.</p>
       </>
@@ -299,7 +299,7 @@ const SECTIONS: DocSection[] = [
     content: (
       <>
         <p>
-          Rainz runs everywhere. Some features (Battles, AI Companion) are restricted to
+          Rejn runs everywhere. Some features (Battles, AI Companion) are restricted to
           PWA/desktop installs because they require background sync.
         </p>
         <p>Get installers at <a href={subdomainHref("/download")}>download.rainz.net</a>.</p>
@@ -348,9 +348,9 @@ export default function Docs() {
   return (
     <>
       <SEOHead
-        title="Rainz Docs — Documentation, API, and developer guide"
-        description="Complete documentation for Rainz Weather: subdomains, API, MCP server, embeddable widgets, prediction game rules, and more."
-        keywords="Rainz docs, weather API docs, MCP server, weather widgets, Rainz developer guide"
+        title="Rejn Docs — Documentation, API, and developer guide"
+        description="Complete documentation for Rejn Weather: subdomains, API, MCP server, embeddable widgets, prediction game rules, and more."
+        keywords="Rejn docs, weather API docs, MCP server, weather widgets, Rejn developer guide"
       />
 
       <div className="min-h-screen bg-background text-foreground">
@@ -368,7 +368,7 @@ export default function Docs() {
             </Button>
             <Link to="/" className="flex items-center gap-2 font-semibold">
               <Cloud className="h-5 w-5 text-primary" />
-              <span>Rainz Docs</span>
+              <span>Rejn Docs</span>
             </Link>
             <Badge variant="secondary" className="ml-1 text-[10px]">
               v1.0

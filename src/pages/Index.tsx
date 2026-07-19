@@ -4,7 +4,7 @@ const Index = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4 text-foreground">Rainz is currently down!</h1>
+        <h1 className="text-4xl font-bold mb-4 text-foreground">Rejn is currently down!</h1>
         <p className="text-xl text-muted-foreground">We are working on it!</p>
       </div>
     </div>

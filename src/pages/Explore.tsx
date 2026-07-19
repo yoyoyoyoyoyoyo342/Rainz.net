@@ -54,7 +54,7 @@ export default function ExplorePage() {
 
   return (
     <>
-      <SEOHead title="Explore — Rainz Weather" description="Weather tools, games, debates, and more" />
+      <SEOHead title="Explore — Rejn Weather" description="Weather tools, games, debates, and more" />
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-6 max-w-2xl">
           {/* Minimalist hero — matches the Weather page top card */}

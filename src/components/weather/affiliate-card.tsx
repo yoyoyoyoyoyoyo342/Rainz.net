@@ -6,7 +6,7 @@ export function AffiliateCard() {
     <Card className="mb-4 rounded-2xl border border-border/20 bg-gradient-to-r from-primary/5 to-primary/10">
       <CardContent className="p-4">
         <p className="text-sm text-muted-foreground mb-2">
-          <span className="font-medium text-foreground">Rainz weather is powered by:</span>
+          <span className="font-medium text-foreground">Rejn weather is powered by:</span>
         </p>
 
         <div className="space-y-2 text-sm">

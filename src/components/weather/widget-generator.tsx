@@ -46,7 +46,7 @@ export function WidgetGenerator({ defaultLocation }: WidgetGeneratorProps) {
   height="${height}" 
   frameborder="0" 
   style="border-radius: 12px; overflow: hidden;"
-  title="Rainz Weather Widget"
+  title="Rejn Weather Widget"
 ></iframe>`;
 
   const handleCopy = () => {

@@ -201,7 +201,7 @@ export function AdminApiToken() {
           Weather API Access
         </CardTitle>
         <CardDescription>
-          Access the Rainz Weather API with AI-enhanced forecasts, multi-source data, and hyperlocal insights.
+          Access the Rejn Weather API with AI-enhanced forecasts, multi-source data, and hyperlocal insights.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

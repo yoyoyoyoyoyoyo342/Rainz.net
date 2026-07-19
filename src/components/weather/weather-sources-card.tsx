@@ -118,7 +118,7 @@ export function WeatherSourcesCard({ sources }: WeatherSourcesCardProps) {
 
         <div className="mt-4 pt-4 border-t">
           <p className="text-xs text-muted-foreground">
-            Rainz combines forecasts from multiple weather models (ECMWF, GFS, DWD ICON) and community reports to provide more accurate predictions.
+            Rejn combines forecasts from multiple weather models (ECMWF, GFS, DWD ICON) and community reports to provide more accurate predictions.
             {communitySources.length > 0 && " Community reports from users in your area are weighted into the forecast."}
           </p>
         </div>

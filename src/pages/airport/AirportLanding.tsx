@@ -156,10 +156,10 @@ function TiltCard({ children, className }: { children: React.ReactNode; classNam
 }
 
 const testimonials = [
-  { name: "Sigrid K.", location: "Oslo", quote: "I haven't been caught in the rain since I started using Rainz. My umbrella is collecting dust.", rating: 5 },
+  { name: "Sigrid K.", location: "Oslo", quote: "I haven't been caught in the rain since I started using Rejn. My umbrella is collecting dust.", rating: 5 },
   { name: "Erik B.", location: "Stockholm", quote: "The prediction battles are genuinely addictive. I beat my girlfriend every week and she's furious.", rating: 5 },
   { name: "Freya L.", location: "Copenhagen", quote: "DryRoutes saved my suede shoes. That alone is worth premium.", rating: 5 },
-  { name: "Olav M.", location: "Bergen", quote: "In Bergen it rains 240 days a year. Rainz makes those days slightly less annoying.", rating: 4 },
+  { name: "Olav M.", location: "Bergen", quote: "In Bergen it rains 240 days a year. Rejn makes those days slightly less annoying.", rating: 4 },
 ];
 
 const highlights = [
@@ -298,7 +298,7 @@ export default function AirportLanding() {
                 to="/"
                 className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-full bg-white text-black font-semibold shadow-[0_0_40px_rgba(255,255,255,0.15)] hover:shadow-[0_0_60px_rgba(255,255,255,0.25)] transition-shadow"
               >
-                Open Rainz <ArrowRight size={18} />
+                Open Rejn <ArrowRight size={18} />
               </Link>
             </motion.div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -351,7 +351,7 @@ export default function AirportLanding() {
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
             />
-            Live from Rainz.net
+            Live from Rejn.net
           </motion.p>
           <motion.div
             className="grid grid-cols-2 sm:grid-cols-4 gap-8"
@@ -407,7 +407,7 @@ export default function AirportLanding() {
               >
                 <img
                   src={img}
-                  alt={`Rainz app screenshot ${i + 1}`}
+                  alt={`Rejn app screenshot ${i + 1}`}
                   className="rounded-2xl border border-white/10 shadow-2xl shadow-blue-500/10"
                 />
               </motion.div>
@@ -426,7 +426,7 @@ export default function AirportLanding() {
             viewport={{ once: true }}
             className="text-3xl sm:text-5xl font-black text-center mb-16"
           >
-            Why Rainz?
+            Why Rejn?
           </motion.h2>
           <motion.div
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
@@ -539,7 +539,7 @@ export default function AirportLanding() {
                 to="/"
                 className="inline-flex items-center gap-2 px-10 py-5 rounded-full bg-white text-black font-bold text-lg shadow-[0_0_50px_rgba(255,255,255,0.2)] hover:shadow-[0_0_80px_rgba(255,255,255,0.3)] transition-shadow"
               >
-                Open Rainz <ArrowRight size={20} />
+                Open Rejn <ArrowRight size={20} />
               </Link>
             </motion.div>
           </div>

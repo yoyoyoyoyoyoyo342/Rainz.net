@@ -79,7 +79,7 @@ const QUARTER_DATA: Record<QuarterKey, QuarterData> = {
     weatherDebates: 0,
     cityPages: 0,
     highlights: [
-      "Rainz Weather launched in August 2025, bringing AI-powered hyper-local weather forecasting to Scandinavia",
+      "Rejn Weather launched in August 2025, bringing AI-powered hyper-local weather forecasting to Scandinavia",
       "Core platform built with multi-model ensemble forecasting (ECMWF, GFS, Met.no, SMHI)",
       "Progressive Web App (PWA) support shipped from day one",
       "Initial weather prediction game system designed and prototyped",
@@ -115,7 +115,7 @@ const QUARTER_DATA: Record<QuarterKey, QuarterData> = {
     highlights: [
       "Prediction system went live — 60 weather predictions made by 8 users",
       "Prediction Battles launched with 7 head-to-head challenges",
-      "8 blog articles published, establishing Rainz as a weather content hub",
+      "8 blog articles published, establishing Rejn as a weather content hub",
       "Location saving and weather search features saw early adoption with 79 searches",
       "User base grew to 11 registered accounts across Scandinavia",
     ],
@@ -287,7 +287,7 @@ function QuarterReport({ quarterKey }: { quarterKey: QuarterKey }) {
           {data.label}: {data.subtitle}
         </h2>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          Quarterly performance report for the Rainz Weather platform
+          Quarterly performance report for the Rejn Weather platform
         </p>
       </div>
 
@@ -414,9 +414,9 @@ export default function MarketReport() {
   return (
     <>
       <SEOHead
-        title="Rainz Weather — Quarterly Market Report"
-        description="Platform performance, growth metrics, and milestones from the Rainz Weather ecosystem. Predictions, battles, user growth, and more."
-        keywords="Rainz market report, weather app statistics, Rainz growth, quarterly report, weather predictions data"
+        title="Rejn Weather — Quarterly Market Report"
+        description="Platform performance, growth metrics, and milestones from the Rejn Weather ecosystem. Predictions, battles, user growth, and more."
+        keywords="Rejn market report, weather app statistics, Rejn growth, quarterly report, weather predictions data"
         canonicalUrl="https://rainz.net/market-report"
       />
 
@@ -427,13 +427,13 @@ export default function MarketReport() {
           <div className="relative max-w-5xl mx-auto px-4 py-16 md:py-24 text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Cloud className="h-6 w-6 text-primary" />
-              <span className="text-sm font-medium text-primary uppercase tracking-widest">Rainz Weather</span>
+              <span className="text-sm font-medium text-primary uppercase tracking-widest">Rejn Weather</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-4 tracking-tight">
               Market Report
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Transparent quarterly insights into the Rainz Weather platform — user growth,
+              Transparent quarterly insights into the Rejn Weather platform — user growth,
               prediction accuracy, community engagement, and product milestones.
             </p>
           </div>
@@ -456,14 +456,14 @@ export default function MarketReport() {
           {/* Footer note */}
           <div className="mt-12 pt-8 border-t border-border/40 text-center">
             <p className="text-xs text-muted-foreground">
-              Data sourced from the Rainz Weather platform database. All metrics reflect verified,
+              Data sourced from the Rejn Weather platform database. All metrics reflect verified,
               production data. Updated quarterly.
             </p>
             <button
               onClick={() => navigate("/")}
               className="mt-4 text-sm text-primary hover:underline"
             >
-              ← Back to Rainz Weather
+              ← Back to Rejn Weather
             </button>
           </div>
         </div>

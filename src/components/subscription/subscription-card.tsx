@@ -35,7 +35,7 @@ export function SubscriptionCard() {
           </div>
         </div>
         <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
-          Rainz
+          Rejn
           <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">Free</span>
         </CardTitle>
         <CardDescription className="text-lg">

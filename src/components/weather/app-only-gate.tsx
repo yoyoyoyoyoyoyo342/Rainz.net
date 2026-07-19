@@ -31,7 +31,7 @@ export function AppOnlyGate({ children, featureName }: AppOnlyGateProps) {
             {featureName} is app-exclusive
           </h3>
           <p className="text-sm text-muted-foreground">
-            Install the Rainz app to unlock {featureName} and other exclusive features.
+            Install the Rejn app to unlock {featureName} and other exclusive features.
           </p>
           <div className="flex flex-col gap-2">
             <Link to="/download">

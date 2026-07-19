@@ -97,7 +97,7 @@ export function BroadcastMessage() {
 
       // Send push notifications to all subscribed users
       await sendPushToAllSubscribers(
-        '📢 Rainz Broadcast',
+        '📢 Rejn Broadcast',
         message.trim()
       );
 

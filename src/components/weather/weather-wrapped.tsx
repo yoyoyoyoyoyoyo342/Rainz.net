@@ -124,7 +124,7 @@ function IntroSlide({ data, slideRef }: { data: WrappedData; slideRef: React.Ref
   return (
     <SlideWrapper slideRef={slideRef} gradient="from-indigo-600 via-purple-600 to-pink-500">
       <div>
-        <img src={rainzLogo} alt="Rainz" className="h-8 mb-4 brightness-0 invert" />
+        <img src={rainzLogo} alt="Rejn" className="h-8 mb-4 brightness-0 invert" />
         <Badge className="bg-white/20 text-white border-0 mb-3">Your Weather Wrapped</Badge>
       </div>
       <div className="flex-1 flex flex-col justify-center items-center text-center gap-4">
@@ -153,7 +153,7 @@ function StatsSlide({ data, slideRef }: { data: WrappedData; slideRef: React.Ref
 
   return (
     <SlideWrapper slideRef={slideRef} gradient="from-emerald-600 via-teal-600 to-cyan-500">
-      <div><img src={rainzLogo} alt="Rainz" className="h-6 brightness-0 invert" /></div>
+      <div><img src={rainzLogo} alt="Rejn" className="h-6 brightness-0 invert" /></div>
       <div className="flex-1 flex flex-col justify-center gap-4">
         <h3 className="text-white/70 text-sm uppercase tracking-widest">Your Numbers</h3>
         <div className="space-y-3">
@@ -201,7 +201,7 @@ function AccuracySlide({ data, slideRef }: { data: WrappedData; slideRef: React.
   const ringPercent = data.accuracy;
   return (
     <SlideWrapper slideRef={slideRef} gradient="from-amber-500 via-orange-500 to-red-500">
-      <div><img src={rainzLogo} alt="Rainz" className="h-6 brightness-0 invert" /></div>
+      <div><img src={rainzLogo} alt="Rejn" className="h-6 brightness-0 invert" /></div>
       <div className="flex-1 flex flex-col justify-center items-center gap-4">
         <h3 className="text-white/70 text-sm uppercase tracking-widest">Prediction Accuracy</h3>
         <div className="relative w-36 h-36">
@@ -230,7 +230,7 @@ function AccuracySlide({ data, slideRef }: { data: WrappedData; slideRef: React.
 function RankSlide({ data, slideRef }: { data: WrappedData; slideRef: React.Ref<HTMLDivElement> }) {
   return (
     <SlideWrapper slideRef={slideRef} gradient="from-violet-600 via-purple-600 to-fuchsia-500">
-      <div><img src={rainzLogo} alt="Rainz" className="h-6 brightness-0 invert" /></div>
+      <div><img src={rainzLogo} alt="Rejn" className="h-6 brightness-0 invert" /></div>
       <div className="flex-1 flex flex-col justify-center items-center gap-5 text-center">
         <Trophy className="w-16 h-16 text-amber-300" />
         <div>
@@ -247,7 +247,7 @@ function RankSlide({ data, slideRef }: { data: WrappedData; slideRef: React.Ref<
         </div>
         <p className="text-white/80 text-sm">Can you reach #1? Keep predicting!</p>
       </div>
-      <p className="text-white/50 text-xs text-center">Join me on Rainz Weather</p>
+      <p className="text-white/50 text-xs text-center">Join me on Rejn Weather</p>
     </SlideWrapper>
   );
 }
@@ -265,7 +265,7 @@ function ConfidenceGamblerSlide({ data, slideRef }: { data: WrappedData; slideRe
 
   return (
     <SlideWrapper slideRef={slideRef} gradient="from-blue-600 via-indigo-600 to-indigo-800">
-      <div><img src={rainzLogo} alt="Rainz" className="h-6 brightness-0 invert" /></div>
+      <div><img src={rainzLogo} alt="Rejn" className="h-6 brightness-0 invert" /></div>
       <div className="flex-1 flex flex-col justify-center gap-4">
         <h3 className="text-white/70 text-sm uppercase tracking-widest">Confidence Gambler</h3>
         <div className="text-center">
@@ -301,7 +301,7 @@ function BattleRecordSlide({ data, slideRef }: { data: WrappedData; slideRef: Re
 
   return (
     <SlideWrapper slideRef={slideRef} gradient="from-rose-500 via-red-500 to-red-700">
-      <div><img src={rainzLogo} alt="Rainz" className="h-6 brightness-0 invert" /></div>
+      <div><img src={rainzLogo} alt="Rejn" className="h-6 brightness-0 invert" /></div>
       <div className="flex-1 flex flex-col justify-center items-center gap-4">
         <Swords className="w-12 h-12 text-white/90" />
         <h3 className="text-white/70 text-sm uppercase tracking-widest">Battle Record</h3>
@@ -515,7 +515,7 @@ export function WeatherWrapped() {
       const blob = await (await fetch(dataUrl)).blob();
       const file = new File([blob], "rainz-wrapped.png", { type: "image/png" });
       if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: "My Rainz Weather Wrapped", text: "Check out my weather prediction stats!" });
+        await navigator.share({ files: [file], title: "My Rejn Weather Wrapped", text: "Check out my weather prediction stats!" });
       } else { handleDownload(); }
     } catch { handleDownload(); }
   };

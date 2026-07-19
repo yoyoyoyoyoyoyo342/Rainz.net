@@ -88,7 +88,7 @@ export const ASK_REJN_SUGGESTIONS: string[] = [
   "How do I share my forecast?",
   "What's Weather Wrapped?",
   "How do streak challenges work?",
-  "What's the Rainz Score?",
+  "What's the Rejn Score?",
   "What are weather reactions?",
   "How do I embed a widget?",
 

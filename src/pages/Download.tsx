@@ -8,9 +8,9 @@ const DownloadPage = () => {
   return (
     <>
       <SEOHead
-        title="Download Rainz Weather - Free Weather App for All Devices"
-        description="Download Rainz Weather for free on iOS, Android, Windows, and macOS. Install as a Progressive Web App or desktop application. No app store needed."
-        keywords="download Rainz, Rainz app download, free weather app download, PWA weather app, install Rainz, weather app iOS, weather app Android"
+        title="Download Rejn Weather - Free Weather App for All Devices"
+        description="Download Rejn Weather for free on iOS, Android, Windows, and macOS. Install as a Progressive Web App or desktop application. No app store needed."
+        keywords="download Rejn, Rejn app download, free weather app download, PWA weather app, install Rejn, weather app iOS, weather app Android"
         canonicalUrl="https://rainz.net/download"
       />
       <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
@@ -20,13 +20,13 @@ const DownloadPage = () => {
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-8"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Rainz
+            Back to Rejn
           </Link>
 
           <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">Download Rainz</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">Download Rejn</h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Choose how you want to use Rainz — install on your phone or download the desktop app.
+              Choose how you want to use Rejn — install on your phone or download the desktop app.
             </p>
           </div>
 

@@ -5,6 +5,7 @@ import { WeatherTimeMachine } from './weather-time-machine';
 import { WeatherReactionsFeed } from './weather-reactions-feed';
 import { WeatherTrendsCard } from './weather-trends-card';
 import { StreakChallenge } from './streak-challenge';
+import { AppOnlyGate } from './app-only-gate';
 import { WeatherPersonalityQuiz } from './weather-personality-quiz';
 import { WeatherFunFacts } from './weather-fun-facts';
 

@@ -292,8 +292,14 @@ export function AdminPanel() {
         </TabsContent>
 
         <TabsContent value="analytics">
-          <AdminSection title="Analytics"><AnalyticsDashboard /></AdminSection>
+          <AdminSection title="Analytics">
+            <div className="space-y-4">
+              <AdminAcquisitionSources />
+              <AnalyticsDashboard />
+            </div>
+          </AdminSection>
         </TabsContent>
+
 
         <TabsContent value="api-data">
           <AdminSection title="API Data Comparison"><ApiDataComparison /></AdminSection>

@@ -148,20 +148,24 @@ export function ExploreSheet({
           />
 
           {/* Time Machine */}
-          <WeatherTimeMachine
-            latitude={latitude}
-            longitude={longitude}
-            locationName={locationName}
-            isImperial={isImperial}
-          />
-
-          {/* Streak Challenge */}
-          {userId && (
-            <StreakChallenge
+          <AppOnlyGate featureName="Time Machine">
+            <WeatherTimeMachine
               latitude={latitude}
               longitude={longitude}
               locationName={locationName}
+              isImperial={isImperial}
             />
+          </AppOnlyGate>
+
+          {/* Streak Challenge */}
+          {userId && (
+            <AppOnlyGate featureName="Streak Challenges">
+              <StreakChallenge
+                latitude={latitude}
+                longitude={longitude}
+                locationName={locationName}
+              />
+            </AppOnlyGate>
           )}
         </div>
       </SheetContent>

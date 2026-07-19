@@ -58,9 +58,22 @@ const PALETTES: Record<LandmarkTimeOfDay, Record<string, string>> = {
 
 function parseHHMM(t?: string): number | undefined {
   if (!t) return undefined;
-  // Accept "HH:MM" or ISO. Returns minutes-of-day.
-  if (/^\d{1,2}:\d{2}/.test(t)) {
-    const [h, m] = t.split(":").map(Number);
+  // Accept "HH:MM", "H:MM AM/PM", or ISO. Returns minutes-of-day.
+  const ampm = t.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (ampm) {
+    let h = parseInt(ampm[1], 10);
+    const m = parseInt(ampm[2], 10);
+    const isPM = ampm[3].toUpperCase() === "PM";
+    if (h === 12) h = 0;
+    if (isPM) h += 12;
+    if (Number.isNaN(h) || Number.isNaN(m)) return undefined;
+    return h * 60 + m;
+  }
+  const hhmm = t.match(/^(\d{1,2}):(\d{2})$/);
+  if (hhmm) {
+    const h = parseInt(hhmm[1], 10);
+    const m = parseInt(hhmm[2], 10);
+    if (Number.isNaN(h) || Number.isNaN(m)) return undefined;
     return h * 60 + m;
   }
   const d = new Date(t);

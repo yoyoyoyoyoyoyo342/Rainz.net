@@ -100,10 +100,6 @@ Deno.serve(async (req) => {
   }
 });
 
-async function currentPoints(admin: ReturnType<typeof createClient>, userId: string): Promise<number> {
-  const { data } = await admin.from("profiles").select("total_points").eq("user_id", userId).maybeSingle();
-  return (data?.total_points as number | null) ?? 0;
-}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {

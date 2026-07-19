@@ -6,6 +6,7 @@ import { Compass } from "lucide-react";
 import { SEOHead } from "@/components/seo/seo-head";
 import { BottomTabBar } from "@/components/weather/bottom-tab-bar";
 import { LocationSearch } from "@/components/weather/location-search";
+import { AppOnlyGate } from "@/components/weather/app-only-gate";
 
 const WeatherTimeMachine = lazy(() => import("@/components/weather/weather-time-machine").then(m => ({ default: m.WeatherTimeMachine })));
 const WeatherReactionsFeed = lazy(() => import("@/components/weather/weather-reactions-feed").then(m => ({ default: m.WeatherReactionsFeed })));

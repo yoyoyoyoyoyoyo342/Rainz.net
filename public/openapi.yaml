@@ -14,11 +14,11 @@ info:
   version: 2.0.0
   contact:
     name: Rejn Weather Support
-    url: https://rainz.net
+    url: https://rejn.app
 servers:
   - url: https://ohwtbkudpkfbakynikyj.supabase.co/functions/v1
     description: API server
-  - url: https://rainz.net
+  - url: https://rejn.app
     description: Web application
 
 paths:
@@ -183,7 +183,7 @@ paths:
         hourly and 10-day forecasts, AI-enhanced predictions, pollen and air quality tracking,
         weather alerts, and gamified weather prediction games.
       servers:
-        - url: https://rainz.net
+        - url: https://rejn.app
       responses:
         '200':
           description: The Rejn Weather web application
@@ -194,7 +194,7 @@ paths:
       summary: Learn about Rejn Weather
       description: Information about Rejn Weather features, mission, and premium subscription options.
       servers:
-        - url: https://rainz.net
+        - url: https://rejn.app
       responses:
         '200':
           description: About page content
@@ -207,7 +207,7 @@ paths:
         Weather-related blog posts published every Tuesday and Thursday, covering weather science,
         forecasting techniques, seasonal guides, and AI in meteorology.
       servers:
-        - url: https://rainz.net
+        - url: https://rejn.app
       responses:
         '200':
           description: List of blog articles
@@ -220,7 +220,7 @@ paths:
         Comprehensive FAQ with 25+ questions about Rejn Weather, AI forecasting,
         ensemble predictions, gamification, privacy, and technical details.
       servers:
-        - url: https://rainz.net
+        - url: https://rejn.app
       responses:
         '200':
           description: FAQ page

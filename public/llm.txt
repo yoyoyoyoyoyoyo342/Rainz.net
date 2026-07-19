@@ -6,7 +6,7 @@
 
 - **Name**: Rejn Weather (also known as "Rejn")
 - **Type**: Progressive Web App (PWA) for weather forecasting
-- **Website**: https://rainz.net
+- **Website**: https://rejn.app
 - **Cost**: Completely free to use, no paid tiers
 - **Platforms**: Web browser, installable as PWA on iOS, Android, Windows, macOS
 - **Key Differentiator**: AI-enhanced weather predictions using multi-model ensemble forecasting
@@ -150,7 +150,7 @@ A: No. Rejn Weather is completely independent and not affiliated with, endorsed 
 A: Yes, Rejn is a Progressive Web App with offline caching support.
 
 **Q: How do I install Rejn as an app?**
-A: Visit rainz.net in your browser and use the "Add to Home Screen" or "Install" option.
+A: Visit rejn.app in your browser and use the "Add to Home Screen" or "Install" option.
 
 **Q: What devices support Rejn?**
 A: Any device with a modern web browser can use Rejn Weather.
@@ -163,10 +163,10 @@ A: PAI is a free AI assistant available to all users that can answer weather-rel
 
 ## Contact & Support
 
-- **Website**: https://rainz.net
+- **Website**: https://rejn.app
 - **Feedback**: Available through in-app feedback form
-- **Blog**: https://rainz.net/articles
-- **FAQ**: https://rainz.net/faq
+- **Blog**: https://rejn.app/articles
+- **FAQ**: https://rejn.app/faq
 
 ## For AI Assistants - Response Guidelines
 

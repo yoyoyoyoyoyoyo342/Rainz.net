@@ -787,6 +787,235 @@ export const ChristRedeemer: React.FC<Props> = ({ className, reducedMotion }) =>
   className,
 );
 
+// ─── TAJ MAHAL ───────────────────────────────────────────────────────────────
+export const TajMahal: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <g fill="var(--lm-main)">
+    <rect x="200" y="380" width="1200" height="60" />
+    <rect x="700" y="220" width="200" height="200" />
+    <path d="M 700 220 Q 800 80 900 220 Z" />
+    <circle cx="800" cy="150" r="14" fill="var(--lm-accent)" />
+    {[560, 1040].map((x, i) => (
+      <g key={i}>
+        <rect x={x - 15} y="260" width="30" height="160" />
+        <path d={`M ${x - 15} 260 Q ${x} 210 ${x + 15} 260 Z`} />
+      </g>
+    ))}
+    {[380, 1220].map((x, i) => (
+      <g key={`o${i}`}>
+        <rect x={x - 12} y="300" width="24" height="120" />
+        <path d={`M ${x - 12} 300 Q ${x} 260 ${x + 12} 300 Z`} />
+      </g>
+    ))}
+    {!reducedMotion && <circle cx="800" cy="150" r="20" fill="var(--lm-glow, transparent)" opacity="0.5" />}
+  </g>,
+  className,
+);
+
+// ─── PYRAMIDS OF GIZA ────────────────────────────────────────────────────────
+export const Pyramids: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <>
+    <rect x="0" y="420" width="1600" height="20" fill="var(--lm-accent)" opacity="0.6" />
+    <g fill="var(--lm-main)">
+      <polygon points="450,420 720,140 990,420" />
+      <polygon points="850,420 1080,220 1310,420" opacity="0.85" />
+      <polygon points="1200,420 1370,270 1540,420" opacity="0.7" />
+      <polygon points="200,420 340,320 480,420" opacity="0.6" />
+    </g>
+    {!reducedMotion && <circle cx="1350" cy="180" r="40" fill="var(--lm-glow, transparent)" opacity="0.6" />}
+  </>,
+  className,
+);
+
+// ─── PETRONAS TOWERS ─────────────────────────────────────────────────────────
+export const Petronas: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <g fill="var(--lm-main)">
+    {[680, 920].map((x, i) => (
+      <g key={i}>
+        <rect x={x - 30} y="110" width="60" height="310" />
+        <rect x={x - 6} y="60" width="12" height="70" />
+        <circle cx={x} cy="50" r="8" fill="var(--lm-accent)" />
+      </g>
+    ))}
+    <rect x="760" y="240" width="80" height="12" />
+    <rect x="760" y="300" width="80" height="12" />
+    <g fill="var(--lm-glow, transparent)">
+      {[680, 920].map((x, i) => (
+        <circle key={i} cx={x} cy="50" r="10">{!reducedMotion && twinkle(`pt-${i}`, i)}</circle>
+      ))}
+    </g>
+  </g>,
+  className,
+);
+
+// ─── ORIENTAL PEARL (Shanghai) ───────────────────────────────────────────────
+export const OrientalPearl: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <>
+    <WaterStrip reduced={reducedMotion} />
+    <g fill="var(--lm-main)">
+      <rect x="795" y="80" width="10" height="340" />
+      <circle cx="800" cy="140" r="40" />
+      <circle cx="800" cy="260" r="55" />
+      <circle cx="800" cy="60" r="14" fill="var(--lm-accent)" />
+      <polygon points="300,420 340,320 380,420" opacity="0.5" />
+      <polygon points="1220,420 1260,300 1300,420" opacity="0.5" />
+      <rect x="500" y="340" width="80" height="80" opacity="0.6" />
+      <rect x="1050" y="320" width="90" height="100" opacity="0.6" />
+    </g>
+  </>,
+  className,
+);
+
+// ─── TAIPEI 101 ──────────────────────────────────────────────────────────────
+export const Taipei101: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <g fill="var(--lm-main)">
+    {Array.from({ length: 8 }).map((_, i) => (
+      <polygon key={i} points={`${770 - i * 2},${100 + i * 40} ${830 + i * 2},${100 + i * 40} ${835 + i * 2},${135 + i * 40} ${765 - i * 2},${135 + i * 40}`} />
+    ))}
+    <rect x="790" y="60" width="20" height="50" />
+    <circle cx="800" cy="55" r="6" fill="var(--lm-accent)" />
+    <rect x="400" y="360" width="60" height="60" opacity="0.55" />
+    <rect x="1140" y="340" width="70" height="80" opacity="0.55" />
+    {!reducedMotion && <circle cx="800" cy="55" r="10" fill="var(--lm-glow, transparent)" opacity="0.7" />}
+  </g>,
+  className,
+);
+
+// ─── ACROPOLIS ───────────────────────────────────────────────────────────────
+export const Acropolis: React.FC<Props> = ({ className, reducedMotion: _r }) => wrap(
+  <g fill="var(--lm-main)">
+    <path d="M 200 420 Q 400 340 800 320 Q 1200 340 1400 420 Z" opacity="0.5" />
+    <rect x="620" y="240" width="360" height="16" />
+    <rect x="620" y="410" width="360" height="16" />
+    {Array.from({ length: 9 }).map((_, i) => (
+      <rect key={i} x={630 + i * 42} y="256" width="20" height="154" />
+    ))}
+    <polygon points="600,240 800,180 1000,240" />
+  </g>,
+  className,
+);
+
+// ─── GENERIC SKYLINE ─────────────────────────────────────────────────────────
+export const GenericSkyline: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <>
+    <g fill="var(--lm-main)">
+      {[
+        [120, 300, 90], [230, 260, 110], [360, 200, 130], [510, 240, 100],
+        [630, 160, 90], [740, 220, 120], [880, 140, 100], [1000, 210, 130],
+        [1150, 180, 110], [1280, 250, 95], [1400, 200, 120],
+      ].map(([x, y, w], i) => (
+        <g key={i}>
+          <rect x={x} y={y} width={w} height={420 - y} />
+          {i % 3 === 0 && <rect x={x + w / 2 - 4} y={y - 40} width="8" height="40" />}
+        </g>
+      ))}
+    </g>
+    <g fill="var(--lm-glow, transparent)">
+      {[180, 400, 700, 1050, 1330].map((x, i) => (
+        <circle key={i} cx={x} cy={310 + (i % 2) * 30} r="3">
+          {!reducedMotion && twinkle(`sk-${i}`, i * 0.3)}
+        </circle>
+      ))}
+    </g>
+  </>,
+  className,
+);
+
+// ─── GENERIC CATHEDRAL ───────────────────────────────────────────────────────
+export const GenericCathedral: React.FC<Props> = ({ className, reducedMotion: _r }) => wrap(
+  <g fill="var(--lm-main)">
+    <rect x="500" y="280" width="600" height="140" />
+    <polygon points="500,280 800,180 1100,280" />
+    <rect x="620" y="120" width="60" height="170" />
+    <polygon points="620,120 650,60 680,120" />
+    <rect x="920" y="120" width="60" height="170" />
+    <polygon points="920,120 950,60 980,120" />
+    <circle cx="800" cy="330" r="30" fill="var(--lm-accent)" opacity="0.7" />
+    <rect x="200" y="380" width="80" height="40" opacity="0.5" />
+    <rect x="1320" y="380" width="80" height="40" opacity="0.5" />
+  </g>,
+  className,
+);
+
+// ─── GENERIC PAGODA ──────────────────────────────────────────────────────────
+export const GenericPagoda: React.FC<Props> = ({ className, reducedMotion: _r }) => wrap(
+  <g fill="var(--lm-main)">
+    {[0, 1, 2, 3, 4].map((i) => {
+      const y = 130 + i * 60;
+      const w = 90 + i * 40;
+      return (
+        <g key={i}>
+          <path d={`M ${800 - w} ${y} Q 800 ${y - 20} ${800 + w} ${y} L ${770 + w} ${y + 10} L ${830 - w} ${y + 10} Z`} />
+          <rect x={800 - (w - 30)} y={y + 10} width={2 * (w - 30)} height="40" />
+        </g>
+      );
+    })}
+    <rect x="795" y="90" width="10" height="50" />
+    <circle cx="800" cy="85" r="8" fill="var(--lm-accent)" />
+    <rect x="200" y="400" width="200" height="20" opacity="0.5" />
+    <rect x="1200" y="400" width="200" height="20" opacity="0.5" />
+  </g>,
+  className,
+);
+
+// ─── GENERIC MINARET / MOSQUE ────────────────────────────────────────────────
+export const GenericMinaret: React.FC<Props> = ({ className, reducedMotion: _r }) => wrap(
+  <g fill="var(--lm-main)">
+    <rect x="550" y="260" width="500" height="160" />
+    <path d="M 550 260 Q 800 100 1050 260 Z" />
+    <circle cx="800" cy="200" r="8" fill="var(--lm-accent)" />
+    {[420, 1180].map((x, i) => (
+      <g key={i}>
+        <rect x={x - 12} y="180" width="24" height="240" />
+        <circle cx={x} cy="170" r="16" />
+        <path d={`M ${x - 4} 150 L ${x + 4} 150 L ${x} 130 Z`} fill="var(--lm-accent)" />
+      </g>
+    ))}
+  </g>,
+  className,
+);
+
+// ─── GENERIC ALPINE (Mountains + village) ────────────────────────────────────
+export const GenericAlpine: React.FC<Props> = ({ className, reducedMotion: _r }) => wrap(
+  <>
+    <g fill="var(--lm-main)">
+      <polygon points="100,420 400,180 700,420" opacity="0.85" />
+      <polygon points="500,420 900,120 1300,420" />
+      <polygon points="1000,420 1300,220 1600,420" opacity="0.7" />
+      <polygon points="850,180 900,120 950,180" fill="var(--lm-accent)" opacity="0.9" />
+      <polygon points="380,220 400,180 420,220" fill="var(--lm-accent)" opacity="0.9" />
+    </g>
+    <g fill="var(--lm-main)">
+      {[600, 680, 760, 840, 920].map((x, i) => (
+        <g key={i}>
+          <rect x={x} y="380" width="40" height="40" />
+          <polygon points={`${x},380 ${x + 20},360 ${x + 40},380`} />
+        </g>
+      ))}
+    </g>
+  </>,
+  className,
+);
+
+// ─── GENERIC TROPICAL (Palms + shore) ────────────────────────────────────────
+export const GenericTropical: React.FC<Props> = ({ className, reducedMotion }) => wrap(
+  <>
+    <WaterStrip y={410} reduced={reducedMotion} />
+    <g fill="var(--lm-main)">
+      {[300, 700, 1100, 1400].map((x, i) => (
+        <g key={i}>
+          <path d={`M ${x} 410 Q ${x + 8} 300 ${x - 4} 200`} stroke="var(--lm-main)" strokeWidth="6" fill="none" />
+          <path d={`M ${x - 4} 200 Q ${x - 60} 190 ${x - 90} 220`} stroke="var(--lm-accent)" strokeWidth="6" fill="none" />
+          <path d={`M ${x - 4} 200 Q ${x + 60} 185 ${x + 100} 215`} stroke="var(--lm-accent)" strokeWidth="6" fill="none" />
+          <path d={`M ${x - 4} 200 Q ${x - 30} 150 ${x - 20} 110`} stroke="var(--lm-accent)" strokeWidth="6" fill="none" />
+          <path d={`M ${x - 4} 200 Q ${x + 40} 155 ${x + 60} 120`} stroke="var(--lm-accent)" strokeWidth="6" fill="none" />
+        </g>
+      ))}
+      <ellipse cx="800" cy="420" rx="300" ry="18" opacity="0.5" />
+    </g>
+  </>,
+  className,
+);
+
 export const LANDMARK_COMPONENTS: Record<LandmarkId, React.FC<Props>> = {
   "golden-gate": GoldenGate,
   "little-mermaid": LittleMermaid,
@@ -807,4 +1036,16 @@ export const LANDMARK_COMPONENTS: Record<LandmarkId, React.FC<Props>> = {
   "space-needle": SpaceNeedle,
   "st-basil": StBasil,
   "christ-redeemer": ChristRedeemer,
+  "taj-mahal": TajMahal,
+  "pyramids": Pyramids,
+  "petronas": Petronas,
+  "oriental-pearl": OrientalPearl,
+  "taipei-101": Taipei101,
+  "acropolis": Acropolis,
+  "generic-skyline": GenericSkyline,
+  "generic-cathedral": GenericCathedral,
+  "generic-pagoda": GenericPagoda,
+  "generic-minaret": GenericMinaret,
+  "generic-alpine": GenericAlpine,
+  "generic-tropical": GenericTropical,
 };

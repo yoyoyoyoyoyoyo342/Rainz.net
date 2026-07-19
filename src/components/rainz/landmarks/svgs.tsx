@@ -142,8 +142,9 @@ export const LittleMermaid: React.FC<Props> = ({ className, reducedMotion }) => 
       <circle cx="1395" cy="385" r="2">{!reducedMotion && twinkle("cph-l3", 2)}</circle>
       <circle cx="1500" cy="395" r="2">{!reducedMotion && twinkle("cph-l4", 0.9)}</circle>
     </g>
-  </>,
+  </g>,
   className,
+
 );
 
 // ─── STATUE OF LIBERTY (New York) ────────────────────────────────────────────

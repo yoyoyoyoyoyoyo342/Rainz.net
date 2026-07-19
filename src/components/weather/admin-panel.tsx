@@ -313,6 +313,14 @@ export function AdminPanel() {
           </AdminSection>
         </TabsContent>
 
+        <TabsContent value="changelog">
+          <AdminSection title="Changelog ✨" description="Publish 'What's new' entries. Newest published version popups once per user.">
+            <AdminChangelog />
+          </AdminSection>
+        </TabsContent>
+
+
+
         <TabsContent value="downloads">
           <AdminSection title="Download Instructions 📥" description="Update desktop app download URLs, versions, and macOS bypass instructions.">
             <AdminDownloadInstructions />

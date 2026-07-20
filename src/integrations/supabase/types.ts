@@ -2189,6 +2189,7 @@ export type Database = {
           updated_at: string
           user_id: string
           visible_cards: Json
+          vision_prefs: Json | null
         }
         Insert: {
           card_order?: Json
@@ -2205,6 +2206,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           visible_cards?: Json
+          vision_prefs?: Json | null
         }
         Update: {
           card_order?: Json
@@ -2221,6 +2223,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           visible_cards?: Json
+          vision_prefs?: Json | null
         }
         Relationships: []
       }

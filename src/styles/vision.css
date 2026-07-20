@@ -69,16 +69,16 @@ html.reduce-transparency [class*="bg-black/"] {
 }
 
 /* ---------- 4. Brightness reduction (aniridia / photophobia) ----------
-   Avoid filter: brightness() on <html>; iOS Safari can turn fixed Radix
-   portals into "overlay only, no dialog" when the root is filtered. Keep the
-   dimmer below popups so controls still appear and remain clickable. */
-html[data-brightness] body::before {
-  content: "";
+   Rendered as a portal <div id="rejn-vision-dimmer"> by VisionProvider so it
+   is never a stacking-context ancestor of Radix/vaul portals. z-index sits
+   above page content (z<=100) but well below all dialogs/popovers (z>=5000). */
+#rejn-vision-dimmer {
   position: fixed;
   inset: 0;
-  z-index: 180;
+  z-index: 40;
   pointer-events: none;
   background: hsl(0 0% 0% / var(--vision-dimmer-opacity, 0));
+  transition: background-color 0.2s ease;
 }
 html[data-brightness="10"] { --vision-dimmer-opacity: 0.10; }
 html[data-brightness="20"] { --vision-dimmer-opacity: 0.20; }

@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bot, CalendarDays, Cookie, MapPin, Shirt, Sparkles, ShieldCheck } from "lucide-react";
+import { Bot, CalendarDays, Cookie, MapPin, Shirt, Sparkles, ShieldCheck, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RejnMascot } from "@/components/rejn/rejn-mascot";
 import { supabase } from "@/integrations/supabase/client";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
 import { useLocationPermission } from "@/hooks/use-location-permission";
+import { useVisionPreferences, type VisionPreset } from "@/hooks/use-vision-preferences";
 import { toast } from "sonner";
 
 const HEARD_ABOUT_OPTIONS = [

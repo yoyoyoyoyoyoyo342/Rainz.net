@@ -619,35 +619,11 @@ export const weatherApi = {
           icon: "",
         });
 
-        // Synthesize hourly entries for this projected day using a simple
-        // diurnal curve peaking mid-afternoon.
-        if (hourly.length < 15 * 24) {
-          for (let h = 0; h < 24; h++) {
-            const t = new Date(d);
-            t.setHours(h, 0, 0, 0);
-            // Diurnal factor: coldest ~5am, warmest ~15:00.
-            const phase = ((h - 5 + 24) % 24) / 24;
-            const warmth = Math.sin(phase * Math.PI); // 0 → 1 → 0
-            const temp = Math.round(projLow + (projHigh - projLow) * warmth);
-            // Sample hourly-precip probability from the daily precip with
-            // afternoon bias so it's not flat across the day.
-            const rainBias = 0.6 + 0.8 * Math.sin(((h - 10 + 24) % 24) / 24 * Math.PI);
-            const hourPrecip = Math.max(0, Math.min(100, Math.round(projPrecip * rainBias * 0.9)));
-            hourly.push({
-              time: t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-              temperature: temp,
-              condition: template.condition,
-              precipitation: hourPrecip,
-              icon: "",
-              feelsLike: temp,
-              humidity: 60,
-              windSpeed: 8,
-              windDirection: 180,
-              uvIndex: Math.round(warmth * 5),
-              cloudCover: template.condition.toLowerCase().includes("cloud") ? 70 : 30,
-            });
-          }
-        }
+        // Intentionally do NOT synthesize hourly entries for AI-interpolated
+        // days: hourly consumers (UV graph, hourly list) shouldn't display
+        // fabricated humidity/wind/UV numbers as if they were measured. The
+        // daily card already carries `aiCertainty` to signal reduced trust.
+
       }
     }
 

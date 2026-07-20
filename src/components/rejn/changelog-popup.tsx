@@ -40,11 +40,15 @@ export function ChangelogPopup() {
 
     const attempt = async () => {
       if (typeof window === "undefined") return;
+      // Never open on top of onboarding/auth flows — those own the screen.
+      const path = window.location.pathname;
+      if (path.startsWith("/welcome") || path.startsWith("/auth")) return;
       // Wait for cookie consent to be resolved before opening any dialog.
       if (!localStorage.getItem("cookie_consent")) {
         setTimeout(() => !cancelled && attempt(), 1500);
         return;
       }
+
 
       const { data, error } = await supabase
         .from("app_changelog")

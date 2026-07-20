@@ -1,174 +1,168 @@
-# Rejn 2.1 — Big Batch Plan
 
-Wide scope, so grouped into ordered workstreams. Each item lists the concrete files/tables it touches.
+# Rejn 2.1.1 — The Vision Update
 
----
-
-## 1. Auth + Onboarding flow
-
-New signup-only fullscreen minimal onboarding (existing users skip). No pre-login onboarding.
-
-Flow: `Login → Cookies → Location → Key features → How did you hear about us → Thanks`.
-
-- Rewrite `src/pages/Auth.tsx`:
-  - Screen 1: existing login/signup (retain Google-first minimal design).
-  - After successful **signup** (not login), set `profiles.onboarding_step = 1` and route to `/welcome`.
-- New route `/welcome` → `src/pages/Welcome.tsx` with a stepper (2–6):
-  - Cookies: reuses `useCookieConsent` accept/reject.
-  - Location: calls `navigator.geolocation` and persists to `profiles.location_permission = 'granted' | 'denied'` (fixes PWA re-asking bug — see §7).
-  - Features: static carousel of 5 highlights.
-  - "How did you hear about us?": radio + Other. Persisted to `profiles.acquisition_source`.
-  - Thanks screen with CTA to weather.
-- Skip logic: existing users have `onboarding_step = null` or `= 'done'`; a `RequireOnboarding` guard in `App.tsx` only redirects when the profile row shows an in-progress signup created after the migration.
-
-Database (via migration):
-
-- `profiles`: add `onboarding_step TEXT`, `acquisition_source TEXT`, `location_permission TEXT`, `changelog_seen_version TEXT`.
-- Backfill: existing rows get `onboarding_step = 'done'`.
-
-Amplitude tracking (see §10):
-
-- Track `onboarding_step_view`, `onboarding_step_complete`, and `acquisition_source_selected` with the chosen value as a user property.
+Goal: make Rejn fully usable for people with visual impairments — including **aniridia** (extreme light sensitivity, nystagmus, reduced acuity), low vision, color blindness, and blindness (screen readers). This update ships one cohesive Vision system, not scattered toggles.
 
 ---
 
-## 2. "What did we change?" changelog popup
+## 1. New "Vision" settings hub
 
-- New table `app_changelog` (title, body_markdown, image_url, version SEMVER-ish, published_at, is_published).
-- Admin form in a new `AdminChangelog` tab in `admin-panel.tsx`: title, body (textarea), image upload to existing `blog_images` bucket, version string, publish toggle.
-- Popup component `src/components/rejn/changelog-popup.tsx`:
-  - Fetch latest published entry on app mount.
-  - Show once per user per version: compare `profiles.changelog_seen_version` (or `localStorage` fallback for guests) with the entry's version.
-  - Update `changelog_seen_version` on close.
-  - Waits for cookie consent (same pattern used to fix the earlier `whats-new-dialog` bug).
+A single dedicated tab inside the redesigned Settings dialog: **Vision & Accessibility**. Preferences persist via `user_preferences` (Aiven edge fn) + localStorage fallback so they survive across devices and load *before first paint* (inline script in `index.html`) to prevent a bright flash for photophobic users.
 
----
+Settings included:
 
-## 3. Expanded landmarks (100 cities, hand-refined)
+- **Vision profile presets** (one-tap): `Standard`, `Low Vision`, `Aniridia / Photophobia`, `Color Blind`, `Screen Reader`. Each preset toggles the right combination of the switches below.
+- **Text size**: 100% / 125% / 150% / 200% (scales `html { font-size }`, not zoom).
+- **Contrast**: Normal / High / Maximum (extends existing `.high-contrast` class with a new `.max-contrast`).
+- **Reduce brightness** (aniridia): 0–70% dark overlay + forces dark theme + caps `--background` luminance.
+- **Reduce blue light**: warm filter layer (`sepia`/hue-rotate on `<html>`).
+- **Reduce motion**: already exists — surface it here too.
+- **Reduce transparency**: kills backdrop-blur/glass, replaces with solid `--card`.
+- **Bold text**: adds `font-weight: 600` minimum globally.
+- **Underline links**: forces `text-decoration` on all `<a>`.
+- **Focus ring**: Thick / Extra thick (4px / 6px, high-contrast yellow).
+- **Color blind mode**: Deuteranopia / Protanopia / Tritanopia (SVG filter on root; also swaps chart palettes).
+- **Screen reader mode**: enables extra `aria-live` regions, verbose labels, skips decorative landmarks.
+- **Cursor size**: Normal / Large / Huge (custom cursor images).
 
-- Rebuild `svgs.tsx` and `registry.ts` to cover 100 cities. Chosen for the target audience: heavy weighting of Scandinavia, Bay Area/US west coast, then major European + world capitals.
-- Each SVG rebuilt with:
-  - Correct proportions and recognizable silhouettes.
-  - Larger default render size (already lifted to `min(72vh, 640px)` — keep).
-  - Right-anchored for compact single-object landmarks (Big Ben, Little Mermaid, Space Needle, etc.).
-  - Day/golden/night palette variants driven by the existing `PALETTES` object (already fixed in the last turn to parse `6:30 AM` strings).
-- Registry uses bounding boxes + display name aliases so map/search results still match. Copenhagen suburbs already fall through to CPH; extend the same pattern to Stockholm/Malmö/Oslo/Bay Area.
-
----
-
-## 4. World coverage + nearest-8 fallback
-
-Add support for locations we don't cover directly.
-
-- New edge function `nearest-neighbors-forecast`:
-  1. Input: `{ lat, lon, locationName }`.
-  2. Find 8 nearest known city rows (uses a new `world_cities` table seeded from GeoNames' `cities500` dump — cached to Aiven at build time).
-  3. Fetch aggregate weather for each of the 8 in parallel (`aggregate-weather`).
-  4. Call `llm-weather-forecast` with the 8-station bundle and instruct Groq to *interpolate* the user's location, not display averages. Prompt weighs stations by inverse distance and altitude delta.
-  5. Return one synthesized forecast (temp, wind, humidity, condition, precip probability) plus confidence score.
-- Search: replace `location-search`'s geocoder with `geonames-search` edge function backed by GeoNames' free API. Requires `GEONAMES_USERNAME` secret — will be requested with `add_secret` in build mode.
-- Client: `use-neighbor-forecast` hook fires when `aggregate-weather` returns "no primary source" for the coordinates.
-
-Database:
-
-- `world_cities` (city, country, admin1, lat, lon, population, timezone). Populated via a one-off `seed-world-cities` edge function run from admin panel.
+### Aniridia-specific defaults (when preset selected)
+- Force dark theme, lock light mode off.
+- Brightness dimmer at 40%.
+- Warm filter on.
+- Reduce transparency on (kills glare from glass cards).
+- Max contrast text.
+- Text size 150%.
+- Large focus ring.
+- Auto-hide the animated sky background + landmark layer (bright gradients trigger photophobia).
 
 ---
 
-## 5. World-average expansion
+## 2. Fix existing accessibility debt
 
-Extend `world-weather-average` edge function's baked-in city list from ~30 to ~150 cities, matching the top of the new `world_cities` table by population. The function already handles per-city fetches; the change is data-only.
+Sweep the codebase for the known offenders:
 
----
-
-## 6. PWA/App gating markers + more locked features
-
-- `use-app-platform` already returns `isPWA` / `isDesktop`. Extend `<AppOnlyGate>` to wrap:
-  - Prediction Battles (already gated).
-  - Ask Rejn chat sidebar/history (chat itself remains public).
-  - Weather Time Machine.
-  - AR overlay.
-  - Streak Challenges.
-- New  `<DownloadPWA>` marker. Placed at:
-  - Bottom right page but a bit up after 30s dwell.
-  - Inside the login screen (below Google button).
-  - After posting a social reaction.
-  - After a prediction is submitted (in the celebration modal).
-  - When a locked feature is tapped in web.
-- Each nudge tracked in Amplitude with `nudge_source`.
-- It should be Rejn goat saying with a speech bubble telling the user to download the pwa with a link to how.
-- Should only be displayed on the site, never the pwa.
+- Icon-only buttons missing `aria-label` (bottom nav bar, briefing card, predict bell, skycam controls, settings tabs).
+- Contrast failures from `text-muted-foreground/50`, arbitrary gray classes, and the light-mode `--muted-foreground` (currently `0 0% 9%` vs `--muted 0 0% 63%` — actually fine, but verify against `--card`).
+- Multiple `<main>` landmarks — audit routes and consolidate into layout.
+- `h-screen` → `h-dvh` for mobile full-height views.
+- Add `lang="en"` to `<html>` if missing.
+- Add skip-to-content link at top of `App.tsx`.
+- Landmark SVGs: add `role="img"` + `<title>` describing the city (e.g. "Copenhagen — The Little Mermaid").
+- Weather icons: ensure each has an `aria-label` describing the condition, not just an emoji/svg.
+- Charts (UV, pollen, temp): add text-based fallback summaries (`aria-label` on chart + hidden `<table>` for screen readers).
 
 ---
 
-## 7. Bug fixes
+## 3. Non-color information cues
 
-- **UV index resets midday**: Bug is in `uv-index-graph.tsx` — it currently rebuilds the series from "now onward" on every render, dropping earlier readings. Fix by memoizing the full daily curve from `ensembleForecast.hourly.uv_index` (0–23) and only styling the current hour marker.
-- **PWA re-asks for location**: Persist granted/denied state to `profiles.location_permission` (see §1) *and* localStorage (`rejn.location_permission`). `useGeolocation` reads it before calling `navigator.geolocation.getCurrentPosition`. If `denied`, never re-prompt.
-- **Days 10–15 fallback text**: `fetch-ensemble-forecast` truncates at 10 days because Open-Meteo's default `forecast_days` is 7 and only some models honor 16. Fix: request `forecast_days=16` explicitly from GFS + ECMWF models, and merge Tomorrow.io's daily 14-day. Update the 15-day component to render real values instead of the fallback string.
-- **15-day day-detail crash**: Root cause unconfirmed — plan starts with a repro (open day 11, capture console) via Playwright, then fix. Likely the day-detail component reads `hourly[dayIndex*24]` past the array end for day 10+. Guard with a length check and skeleton for missing hours.
-- **"Rainz" → "Rejn" everywhere**: sweep the files ripgrep found (30+ files) and rename all user-visible strings. Keep `src/components/rainz/**` directory paths as-is to avoid a huge diff; only strings change. Also update Rainz Score → Rejn Score, Rejn SkyCam (already partly done), sponsor card.
+Aniridia + color blindness both mean color-only signals fail. Add redundant cues:
 
----
-
-## 8. Docs + AEO/SEO/GEO
-
-- `src/pages/Docs.tsx`: new layout with sidebar TOC, sections for API, MCP, widgets, embed, DryRoutes, changelog. Code samples in copy-friendly blocks.
-- Add per-route JSON-LD via `SEOHead` for FAQ, Docs, City pages (already partial), and Blog posts.
-- Regenerate `public/llm-full.txt` with the new feature list.
-- Update `public/openapi.yaml` for the new `/api/weather` + neighbor-interpolation notes.
-- `robots.txt` and `sitemap.xml`: unchanged pattern, sitemap gets new `/welcome` and per-city routes from `world_cities`.
-- Trigger a scan via SEO tool once the above lands.
+- **UV index**: add textual severity ("Extreme", "High") next to the color band.
+- **Pollen wheel**: add labels inside each segment, not just color.
+- **Prediction results**: ✓ / ✗ icons plus color, not just green/red.
+- **Notifications**: bell has both red dot *and* a numeric badge count.
+- **Battle win/loss**: icons + words, not just red/green pill.
+- **Charts**: add patterns/dashes to lines so they're distinguishable in grayscale.
 
 ---
 
-## 9. Admin panel rebuild
+## 4. Screen reader pass
 
-- New shell `src/components/weather/admin-panel.tsx` using a left-rail nav (Overview, Users, Content, Analytics, Changelog, Feature Flags, Banners, Feature Ideas, Downloads, Broadcasts).
-- Overview tab pulls from Amplitude via the existing MCP integration (see §10).
-- Analytics tab adds a "How did you hear about us?" bar chart sourced from `profiles.acquisition_source` aggregations.
-
----
-
-## 10. Amplitude tracking upgrade
-
-- Expand `use-amplitude-instrumentation` to emit route-scoped view events with normalized props (`route`, `is_pwa`, `is_authenticated`, `city`).
-- Add explicit events: `signup_completed`, `onboarding_step_view`, `onboarding_step_complete`, `acquisition_source_selected`, `changelog_popup_view`, `changelog_popup_dismissed`, `download_nudge_view`, `download_nudge_click`, `locked_feature_tap`, `neighbor_forecast_used`.
-- Set user properties: `acquisition_source`, `platform` (`web`|`pwa`|`ios`|`android`), `is_founder_sf`.
-- Admin Analytics tab calls the Amplitude MCP to render:
-  - DAU/WAU/MAU.
-  - Top routes.
-  - Signup funnel (`signup_completed` → each onboarding step → `onboarding_completed`).
-  - Acquisition source breakdown.
-  - Retention cohort by acquisition source.
-- Remove the old Lovable analytics widgets from the admin panel.
+- Verify shadcn primitives are used everywhere (they already ship correct ARIA); replace any hand-rolled dropdowns/dialogs found during audit.
+- Add `aria-live="polite"` to the weather hero so temp/condition updates announce.
+- Add `aria-live="assertive"` to prediction submission feedback and toast region (sonner already handles this — verify).
+- Label the mobile bottom tab bar as `<nav aria-label="Primary">`.
+- Landmark structure: `<header>`, single `<main>`, `<nav>`, `<footer>` per route.
+- All form inputs on `/auth`, `/predict`, `/ask-rejn` composer get real `<label>` associations.
 
 ---
 
-## Order of execution
+## 5. Keyboard navigation
 
-1. Database migration (§1, §2, §4 tables; add missing profile columns).
-2. Secrets: request `GEONAMES_USERNAME` via `add_secret`.
-3. Edge functions: `geonames-search`, `nearest-neighbors-forecast`, `seed-world-cities`, extend `world-weather-average`.
-4. Auth + Welcome onboarding pages, guard in `App.tsx`.
-5. Changelog popup + admin form.
-6. Landmark rebuild (100 cities).
-7. Bug fixes (§7).
-8. PWA gating + `<DownloadPWA>`.
-9. Admin panel rebuild + Amplitude wiring.
-10. Docs, SEO/AEO, string sweep, `sitemap.xml` regeneration.
-11. SEO rescan.
+- Every interactive element reachable via Tab in a logical order.
+- Escape closes all dialogs/sheets (shadcn does this — verify custom ones).
+- Ask Rejn composer: Cmd/Ctrl+Enter submits.
+- Predict form: full keyboard flow.
+- Bottom tab bar: arrow-key navigation between tabs.
+- Visible focus ring everywhere (`:focus-visible` with `--ring`, thicker when Vision preset active).
 
-## Technical notes
+---
 
-- Rejn 1 model: intentionally not mentioned anywhere in code or UI copy per the user's instruction.
-- Aiven vs Supabase: `profiles` is Aiven-backed. New `profiles.*` columns must be added via Aiven schema migration (the profiles edge function's DDL block) *and* via a Supabase migration since the trigger `handle_new_user` still writes there. Keep both in sync until the Aiven-only cutover.
-- Landmark SVGs: keep the existing palette CSS-variable pattern so day/golden/night still work without extra assets.
-- Changelog images: reuse `blog_images` public bucket; no new bucket needed.
-- Cookie consent gating for the changelog popup stays consistent with the pattern that fixed the 2.0 dialog bug.
+## 6. Onboarding update
 
-## Out of scope
+Add a **step to `/welcome`** after signup: "Do you have any visual needs?" with the 5 presets as large tap targets. Applied immediately. Also surface a subtle "Vision settings" link on `/auth` so users can dial it in before even signing in (stored in localStorage pre-auth, migrated on signup).
 
-- Rejn 1 custom model (explicitly deferred).
-- Native iOS/Android app changes (unrelated to this batch).
-- Payment/subscription changes.
+---
+
+## 7. Technical implementation
+
+### CSS layer
+- New file `src/styles/vision.css` imported after `index.css`.
+- Adds `.reduce-transparency`, `.reduce-brightness-{0..70}`, `.warm-filter`, `.max-contrast`, `.bold-text`, `.underline-links`, `.thick-focus`, `.cb-deuteranopia`, `.cb-protanopia`, `.cb-tritanopia`, `.large-cursor`.
+- Text-size scaling via `html.text-scale-125 { font-size: 20px }` etc.
+
+### Hook
+- `src/hooks/use-vision-preferences.tsx`: reads/writes preferences, applies classes to `<html>`, syncs to Aiven via `user-preferences` edge function (already exists — extend its columns).
+
+### DB migration
+Extend `user_preferences` (Aiven) with:
+```
+vision_preset TEXT,
+text_scale INT,
+contrast_mode TEXT,
+brightness_reduction INT,
+warm_filter BOOL,
+reduce_transparency BOOL,
+bold_text BOOL,
+underline_links BOOL,
+thick_focus BOOL,
+color_blind_mode TEXT,
+screen_reader_mode BOOL,
+cursor_size TEXT
+```
+Update `user-preferences` edge function (`supabase/functions/user-preferences/index.ts`) to accept these columns.
+
+### Pre-paint script
+Inline `<script>` in `index.html` reads localStorage vision prefs and applies classes on `<html>` before React mounts — critical so photophobic users never see a flash of bright UI.
+
+### Files to touch (est.)
+- `index.html` — pre-paint script, `lang` attr
+- `src/App.tsx` — skip link, apply vision hook globally, single `<main>`
+- `src/index.css` — extend high-contrast, add max-contrast
+- `src/styles/vision.css` — new
+- `src/hooks/use-vision-preferences.tsx` — new
+- `src/components/weather/settings-dialog.tsx` — new Vision tab
+- `src/pages/Welcome.tsx` — vision step
+- `src/pages/Auth.tsx` — pre-auth vision link
+- `src/components/weather/uv-index-graph.tsx` — text labels + patterns
+- `src/components/weather/pollen-wheel.tsx` (or equivalent) — segment labels
+- `src/components/weather/bottom-tab-bar.tsx` — nav landmark + arrow keys + badges
+- `src/components/rainz/landmarks/svgs.tsx` — `role`/`<title>`
+- `src/components/rainz/sky-renderer.tsx` — respect `reduce-brightness` / hide when vision preset active
+- `src/components/rainz/ai-briefing-hero.tsx` — aria-live + labels
+- Audit sweep across icon-only Buttons (bottom nav, predict bell, skycam, admin)
+- `supabase/functions/user-preferences/index.ts` — new columns
+
+---
+
+## 8. Verification
+
+- Manual: enable each preset, walk every route, screen-reader test with VoiceOver on iOS + NVDA on Windows.
+- Automated: run axe-core against the built app for critical/serious findings.
+- Aniridia test: verify no white/bright surface ever paints when Aniridia preset is on, even during initial load.
+
+---
+
+## 9. Changelog & release
+
+- Write "The Vision Update" blog post (not published — draft only, matching the pattern from Rejn 2.0/2.1).
+- Add `app_changelog` entry so the in-app "What did we change?" popup announces it.
+
+---
+
+## Out of scope for 2.1.1 (later versions)
+- Hearing accessibility (captions on any future video content)
+- Motor accessibility (dwell click, switch control)
+- Cognitive accessibility (reading level toggle, simplified mode)
+
+These are acknowledged and will get their own themed updates.

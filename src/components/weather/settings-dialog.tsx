@@ -25,6 +25,7 @@ import { IOSInstallGuide } from "@/components/ui/ios-install-guide";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
 import { useExperimentalData } from "@/hooks/use-experimental-data";
 import { usePremiumSettings } from "@/hooks/use-premium-settings";
+import { VisionSettingsSection } from "@/components/vision/vision-settings-section";
 
 interface SettingsDialogProps {
   isImperial: boolean;
@@ -60,6 +61,7 @@ function SettingsSection({ id, title, icon: Icon, children, badge }: {
 
 const CATEGORY_NAV = [
   { id: 'account', label: 'Account', icon: User },
+  { id: 'vision', label: 'Vision', icon: Eye },
   { id: 'display', label: 'Display', icon: Eye },
   { id: 'behavior', label: 'Behavior', icon: Zap },
   { id: 'notifications', label: 'Alerts', icon: Bell },
@@ -455,6 +457,9 @@ export function SettingsDialog({
                 ))}
               </div>
             </SettingsSection>
+
+            {/* Vision & Accessibility (Rejn 2.1.1) */}
+            <VisionSettingsSection />
 
             {/* Display Settings Section */}
             <SettingsSection id="display" title="Display" icon={Eye}>

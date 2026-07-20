@@ -1,0 +1,175 @@
+/* Rejn 2.1.1 — Vision & Accessibility utility layer.
+   Classes are toggled on <html> by the useVisionPreferences hook (and
+   by an inline script in index.html so photophobic users never see a
+   bright flash of unstyled UI). */
+
+/* ---------- 1. Text scaling (root font-size) ---------- */
+html.text-scale-100 { font-size: 16px; }
+html.text-scale-125 { font-size: 20px; }
+html.text-scale-150 { font-size: 24px; }
+html.text-scale-200 { font-size: 32px; }
+
+/* ---------- 2. Contrast modes ---------- */
+/* .high-contrast is defined in index.css. .max-contrast pushes further. */
+html.max-contrast.light,
+html.max-contrast:not(.dark) {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+  --muted-foreground: 0 0% 0%;
+  --secondary-foreground: 0 0% 0%;
+  --border: 0 0% 0%;
+  --input: 0 0% 0%;
+  --primary: 217 100% 30%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 45 100% 45%;
+}
+
+html.max-contrast.dark {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 5%;
+  --card-foreground: 0 0% 100%;
+  --popover: 0 0% 5%;
+  --popover-foreground: 0 0% 100%;
+  --muted-foreground: 0 0% 100%;
+  --secondary-foreground: 0 0% 100%;
+  --border: 0 0% 100%;
+  --input: 0 0% 100%;
+  --primary: 45 100% 65%;
+  --primary-foreground: 0 0% 0%;
+  --ring: 45 100% 65%;
+}
+
+/* ---------- 3. Reduce transparency (kills glass glare) ---------- */
+html.reduce-transparency *,
+html.reduce-transparency *::before,
+html.reduce-transparency *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html.reduce-transparency .glass-card,
+html.reduce-transparency .glass-card-strong,
+html.reduce-transparency .glass-header,
+html.reduce-transparency [class*="bg-card/"],
+html.reduce-transparency [class*="bg-background/"],
+html.reduce-transparency [class*="bg-white/"],
+html.reduce-transparency [class*="bg-black/"] {
+  background-color: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* ---------- 4. Brightness reduction (aniridia / photophobia) ---------- */
+/* Global dim overlay that sits above every layer but below focus indicators.
+   The overlay is pointer-events:none so it never blocks interaction. */
+html[data-brightness]:not([data-brightness="0"]) body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: calc(var(--vision-dim, 0) * 1);
+  pointer-events: none;
+  z-index: 2147483000; /* just below system max */
+  mix-blend-mode: multiply;
+}
+html[data-brightness="10"] { --vision-dim: 0.10; }
+html[data-brightness="20"] { --vision-dim: 0.20; }
+html[data-brightness="30"] { --vision-dim: 0.30; }
+html[data-brightness="40"] { --vision-dim: 0.40; }
+html[data-brightness="50"] { --vision-dim: 0.50; }
+html[data-brightness="60"] { --vision-dim: 0.60; }
+html[data-brightness="70"] { --vision-dim: 0.70; }
+
+/* ---------- 5. Warm filter (reduce blue light) ---------- */
+html.warm-filter body {
+  filter: sepia(0.25) hue-rotate(-15deg) saturate(0.95);
+}
+
+/* ---------- 6. Bold text everywhere ---------- */
+html.bold-text,
+html.bold-text * {
+  font-weight: 600 !important;
+}
+html.bold-text b,
+html.bold-text strong,
+html.bold-text h1,
+html.bold-text h2,
+html.bold-text h3 {
+  font-weight: 800 !important;
+}
+
+/* ---------- 7. Underline all links ---------- */
+html.underline-links a {
+  text-decoration: underline !important;
+  text-underline-offset: 2px;
+}
+
+/* ---------- 8. Thick focus ring ---------- */
+html.thick-focus *:focus-visible {
+  outline: 4px solid hsl(45 100% 55%) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 6px hsl(45 100% 55% / 0.35) !important;
+  border-radius: 6px;
+}
+html.thick-focus.extra-focus *:focus-visible {
+  outline-width: 6px !important;
+  outline-offset: 4px !important;
+}
+
+/* ---------- 9. Color-blind SVG filters ---------- */
+html.cb-deuteranopia body { filter: url("#rejn-cb-deut"); }
+html.cb-protanopia   body { filter: url("#rejn-cb-prot"); }
+html.cb-tritanopia   body { filter: url("#rejn-cb-trit"); }
+/* Warm + cb can stack; keep both filters composable by scoping to body. */
+html.warm-filter.cb-deuteranopia body { filter: sepia(0.25) hue-rotate(-15deg) url("#rejn-cb-deut"); }
+html.warm-filter.cb-protanopia   body { filter: sepia(0.25) hue-rotate(-15deg) url("#rejn-cb-prot"); }
+html.warm-filter.cb-tritanopia   body { filter: sepia(0.25) hue-rotate(-15deg) url("#rejn-cb-trit"); }
+
+/* ---------- 10. Large cursor ---------- */
+html.cursor-large,
+html.cursor-large * { cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><path d='M4 2 L4 26 L11 20 L15 30 L20 28 L16 18 L26 18 Z' fill='white' stroke='black' stroke-width='2'/></svg>") 4 2, auto !important; }
+html.cursor-huge,
+html.cursor-huge * { cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 32 32'><path d='M4 2 L4 26 L11 20 L15 30 L20 28 L16 18 L26 18 Z' fill='white' stroke='black' stroke-width='2.5'/></svg>") 6 3, auto !important; }
+
+/* ---------- 11. Reduced motion (extra to prefers-reduced-motion) ---------- */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ---------- 12. Aniridia preset — hide decorative bright layers ---------- */
+html.aniridia [data-decorative="sky"],
+html.aniridia [data-decorative="landmark"] {
+  display: none !important;
+}
+html.aniridia body {
+  background: hsl(0 0% 6%) !important;
+}
+
+/* ---------- 13. Skip-to-content link ---------- */
+.skip-to-content {
+  position: fixed;
+  top: -100px;
+  left: 12px;
+  z-index: 2147483647;
+  padding: 12px 20px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-radius: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+.skip-to-content:focus,
+.skip-to-content:focus-visible {
+  top: 12px;
+  outline: 4px solid hsl(45 100% 55%);
+  outline-offset: 3px;
+}

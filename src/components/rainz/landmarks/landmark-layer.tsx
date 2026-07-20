@@ -122,6 +122,7 @@ export function LandmarkLayer({
   return (
     <div
       aria-hidden
+      data-decorative="landmark"
       className="fixed inset-x-0 -z-[5] pointer-events-none select-none flex items-end justify-end sm:justify-center"
       style={{
         ...styleVars,

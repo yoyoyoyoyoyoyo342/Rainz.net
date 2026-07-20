@@ -14,6 +14,35 @@
         } catch (e) {}
       })();
     </script>
+    <script>
+      // Rejn 2.1.1 Vision Update — apply vision prefs BEFORE first paint so
+      // photophobic / aniridia users never see a bright flash of unstyled UI.
+      (function () {
+        try {
+          var raw = localStorage.getItem('rejn-vision-prefs');
+          if (!raw) return;
+          var p = JSON.parse(raw);
+          var html = document.documentElement;
+          html.classList.add('text-scale-' + (p.textScale || 100));
+          if (p.contrast === 'high' || p.contrast === 'max') html.classList.add('high-contrast');
+          if (p.contrast === 'max') html.classList.add('max-contrast');
+          if (p.brightness) html.setAttribute('data-brightness', String(p.brightness));
+          if (p.warmFilter) html.classList.add('warm-filter');
+          if (p.reduceTransparency) html.classList.add('reduce-transparency');
+          if (p.reduceMotion) html.classList.add('reduce-motion');
+          if (p.boldText) html.classList.add('bold-text');
+          if (p.underlineLinks) html.classList.add('underline-links');
+          if (p.thickFocus) html.classList.add('thick-focus');
+          if (p.colorBlind && p.colorBlind !== 'none') html.classList.add('cb-' + p.colorBlind);
+          if (p.cursorSize === 'large') html.classList.add('cursor-large');
+          if (p.cursorSize === 'huge') html.classList.add('cursor-huge');
+          if (p.preset === 'aniridia') {
+            html.classList.add('aniridia', 'dark');
+            document.documentElement.style.background = 'hsl(0 0% 6%)';
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="manifest" href="manifest.json" />
 
     <meta charset="UTF-8" />

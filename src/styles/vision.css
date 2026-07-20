@@ -172,7 +172,7 @@ html.aniridia {
 html.aniridia,
 html.aniridia body {
   font-family: "Atkinson Hyperlegible", var(--font-sans), system-ui, sans-serif;
-  line-height: 1.6;
+  line-height: 1.7;
   text-rendering: optimizeLegibility;
 }
 
@@ -190,10 +190,19 @@ html.aniridia label,
 html.aniridia input,
 html.aniridia select,
 html.aniridia textarea {
-  letter-spacing: 0.01em;
-  line-height: 1.55;
+  letter-spacing: 0;
+  line-height: 1.65;
   overflow-wrap: anywhere;
   word-break: normal;
+}
+
+html.aniridia p,
+html.aniridia label,
+html.aniridia button,
+html.aniridia input,
+html.aniridia select,
+html.aniridia textarea {
+  font-weight: 600;
 }
 
 html.aniridia .text-xs { font-size: 0.82rem; }
@@ -233,6 +242,13 @@ html.aniridia .truncate {
   white-space: normal;
 }
 
+html.text-scale-150 .truncate,
+html.text-scale-200 .truncate {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
 html.aniridia [class*="grid-cols-2"],
 html.aniridia [class*="grid-cols-3"],
 html.aniridia [class*="grid-cols-4"] {
@@ -246,22 +262,44 @@ html.aniridia [class*="blur-3xl"] {
 }
 
 @media (max-width: 640px) {
+  html.text-scale-125 { font-size: 18px; }
+  html.text-scale-150 { font-size: 20px; }
+  html.text-scale-200 { font-size: 22px; }
+
+  html.text-scale-150 [role="dialog"],
+  html.text-scale-200 [role="dialog"],
   html.aniridia [role="dialog"] {
     width: calc(100vw - 0.75rem) !important;
     max-width: calc(100vw - 0.75rem) !important;
     max-height: calc(100dvh - 0.75rem) !important;
   }
 
+  html.text-scale-150 [role="dialog"] .grid,
+  html.text-scale-200 [role="dialog"] .grid,
   html.aniridia [role="dialog"] .grid,
+  html.text-scale-150 [data-vaul-drawer] .grid,
+  html.text-scale-200 [data-vaul-drawer] .grid,
   html.aniridia [data-vaul-drawer] .grid,
+  html.text-scale-150 [class*="grid-cols-2"],
+  html.text-scale-200 [class*="grid-cols-2"],
+  html.text-scale-150 [class*="grid-cols-3"],
+  html.text-scale-200 [class*="grid-cols-3"],
+  html.text-scale-150 [class*="grid-cols-4"],
+  html.text-scale-200 [class*="grid-cols-4"],
   html.aniridia [class*="grid-cols-2"],
   html.aniridia [class*="grid-cols-3"],
   html.aniridia [class*="grid-cols-4"] {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
+  html.text-scale-150 .fixed.bottom-0 nav,
+  html.text-scale-200 .fixed.bottom-0 nav,
   html.aniridia .fixed.bottom-0 nav,
+  html.text-scale-150 nav.fixed.bottom-0,
+  html.text-scale-200 nav.fixed.bottom-0,
   html.aniridia nav.fixed.bottom-0,
+  html.text-scale-150 .glass-tab-bar,
+  html.text-scale-200 .glass-tab-bar,
   html.aniridia .glass-tab-bar {
     font-size: 0.85rem;
   }

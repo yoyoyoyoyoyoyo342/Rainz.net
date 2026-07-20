@@ -1,4 +1,4 @@
-import { Eye, Type, Sun, Contrast as ContrastIcon, Palette, MousePointer2, Sparkles, RotateCcw } from "lucide-react";
+import { Circle, Eye, Moon, Palette, RotateCcw, Sparkles, Volume2, ZoomIn, type LucideIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -11,12 +11,12 @@ import {
   type TextScale,
 } from "@/hooks/use-vision-preferences";
 
-const PRESET_OPTIONS: { id: VisionPreset; label: string; desc: string; emoji: string }[] = [
-  { id: "standard", label: "Standard", desc: "No adjustments", emoji: "◯" },
-  { id: "low-vision", label: "Low Vision", desc: "Bigger, bolder, high contrast", emoji: "🔍" },
-  { id: "aniridia", label: "Aniridia / Photophobia", desc: "Warm, matte, high-legibility text", emoji: "🌒" },
-  { id: "color-blind", label: "Color Blind", desc: "Adds patterns + underlines", emoji: "🎨" },
-  { id: "screen-reader", label: "Screen Reader", desc: "Verbose labels, no motion", emoji: "🔊" },
+const PRESET_OPTIONS: { id: VisionPreset; label: string; desc: string; Icon: LucideIcon }[] = [
+  { id: "standard", label: "Standard", desc: "No adjustments", Icon: Circle },
+  { id: "low-vision", label: "Low Vision", desc: "Bigger, bolder, high contrast", Icon: ZoomIn },
+  { id: "aniridia", label: "Aniridia / Photophobia", desc: "Warm matte screen, clear text", Icon: Moon },
+  { id: "color-blind", label: "Color Blind", desc: "Adds patterns + underlines", Icon: Palette },
+  { id: "screen-reader", label: "Screen Reader", desc: "Verbose labels, no motion", Icon: Volume2 },
 ];
 
 // Local mirror of the SettingsSection wrapper used elsewhere, kept minimal.
@@ -61,6 +61,7 @@ export function VisionSettingsSection() {
         <div role="radiogroup" aria-label="Vision profile preset" className="grid grid-cols-1 gap-2 pt-1">
           {PRESET_OPTIONS.map((opt) => {
             const active = prefs.preset === opt.id;
+            const Icon = opt.Icon;
             return (
               <button
                 key={opt.id}
@@ -73,7 +74,9 @@ export function VisionSettingsSection() {
                     : "border-border/50 bg-muted/30 hover:bg-muted/50"
                 }`}
               >
-                <span className="text-xl leading-none" aria-hidden>{opt.emoji}</span>
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-background text-foreground" aria-hidden>
+                  <Icon className="h-5 w-5" strokeWidth={2} />
+                </span>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm">{opt.label}</div>
                   <div className="text-xs text-muted-foreground">{opt.desc}</div>

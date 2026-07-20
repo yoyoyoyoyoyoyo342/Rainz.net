@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Loader2 } from "lucide-react";
+import { Trash2, Loader2, X, ArrowUp, ArrowDown } from "lucide-react";
 
 interface Entry {
   id: string;
@@ -14,6 +14,7 @@ interface Entry {
   title: string;
   body_markdown: string;
   image_url: string | null;
+  image_urls: string[] | null;
   is_published: boolean;
   published_at: string | null;
   created_at: string;
@@ -27,7 +28,7 @@ export function AdminChangelog() {
   const [version, setVersion] = useState("");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [publish, setPublish] = useState(true);
   const [uploading, setUploading] = useState(false);
 
@@ -43,22 +44,40 @@ export function AdminChangelog() {
 
   useEffect(() => { load(); }, []);
 
-  const handleImage = async (file: File) => {
+  const handleImages = async (files: FileList) => {
     setUploading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      const path = `changelog/${user.id}/${Date.now()}-${file.name}`;
-      const { error } = await supabase.storage.from("blog_images").upload(path, file);
-      if (error) throw error;
-      const { data: pub } = supabase.storage.from("blog_images").getPublicUrl(path);
-      setImageUrl(pub.publicUrl);
-      toast.success("Image uploaded");
+      const uploaded: string[] = [];
+      for (const file of Array.from(files)) {
+        const path = `changelog/${user.id}/${Date.now()}-${file.name}`;
+        const { error } = await supabase.storage.from("blog_images").upload(path, file);
+        if (error) throw error;
+        const { data: pub } = supabase.storage.from("blog_images").getPublicUrl(path);
+        uploaded.push(pub.publicUrl);
+      }
+      setImageUrls((prev) => [...prev, ...uploaded]);
+      toast.success(`${uploaded.length} image${uploaded.length > 1 ? "s" : ""} uploaded`);
     } catch (e: any) {
       toast.error(e.message ?? "Upload failed");
     } finally {
       setUploading(false);
     }
+  };
+
+  const removeImage = (idx: number) => {
+    setImageUrls((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const moveImage = (idx: number, dir: -1 | 1) => {
+    setImageUrls((prev) => {
+      const next = [...prev];
+      const target = idx + dir;
+      if (target < 0 || target >= next.length) return prev;
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
   };
 
   const save = async () => {
@@ -72,7 +91,8 @@ export function AdminChangelog() {
       version: version.trim(),
       title: title.trim(),
       body_markdown: body,
-      image_url: imageUrl || null,
+      image_url: imageUrls[0] ?? null,
+      image_urls: imageUrls,
       is_published: publish,
       published_at: publish ? new Date().toISOString() : null,
       created_by: user?.id ?? null,
@@ -80,7 +100,7 @@ export function AdminChangelog() {
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Changelog published");
-    setVersion(""); setTitle(""); setBody(""); setImageUrl(""); setPublish(true);
+    setVersion(""); setTitle(""); setBody(""); setImageUrls([]); setPublish(true);
     load();
   };
 
@@ -123,18 +143,31 @@ export function AdminChangelog() {
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs">Cover image (optional)</Label>
+          <Label className="text-xs">Cover images (optional, first is used as thumbnail)</Label>
           <div className="flex items-center gap-2">
             <Input
               type="file"
               accept="image/*"
+              multiple
               disabled={uploading}
-              onChange={(e) => e.target.files?.[0] && handleImage(e.target.files[0])}
+              onChange={(e) => e.target.files && e.target.files.length > 0 && handleImages(e.target.files)}
             />
             {uploading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
           </div>
-          {imageUrl && (
-            <img src={imageUrl} alt="preview" className="mt-2 h-24 rounded-lg object-cover border border-border/40" />
+          {imageUrls.length > 0 && (
+            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {imageUrls.map((url, idx) => (
+                <div key={url + idx} className="relative group rounded-lg overflow-hidden border border-border/40">
+                  <img src={url} alt={`cover ${idx + 1}`} className="w-full h-24 object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-1">
+                    <button type="button" onClick={() => moveImage(idx, -1)} className="p-1 rounded bg-background/80" aria-label="Move left"><ArrowUp className="h-3 w-3 rotate-[-90deg]" /></button>
+                    <button type="button" onClick={() => moveImage(idx, 1)} className="p-1 rounded bg-background/80" aria-label="Move right"><ArrowDown className="h-3 w-3 rotate-[-90deg]" /></button>
+                    <button type="button" onClick={() => removeImage(idx)} className="p-1 rounded bg-destructive/90 text-white" aria-label="Remove"><X className="h-3 w-3" /></button>
+                  </div>
+                  <span className="absolute top-1 left-1 text-[10px] px-1.5 py-0.5 rounded bg-background/80 font-mono">{idx + 1}</span>
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
@@ -164,6 +197,9 @@ export function AdminChangelog() {
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-foreground truncate">{e.title}</span>
                     <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted/40 text-muted-foreground">v{e.version}</span>
+                    {(e.image_urls?.length ?? 0) > 1 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary">{e.image_urls!.length} imgs</span>
+                    )}
                     {e.is_published ? (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-500">live</span>
                     ) : (

@@ -43,29 +43,29 @@ export function AppSplashScreen() {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-white px-6"
+          className="fixed inset-0 z-[6000] flex min-h-dvh flex-col items-center justify-center bg-background px-6 text-foreground"
           aria-hidden="true"
         >
           <motion.div
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col items-center gap-5"
+            className="flex w-full max-w-sm flex-col items-center justify-center gap-5 text-center"
           >
             <img
               src="/logo.png"
               alt="Rejn"
-              className="w-28 h-28 object-contain"
+              className="h-24 w-24 object-contain sm:h-28 sm:w-28"
             />
-            <p className="text-base text-neutral-600">Be prepared</p>
+            <p className="text-base font-semibold text-muted-foreground">Be prepared</p>
 
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.5 }}
-              className="mt-6 max-w-xs text-center"
+              className="mt-3 max-w-xs text-center"
             >
-              <p className="text-sm text-neutral-700 leading-snug">
+              <p className="text-sm leading-relaxed text-muted-foreground">
                 <span className="font-semibold">Did you know: </span>
                 {fact}
               </p>

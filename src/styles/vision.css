@@ -69,16 +69,24 @@ html.reduce-transparency [class*="bg-black/"] {
 }
 
 /* ---------- 4. Brightness reduction (aniridia / photophobia) ----------
-   Uses a CSS filter on <html> so dialogs, popovers, and toasts are dimmed
-   TOGETHER with the app — no overlay pseudo-element (that used to sit on
-   z-index 2147483000 and made every modal appear pitch-black). */
-html[data-brightness="10"] { filter: brightness(0.90); }
-html[data-brightness="20"] { filter: brightness(0.80); }
-html[data-brightness="30"] { filter: brightness(0.70); }
-html[data-brightness="40"] { filter: brightness(0.60); }
-html[data-brightness="50"] { filter: brightness(0.50); }
-html[data-brightness="60"] { filter: brightness(0.42); }
-html[data-brightness="70"] { filter: brightness(0.35); }
+   Avoid filter: brightness() on <html>; iOS Safari can turn fixed Radix
+   portals into "overlay only, no dialog" when the root is filtered. Keep the
+   dimmer below popups so controls still appear and remain clickable. */
+html[data-brightness] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 180;
+  pointer-events: none;
+  background: hsl(0 0% 0% / var(--vision-dimmer-opacity, 0));
+}
+html[data-brightness="10"] { --vision-dimmer-opacity: 0.10; }
+html[data-brightness="20"] { --vision-dimmer-opacity: 0.20; }
+html[data-brightness="30"] { --vision-dimmer-opacity: 0.30; }
+html[data-brightness="40"] { --vision-dimmer-opacity: 0.40; }
+html[data-brightness="50"] { --vision-dimmer-opacity: 0.50; }
+html[data-brightness="60"] { --vision-dimmer-opacity: 0.58; }
+html[data-brightness="70"] { --vision-dimmer-opacity: 0.65; }
 
 
 /* ---------- 5. Warm filter (reduce blue light) ---------- */
@@ -171,7 +179,8 @@ html.aniridia {
 
 html.aniridia,
 html.aniridia body {
-  font-family: "Atkinson Hyperlegible", var(--font-sans), system-ui, sans-serif;
+  --aniridia-font: "Atkinson Hyperlegible", var(--font-sans), system-ui, sans-serif;
+  font-family: var(--aniridia-font);
   line-height: 1.7;
   text-rendering: optimizeLegibility;
 }
@@ -191,9 +200,31 @@ html.aniridia input,
 html.aniridia select,
 html.aniridia textarea {
   letter-spacing: 0;
-  line-height: 1.65;
-  overflow-wrap: anywhere;
-  word-break: normal;
+  line-height: 1.45;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: manual;
+  text-wrap: pretty;
+  max-width: 100%;
+}
+
+html.text-scale-125 button,
+html.text-scale-150 button,
+html.text-scale-200 button,
+html.text-scale-125 a,
+html.text-scale-150 a,
+html.text-scale-200 a,
+html.text-scale-125 span,
+html.text-scale-150 span,
+html.text-scale-200 span,
+html.text-scale-125 p,
+html.text-scale-150 p,
+html.text-scale-200 p,
+html.text-scale-125 label,
+html.text-scale-150 label,
+html.text-scale-200 label {
+  overflow-wrap: normal;
+  word-break: keep-all;
 }
 
 html.aniridia p,
@@ -211,7 +242,9 @@ html.aniridia .text-sm { font-size: 0.95rem; }
 html.aniridia .glass-dialog-overlay,
 html.aniridia [data-radix-dialog-overlay],
 html.aniridia [data-vaul-drawer-overlay] {
-  background: hsl(0 0% 0% / 0.62) !important;
+  background: hsl(0 0% 0% / 0.58) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 html.aniridia .glass-dialog-content,
@@ -237,16 +270,30 @@ html.aniridia [role="switch"] {
 }
 
 html.aniridia .truncate {
-  overflow: visible;
-  text-overflow: clip;
-  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 html.text-scale-150 .truncate,
 html.text-scale-200 .truncate {
-  overflow: visible;
-  text-overflow: clip;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html.aniridia .whitespace-nowrap,
+html.text-scale-150 .whitespace-nowrap,
+html.text-scale-200 .whitespace-nowrap {
   white-space: normal;
+}
+
+html.aniridia [class*="break-words"],
+html.text-scale-125 [class*="break-words"],
+html.text-scale-150 [class*="break-words"],
+html.text-scale-200 [class*="break-words"] {
+  overflow-wrap: normal;
+  word-break: keep-all;
 }
 
 html.aniridia [class*="grid-cols-2"],
@@ -272,6 +319,7 @@ html.aniridia [class*="blur-3xl"] {
     width: calc(100vw - 0.75rem) !important;
     max-width: calc(100vw - 0.75rem) !important;
     max-height: calc(100dvh - 0.75rem) !important;
+    overflow-y: auto !important;
   }
 
   html.text-scale-150 [role="dialog"] .grid,

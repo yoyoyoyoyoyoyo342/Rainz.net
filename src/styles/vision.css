@@ -89,8 +89,10 @@ html[data-brightness="60"] { --vision-dimmer-opacity: 0.58; }
 html[data-brightness="70"] { --vision-dimmer-opacity: 0.65; }
 
 
-/* ---------- 5. Warm filter (reduce blue light) ---------- */
-html.warm-filter body {
+/* ---------- 5. Warm filter (reduce blue light) ----------
+   Scoped to #root (not body) so Radix/vaul portals — rendered as siblings
+   of #root — are not captured by the filter and always render on top. */
+html.warm-filter #root {
   filter: sepia(0.25) hue-rotate(-15deg) saturate(0.95);
 }
 
@@ -125,14 +127,14 @@ html.thick-focus.extra-focus *:focus-visible {
   outline-offset: 4px !important;
 }
 
-/* ---------- 9. Color-blind SVG filters ---------- */
-html.cb-deuteranopia body { filter: url("#rejn-cb-deut"); }
-html.cb-protanopia   body { filter: url("#rejn-cb-prot"); }
-html.cb-tritanopia   body { filter: url("#rejn-cb-trit"); }
-/* Warm + cb can stack; keep both filters composable by scoping to body. */
-html.warm-filter.cb-deuteranopia body { filter: sepia(0.25) hue-rotate(-15deg) url("#rejn-cb-deut"); }
-html.warm-filter.cb-protanopia   body { filter: sepia(0.25) hue-rotate(-15deg) url("#rejn-cb-prot"); }
-html.warm-filter.cb-tritanopia   body { filter: sepia(0.25) hue-rotate(-15deg) url("#rejn-cb-trit"); }
+/* ---------- 9. Color-blind SVG filters ----------
+   Scoped to #root so Radix/vaul portals (siblings of #root) render clean. */
+html.cb-deuteranopia #root { filter: url("#rejn-cb-deut"); }
+html.cb-protanopia   #root { filter: url("#rejn-cb-prot"); }
+html.cb-tritanopia   #root { filter: url("#rejn-cb-trit"); }
+html.warm-filter.cb-deuteranopia #root { filter: sepia(0.25) hue-rotate(-15deg) url("#rejn-cb-deut"); }
+html.warm-filter.cb-protanopia   #root { filter: sepia(0.25) hue-rotate(-15deg) url("#rejn-cb-prot"); }
+html.warm-filter.cb-tritanopia   #root { filter: sepia(0.25) hue-rotate(-15deg) url("#rejn-cb-trit"); }
 
 /* ---------- 10. Large cursor ---------- */
 html.cursor-large,
@@ -178,8 +180,12 @@ html.aniridia {
 }
 
 html.aniridia,
-html.aniridia body {
-  --aniridia-font: "Atkinson Hyperlegible", var(--font-sans), system-ui, sans-serif;
+html.aniridia body,
+html.low-vision,
+html.low-vision body,
+html.screen-reader,
+html.screen-reader body {
+  --aniridia-font: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", var(--font-sans), system-ui, sans-serif;
   font-family: var(--aniridia-font);
   line-height: 1.7;
   text-rendering: optimizeLegibility;

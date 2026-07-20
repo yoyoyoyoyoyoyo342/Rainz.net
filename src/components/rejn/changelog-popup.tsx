@@ -48,7 +48,7 @@ export function ChangelogPopup() {
 
       const { data, error } = await supabase
         .from("app_changelog")
-        .select("id, version, title, body_markdown, image_url, published_at")
+        .select("id, version, title, body_markdown, image_url, image_urls, published_at")
         .eq("is_published", true)
         .order("published_at", { ascending: false, nullsFirst: false })
         .limit(1)

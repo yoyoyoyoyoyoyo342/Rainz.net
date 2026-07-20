@@ -62,26 +62,18 @@ html.reduce-transparency [class*="bg-black/"] {
   border-color: hsl(var(--border)) !important;
 }
 
-/* ---------- 4. Brightness reduction (aniridia / photophobia) ---------- */
-/* Global dim overlay that sits above every layer but below focus indicators.
-   The overlay is pointer-events:none so it never blocks interaction. */
-html[data-brightness]:not([data-brightness="0"]) body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: #000;
-  opacity: calc(var(--vision-dim, 0) * 1);
-  pointer-events: none;
-  z-index: 2147483000; /* just below system max */
-  mix-blend-mode: multiply;
-}
-html[data-brightness="10"] { --vision-dim: 0.10; }
-html[data-brightness="20"] { --vision-dim: 0.20; }
-html[data-brightness="30"] { --vision-dim: 0.30; }
-html[data-brightness="40"] { --vision-dim: 0.40; }
-html[data-brightness="50"] { --vision-dim: 0.50; }
-html[data-brightness="60"] { --vision-dim: 0.60; }
-html[data-brightness="70"] { --vision-dim: 0.70; }
+/* ---------- 4. Brightness reduction (aniridia / photophobia) ----------
+   Uses a CSS filter on <html> so dialogs, popovers, and toasts are dimmed
+   TOGETHER with the app — no overlay pseudo-element (that used to sit on
+   z-index 2147483000 and made every modal appear pitch-black). */
+html[data-brightness="10"] { filter: brightness(0.90); }
+html[data-brightness="20"] { filter: brightness(0.80); }
+html[data-brightness="30"] { filter: brightness(0.70); }
+html[data-brightness="40"] { filter: brightness(0.60); }
+html[data-brightness="50"] { filter: brightness(0.50); }
+html[data-brightness="60"] { filter: brightness(0.42); }
+html[data-brightness="70"] { filter: brightness(0.35); }
+
 
 /* ---------- 5. Warm filter (reduce blue light) ---------- */
 html.warm-filter body {

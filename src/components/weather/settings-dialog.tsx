@@ -457,6 +457,9 @@ export function SettingsDialog({
               </div>
             </SettingsSection>
 
+            {/* Vision & Accessibility (Rejn 2.1.1) */}
+            <VisionSettingsSection />
+
             {/* Display Settings Section */}
             <SettingsSection id="display" title="Display" icon={Eye}>
               <ToggleRow

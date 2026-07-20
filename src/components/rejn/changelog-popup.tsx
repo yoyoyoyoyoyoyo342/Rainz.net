@@ -26,6 +26,14 @@ export function ChangelogPopup() {
   const [entry, setEntry] = useState<ChangelogEntry | null>(null);
   const [open, setOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [imgIdx, setImgIdx] = useState(0);
+
+  const images = useMemo(() => {
+    if (!entry) return [] as string[];
+    const arr = (entry.image_urls ?? []).filter(Boolean);
+    if (arr.length > 0) return arr;
+    return entry.image_url ? [entry.image_url] : [];
+  }, [entry]);
 
   useEffect(() => {
     let cancelled = false;

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { X, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,7 @@ interface ChangelogEntry {
   title: string;
   body_markdown: string;
   image_url: string | null;
+  image_urls: string[] | null;
   published_at: string | null;
 }
 
@@ -25,6 +26,14 @@ export function ChangelogPopup() {
   const [entry, setEntry] = useState<ChangelogEntry | null>(null);
   const [open, setOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [imgIdx, setImgIdx] = useState(0);
+
+  const images = useMemo(() => {
+    if (!entry) return [] as string[];
+    const arr = (entry.image_urls ?? []).filter(Boolean);
+    if (arr.length > 0) return arr;
+    return entry.image_url ? [entry.image_url] : [];
+  }, [entry]);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,7 +48,7 @@ export function ChangelogPopup() {
 
       const { data, error } = await supabase
         .from("app_changelog")
-        .select("id, version, title, body_markdown, image_url, published_at")
+        .select("id, version, title, body_markdown, image_url, image_urls, published_at")
         .eq("is_published", true)
         .order("published_at", { ascending: false, nullsFirst: false })
         .limit(1)
@@ -103,10 +112,52 @@ export function ChangelogPopup() {
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) dismiss(); }}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0 border-border/60">
-        {entry.image_url && (
-          <div className="relative w-full aspect-[16/9] overflow-hidden rounded-t-lg">
-            <img src={entry.image_url} alt={entry.title} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/70 to-transparent" />
+        {images.length > 0 && (
+          <div className="relative w-full aspect-[16/9] overflow-hidden rounded-t-lg bg-muted/20">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.img
+                key={images[imgIdx]}
+                src={images[imgIdx]}
+                alt={`${entry.title} ${imgIdx + 1}`}
+                className="absolute inset-0 w-full h-full object-cover"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+              />
+            </AnimatePresence>
+            <div className="absolute inset-0 bg-gradient-to-t from-background/70 to-transparent pointer-events-none" />
+            {images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setImgIdx((i) => (i - 1 + images.length) % images.length)}
+                  aria-label="Previous image"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background border border-border/40 backdrop-blur-sm"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImgIdx((i) => (i + 1) % images.length)}
+                  aria-label="Next image"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background border border-border/40 backdrop-blur-sm"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+                  {images.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setImgIdx(i)}
+                      aria-label={`Go to image ${i + 1}`}
+                      className={`h-1.5 rounded-full transition-all ${i === imgIdx ? "w-5 bg-foreground" : "w-1.5 bg-foreground/40"}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
         <div className="relative p-6 space-y-4">

@@ -1,0 +1,1 @@
+ALTER TABLE public.app_changelog ADD COLUMN IF NOT EXISTS image_urls TEXT[] NOT NULL DEFAULT '{}';

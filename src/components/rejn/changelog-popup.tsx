@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { X, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,7 @@ interface ChangelogEntry {
   title: string;
   body_markdown: string;
   image_url: string | null;
+  image_urls: string[] | null;
   published_at: string | null;
 }
 

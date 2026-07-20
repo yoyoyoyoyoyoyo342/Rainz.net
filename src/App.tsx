@@ -31,6 +31,7 @@ import { useBroadcastListener } from "@/hooks/use-broadcast-listener";
 import { useAivenMigration } from "@/hooks/use-aiven-migration";
 import { toast as sonnerToast } from "sonner";
 import { maybeRedirectLegacyDomain } from "@/lib/subdomain-routing";
+import { VisionProvider } from "@/hooks/use-vision-preferences";
 
 
 // Critical components - load immediately

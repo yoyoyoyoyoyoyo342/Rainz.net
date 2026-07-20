@@ -60,6 +60,7 @@ function SettingsSection({ id, title, icon: Icon, children, badge }: {
 
 const CATEGORY_NAV = [
   { id: 'account', label: 'Account', icon: User },
+  { id: 'vision', label: 'Vision', icon: Eye },
   { id: 'display', label: 'Display', icon: Eye },
   { id: 'behavior', label: 'Behavior', icon: Zap },
   { id: 'notifications', label: 'Alerts', icon: Bell },

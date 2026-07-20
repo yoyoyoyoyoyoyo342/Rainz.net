@@ -399,16 +399,17 @@ export function SettingsDialog({
           </DialogHeader>
 
           {/* Sticky category pill nav */}
-          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border/20 px-4 py-2.5">
-            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-1 px-1">
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-border/20 px-4 py-2.5">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {CATEGORY_NAV.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => scrollToSection(c.id)}
-                  className="flex min-h-11 items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-muted/50 hover:bg-primary/10 hover:text-primary text-muted-foreground shrink-0 transition-colors"
+                  aria-label={`Go to ${c.label} settings`}
+                  className="flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-full bg-muted/50 px-3 py-2 text-center text-xs font-medium leading-tight text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                 >
-                  <c.icon className="w-3 h-3" />
-                  {c.label}
+                  <c.icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span className="min-w-0 break-words">{c.label}</span>
                 </button>
               ))}
             </div>
@@ -450,8 +451,10 @@ export function SettingsDialog({
                         : 'border-border/60 hover:border-primary/50 hover:bg-muted/50'
                     }`}
                   >
-                    <span className="text-lg">{languageFlags[lang]}</span>
-                    <span className="text-xs font-medium flex-1">{t(`language.${lang}`)}</span>
+                    <span className="flex h-8 w-9 shrink-0 items-center justify-center rounded-md border border-border/50 bg-background text-[10px] font-bold uppercase text-muted-foreground" aria-hidden>
+                      {lang.split('-')[0]}
+                    </span>
+                    <span className="text-xs font-medium flex-1 break-words">{t(`language.${lang}`)}</span>
                     {language === lang && <span className="text-xs text-primary">✓</span>}
                   </button>
                 ))}

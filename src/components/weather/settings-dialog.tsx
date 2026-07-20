@@ -25,6 +25,7 @@ import { IOSInstallGuide } from "@/components/ui/ios-install-guide";
 import { useCookieConsent } from "@/hooks/use-cookie-consent";
 import { useExperimentalData } from "@/hooks/use-experimental-data";
 import { usePremiumSettings } from "@/hooks/use-premium-settings";
+import { VisionSettingsSection } from "@/components/vision/vision-settings-section";
 
 interface SettingsDialogProps {
   isImperial: boolean;

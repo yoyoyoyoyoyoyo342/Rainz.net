@@ -14,7 +14,7 @@ import {
 const PRESET_OPTIONS: { id: VisionPreset; label: string; desc: string; emoji: string }[] = [
   { id: "standard", label: "Standard", desc: "No adjustments", emoji: "◯" },
   { id: "low-vision", label: "Low Vision", desc: "Bigger, bolder, high contrast", emoji: "🔍" },
-  { id: "aniridia", label: "Aniridia / Photophobia", desc: "Dim, warm, glare-free", emoji: "🌒" },
+  { id: "aniridia", label: "Aniridia / Photophobia", desc: "Warm, matte, high-legibility text", emoji: "🌒" },
   { id: "color-blind", label: "Color Blind", desc: "Adds patterns + underlines", emoji: "🎨" },
   { id: "screen-reader", label: "Screen Reader", desc: "Verbose labels, no motion", emoji: "🔊" },
 ];
@@ -37,12 +37,12 @@ function Section({ children }: { children: React.ReactNode }) {
 
 function Row({ label, description, children }: { label: string; description?: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex-1 min-w-0">
         <Label className="text-sm font-medium">{label}</Label>
         {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
       </div>
-      {children}
+      <div className="shrink-0 max-w-full">{children}</div>
     </div>
   );
 }
@@ -90,7 +90,7 @@ export function VisionSettingsSection() {
           aria-label="Text size"
           value={prefs.textScale}
           onChange={(e) => setPrefs({ textScale: Number(e.target.value) as TextScale })}
-          className="h-9 rounded-lg border border-border bg-background px-2 text-sm"
+          className="h-9 w-full rounded-lg border border-border bg-background px-2 text-sm sm:w-auto"
         >
           <option value={100}>100%</option>
           <option value={125}>125%</option>
@@ -105,7 +105,7 @@ export function VisionSettingsSection() {
           aria-label="Contrast level"
           value={prefs.contrast}
           onChange={(e) => setPrefs({ contrast: e.target.value as ContrastMode })}
-          className="h-9 rounded-lg border border-border bg-background px-2 text-sm"
+          className="h-9 w-full rounded-lg border border-border bg-background px-2 text-sm sm:w-auto"
         >
           <option value="normal">Normal</option>
           <option value="high">High</option>
@@ -159,7 +159,7 @@ export function VisionSettingsSection() {
           aria-label="Color blind mode"
           value={prefs.colorBlind}
           onChange={(e) => setPrefs({ colorBlind: e.target.value as ColorBlindMode })}
-          className="h-9 rounded-lg border border-border bg-background px-2 text-sm"
+          className="h-9 w-full rounded-lg border border-border bg-background px-2 text-sm sm:w-auto"
         >
           <option value="none">Off</option>
           <option value="deuteranopia">Deuteranopia</option>
@@ -173,7 +173,7 @@ export function VisionSettingsSection() {
           aria-label="Cursor size"
           value={prefs.cursorSize}
           onChange={(e) => setPrefs({ cursorSize: e.target.value as CursorSize })}
-          className="h-9 rounded-lg border border-border bg-background px-2 text-sm"
+          className="h-9 w-full rounded-lg border border-border bg-background px-2 text-sm sm:w-auto"
         >
           <option value="normal">Normal</option>
           <option value="large">Large</option>

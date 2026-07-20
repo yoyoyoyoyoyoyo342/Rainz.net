@@ -50,9 +50,9 @@ export const PRESETS: Record<VisionPreset, Partial<VisionPrefs>> = {
     cursorSize: "large",
   },
   aniridia: {
-    textScale: 150,
+    textScale: 125,
     contrast: "max",
-    brightness: 40,
+    brightness: 30,
     warmFilter: true,
     reduceTransparency: true,
     boldText: true,

@@ -30,8 +30,16 @@ const FEATURES = [
   { icon: ShieldCheck, title: "Trust every day", text: "Confidence scores on every forecast." },
 ];
 
-type StepId = "cookies" | "location" | "features" | "source" | "thanks";
-const STEPS: StepId[] = ["cookies", "location", "features", "source", "thanks"];
+const VISION_PRESETS: { id: VisionPreset; label: string; desc: string; emoji: string }[] = [
+  { id: "standard", label: "No adjustments", desc: "I see the app just fine.", emoji: "◯" },
+  { id: "low-vision", label: "Low vision", desc: "Bigger, bolder, higher contrast.", emoji: "🔍" },
+  { id: "aniridia", label: "Aniridia / light sensitive", desc: "Dim, warm, glare-free UI.", emoji: "🌒" },
+  { id: "color-blind", label: "Color blind", desc: "Extra patterns and labels.", emoji: "🎨" },
+  { id: "screen-reader", label: "Screen reader user", desc: "Verbose labels, no motion.", emoji: "🔊" },
+];
+
+type StepId = "cookies" | "location" | "features" | "vision" | "source" | "thanks";
+const STEPS: StepId[] = ["cookies", "location", "features", "vision", "source", "thanks"];
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -39,6 +47,7 @@ export default function Welcome() {
   const [source, setSource] = useState<string | null>(null);
   const [otherSource, setOtherSource] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
+  const { applyPreset, prefs } = useVisionPreferences();
 
   const { acceptAll, declineAll } = useCookieConsent();
   const { persist: persistLocation } = useLocationPermission();

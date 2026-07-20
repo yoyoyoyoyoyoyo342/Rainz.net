@@ -224,6 +224,7 @@ html.aniridia [role="combobox"],
 html.aniridia [role="radio"],
 html.aniridia [role="switch"] {
   min-height: 44px;
+  min-width: 44px;
 }
 
 html.aniridia .truncate {

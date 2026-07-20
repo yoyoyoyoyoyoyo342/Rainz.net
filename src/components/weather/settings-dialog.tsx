@@ -380,7 +380,7 @@ export function SettingsDialog({
     <>
       <Dialog>
         <DialogTrigger asChild>
-          <Button variant="ghost" size="icon" className="text-foreground hover:text-primary rounded-xl">
+          <Button variant="ghost" size="icon" className="text-foreground hover:text-primary rounded-xl" aria-label="Open settings">
             <Settings className="w-5 h-5" />
           </Button>
         </DialogTrigger>

@@ -9,6 +9,12 @@ html.text-scale-125 { font-size: 20px; }
 html.text-scale-150 { font-size: 24px; }
 html.text-scale-200 { font-size: 32px; }
 
+@media (max-width: 640px) {
+  html.text-scale-125 { font-size: 18px; }
+  html.text-scale-150 { font-size: 20px; }
+  html.text-scale-200 { font-size: 22px; }
+}
+
 /* ---------- 2. Contrast modes ---------- */
 /* .high-contrast is defined in index.css. .max-contrast pushes further. */
 html.max-contrast.light,
@@ -145,7 +151,122 @@ html.aniridia body {
   background: hsl(0 0% 6%) !important;
 }
 
-/* ---------- 13. Skip-to-content link ---------- */
+/* ---------- 13. Aniridia legibility + mobile safety ---------- */
+html.aniridia {
+  --background: 0 0% 4%;
+  --foreground: 48 100% 96%;
+  --card: 0 0% 8%;
+  --card-foreground: 48 100% 96%;
+  --popover: 0 0% 7%;
+  --popover-foreground: 48 100% 96%;
+  --muted: 0 0% 16%;
+  --muted-foreground: 45 46% 86%;
+  --border: 45 60% 72%;
+  --input: 45 42% 62%;
+  --ring: 45 100% 65%;
+  --primary: 45 100% 70%;
+  --primary-foreground: 0 0% 5%;
+  color-scheme: dark;
+}
+
+html.aniridia,
+html.aniridia body {
+  font-family: "Atkinson Hyperlegible", var(--font-sans), system-ui, sans-serif;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+}
+
+html.aniridia h1,
+html.aniridia h2,
+html.aniridia h3,
+html.aniridia h4,
+html.aniridia h5,
+html.aniridia h6,
+html.aniridia p,
+html.aniridia span,
+html.aniridia button,
+html.aniridia a,
+html.aniridia label,
+html.aniridia input,
+html.aniridia select,
+html.aniridia textarea {
+  letter-spacing: 0.01em;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+html.aniridia .text-xs { font-size: 0.82rem; }
+html.aniridia .text-sm { font-size: 0.95rem; }
+
+html.aniridia .glass-dialog-overlay,
+html.aniridia [data-radix-dialog-overlay],
+html.aniridia [data-vaul-drawer-overlay] {
+  background: hsl(0 0% 0% / 0.62) !important;
+}
+
+html.aniridia .glass-dialog-content,
+html.aniridia [role="dialog"],
+html.aniridia [data-radix-popper-content-wrapper] [role="listbox"] {
+  background: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border-color: hsl(var(--border) / 0.85) !important;
+  box-shadow: 0 0 0 1px hsl(var(--border) / 0.45) !important;
+}
+
+html.aniridia button,
+html.aniridia [role="button"],
+html.aniridia a,
+html.aniridia input,
+html.aniridia select,
+html.aniridia textarea,
+html.aniridia [role="combobox"],
+html.aniridia [role="radio"],
+html.aniridia [role="switch"] {
+  min-height: 44px;
+}
+
+html.aniridia .truncate {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+html.aniridia [class*="grid-cols-2"],
+html.aniridia [class*="grid-cols-3"],
+html.aniridia [class*="grid-cols-4"] {
+  align-items: stretch;
+}
+
+html.aniridia [class*="bg-gradient"],
+html.aniridia [class*="blur-3xl"] {
+  background-image: none !important;
+  filter: none !important;
+}
+
+@media (max-width: 640px) {
+  html.aniridia [role="dialog"] {
+    width: calc(100vw - 0.75rem) !important;
+    max-width: calc(100vw - 0.75rem) !important;
+    max-height: calc(100dvh - 0.75rem) !important;
+  }
+
+  html.aniridia [role="dialog"] .grid,
+  html.aniridia [data-vaul-drawer] .grid,
+  html.aniridia [class*="grid-cols-2"],
+  html.aniridia [class*="grid-cols-3"],
+  html.aniridia [class*="grid-cols-4"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  html.aniridia .fixed.bottom-0 nav,
+  html.aniridia nav.fixed.bottom-0,
+  html.aniridia .glass-tab-bar {
+    font-size: 0.85rem;
+  }
+}
+
+/* ---------- 14. Skip-to-content link ---------- */
 .skip-to-content {
   position: fixed;
   top: -100px;

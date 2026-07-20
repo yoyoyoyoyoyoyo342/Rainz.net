@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export type VisionPreset = "standard" | "low-vision" | "aniridia" | "color-blind" | "screen-reader";
 export type ContrastMode = "normal" | "high" | "max";
@@ -20,6 +21,8 @@ export interface VisionPrefs {
   colorBlind: ColorBlindMode;
   cursorSize: CursorSize;
   screenReaderMode: boolean;
+  /** Last-modified ms since epoch. Used for cloud-vs-local reconciliation. */
+  updatedAt?: number;
 }
 
 export const DEFAULT_VISION: VisionPrefs = {
@@ -36,6 +39,7 @@ export const DEFAULT_VISION: VisionPrefs = {
   colorBlind: "none",
   cursorSize: "normal",
   screenReaderMode: false,
+  updatedAt: 0,
 };
 
 export const PRESETS: Record<VisionPreset, Partial<VisionPrefs>> = {
@@ -120,8 +124,10 @@ export function applyVisionClasses(p: VisionPrefs) {
   html.classList.toggle("cursor-large", p.cursorSize === "large");
   html.classList.toggle("cursor-huge", p.cursorSize === "huge");
 
-  // Aniridia decorative-hide flag
+  // Preset flags (drive font + preset-specific rules)
   html.classList.toggle("aniridia", p.preset === "aniridia");
+  html.classList.toggle("low-vision", p.preset === "low-vision");
+  html.classList.toggle("screen-reader", p.preset === "screen-reader");
 }
 
 interface Ctx {
@@ -135,7 +141,10 @@ const VisionContext = createContext<Ctx | null>(null);
 
 export function VisionProvider({ children }: { children: React.ReactNode }) {
   const [prefs, setPrefsState] = useState<VisionPrefs>(loadFromStorage);
+  const cloudLoadedRef = useRef(false);
+  const pushTimerRef = useRef<number | null>(null);
 
+  // Apply CSS classes + persist locally on every change.
   useEffect(() => {
     applyVisionClasses(prefs);
     try {
@@ -143,21 +152,99 @@ export function VisionProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [prefs]);
 
-  const setPrefs = useCallback((patch: Partial<VisionPrefs>) => {
-    setPrefsState((p) => ({ ...p, ...patch, preset: patch.preset ?? p.preset }));
+  // Cloud sync: local-first. Fetch once when a session appears; push debounced
+  // on every mutation while signed in. Anonymous users stay purely local.
+  useEffect(() => {
+    let cancelled = false;
+
+    const pullOnce = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || cloudLoadedRef.current || cancelled) return;
+      cloudLoadedRef.current = true;
+      try {
+        const { data, error } = await supabase.functions.invoke("user-preferences", { method: "GET" });
+        if (error || cancelled) return;
+        const remote = (data?.data?.vision_prefs ?? null) as VisionPrefs | null;
+        if (remote && typeof remote === "object") {
+          const remoteTs = remote.updatedAt ?? 0;
+          const localTs = prefs.updatedAt ?? 0;
+          if (remoteTs > localTs) {
+            setPrefsState({ ...DEFAULT_VISION, ...remote });
+          } else if (localTs > remoteTs) {
+            void pushToCloud(prefs);
+          }
+        } else {
+          // No remote yet — seed it with whatever we have locally.
+          if ((prefs.updatedAt ?? 0) > 0) void pushToCloud(prefs);
+        }
+      } catch {
+        /* ignore, local wins */
+      }
+    };
+
+    pullOnce();
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      if (session && !cloudLoadedRef.current) pullOnce();
+      if (!session) cloudLoadedRef.current = false;
+    });
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const pushToCloud = useCallback(async (next: VisionPrefs) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      await supabase.functions.invoke("user-preferences", {
+        method: "PUT",
+        body: { vision_prefs: next },
+      });
+    } catch {
+      /* offline / not signed in — local remains source of truth */
+    }
+  }, []);
+
+  const scheduleCloudPush = useCallback((next: VisionPrefs) => {
+    if (pushTimerRef.current) window.clearTimeout(pushTimerRef.current);
+    pushTimerRef.current = window.setTimeout(() => void pushToCloud(next), 500);
+  }, [pushToCloud]);
+
+  const setPrefs = useCallback((patch: Partial<VisionPrefs>) => {
+    setPrefsState((p) => {
+      const next = { ...p, ...patch, preset: patch.preset ?? p.preset, updatedAt: Date.now() };
+      scheduleCloudPush(next);
+      return next;
+    });
+  }, [scheduleCloudPush]);
 
   const applyPreset = useCallback((preset: VisionPreset) => {
-    setPrefsState({ ...DEFAULT_VISION, ...PRESETS[preset], preset });
-  }, []);
+    setPrefsState(() => {
+      const next: VisionPrefs = { ...DEFAULT_VISION, ...PRESETS[preset], preset, updatedAt: Date.now() };
+      scheduleCloudPush(next);
+      return next;
+    });
+  }, [scheduleCloudPush]);
 
-  const reset = useCallback(() => setPrefsState(DEFAULT_VISION), []);
+  const reset = useCallback(() => {
+    setPrefsState(() => {
+      const next: VisionPrefs = { ...DEFAULT_VISION, updatedAt: Date.now() };
+      scheduleCloudPush(next);
+      return next;
+    });
+  }, [scheduleCloudPush]);
 
   const value = useMemo(() => ({ prefs, setPrefs, applyPreset, reset }), [prefs, setPrefs, applyPreset, reset]);
 
   return (
     <VisionContext.Provider value={value}>
       {children}
+      {/* Portal dimmer for photophobia/aniridia brightness reduction.
+          A real DOM element (not body::before) so it never becomes a
+          stacking-context ancestor of Radix/vaul portals. */}
+      <div id="rejn-vision-dimmer" aria-hidden="true" />
       {/* SVG filter defs for color-blind modes. Rendered once, referenced by CSS. */}
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
         <defs>

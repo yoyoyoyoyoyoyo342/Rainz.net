@@ -43,14 +43,15 @@ export function AppSplashScreen() {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="fixed inset-0 z-[6000] flex min-h-dvh flex-col items-center justify-center bg-background px-6 text-foreground"
+          className="fixed inset-0 z-[6000] grid place-items-center bg-background px-6 text-foreground"
+          style={{ fontSize: 16 }}
           aria-hidden="true"
         >
           <motion.div
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="flex w-full max-w-sm flex-col items-center justify-center gap-5 text-center"
+            className="flex w-full max-w-sm flex-col items-center gap-4 text-center"
           >
             <img
               src="/logo.png"
@@ -63,7 +64,7 @@ export function AppSplashScreen() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.5 }}
-              className="mt-3 max-w-xs text-center"
+              className="max-w-xs text-center"
             >
               <p className="text-sm leading-relaxed text-muted-foreground">
                 <span className="font-semibold">Did you know: </span>

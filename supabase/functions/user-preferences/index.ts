@@ -14,6 +14,7 @@ interface Prefs {
   saved_latitude?: number | null;
   saved_longitude?: number | null;
   seen_whatsnew_2?: boolean;
+  vision_prefs?: unknown;
 }
 
 serve(async (req) => {
@@ -26,7 +27,8 @@ serve(async (req) => {
     if (req.method === "GET") {
       const rows = await db`
         SELECT user_id, visible_cards, card_order, is_24_hour, is_high_contrast,
-               saved_address, saved_latitude, saved_longitude, seen_whatsnew_2
+               saved_address, saved_latitude, saved_longitude, seen_whatsnew_2,
+               vision_prefs
         FROM user_preferences
         WHERE user_id = ${user.id}
         LIMIT 1
@@ -39,7 +41,8 @@ serve(async (req) => {
       const rows = await db`
         INSERT INTO user_preferences (
           user_id, visible_cards, card_order, is_24_hour, is_high_contrast,
-          saved_address, saved_latitude, saved_longitude, seen_whatsnew_2
+          saved_address, saved_latitude, saved_longitude, seen_whatsnew_2,
+          vision_prefs
         ) VALUES (
           ${user.id},
           ${db.json(body.visible_cards ?? {})},
@@ -49,7 +52,8 @@ serve(async (req) => {
           ${body.saved_address ?? null},
           ${body.saved_latitude ?? null},
           ${body.saved_longitude ?? null},
-          ${body.seen_whatsnew_2 ?? false}
+          ${body.seen_whatsnew_2 ?? false},
+          ${body.vision_prefs === undefined ? null : db.json(body.vision_prefs)}
         )
         ON CONFLICT (user_id) DO UPDATE SET
           visible_cards     = COALESCE(EXCLUDED.visible_cards,     user_preferences.visible_cards),
@@ -60,6 +64,7 @@ serve(async (req) => {
           saved_latitude    = COALESCE(EXCLUDED.saved_latitude,    user_preferences.saved_latitude),
           saved_longitude   = COALESCE(EXCLUDED.saved_longitude,   user_preferences.saved_longitude),
           seen_whatsnew_2   = COALESCE(EXCLUDED.seen_whatsnew_2,   user_preferences.seen_whatsnew_2),
+          vision_prefs      = COALESCE(EXCLUDED.vision_prefs,      user_preferences.vision_prefs),
           updated_at        = now()
         RETURNING *
       `;

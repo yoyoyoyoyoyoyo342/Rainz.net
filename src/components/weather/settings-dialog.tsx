@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { MAX_SAVED_LOCATIONS } from "@/lib/saved-locations";
-import { useLanguage, Language, languageFlags } from "@/contexts/language-context";
+import { useLanguage, Language } from "@/contexts/language-context";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -83,7 +83,7 @@ function ToggleRow({ icon: Icon, label, description, checked, onCheckedChange, d
   disabled?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           {Icon && <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
@@ -93,7 +93,7 @@ function ToggleRow({ icon: Icon, label, description, checked, onCheckedChange, d
           <p className="text-xs text-muted-foreground mt-0.5 ml-6">{description}</p>
         )}
       </div>
-      <Switch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
+      <Switch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} className="shrink-0" />
     </div>
   );
 }
@@ -380,50 +380,51 @@ export function SettingsDialog({
     <>
       <Dialog>
         <DialogTrigger asChild>
-          <Button variant="ghost" size="icon" className="text-foreground hover:text-primary rounded-xl">
+          <Button variant="ghost" size="icon" className="text-foreground hover:text-primary rounded-xl" aria-label="Open settings">
             <Settings className="w-5 h-5" />
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[520px] max-h-[92vh] flex flex-col overflow-hidden p-0 border-border/50">
-          <DialogHeader className="px-6 pt-6 pb-5 border-b border-border/30 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent relative">
+        <DialogContent className="sm:max-w-[520px] max-h-[calc(100dvh-1rem)] flex flex-col overflow-hidden p-0 border-border/50">
+          <DialogHeader className="px-4 pt-5 pb-4 border-b border-border/30 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent relative sm:px-6 sm:pt-6 sm:pb-5">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-            <DialogTitle className="flex items-center gap-2.5 text-xl font-bold relative">
-              <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center">
+            <DialogTitle className="flex items-center gap-2.5 pr-12 text-lg font-bold leading-tight relative sm:text-xl">
+              <div className="h-9 w-9 shrink-0 rounded-xl bg-primary/15 flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-primary" />
               </div>
-              {t('settings.title')}
+              <span className="min-w-0 break-words">{t('settings.title')}</span>
             </DialogTitle>
-            <DialogDescription className="text-sm pl-[46px] -mt-1 relative">
+            <DialogDescription className="text-sm pl-[46px] -mt-1 pr-8 relative leading-relaxed">
               {t('settings.customise')}
             </DialogDescription>
           </DialogHeader>
 
           {/* Sticky category pill nav */}
-          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border/20 px-4 py-2.5">
-            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-1 px-1">
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-border/20 px-4 py-2.5">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {CATEGORY_NAV.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => scrollToSection(c.id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-muted/50 hover:bg-primary/10 hover:text-primary text-muted-foreground shrink-0 transition-colors"
+                  aria-label={`Go to ${c.label} settings`}
+                  className="flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-full bg-muted/50 px-3 py-2 text-center text-xs font-medium leading-tight text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                 >
-                  <c.icon className="w-3 h-3" />
-                  {c.label}
+                  <c.icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span className="min-w-0 break-words">{c.label}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4 sm:px-4">
             {/* Account Section */}
             {user && (
               <SettingsSection id="account" title={t('settings.account')} icon={User}>
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{user.email}</p>
                     <p className="text-xs text-muted-foreground">Signed in</p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={handleSignOut} className="gap-1.5">
+                  <Button variant="outline" size="sm" onClick={handleSignOut} className="w-full gap-1.5 sm:w-auto">
                     <LogOut className="w-3.5 h-3.5" />
                     {t('settings.signOut')}
                   </Button>
@@ -433,7 +434,7 @@ export function SettingsDialog({
 
             {/* Language Section */}
             <SettingsSection title={t('settings.language')} icon={Languages}>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {(['en-GB', 'en-US', 'da', 'sv', 'no', 'fr', 'it', 'boomer'] as Language[]).map((lang) => (
                   <button
                     key={lang}
@@ -444,14 +445,16 @@ export function SettingsDialog({
                         description: `${t('settings.changedTo')} ${t(`language.${lang}`)}`,
                       });
                     }}
-                    className={`flex items-center gap-2 p-2.5 rounded-lg border text-left transition-all ${
+                    className={`flex min-h-11 items-center gap-2 p-2.5 rounded-lg border text-left transition-all ${
                       language === lang
                         ? 'border-primary bg-primary/10 ring-1 ring-primary/50'
                         : 'border-border/60 hover:border-primary/50 hover:bg-muted/50'
                     }`}
                   >
-                    <span className="text-lg">{languageFlags[lang]}</span>
-                    <span className="text-xs font-medium flex-1">{t(`language.${lang}`)}</span>
+                    <span className="flex h-8 w-9 shrink-0 items-center justify-center rounded-md border border-border/50 bg-background text-[10px] font-bold uppercase text-muted-foreground" aria-hidden>
+                      {lang.split('-')[0]}
+                    </span>
+                    <span className="text-xs font-medium flex-1 break-words">{t(`language.${lang}`)}</span>
                     {language === lang && <span className="text-xs text-primary">✓</span>}
                   </button>
                 ))}

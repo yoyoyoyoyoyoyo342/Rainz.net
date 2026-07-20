@@ -293,19 +293,22 @@ function AppContent() {
                     {/* PWA install popup removed — use /download for opt-in install */}
                     <AppSplashScreen />
                      <BrowserRouter>
+                        <VisionProvider>
+                        <a href="#main-content" className="skip-to-content">Skip to main content</a>
                         <div className="flex flex-col min-h-screen">
                           <AppBanner />
                           <BirthdayBanner />
-                          <div className="flex-1">
+                          <main id="main-content" className="flex-1" tabIndex={-1}>
                             <AnalyticsTracker />
                             <AnimatedRoutes />
                             <ChangelogPopup />
                             <DownloadPWANudge source="ambient_bottom_right" />
-                          </div>
+                          </main>
                           {window.location.pathname !== '/dryroutes' && (
                          <Footer />
                           )}
                        </div>
+                       </VisionProvider>
                     </BrowserRouter>
                   </TooltipProvider>
                    </CookieConsentProvider>

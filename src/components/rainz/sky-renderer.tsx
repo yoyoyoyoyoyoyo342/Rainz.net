@@ -251,7 +251,7 @@ export function SkyRenderer({
   useFxCanvas(canvasRef, cond, !reducedMotion);
 
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
+    <div data-decorative="sky" className="fixed inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
       {/* 1. Photoreal gradient sky */}
       <div
         className="absolute inset-0 transition-[background] duration-[1500ms] ease-out"

@@ -198,6 +198,46 @@ export default function Welcome() {
               </div>
             )}
 
+            {step === "vision" && (
+              <div className="space-y-5">
+                <div className="text-center space-y-1">
+                  <div className="mx-auto h-12 w-12 rounded-2xl bg-primary/15 flex items-center justify-center">
+                    <Eye className="h-6 w-6 text-primary" aria-hidden />
+                  </div>
+                  <h1 className="text-2xl font-bold">Any vision needs?</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Rejn is built for everyone. Pick a profile — you can change it any time in Settings.
+                  </p>
+                </div>
+                <div role="radiogroup" aria-label="Vision profile" className="grid grid-cols-1 gap-2">
+                  {VISION_PRESETS.map((opt) => {
+                    const active = prefs.preset === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        onClick={() => applyPreset(opt.id)}
+                        className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-colors ${
+                          active
+                            ? "border-primary bg-primary/10 ring-2 ring-primary/40"
+                            : "border-border/40 bg-card/40 hover:bg-card/70"
+                        }`}
+                      >
+                        <span className="text-2xl leading-none" aria-hidden>{opt.emoji}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm">{opt.label}</div>
+                          <div className="text-xs text-muted-foreground">{opt.desc}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <Button className="w-full" onClick={advance}>Continue</Button>
+              </div>
+            )}
+
             {step === "source" && (
               <div className="space-y-5">
                 <div className="text-center space-y-1">

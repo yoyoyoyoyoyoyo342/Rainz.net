@@ -113,12 +113,6 @@ const faqs = [
   // --- Features ---
   {
     category: "Features",
-    question: "What is DryRoutes in Rejn?",
-    answer:
-      "DryRoutes is a unique Rejn feature that plans walking and cycling routes to avoid rain. Using real-time precipitation data and forecasts, it finds the driest path between two points, helping you stay dry during your commute or outdoor activities.",
-  },
-  {
-    category: "Features",
     question: "Does Rejn track pollen and allergies?",
     answer:
       "Yes. Rejn provides detailed pollen tracking for grass, tree, and weed pollen with allergy severity forecasts. If you're an allergy sufferer, you can set up pollen alerts to get notified when levels are high in your area.",

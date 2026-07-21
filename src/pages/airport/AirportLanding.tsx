@@ -158,7 +158,7 @@ function TiltCard({ children, className }: { children: React.ReactNode; classNam
 const testimonials = [
   { name: "Sigrid K.", location: "Oslo", quote: "I haven't been caught in the rain since I started using Rejn. My umbrella is collecting dust.", rating: 5 },
   { name: "Erik B.", location: "Stockholm", quote: "The prediction battles are genuinely addictive. I beat my girlfriend every week and she's furious.", rating: 5 },
-  { name: "Freya L.", location: "Copenhagen", quote: "DryRoutes saved my suede shoes. That alone is worth premium.", rating: 5 },
+  { name: "Freya L.", location: "Copenhagen", quote: "The AI companion actually explains the forecast instead of just showing icons. Refreshing.", rating: 5 },
   { name: "Olav M.", location: "Bergen", quote: "In Bergen it rains 240 days a year. Rejn makes those days slightly less annoying.", rating: 4 },
 ];
 

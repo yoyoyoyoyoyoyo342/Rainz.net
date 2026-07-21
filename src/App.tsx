@@ -304,9 +304,7 @@ function AppContent() {
                             <ChangelogPopup />
                             <DownloadPWANudge source="ambient_bottom_right" />
                           </main>
-                          {window.location.pathname !== '/dryroutes' && (
-                         <Footer />
-                          )}
+                          <Footer />
                        </div>
                        </VisionProvider>
                     </BrowserRouter>

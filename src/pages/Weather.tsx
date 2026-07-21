@@ -66,7 +66,7 @@ const ARWeatherOverlay = lazy(() => import("@/components/weather/ar-weather-over
 const AQICard = lazy(() => import("@/components/weather/aqi-card").then(m => ({ default: m.AQICard })));
 const BarometerCard = lazy(() => import("@/components/weather/barometer-card").then(m => ({ default: m.BarometerCard })));
 const RainMapCard = lazy(() => import("@/components/weather/rain-map-card"));
-const DryRoute = lazy(() => import("@/components/weather/dry-route").then(m => ({ default: m.DryRoute })));
+
 const AffiliateCard = lazy(() => import("@/components/weather/affiliate-card").then(m => ({ default: m.AffiliateCard })));
 const ChristmasCalendar = lazy(() => import("@/components/weather/christmas-calendar").then(m => ({ default: m.ChristmasCalendar })));
 const RamadanCalendar = lazy(() => import("@/components/weather/ramadan-calendar").then(m => ({ default: m.RamadanCalendar })));

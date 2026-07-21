@@ -341,28 +341,30 @@ html.aniridia [class*="blur-3xl"] {
   html.text-scale-150 [data-vaul-drawer] .grid,
   html.text-scale-200 [data-vaul-drawer] .grid,
   html.aniridia [data-vaul-drawer] .grid,
-  html.text-scale-150 [class*="grid-cols-2"],
-  html.text-scale-200 [class*="grid-cols-2"],
-  html.text-scale-150 [class*="grid-cols-3"],
-  html.text-scale-200 [class*="grid-cols-3"],
-  html.text-scale-150 [class*="grid-cols-4"],
-  html.text-scale-200 [class*="grid-cols-4"],
-  html.aniridia [class*="grid-cols-2"],
-  html.aniridia [class*="grid-cols-3"],
-  html.aniridia [class*="grid-cols-4"] {
+  html.text-scale-150 [role="dialog"] [class*="grid-cols-2"],
+  html.text-scale-200 [role="dialog"] [class*="grid-cols-2"],
+  html.text-scale-150 [role="dialog"] [class*="grid-cols-3"],
+  html.text-scale-200 [role="dialog"] [class*="grid-cols-3"],
+  html.text-scale-150 [role="dialog"] [class*="grid-cols-4"],
+  html.text-scale-200 [role="dialog"] [class*="grid-cols-4"],
+  html.aniridia [role="dialog"] [class*="grid-cols-2"],
+  html.aniridia [role="dialog"] [class*="grid-cols-3"],
+  html.aniridia [role="dialog"] [class*="grid-cols-4"],
+  html.text-scale-150 [data-vaul-drawer] [class*="grid-cols-2"],
+  html.text-scale-200 [data-vaul-drawer] [class*="grid-cols-2"],
+  html.aniridia [data-vaul-drawer] [class*="grid-cols-2"] {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
-  html.text-scale-150 .fixed.bottom-0 nav,
-  html.text-scale-200 .fixed.bottom-0 nav,
-  html.aniridia .fixed.bottom-0 nav,
-  html.text-scale-150 nav.fixed.bottom-0,
-  html.text-scale-200 nav.fixed.bottom-0,
-  html.aniridia nav.fixed.bottom-0,
-  html.text-scale-150 .glass-tab-bar,
-  html.text-scale-200 .glass-tab-bar,
-  html.aniridia .glass-tab-bar {
-    font-size: 0.85rem;
+  /* Don't shrink or rewrite the bottom nav in accessibility modes — it must
+     stay a horizontal 4-column pill on mobile. */
+  html.text-scale-150 nav.fixed.bottom-0 [class*="grid-cols-4"],
+  html.text-scale-200 nav.fixed.bottom-0 [class*="grid-cols-4"],
+  html.aniridia nav.fixed.bottom-0 [class*="grid-cols-4"],
+  html.text-scale-150 .glass-tab-bar [class*="grid-cols-4"],
+  html.text-scale-200 .glass-tab-bar [class*="grid-cols-4"],
+  html.aniridia .glass-tab-bar [class*="grid-cols-4"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 }
 

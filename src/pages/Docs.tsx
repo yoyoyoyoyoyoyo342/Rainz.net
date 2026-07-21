@@ -157,17 +157,24 @@ const SECTIONS: DocSection[] = [
     ),
   },
   {
-    id: "dryroutes",
-    title: "DryRoutes",
+    id: "accessibility",
+    title: "Accessibility",
     category: "Features",
-    icon: Map,
-    summary: "Plan a route that dodges the rain.",
+    icon: Shield,
+    summary: "The world's first aniridia-friendly weather app.",
     content: (
       <>
         <p>
-          DryRoutes uses the MOTIS Transitous API combined with our precipitation ensemble to
-          score multiple route candidates by how much rain you'd actually walk through. The
-          full-screen experience lives on <code>dryroutes.rainz.net</code>.
+          Rejn is <strong>the world's first aniridia-friendly weather app</strong>. The
+          Vision Update ships five presets — Standard, Low Vision, Aniridia / Photophobia,
+          Color Blind, and Screen Reader — plus fine-grained controls for text size,
+          contrast, brightness dimming, warm-light filter, motion reduction, and cursor
+          size.
+        </p>
+        <p>
+          Atkinson Hyperlegible Next is used across low-vision presets, all interactive
+          controls hit a 44px minimum tap target, and Radix / Vaul portals render above
+          any dimmers so dialogs are always reachable.
         </p>
       </>
     ),

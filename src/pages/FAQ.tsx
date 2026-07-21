@@ -272,7 +272,6 @@ export default function FAQ() {
               <Link to="/about" className="text-sm text-primary hover:underline">About Rejn</Link>
               <Link to="/articles" className="text-sm text-primary hover:underline">Weather Blog</Link>
               <Link to="/download" className="text-sm text-primary hover:underline">Download App</Link>
-              <Link to="/dryroutes" className="text-sm text-primary hover:underline">DryRoutes</Link>
               <Link to="/privacy" className="text-sm text-primary hover:underline">Privacy Policy</Link>
               <Link to="/terms" className="text-sm text-primary hover:underline">Terms of Service</Link>
             </div>

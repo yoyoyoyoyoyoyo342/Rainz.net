@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Target, Navigation, Users } from "lucide-react";
+import { X, Target, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const TOUR_KEY = "rainz-tour-complete";

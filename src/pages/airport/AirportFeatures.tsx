@@ -39,9 +39,9 @@ const features = [
   },
   {
     icon: MapPin,
-    title: "DryRoutes Navigation",
-    desc: "Find the driest path between two points. Minute-by-minute precipitation overlayed on real routes. Your suede shoes will thank you.",
-    tag: "Premium",
+    title: "Accessible for Everyone",
+    desc: "The world's first aniridia-friendly weather app. Vision presets for low vision, photophobia, color blindness, and screen readers — built in, not bolted on.",
+    tag: "Accessibility",
   },
   {
     icon: Flower2,

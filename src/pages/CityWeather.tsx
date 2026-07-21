@@ -259,46 +259,6 @@ export default function CityWeather() {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* DryRoutes Embed + CTA */}
-              <Card className="glass-card mb-6 border-primary/20 overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="bg-primary/5 px-4 pt-4 pb-3">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="rounded-full bg-primary/10 p-2 shrink-0">
-                        <Navigation className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h2 className="text-base md:text-lg font-bold text-foreground">
-                          DryRoutes in {city.name}
-                        </h2>
-                        <p className="text-xs text-muted-foreground">
-                          Find the driest path for walking, cycling or driving
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Tall iframe embed of DryRoutes */}
-                  <div className="w-full h-[calc(100vh-120px)] md:h-[calc(100vh-140px)] bg-background/20">
-                    <iframe
-                      src={dryRoutesEmbedUrl}
-                      className="w-full h-full border-0"
-                      title={`DryRoutes map for ${city.name}`}
-                      loading="lazy"
-                      allow="geolocation"
-                    />
-                  </div>
-                  <div className="px-4 py-3 border-t border-border/30">
-                    <Link to={dryRoutesUrl}>
-                      <Button className="w-full gap-2 h-11 text-sm" size="lg">
-                        <Navigation className="h-4 w-4" />
-                        Open Full DryRoutes
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
             </>
           ) : null}
 

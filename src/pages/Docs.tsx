@@ -70,7 +70,7 @@ const SECTIONS: DocSection[] = [
           <li>Open <a href="https://rainz.net">rainz.net</a> — there is no onboarding flow.</li>
           <li>Allow location access when prompted (one-time, persisted locally).</li>
           <li>Optionally sign up to save locations, predict the weather, and earn trophies.</li>
-          <li>Tap any tab in the bottom bar: Weather, Predict, Social, Explore, DryRoutes.</li>
+          <li>Tap any tab in the bottom bar: Weather, Predict, Ask Rejn, Explore.</li>
         </ol>
       </>
     ),

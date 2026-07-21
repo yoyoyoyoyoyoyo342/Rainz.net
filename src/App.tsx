@@ -218,7 +218,7 @@ function AnimatedRoutes() {
               <Route path="/widget" element={<Widget />} />
               <Route path="/embed" element={<Embed />} />
               <Route path="/info" element={<Info />} />
-              <Route path="/dryroutes" element={<DryRoutes />} />
+              <Route path="/dryroutes" element={<Navigate to="/" replace />} />
               <Route path="/weather/:citySlug" element={<CityWeather />} />
               <Route path="/weather" element={<Navigate to="/" replace />} />
               <Route path="/mcp" element={<MCP />} />

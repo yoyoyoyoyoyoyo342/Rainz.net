@@ -121,19 +121,6 @@ export default function TermsOfService() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>5. DryRoutes Liability Disclaimer</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <p>
-              Some features of Rejn Weather allow users to create and share routes via the&nbsp;DryRoutes&nbsp;planner. All routes are generated entirely by other users and may traverse private property, unmaintained trails, or hazardous terrain.
-            </p>
-            <p>
-              Rejn.net provides no assurances regarding the safety, accuracy, or suitability of DryRoutes paths. By using or following any route obtained through DryRoutes, you agree that you do so at your own risk. We accept no liability for any injuries, accidents, damages, or other harm arising from your use of or reliance on user‑generated routes.
-            </p>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>

@@ -64,7 +64,7 @@ const Widgets = lazy(() => import("./pages/Widgets"));
 const Widget = lazy(() => import("./pages/Widget"));
 const Embed = lazy(() => import("./pages/Embed"));
 const Info = lazy(() => import("./pages/Info"));
-const DryRoutes = lazy(() => import("./pages/DryRoutes"));
+
 const CityWeather = lazy(() => import("./pages/CityWeather"));
 const MCP = lazy(() => import("./pages/MCP"));
 const FAQ = lazy(() => import("./pages/FAQ"));
@@ -218,7 +218,7 @@ function AnimatedRoutes() {
               <Route path="/widget" element={<Widget />} />
               <Route path="/embed" element={<Embed />} />
               <Route path="/info" element={<Info />} />
-              <Route path="/dryroutes" element={<DryRoutes />} />
+              <Route path="/dryroutes" element={<Navigate to="/" replace />} />
               <Route path="/weather/:citySlug" element={<CityWeather />} />
               <Route path="/weather" element={<Navigate to="/" replace />} />
               <Route path="/mcp" element={<MCP />} />
@@ -304,9 +304,7 @@ function AppContent() {
                             <ChangelogPopup />
                             <DownloadPWANudge source="ambient_bottom_right" />
                           </main>
-                          {window.location.pathname !== '/dryroutes' && (
-                         <Footer />
-                          )}
+                          <Footer />
                        </div>
                        </VisionProvider>
                     </BrowserRouter>

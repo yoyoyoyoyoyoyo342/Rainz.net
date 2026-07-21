@@ -21,8 +21,7 @@ export function CookieConsentBanner() {
     functional: preferences?.functional || false,
   });
 
-  // Hide on /dryroutes — immersive full-screen experience
-  if (hasConsented || window.location.pathname === '/dryroutes') return null;
+  if (hasConsented) return null;
 
   const handleSaveCustom = () => {
     savePreferences({

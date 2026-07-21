@@ -113,12 +113,6 @@ const faqs = [
   // --- Features ---
   {
     category: "Features",
-    question: "What is DryRoutes in Rejn?",
-    answer:
-      "DryRoutes is a unique Rejn feature that plans walking and cycling routes to avoid rain. Using real-time precipitation data and forecasts, it finds the driest path between two points, helping you stay dry during your commute or outdoor activities.",
-  },
-  {
-    category: "Features",
     question: "Does Rejn track pollen and allergies?",
     answer:
       "Yes. Rejn provides detailed pollen tracking for grass, tree, and weed pollen with allergy severity forecasts. If you're an allergy sufferer, you can set up pollen alerts to get notified when levels are high in your area.",
@@ -278,7 +272,6 @@ export default function FAQ() {
               <Link to="/about" className="text-sm text-primary hover:underline">About Rejn</Link>
               <Link to="/articles" className="text-sm text-primary hover:underline">Weather Blog</Link>
               <Link to="/download" className="text-sm text-primary hover:underline">Download App</Link>
-              <Link to="/dryroutes" className="text-sm text-primary hover:underline">DryRoutes</Link>
               <Link to="/privacy" className="text-sm text-primary hover:underline">Privacy Policy</Link>
               <Link to="/terms" className="text-sm text-primary hover:underline">Terms of Service</Link>
             </div>

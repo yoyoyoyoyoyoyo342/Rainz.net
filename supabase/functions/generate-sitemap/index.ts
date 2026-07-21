@@ -21,7 +21,7 @@ const STATIC_ROUTES = [
   { path: "/privacy", priority: "0.3", changefreq: "yearly" },
   { path: "/terms", priority: "0.3", changefreq: "yearly" },
   { path: "/data-settings", priority: "0.3", changefreq: "yearly" },
-  { path: "/dryroutes", priority: "0.7", changefreq: "daily" },
+  
   { path: "/mcp", priority: "0.5", changefreq: "monthly" },
   { path: "/auth", priority: "0.4", changefreq: "monthly" },
   { path: "/widgets", priority: "0.5", changefreq: "monthly" },

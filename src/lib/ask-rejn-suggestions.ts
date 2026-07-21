@@ -76,7 +76,7 @@ export const ASK_REJN_SUGGESTIONS: string[] = [
   "How do I unlock achievements?",
 
   // Features
-  "What is DryRoutes?",
+  "How does Rejn stay accessible?",
   "How does Rejn SkyCam work?",
   "What's the ensemble forecast?",
   "Why do I get different forecasts?",

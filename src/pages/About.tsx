@@ -111,6 +111,9 @@ export default function About() {
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             The most accurate hyperlocal weather app, powered by multi-model ensemble forecasting and a passionate community of weather enthusiasts.
           </p>
+          <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-semibold text-primary">
+            🌍 The world's first aniridia-friendly weather app
+          </p>
         </div>
 
         {/* Image Carousel */}

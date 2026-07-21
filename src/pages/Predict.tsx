@@ -1,353 +1,50 @@
-import { Suspense, lazy, useState, useEffect } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Target, LogIn, Medal, Flame, Trophy, History, ShoppingBag, MapPin, Info, Sparkles } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Target, ArrowLeft, Wrench } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { SEOHead } from "@/components/seo/seo-head";
 import { BottomTabBar } from "@/components/weather/bottom-tab-bar";
-import { HeaderInfoBar } from "@/components/weather/header-info-bar";
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useLanguage } from "@/contexts/language-context";
-import { trackPredictionMade } from "@/lib/track-event";
-
-const WeatherPredictionForm = lazy(() => import("@/components/weather/weather-prediction-form").then(m => ({ default: m.WeatherPredictionForm })));
-const Leaderboard = lazy(() => import("@/components/weather/leaderboard").then(m => ({ default: m.Leaderboard })));
-const PointsHistory = lazy(() => import("@/components/weather/points-history").then(m => ({ default: m.PointsHistory })));
-const PointsShop = lazy(() => import("@/components/weather/points-shop").then(m => ({ default: m.PointsShop })));
-const PredictionBattles = lazy(() => import("@/components/weather/prediction-battles").then(m => ({ default: m.PredictionBattles })));
-const BattleAcceptCard = lazy(() => import("@/components/weather/battle-accept-card").then(m => ({ default: m.BattleAcceptCard })));
-const DailySpinWheel = lazy(() => import("@/components/weather/daily-spin-wheel").then(m => ({ default: m.DailySpinWheel })));
-import { StreakMultiplierMeter } from "@/components/predict/streak-multiplier-meter";
-import { RejnMascot } from "@/components/rejn/rejn-mascot";
-import { PredictionCelebration } from "@/components/predict/prediction-celebration";
-import { RejnCommentary } from "@/components/predict/rejn-commentary";
-import { WildCardHype } from "@/components/predict/wild-card-hype";
 
 export default function PredictPage() {
-  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState("predict");
-  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lon: number; name: string }>({
-    lat: 55.6761,
-    lon: 12.5683,
-    name: "Copenhagen",
-  });
-  const [isImperial, setIsImperial] = useState(false);
-  const [celebrateTick, setCelebrateTick] = useState(0);
-  const acceptBattleId = searchParams.get("accept_battle");
-
-  // If we land here with accept_battle, ensure we're on the predict tab
-  useEffect(() => {
-    if (acceptBattleId) setActiveTab("predict");
-  }, [acceptBattleId]);
-
-  const clearAcceptBattle = () => {
-    const next = new URLSearchParams(searchParams);
-    next.delete("accept_battle");
-    setSearchParams(next, { replace: true });
-  };
-
-  // Load user's primary saved location
-  const { data: savedLocations = [] } = useQuery({
-    queryKey: ["saved-locations", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("saved_locations")
-        .select("*")
-        .eq("user_id", user!.id)
-        .order("is_primary", { ascending: false })
-        .order("name");
-      return data || [];
-    },
-    enabled: !!user,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  // User stats
-  const { data: userStats } = useQuery({
-    queryKey: ["predict-user-stats", user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      const { data: predictions } = await supabase
-        .from("weather_predictions")
-        .select("is_correct, is_verified, points_earned, user_id, prediction_date")
-        .eq("user_id", user.id);
-
-      const verified = predictions?.filter(p => p.is_verified) || [];
-      const correct = verified.filter(p => p.is_correct).length;
-      const accuracy = verified.length > 0 ? Math.round((correct / verified.length) * 100) : 0;
-
-      const { data: streakData } = await supabase
-        .from("user_streaks")
-        .select("current_streak")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      const now = new Date();
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
-      const { data: monthlyPredictions } = await supabase
-        .from("weather_predictions")
-        .select("user_id, points_earned")
-        .gte("prediction_date", monthStart.split("T")[0])
-        .lt("prediction_date", monthEnd.split("T")[0]);
-
-      const userMonthlyPoints: Record<string, number> = {};
-      (monthlyPredictions || []).forEach((p: any) => {
-        userMonthlyPoints[p.user_id] = (userMonthlyPoints[p.user_id] || 0) + (p.points_earned || 0);
-      });
-      const myPoints = userMonthlyPoints[user.id] || 0;
-      const rank = Object.values(userMonthlyPoints).filter(pts => pts > myPoints).length + 1;
-
-      return { rank, streak: streakData?.current_streak || 0, totalPredictions: predictions?.length || 0, accuracy };
-    },
-    enabled: !!user,
-    staleTime: 1000 * 60 * 2,
-  });
-
-  useEffect(() => {
-    if (savedLocations.length > 0) {
-      const primary = savedLocations[0];
-      setSelectedLocation({ lat: Number(primary.latitude), lon: Number(primary.longitude), name: primary.name });
-    }
-  }, [savedLocations]);
-
-  if (authLoading) {
-    return (
-      <>
-        <SEOHead title="Predict — Rejn Weather" description="Make weather predictions and compete on the leaderboard" />
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-          <Card className="glass-card max-w-sm w-full">
-            <CardContent className="flex flex-col items-center gap-4 pt-8 pb-8">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <Target className="w-8 h-8 text-primary" />
-              </div>
-              <h2 className="text-xl font-bold text-foreground">Loading prediction form…</h2>
-            </CardContent>
-          </Card>
-        </div>
-        <BottomTabBar />
-      </>
-    );
-  }
-
-  if (!user) {
-    return (
-      <>
-        <SEOHead title="Predict — Rejn Weather" description="Make weather predictions and compete on the leaderboard" />
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-          <Card className="glass-card max-w-sm w-full">
-            <CardContent className="flex flex-col items-center gap-4 pt-8 pb-8">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <Target className="w-8 h-8 text-primary" />
-              </div>
-              <h2 className="text-xl font-bold text-foreground">Predict the Weather</h2>
-              <p className="text-sm text-muted-foreground text-center">
-                Make daily predictions, earn points, and climb the leaderboard. Sign in to get started!
-              </p>
-              <Button onClick={() => navigate("/auth")} className="gap-2 w-full">
-                <LogIn className="w-4 h-4" /> Sign In to Predict
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-        <BottomTabBar />
-      </>
-    );
-  }
 
   return (
     <>
-      <SEOHead title="Predict — Rejn Weather" description="Make weather predictions and compete on the leaderboard" />
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-6 max-w-2xl space-y-4">
-          <div className="flex justify-end -mb-2">
-            <HeaderInfoBar user={user} showInbox={true} showStreak={false} />
-          </div>
-
-          {/* Hero — Tomorrow's Challenge */}
-          <Card className="relative overflow-hidden border-primary/30 bg-gradient-to-br from-primary/15 via-primary/5 to-background">
-            <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
-            <RejnMascot pose="pounce" className="absolute -bottom-2 right-2 w-20 h-20 opacity-90 pointer-events-none" />
-            <CardContent className="relative p-4 sm:p-5 space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-wider">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    Tomorrow's Challenge
-                  </div>
-                  <h1 className="text-2xl font-bold mt-1">
-                    {(() => {
-                      const t = new Date();
-                      t.setDate(t.getDate() + 1);
-                      return t.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
-                    })()}
-                  </h1>
-                  {selectedLocation && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                      <MapPin className="w-3 h-3" />
-                      <span>{selectedLocation.name}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
-                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-500/15 border border-orange-500/30">
-                    <Flame className="w-3.5 h-3.5 text-orange-500" />
-                    <span className="text-sm font-bold text-orange-600">{userStats?.streak || 0}</span>
-                  </div>
-                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-yellow-500/15 border border-yellow-500/30">
-                    <Medal className="w-3.5 h-3.5 text-yellow-600" />
-                    <span className="text-xs font-bold text-yellow-700">#{userStats?.rank || "—"}</span>
-                  </div>
-                </div>
+      <SEOHead
+        title="Predictions — Rejn Weather"
+        description="Predictions are being reworked. Check back soon for the new Rejn prediction game."
+      />
+      <div className="min-h-screen bg-background flex items-center justify-center px-4 pb-24">
+        <Card className="glass-card max-w-md w-full">
+          <CardContent className="flex flex-col items-center gap-5 pt-10 pb-10 text-center">
+            <div className="relative">
+              <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center">
+                <Target className="w-10 h-10 text-primary" aria-hidden />
               </div>
-
-              <div className="flex items-center justify-between pt-2 border-t border-border/40">
-                <div className="flex gap-4 text-xs">
-                  <div>
-                    <div className="text-muted-foreground">Total</div>
-                    <div className="font-bold text-sm">{userStats?.totalPredictions || 0}</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Accuracy</div>
-                    <div className="font-bold text-sm text-green-600">{userStats?.accuracy || 0}%</div>
-                  </div>
-                </div>
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
-                      <Info className="w-3.5 h-3.5" />
-                      Scoring
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="bottom" className="rounded-t-2xl">
-                    <SheetHeader>
-                      <SheetTitle className="flex items-center gap-2">
-                        <Trophy className="w-5 h-5 text-primary" />
-                        How Points Work
-                      </SheetTitle>
-                    </SheetHeader>
-                    <div className="space-y-3 mt-4 text-sm">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="flex items-center gap-2"><Badge className="bg-green-500/20 text-green-700">+300</Badge> All 3 correct</div>
-                        <div className="flex items-center gap-2"><Badge className="bg-blue-500/20 text-blue-700">+200</Badge> 2 correct</div>
-                        <div className="flex items-center gap-2"><Badge className="bg-amber-500/20 text-amber-700">+100</Badge> 1 correct</div>
-                        <div className="flex items-center gap-2"><Badge className="bg-red-500/20 text-red-700">−100</Badge> All wrong</div>
-                      </div>
-                      <p className="text-xs text-muted-foreground pt-2 border-t">
-                        🔥 Use Confidence Betting to multiply rewards (and risks) — up to <span className="font-bold text-foreground">2.5x</span> with All-In.
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Predictions verified daily at 10 PM CET against multi-model ensemble data.
-                      </p>
-                    </div>
-                  </SheetContent>
-                </Sheet>
+              <div className="absolute -bottom-1 -right-1 w-9 h-9 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
+                <Wrench className="w-4 h-4 text-amber-600" aria-hidden />
               </div>
-            </CardContent>
-          </Card>
-
-
-          {/* Tabs: Predict, Leaders, History, Shop */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 h-11">
-              <TabsTrigger value="predict" className="gap-1 text-xs">
-                <Target className="w-4 h-4" />
-                <span className="hidden sm:inline">Predict</span>
-              </TabsTrigger>
-              <TabsTrigger value="leaderboard" className="gap-1 text-xs">
-                <Trophy className="w-4 h-4" />
-                <span className="hidden sm:inline">Leaders</span>
-              </TabsTrigger>
-              <TabsTrigger value="history" className="gap-1 text-xs">
-                <History className="w-4 h-4" />
-                <span className="hidden sm:inline">History</span>
-              </TabsTrigger>
-              <TabsTrigger value="shop" className="gap-1 text-xs">
-                <ShoppingBag className="w-4 h-4" />
-                <span className="hidden sm:inline">Shop</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="predict" className="mt-4 space-y-4">
-              {acceptBattleId && (
-                <Suspense fallback={null}>
-                  <BattleAcceptCard
-                    battleId={acceptBattleId}
-                    isImperial={isImperial}
-                    onComplete={clearAcceptBattle}
-                  />
-                </Suspense>
-              )}
-              {(userStats?.streak ?? 0) > 0 && (
-                <StreakMultiplierMeter streak={userStats?.streak || 0} />
-              )}
-
-              <RejnCommentary
-                streak={userStats?.streak || 0}
-                accuracy={userStats?.accuracy || 0}
-                totalPredictions={userStats?.totalPredictions || 0}
-              />
-
-              <WildCardHype />
-
-              <Suspense fallback={<Card className="glass-card"><CardContent className="p-6 text-sm text-muted-foreground">Loading prediction form…</CardContent></Card>}>
-                <WeatherPredictionForm
-                  location={selectedLocation.name}
-                  latitude={selectedLocation.lat}
-                  longitude={selectedLocation.lon}
-                  onPredictionMade={() => {
-                    trackPredictionMade(selectedLocation.name);
-                    setCelebrateTick((n) => n + 1);
-                  }}
-                  isImperial={isImperial}
-                />
-              </Suspense>
-
-              <Suspense fallback={null}>
-                <DailySpinWheel />
-              </Suspense>
-
-              <Suspense fallback={null}>
-                <PredictionBattles
-                  location={selectedLocation.name}
-                  latitude={selectedLocation.lat}
-                  longitude={selectedLocation.lon}
-                />
-              </Suspense>
-            </TabsContent>
-
-            <TabsContent value="leaderboard" className="mt-4 space-y-4">
-              <Suspense fallback={null}>
-                <Leaderboard />
-              </Suspense>
-            </TabsContent>
-
-            <TabsContent value="history" className="mt-4">
-              <Suspense fallback={null}>
-                <PointsHistory />
-              </Suspense>
-            </TabsContent>
-
-            <TabsContent value="shop" className="mt-4">
-              <Suspense fallback={null}>
-                <PointsShop />
-              </Suspense>
-            </TabsContent>
-          </Tabs>
-        </div>
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold text-foreground">
+                Predictions is having a redo
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Check back again soon.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/")}
+              className="gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to weather
+            </Button>
+          </CardContent>
+        </Card>
       </div>
       <BottomTabBar />
-      <PredictionCelebration trigger={celebrateTick} streak={userStats?.streak || 0} />
     </>
   );
 }
-

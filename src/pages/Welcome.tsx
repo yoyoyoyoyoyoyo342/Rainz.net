@@ -25,7 +25,7 @@ const HEARD_ABOUT_OPTIONS = [
 const FEATURES = [
   { icon: Bot, title: "Ask Rejn", text: "Chat with our AI meteorologist about your local weather." },
   { icon: CalendarDays, title: "15-day forecasts", text: "Ensemble forecasts synced to your calendar." },
-  { icon: MapPin, title: "DryRoutes", text: "Plan trips through the driest, calmest windows." },
+  { icon: MapPin, title: "Saved places", text: "Track weather across every city that matters to you." },
   { icon: Shirt, title: "Outfit picks", text: "Get dressed for the actual weather, not the app icon." },
   { icon: ShieldCheck, title: "Trust every day", text: "Confidence scores on every forecast." },
 ];

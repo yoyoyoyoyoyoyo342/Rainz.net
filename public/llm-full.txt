@@ -132,7 +132,6 @@ Raw data (ECMWF, GFS, Met.no, etc.)
 
 | Feature | Description |
 |---|---|
-| DryRoutes | AI-powered route planning that avoids rain |
 | Outfit recommender | Clothing suggestions based on weather |
 | Widget generator | Embeddable weather widgets for websites |
 | Saved locations | Quick-switch between multiple locations |
@@ -320,8 +319,6 @@ A: PAI is a free AI chat assistant within Rejn that answers weather questions in
 **Q: How accurate are 15-day weather forecasts?**
 A: Generally, days 1-3 are 80-90% accurate, days 4-7 are 50-70% accurate, and days 8-10 are 40-60% accurate. Rejn's ensemble approach improves accuracy at all ranges compared to single-model apps.
 
-**Q: What is DryRoutes?**
-A: DryRoutes is a Rejn feature that plans walking/cycling routes to avoid rain, using real-time precipitation data to find the driest path between two points.
 
 ---
 

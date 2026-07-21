@@ -158,7 +158,7 @@ function TiltCard({ children, className }: { children: React.ReactNode; classNam
 const testimonials = [
   { name: "Sigrid K.", location: "Oslo", quote: "I haven't been caught in the rain since I started using Rejn. My umbrella is collecting dust.", rating: 5 },
   { name: "Erik B.", location: "Stockholm", quote: "The prediction battles are genuinely addictive. I beat my girlfriend every week and she's furious.", rating: 5 },
-  { name: "Freya L.", location: "Copenhagen", quote: "DryRoutes saved my suede shoes. That alone is worth premium.", rating: 5 },
+  { name: "Freya L.", location: "Copenhagen", quote: "The AI companion actually explains the forecast instead of just showing icons. Refreshing.", rating: 5 },
   { name: "Olav M.", location: "Bergen", quote: "In Bergen it rains 240 days a year. Rejn makes those days slightly less annoying.", rating: 4 },
 ];
 
@@ -166,7 +166,7 @@ const highlights = [
   { icon: Cloud, title: "Multi-Source Forecasts", desc: "We aggregate 13+ weather models so you don't have to." },
   { icon: Sparkles, title: "AI Weather Companion", desc: "Ask anything about the weather. Get answers that actually make sense." },
   { icon: Trophy, title: "Prediction Battles", desc: "Challenge friends. Predict the weather. Win bragging rights." },
-  { icon: MapPin, title: "DryRoutes", desc: "Find the driest path to your destination. Your shoes will thank you." },
+  { icon: MapPin, title: "Saved Places", desc: "Weather for every city you care about, one swipe away." },
   { icon: Users, title: "Community", desc: "Leaderboards, streaks, achievements. Weather just got competitive." },
   { icon: Zap, title: "Hyper-local", desc: "Minute-by-minute rain forecasts for your exact location." },
 ];

@@ -66,7 +66,7 @@ const ARWeatherOverlay = lazy(() => import("@/components/weather/ar-weather-over
 const AQICard = lazy(() => import("@/components/weather/aqi-card").then(m => ({ default: m.AQICard })));
 const BarometerCard = lazy(() => import("@/components/weather/barometer-card").then(m => ({ default: m.BarometerCard })));
 const RainMapCard = lazy(() => import("@/components/weather/rain-map-card"));
-const DryRoute = lazy(() => import("@/components/weather/dry-route").then(m => ({ default: m.DryRoute })));
+
 const AffiliateCard = lazy(() => import("@/components/weather/affiliate-card").then(m => ({ default: m.AffiliateCard })));
 const ChristmasCalendar = lazy(() => import("@/components/weather/christmas-calendar").then(m => ({ default: m.ChristmasCalendar })));
 const RamadanCalendar = lazy(() => import("@/components/weather/ramadan-calendar").then(m => ({ default: m.RamadanCalendar })));
@@ -1001,27 +1001,8 @@ export default function WeatherPage() {
 
 
 
-              {/* DryRoutes - embedded card experience */}
-              <AnimatedCard index={9}>
-                <Card className="glass-card mb-4 overflow-hidden">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="flex items-center justify-between text-base">
-                      <span className="flex items-center gap-2">🗺️ DryRoutes</span>
-                      <a href="/dryroutes" className="text-xs text-primary hover:underline flex items-center gap-1">
-                        Full Screen →
-                      </a>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <iframe
-                      src={`/dryroutes?lat=${selectedLocation.lat}&lon=${selectedLocation.lon}&embed=true`}
-                      title="DryRoutes"
-                      className="w-full h-[300px] border-0"
-                      allow="geolocation"
-                    />
-                  </CardContent>
-                </Card>
-              </AnimatedCard>
+
+
 
 
               {/* Holiday Calendars - only shown in season */}

@@ -16,7 +16,7 @@ const coreFeatures = [
   { icon: Cloud, title: "13+ Weather Sources", desc: "ECMWF, GFS, DWD ICON, SMHI, MET Norway and more — blended into one hyper-accurate forecast." },
   { icon: Brain, title: "AI Weather Companion", desc: "Ask natural-language weather questions and get context-aware answers powered by LLMs." },
   { icon: Swords, title: "Prediction Battles", desc: "Compete with friends to predict tomorrow's weather. Leaderboards, leagues, and bragging rights." },
-  { icon: MapPin, title: "DryRoutes", desc: "Minute-by-minute precipitation overlayed on real walking routes. Stay dry, door to door." },
+  { icon: MapPin, title: "Hyperlocal Stations", desc: "Live readings from nearby weather stations, cross-checked against the ensemble forecast." },
   { icon: Flower2, title: "Pollen & Air Quality", desc: "Personal allergy profiles, pollen alerts, and real-time AQI monitoring." },
   { icon: Gamepad2, title: "Weather Games", desc: "Six weather-themed mini-games that change based on current conditions." },
 ];

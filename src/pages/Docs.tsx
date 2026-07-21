@@ -39,12 +39,19 @@ const SECTIONS: DocSection[] = [
           than any single provider.
         </p>
         <p>
-          On top of that we layer prediction games, head-to-head battles, dry-route navigation,
-          a social feed, and an AR overlay — all wrapped in a dark, Apple Liquid Glass aesthetic.
+          On top of that we layer prediction games, head-to-head battles, an AI weather
+          companion, a social feed, and an AR overlay — all wrapped in a dark, Apple
+          Liquid Glass aesthetic.
+        </p>
+        <p>
+          Rejn is also <strong>the world's first aniridia-friendly weather app</strong>,
+          with built-in vision presets for low vision, photophobia, color blindness, and
+          screen readers.
         </p>
         <h4>Core principles</h4>
         <ul>
           <li>100% free, no paywalls, no "Rejn+" tier.</li>
+          <li>Accessibility-first — vision presets ship with the app, not as an add-on.</li>
           <li>Privacy-first: location and predictions stay on-device or in your account.</li>
           <li>Graceful degradation — if the LLM is down, you still get raw forecast data.</li>
         </ul>
@@ -63,7 +70,7 @@ const SECTIONS: DocSection[] = [
           <li>Open <a href="https://rainz.net">rainz.net</a> — there is no onboarding flow.</li>
           <li>Allow location access when prompted (one-time, persisted locally).</li>
           <li>Optionally sign up to save locations, predict the weather, and earn trophies.</li>
-          <li>Tap any tab in the bottom bar: Weather, Predict, Social, Explore, DryRoutes.</li>
+          <li>Tap any tab in the bottom bar: Weather, Predict, Ask Rejn, Explore.</li>
         </ol>
       </>
     ),
@@ -86,7 +93,7 @@ const SECTIONS: DocSection[] = [
           <li><code>rejn.app/predict</code> — Daily prediction game</li>
           <li><code>rejn.app/social</code> — Live community feed</li>
           <li><code>rejn.app/explore</code> — Discover other users and locations</li>
-          <li><code>rejn.app/dryroutes</code> — Rain-free route planning</li>
+          <li><code>rejn.app/ai</code> — Ask Rejn, the AI weather companion</li>
           <li><code>rejn.app/widgets</code> — Embeddable weather widgets</li>
           <li><code>rejn.app/download</code> — PWA & native app installers</li>
           <li><code>rejn.app/airport</code> — Airport weather product</li>
@@ -150,17 +157,24 @@ const SECTIONS: DocSection[] = [
     ),
   },
   {
-    id: "dryroutes",
-    title: "DryRoutes",
+    id: "accessibility",
+    title: "Accessibility",
     category: "Features",
-    icon: Map,
-    summary: "Plan a route that dodges the rain.",
+    icon: Shield,
+    summary: "The world's first aniridia-friendly weather app.",
     content: (
       <>
         <p>
-          DryRoutes uses the MOTIS Transitous API combined with our precipitation ensemble to
-          score multiple route candidates by how much rain you'd actually walk through. The
-          full-screen experience lives on <code>dryroutes.rainz.net</code>.
+          Rejn is <strong>the world's first aniridia-friendly weather app</strong>. The
+          Vision Update ships five presets — Standard, Low Vision, Aniridia / Photophobia,
+          Color Blind, and Screen Reader — plus fine-grained controls for text size,
+          contrast, brightness dimming, warm-light filter, motion reduction, and cursor
+          size.
+        </p>
+        <p>
+          Atkinson Hyperlegible Next is used across low-vision presets, all interactive
+          controls hit a 44px minimum tap target, and Radix / Vaul portals render above
+          any dimmers so dialogs are always reachable.
         </p>
       </>
     ),

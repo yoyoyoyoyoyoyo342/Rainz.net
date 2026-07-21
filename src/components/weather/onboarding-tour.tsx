@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Target, Navigation, Users } from "lucide-react";
+import { X, Target, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const TOUR_KEY = "rainz-tour-complete";
@@ -14,9 +14,9 @@ const steps = [
     bg: "from-primary/20 to-primary/5",
   },
   {
-    icon: Navigation,
-    title: "Plan Dry Walking Routes",
-    description: "DryRoutes finds rain-free paths so you stay dry on your commute. Tap the map icon to try it!",
+    icon: Sparkles,
+    title: "Accessible for everyone",
+    description: "Rejn is the world's first aniridia-friendly weather app, with vision presets tuned for low vision, photophobia, and screen readers.",
     color: "text-emerald-500",
     bg: "from-emerald-500/20 to-emerald-500/5",
   },

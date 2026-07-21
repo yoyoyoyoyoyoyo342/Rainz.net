@@ -175,17 +175,6 @@ export default function PrivacyPolicy() {
           </CardContent>
         </Card>
 
-        {/* DryRoutes liability paragraph added to privacy policy for completeness */}
-        <Card>
-          <CardHeader>
-            <CardTitle>DryRoutes Liability Disclaimer</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <p>
-              Routes generated through the DryRoutes feature are created by users and are not vetted by Rejn.net. Users are responsible for their own safety when following any route; we are not liable for injuries, accidents, or other harm resulting from use of user‑generated routes, and we collect no special personal data for this purpose.
-            </p>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>

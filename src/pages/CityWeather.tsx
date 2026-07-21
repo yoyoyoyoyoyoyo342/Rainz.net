@@ -139,8 +139,6 @@ export default function CityWeather() {
   const hourly = weatherData?.mostAccurate?.hourlyForecast?.slice(0, 12) ?? [];
   const condition = current?.condition ?? "Loading";
 
-  const dryRoutesUrl = `/dryroutes?lat=${city.lat}&lon=${city.lon}&name=${encodeURIComponent(city.name)}`;
-  const dryRoutesEmbedUrl = `${window.location.origin}/dryroutes?lat=${city.lat}&lon=${city.lon}&name=${encodeURIComponent(city.name)}&embed=1`;
 
   return (
     <>

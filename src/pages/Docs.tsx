@@ -93,7 +93,7 @@ const SECTIONS: DocSection[] = [
           <li><code>rejn.app/predict</code> — Daily prediction game</li>
           <li><code>rejn.app/social</code> — Live community feed</li>
           <li><code>rejn.app/explore</code> — Discover other users and locations</li>
-          <li><code>rejn.app/dryroutes</code> — Rain-free route planning</li>
+          <li><code>rejn.app/ai</code> — Ask Rejn, the AI weather companion</li>
           <li><code>rejn.app/widgets</code> — Embeddable weather widgets</li>
           <li><code>rejn.app/download</code> — PWA & native app installers</li>
           <li><code>rejn.app/airport</code> — Airport weather product</li>

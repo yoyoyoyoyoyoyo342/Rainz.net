@@ -39,12 +39,19 @@ const SECTIONS: DocSection[] = [
           than any single provider.
         </p>
         <p>
-          On top of that we layer prediction games, head-to-head battles, dry-route navigation,
-          a social feed, and an AR overlay — all wrapped in a dark, Apple Liquid Glass aesthetic.
+          On top of that we layer prediction games, head-to-head battles, an AI weather
+          companion, a social feed, and an AR overlay — all wrapped in a dark, Apple
+          Liquid Glass aesthetic.
+        </p>
+        <p>
+          Rejn is also <strong>the world's first aniridia-friendly weather app</strong>,
+          with built-in vision presets for low vision, photophobia, color blindness, and
+          screen readers.
         </p>
         <h4>Core principles</h4>
         <ul>
           <li>100% free, no paywalls, no "Rejn+" tier.</li>
+          <li>Accessibility-first — vision presets ship with the app, not as an add-on.</li>
           <li>Privacy-first: location and predictions stay on-device or in your account.</li>
           <li>Graceful degradation — if the LLM is down, you still get raw forecast data.</li>
         </ul>

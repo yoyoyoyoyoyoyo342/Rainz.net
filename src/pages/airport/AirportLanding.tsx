@@ -166,7 +166,7 @@ const highlights = [
   { icon: Cloud, title: "Multi-Source Forecasts", desc: "We aggregate 13+ weather models so you don't have to." },
   { icon: Sparkles, title: "AI Weather Companion", desc: "Ask anything about the weather. Get answers that actually make sense." },
   { icon: Trophy, title: "Prediction Battles", desc: "Challenge friends. Predict the weather. Win bragging rights." },
-  { icon: MapPin, title: "DryRoutes", desc: "Find the driest path to your destination. Your shoes will thank you." },
+  { icon: MapPin, title: "Saved Places", desc: "Weather for every city you care about, one swipe away." },
   { icon: Users, title: "Community", desc: "Leaderboards, streaks, achievements. Weather just got competitive." },
   { icon: Zap, title: "Hyper-local", desc: "Minute-by-minute rain forecasts for your exact location." },
 ];

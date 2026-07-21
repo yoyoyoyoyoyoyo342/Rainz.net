@@ -262,15 +262,17 @@ html.aniridia [data-radix-popper-content-wrapper] [role="listbox"] {
   box-shadow: 0 0 0 1px hsl(var(--border) / 0.45) !important;
 }
 
-html.aniridia button,
-html.aniridia [role="button"],
-html.aniridia a,
-html.aniridia input,
-html.aniridia select,
-html.aniridia textarea,
-html.aniridia [role="combobox"],
-html.aniridia [role="radio"],
-html.aniridia [role="switch"] {
+/* Enforce 44px tap targets, but NOT inside navigation bars, tab lists,
+   toolbars, or icon-only header controls — those have their own tuned
+   sizing and forcing 44px there stacks/breaks the bottom nav. */
+html.aniridia :where(button, [role="button"], a, input, select, textarea, [role="combobox"], [role="radio"], [role="switch"]):not(
+  nav *,
+  [role="tablist"] *,
+  [role="toolbar"] *,
+  .glass-tab-bar *,
+  [data-no-glass],
+  [data-no-min-tap]
+) {
   min-height: 44px;
   min-width: 44px;
 }
@@ -302,9 +304,14 @@ html.text-scale-200 [class*="break-words"] {
   word-break: keep-all;
 }
 
-html.aniridia [class*="grid-cols-2"],
-html.aniridia [class*="grid-cols-3"],
-html.aniridia [class*="grid-cols-4"] {
+/* Only stretch grid children inside dialogs/drawers — never rewrite grids
+   in navigation bars, tab lists, or the bottom tab bar. */
+html.aniridia [role="dialog"] [class*="grid-cols-2"],
+html.aniridia [role="dialog"] [class*="grid-cols-3"],
+html.aniridia [role="dialog"] [class*="grid-cols-4"],
+html.aniridia [data-vaul-drawer] [class*="grid-cols-2"],
+html.aniridia [data-vaul-drawer] [class*="grid-cols-3"],
+html.aniridia [data-vaul-drawer] [class*="grid-cols-4"] {
   align-items: stretch;
 }
 
